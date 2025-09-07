@@ -73,8 +73,23 @@ def configure_app(app, config_name):
         config_name: 配置名称
     """
     # 基础配置
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
-    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'dev-jwt-secret')
+    secret_key = os.getenv('SECRET_KEY')
+    jwt_secret_key = os.getenv('JWT_SECRET_KEY')
+    
+    if not secret_key:
+        if app.debug:
+            secret_key = 'dev-secret-key-change-in-production'
+        else:
+            raise ValueError("SECRET_KEY environment variable must be set in production")
+    
+    if not jwt_secret_key:
+        if app.debug:
+            jwt_secret_key = 'dev-jwt-secret-change-in-production'
+        else:
+            raise ValueError("JWT_SECRET_KEY environment variable must be set in production")
+    
+    app.config['SECRET_KEY'] = secret_key
+    app.config['JWT_SECRET_KEY'] = jwt_secret_key
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 3600))
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = int(os.getenv('JWT_REFRESH_TOKEN_EXPIRES', 2592000))
     
@@ -178,11 +193,13 @@ def initialize_extensions(app):
         return User.query.get(int(user_id))
     
     # 初始化CORS
+    allowed_origins = os.getenv('CORS_ORIGINS', 'http://localhost:5001,http://127.0.0.1:5001').split(',')
     cors.init_app(app, resources={
         r"/api/*": {
-            "origins": "*",
+            "origins": allowed_origins,
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"]
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True
         }
     })
     
@@ -342,4 +359,5 @@ app = create_app()
 from app.models import user, instance, credential, account, task, log, global_param
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8000)
+    debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug_mode, host='0.0.0.0', port=8000)

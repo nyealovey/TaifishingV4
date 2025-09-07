@@ -160,7 +160,9 @@ class DatabaseService:
         """
         try:
             if instance.id in self.connections:
-                self.connections[instance.id].close()
+                conn = self.connections[instance.id]
+                if conn:
+                    conn.close()
                 del self.connections[instance.id]
                 log_operation('database_disconnect', details={
                     'instance_id': instance.id,
@@ -168,6 +170,10 @@ class DatabaseService:
                 })
         except Exception as e:
             log_error(e, context={'instance_id': instance.id})
+        finally:
+            # 确保连接被清理
+            if instance.id in self.connections:
+                del self.connections[instance.id]
     
     def close_all_connections(self):
         """关闭所有数据库连接"""

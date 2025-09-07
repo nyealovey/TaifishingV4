@@ -10,6 +10,11 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.credential import Credential
 from app import db
 from app.utils.logger import log_operation
+from app.utils.security import (
+    sanitize_form_data, validate_required_fields, 
+    validate_username, validate_password, 
+    validate_db_type, validate_credential_type
+)
 import logging
 
 # 创建蓝图
@@ -69,16 +74,69 @@ def create():
     if request.method == 'POST':
         data = request.get_json() if request.is_json else request.form
         
+        # 清理输入数据
+        data = sanitize_form_data(data)
+        
+        # 输入验证
+        required_fields = ['name', 'credential_type', 'username', 'password']
+        validation_error = validate_required_fields(data, required_fields)
+        if validation_error:
+            if request.is_json:
+                return jsonify({'error': validation_error}), 400
+            flash(validation_error, 'error')
+            return render_template('credentials/create.html')
+        
+        # 验证用户名格式
+        username_error = validate_username(data.get('username'))
+        if username_error:
+            if request.is_json:
+                return jsonify({'error': username_error}), 400
+            flash(username_error, 'error')
+            return render_template('credentials/create.html')
+        
+        # 验证密码强度
+        password_error = validate_password(data.get('password'))
+        if password_error:
+            if request.is_json:
+                return jsonify({'error': password_error}), 400
+            flash(password_error, 'error')
+            return render_template('credentials/create.html')
+        
+        # 验证数据库类型
+        if data.get('db_type'):
+            db_type_error = validate_db_type(data.get('db_type'))
+            if db_type_error:
+                if request.is_json:
+                    return jsonify({'error': db_type_error}), 400
+                flash(db_type_error, 'error')
+                return render_template('credentials/create.html')
+        
+        # 验证凭据类型
+        credential_type_error = validate_credential_type(data.get('credential_type'))
+        if credential_type_error:
+            if request.is_json:
+                return jsonify({'error': credential_type_error}), 400
+            flash(credential_type_error, 'error')
+            return render_template('credentials/create.html')
+        
+        # 验证凭据名称唯一性
+        existing_credential = Credential.query.filter_by(name=data.get('name')).first()
+        if existing_credential:
+            error_msg = '凭据名称已存在'
+            if request.is_json:
+                return jsonify({'error': error_msg}), 400
+            flash(error_msg, 'error')
+            return render_template('credentials/create.html')
+        
         try:
             # 创建新凭据
             credential = Credential(
-                name=data.get('name'),
+                name=data.get('name').strip(),
                 credential_type=data.get('credential_type'),
-                db_type=data.get('db_type'),
-                username=data.get('username'),
+                username=data.get('username').strip(),
                 password=data.get('password'),
-                description=data.get('description', ''),
-                is_active=data.get('is_active', True)
+                db_type=data.get('db_type'),
+                description=data.get('description', '').strip()
             )
             
             db.session.add(credential)
@@ -103,12 +161,20 @@ def create():
             
         except Exception as e:
             db.session.rollback()
-            logging.error(f"创建凭据失败: {e}")
+            logging.error(f"创建凭据失败: {e}", exc_info=True)
+            
+            # 根据错误类型提供更具体的错误信息
+            if 'UNIQUE constraint failed' in str(e):
+                error_msg = '凭据名称已存在，请使用其他名称'
+            elif 'NOT NULL constraint failed' in str(e):
+                error_msg = '必填字段不能为空'
+            else:
+                error_msg = f'创建凭据失败: {str(e)}'
             
             if request.is_json:
-                return jsonify({'error': '创建凭据失败，请重试'}), 500
+                return jsonify({'error': error_msg}), 500
             
-            flash('创建凭据失败，请重试', 'error')
+            flash(error_msg, 'error')
     
     # GET请求，显示创建表单
     if request.is_json:

@@ -119,14 +119,17 @@ class Instance(db.Model):
         except Exception as e:
             return {'status': 'error', 'message': f'Oracle连接失败: {str(e)}'}
     
-    def to_dict(self):
+    def to_dict(self, include_password=False):
         """
-        转换为字典
+        转换为字典格式
         
+        Args:
+            include_password: 是否包含密码（默认False，安全考虑）
+            
         Returns:
             dict: 实例信息字典
         """
-        return {
+        data = {
             'id': self.id,
             'name': self.name,
             'db_type': self.db_type,
@@ -136,9 +139,31 @@ class Instance(db.Model):
             'description': self.description,
             'tags': self.tags,
             'status': self.status,
+            'is_active': self.is_active,
+            'last_connected': self.last_connected.isoformat() if self.last_connected else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
+        
+        if self.credential:
+            if include_password:
+                data['credential'] = {
+                    'id': self.credential.id,
+                    'name': self.credential.name,
+                    'username': self.credential.username,
+                    'password': self.credential.password,
+                    'credential_type': self.credential.credential_type
+                }
+            else:
+                data['credential'] = {
+                    'id': self.credential.id,
+                    'name': self.credential.name,
+                    'username': self.credential.username,
+                    'password': self.credential.get_password_masked(),
+                    'credential_type': self.credential.credential_type
+                }
+        
+        return data
     
     def soft_delete(self):
         """软删除实例"""
@@ -164,29 +189,6 @@ class Instance(db.Model):
         """根据数据库类型获取实例"""
         return Instance.query.filter_by(db_type=db_type, deleted_at=None).all()
     
-    def to_dict(self):
-        """
-        转换为字典格式
-        
-        Returns:
-            Dict: 实例信息字典
-        """
-        return {
-            'id': self.id,
-            'name': self.name,
-            'db_type': self.db_type,
-            'host': self.host,
-            'port': self.port,
-            'database_name': getattr(self, 'database_name', None),
-            'credential_id': self.credential_id,
-            'description': self.description,
-            'tags': self.tags,
-            'status': self.status,
-            'is_active': getattr(self, 'is_active', True),
-            'last_connected': self.last_connected.isoformat() if hasattr(self, 'last_connected') and self.last_connected else None,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
-        }
     
     def __repr__(self):
         return f'<Instance {self.name}>'
