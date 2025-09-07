@@ -8,6 +8,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from flask_login import login_required, current_user
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.credential import Credential
+from app.models.instance import Instance
 from app import db
 from app.utils.logger import log_operation
 from app.utils.security import (
@@ -29,8 +30,11 @@ def index():
     search = request.args.get('search', '', type=str)
     credential_type = request.args.get('credential_type', '', type=str)
     
-    # 构建查询
-    query = Credential.query
+    # 构建查询，包含实例数量统计
+    query = db.session.query(
+        Credential,
+        db.func.count(Instance.id).label('instance_count')
+    ).outerjoin(Instance, Credential.id == Instance.credential_id)
     
     if search:
         query = query.filter(
@@ -44,10 +48,31 @@ def index():
     if credential_type:
         query = query.filter(Credential.credential_type == credential_type)
     
+    # 按凭据分组并排序
+    query = query.group_by(Credential.id).order_by(Credential.created_at.desc())
+    
     # 分页查询
-    credentials = query.paginate(
-        page=page, per_page=per_page, error_out=False
-    )
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    # 处理结果，添加实例数量到凭据对象
+    credentials_with_count = []
+    for cred, instance_count in pagination.items:
+        cred.instance_count = instance_count
+        credentials_with_count.append(cred)
+    
+    # 创建分页对象
+    credentials = type('obj', (object,), {
+        'items': credentials_with_count,
+        'page': pagination.page,
+        'pages': pagination.pages,
+        'per_page': pagination.per_page,
+        'total': pagination.total,
+        'has_prev': pagination.has_prev,
+        'has_next': pagination.has_next,
+        'prev_num': pagination.prev_num,
+        'next_num': pagination.next_num,
+        'iter_pages': pagination.iter_pages
+    })()
     
     if request.is_json:
         return jsonify({
@@ -316,6 +341,46 @@ def edit(credential_id):
         })
     
     return render_template('credentials/edit.html', credential=credential)
+
+@credentials_bp.route('/<int:credential_id>/toggle', methods=['POST'])
+@login_required
+def toggle(credential_id):
+    """启用/禁用凭据"""
+    credential = Credential.query.get_or_404(credential_id)
+    data = request.get_json()
+    
+    try:
+        is_active = data.get('is_active', False)
+        credential.is_active = is_active
+        db.session.commit()
+        
+        # 记录操作日志
+        log_operation('TOGGLE_CREDENTIAL', current_user.id, {
+            'credential_id': credential.id,
+            'credential_name': credential.name,
+            'is_active': is_active
+        })
+        
+        action = '启用' if is_active else '禁用'
+        message = f'凭据{action}成功'
+        
+        if request.is_json:
+            return jsonify({'message': message})
+        
+        flash(message, 'success')
+        return redirect(url_for('credentials.index'))
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"切换凭据状态失败: {e}", exc_info=True)
+        
+        error_msg = f'切换凭据状态失败: {str(e)}'
+        
+        if request.is_json:
+            return jsonify({'error': error_msg}), 500
+        
+        flash(error_msg, 'error')
+        return redirect(url_for('credentials.index'))
 
 @credentials_bp.route('/<int:credential_id>/delete', methods=['POST'])
 @login_required
