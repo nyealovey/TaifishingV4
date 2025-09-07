@@ -98,7 +98,7 @@
                         </td>
                         <td>
                             {% if instance.last_connected %}
-                            <small class="text-muted">{{ instance.last_connected.strftime('%Y-%m-%d %H:%M') }}</small>
+                            <small class="text-muted">{{ instance.last_connected | china_time('%Y-%m-%d %H:%M') }}</small>
                             {% else %}
                             <small class="text-muted">从未连接</small>
                             {% endif %}

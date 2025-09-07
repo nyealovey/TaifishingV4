@@ -63,7 +63,7 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold">最后登录</label>
                             <p class="form-control-plaintext">
-                                {{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else '从未登录' }}
+                                {{ user.last_login | china_datetime if user.last_login else '从未登录' }}
                             </p>
                         </div>
                     </div>

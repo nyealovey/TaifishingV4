@@ -96,7 +96,7 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold">更新时间</label>
                             <p class="form-control-plaintext">
-                                {{ param.updated_at.strftime('%Y-%m-%d %H:%M:%S') if param.updated_at else '未知' }}
+                                {{ param.updated_at | china_datetime if param.updated_at else '未知' }}
                             </p>
                         </div>
                     </div>

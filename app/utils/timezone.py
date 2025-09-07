@@ -61,6 +61,10 @@ def format_china_time(dt, format_str='%Y-%m-%d %H:%M:%S'):
             # 解析失败，直接返回原字符串
             return dt
     
+    # 如果是datetime对象但没有时区信息，假设为UTC
+    if hasattr(dt, 'tzinfo') and dt.tzinfo is None:
+        dt = pytz.utc.localize(dt)
+    
     china_dt = utc_to_china(dt)
     return china_dt.strftime(format_str)
 

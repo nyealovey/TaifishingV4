@@ -87,7 +87,7 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold">最后运行时间</label>
                             <p class="form-control-plaintext">
-                                {{ task.last_run_at.strftime('%Y-%m-%d %H:%M:%S') if task.last_run_at else '未运行' }}
+                                {{ task.last_run_at | china_datetime if task.last_run_at else '未运行' }}
                             </p>
                         </div>
                     </div>
@@ -127,7 +127,7 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold">更新时间</label>
                             <p class="form-control-plaintext">
-                                {{ task.updated_at.strftime('%Y-%m-%d %H:%M:%S') if task.updated_at else '未知' }}
+                                {{ task.updated_at | china_datetime if task.updated_at else '未知' }}
                             </p>
                         </div>
                     </div>

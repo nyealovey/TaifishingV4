@@ -212,7 +212,7 @@
                     {% for sync in recent_syncs %}
                     <tr>
                         <td>
-                            <small class="text-muted">{{ sync.sync_time.strftime('%m-%d %H:%M') }}</small>
+                            <small class="text-muted">{{ sync.sync_time | china_time('%m-%d %H:%M') }}</small>
                         </td>
                         <td>
                             <i class="fas fa-database text-primary me-1"></i>

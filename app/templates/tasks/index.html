@@ -111,8 +111,8 @@
                         <td>
                             {% if task.last_run %}
                             <div>
-                                <strong>{{ task.last_run.strftime('%Y-%m-%d') }}</strong>
-                                <br><small class="text-muted">{{ task.last_run.strftime('%H:%M:%S') }}</small>
+                                <strong>{{ task.last_run | china_date }}</strong>
+                                <br><small class="text-muted">{{ task.last_run | china_time('%H:%M:%S') }}</small>
                             </div>
                             {% else %}
                             <span class="text-muted">从未运行</span>
