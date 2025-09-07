@@ -72,7 +72,7 @@ def get_app_logger():
 
 def log_operation(operation_type, user_id=None, details=None):
     """
-    记录操作日志
+    记录操作日志（安全版本）
     
     Args:
         operation_type: 操作类型
@@ -81,11 +81,14 @@ def log_operation(operation_type, user_id=None, details=None):
     """
     logger = get_app_logger()
     
+    # 清理敏感信息
+    safe_details = _sanitize_log_details(details) if details else {}
+    
     log_data = {
         'operation_type': operation_type,
         'user_id': user_id,
         'timestamp': get_china_time().isoformat(),
-        'details': details or {}
+        'details': safe_details
     }
     
     logger.info(f"操作日志: {log_data}")
@@ -101,7 +104,7 @@ def log_operation(operation_type, user_id=None, details=None):
             level='INFO',
             module='system',
             message=f"操作: {operation_type}",
-            details=str(details) if details else None,
+            details=str(safe_details) if safe_details else None,
             user_id=user_id,
             ip_address=request.remote_addr if request else None,
             user_agent=request.headers.get('User-Agent') if request else None
@@ -111,6 +114,41 @@ def log_operation(operation_type, user_id=None, details=None):
         db.session.commit()
     except Exception as e:
         logger.error(f"保存操作日志到数据库失败: {e}")
+
+def _sanitize_log_details(details):
+    """
+    清理日志中的敏感信息
+    
+    Args:
+        details: 原始详细信息
+        
+    Returns:
+        dict: 清理后的详细信息
+    """
+    if not isinstance(details, dict):
+        return details
+    
+    # 敏感字段列表
+    sensitive_fields = [
+        'password', 'pwd', 'passwd', 'secret', 'token', 'key', 'auth',
+        'credential', 'credential_id', 'username', 'user', 'email',
+        'phone', 'mobile', 'ssn', 'id_card', 'credit_card'
+    ]
+    
+    safe_details = {}
+    for key, value in details.items():
+        # 检查字段名是否包含敏感信息
+        if any(sensitive in key.lower() for sensitive in sensitive_fields):
+            safe_details[key] = '[REDACTED]'
+        elif isinstance(value, dict):
+            safe_details[key] = _sanitize_log_details(value)
+        elif isinstance(value, str) and len(value) > 100:
+            # 截断过长的字符串
+            safe_details[key] = value[:100] + '...'
+        else:
+            safe_details[key] = value
+    
+    return safe_details
 
 def log_error(error, user_id=None, context=None):
     """

@@ -20,6 +20,7 @@ import psutil
 import os
 from sqlalchemy import text
 from app.utils.timezone import get_china_time, utc_to_china, format_china_time, get_china_today, get_china_date, china_to_utc, CHINA_TZ
+from app.utils.cache_manager import cached, cache_dashboard_data, get_cached_dashboard_data, invalidate_dashboard_cache
 
 # 创建蓝图
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -84,8 +85,9 @@ def api_status():
     status = get_system_status()
     return jsonify(status)
 
+@cached(timeout=300, key_prefix='dashboard')
 def get_system_overview():
-    """获取系统概览数据"""
+    """获取系统概览数据（缓存版本）"""
     try:
         # 基础统计
         total_users = User.query.count()
@@ -284,10 +286,11 @@ def get_sync_trend_data():
         return []
 
 def get_recent_activities(limit=10):
-    """获取最近活动"""
+    """获取最近活动（优化版本）"""
     try:
-        # 获取最近的日志记录
-        recent_logs = Log.query.order_by(Log.created_at.desc()).limit(limit).all()
+        # 使用join查询避免N+1问题
+        recent_logs = db.session.query(Log).join(User, Log.user_id == User.id, isouter=True)\
+            .order_by(Log.created_at.desc()).limit(limit).all()
         
         activities = []
         for log in recent_logs:

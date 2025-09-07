@@ -153,7 +153,7 @@ class DatabaseService:
     
     def close_connection(self, instance: Instance):
         """
-        关闭数据库连接
+        关闭数据库连接（改进版本）
         
         Args:
             instance: 数据库实例
@@ -162,7 +162,11 @@ class DatabaseService:
             if instance.id in self.connections:
                 conn = self.connections[instance.id]
                 if conn:
-                    conn.close()
+                    # 确保连接被正确关闭
+                    if hasattr(conn, 'close'):
+                        conn.close()
+                    elif hasattr(conn, 'disconnect'):
+                        conn.disconnect()
                 del self.connections[instance.id]
                 log_operation('database_disconnect', details={
                     'instance_id': instance.id,
@@ -176,13 +180,54 @@ class DatabaseService:
                 del self.connections[instance.id]
     
     def close_all_connections(self):
-        """关闭所有数据库连接"""
-        for instance_id, conn in self.connections.items():
+        """关闭所有数据库连接（改进版本）"""
+        connection_ids = list(self.connections.keys())
+        for instance_id in connection_ids:
             try:
-                conn.close()
+                conn = self.connections[instance_id]
+                if conn:
+                    # 确保连接被正确关闭
+                    if hasattr(conn, 'close'):
+                        conn.close()
+                    elif hasattr(conn, 'disconnect'):
+                        conn.disconnect()
             except Exception as e:
                 log_error(e, context={'instance_id': instance_id})
         self.connections.clear()
+    
+    def get_connection_count(self):
+        """
+        获取当前连接数
+        
+        Returns:
+            int: 连接数
+        """
+        return len(self.connections)
+    
+    def cleanup_stale_connections(self):
+        """
+        清理过期的连接
+        """
+        stale_connections = []
+        for instance_id, conn in self.connections.items():
+            try:
+                # 测试连接是否仍然有效
+                if hasattr(conn, 'ping'):
+                    conn.ping()
+                elif hasattr(conn, 'execute'):
+                    conn.execute('SELECT 1')
+            except Exception:
+                stale_connections.append(instance_id)
+        
+        # 移除过期连接
+        for instance_id in stale_connections:
+            try:
+                conn = self.connections[instance_id]
+                if hasattr(conn, 'close'):
+                    conn.close()
+                del self.connections[instance_id]
+            except Exception:
+                pass
     
     def get_connection_status(self, instance: Instance) -> Dict[str, Any]:
         """
@@ -221,7 +266,7 @@ class DatabaseService:
     
     def execute_query(self, instance: Instance, query: str, params: tuple = None) -> Dict[str, Any]:
         """
-        执行SQL查询
+        执行SQL查询（安全版本）
         
         Args:
             instance: 数据库实例
@@ -232,6 +277,13 @@ class DatabaseService:
             Dict: 查询结果
         """
         try:
+            # 安全检查：防止SQL注入
+            if not self._is_safe_query(query):
+                return {
+                    'success': False,
+                    'error': '查询包含不安全的操作，已被阻止'
+                }
+            
             conn = self.get_connection(instance)
             if not conn:
                 return {
@@ -240,7 +292,12 @@ class DatabaseService:
                 }
             
             cursor = conn.cursor()
-            cursor.execute(query, params)
+            
+            # 使用参数化查询防止SQL注入
+            if params:
+                cursor.execute(query, params)
+            else:
+                cursor.execute(query)
             
             if query.strip().upper().startswith('SELECT'):
                 results = cursor.fetchall()
@@ -271,3 +328,38 @@ class DatabaseService:
                 'success': False,
                 'error': f'查询执行失败: {str(e)}'
             }
+    
+    def _is_safe_query(self, query: str) -> bool:
+        """
+        检查查询是否安全
+        
+        Args:
+            query: SQL查询语句
+            
+        Returns:
+            bool: 是否安全
+        """
+        # 转换为大写进行检查
+        query_upper = query.upper().strip()
+        
+        # 危险操作列表
+        dangerous_operations = [
+            'DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'TRUNCATE',
+            'EXEC', 'EXECUTE', 'SP_', 'XP_', 'BULK', 'BULKINSERT',
+            'UNION', '--', '/*', '*/', ';', 'XP_CMDSHELL', 'SP_EXECUTESQL'
+        ]
+        
+        # 检查是否包含危险操作
+        for operation in dangerous_operations:
+            if operation in query_upper:
+                return False
+        
+        # 只允许SELECT查询（用于数据查看）
+        if not query_upper.startswith('SELECT'):
+            return False
+        
+        # 检查查询长度（防止过长的查询）
+        if len(query) > 10000:
+            return False
+        
+        return True

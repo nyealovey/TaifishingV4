@@ -14,6 +14,7 @@ from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from flask_cors import CORS
+from flask_wtf.csrf import CSRFProtect
 from celery import Celery
 from dotenv import load_dotenv
 
@@ -28,6 +29,7 @@ jwt = JWTManager()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
 cors = CORS()
+csrf = CSRFProtect()
 
 # 初始化Celery
 celery = Celery()
@@ -47,6 +49,9 @@ def create_app(config_name=None):
     # 配置应用
     configure_app(app, config_name)
     
+    # 配置会话安全
+    configure_session_security(app)
+    
     # 初始化扩展
     initialize_extensions(app)
     
@@ -58,6 +63,10 @@ def create_app(config_name=None):
     
     # 配置错误处理
     configure_error_handlers(app)
+    
+    # 注册全局错误处理器
+    from app.utils.error_handler import register_error_handlers
+    register_error_handlers(app)
     
     # 配置模板过滤器
     configure_template_filters(app)
@@ -160,6 +169,25 @@ def configure_app(app, config_name):
     app.config['ORACLE_USERNAME'] = os.getenv('ORACLE_USERNAME', 'system')
     app.config['ORACLE_PASSWORD'] = os.getenv('ORACLE_PASSWORD', '')
 
+def configure_session_security(app):
+    """
+    配置会话安全
+    
+    Args:
+        app: Flask应用实例
+    """
+    # 会话配置
+    app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 会话1小时过期
+    app.config['SESSION_COOKIE_SECURE'] = not app.debug  # 生产环境使用HTTPS
+    app.config['SESSION_COOKIE_HTTPONLY'] = True  # 防止XSS攻击
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF保护
+    
+    # 防止会话固定攻击
+    app.config['SESSION_COOKIE_NAME'] = 'taifish_session'
+    
+    # 会话超时配置
+    app.config['SESSION_TIMEOUT'] = 3600  # 1小时
+
 def initialize_extensions(app):
     """
     初始化Flask扩展
@@ -174,6 +202,13 @@ def initialize_extensions(app):
     # 初始化缓存
     cache.init_app(app)
     
+    # 初始化缓存管理器
+    from app.utils.cache_manager import init_cache_manager
+    init_cache_manager(cache)
+    
+    # 初始化CSRF保护
+    csrf.init_app(app)
+    
     # 初始化JWT
     jwt.init_app(app)
     
@@ -185,6 +220,12 @@ def initialize_extensions(app):
     login_manager.login_view = 'auth.login'
     login_manager.login_message = '请先登录'
     login_manager.login_message_category = 'info'
+    
+    # 会话安全配置
+    login_manager.session_protection = "strong"  # 强会话保护
+    login_manager.remember_cookie_duration = 3600  # 记住我功能1小时过期
+    login_manager.remember_cookie_secure = not app.debug  # 生产环境使用HTTPS
+    login_manager.remember_cookie_httponly = True  # 防止XSS攻击
     
     # 用户加载器
     @login_manager.user_loader
@@ -208,6 +249,10 @@ def initialize_extensions(app):
     try:
         import redis
         redis_client = redis.from_url(redis_url)
+        
+        # 初始化速率限制器
+        from app.utils.rate_limiter import init_rate_limiter
+        init_rate_limiter(redis_client)
         redis_client.ping()
         # Redis可用，配置Celery
         celery.conf.update(

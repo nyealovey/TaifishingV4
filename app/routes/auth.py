@@ -11,11 +11,13 @@ from werkzeug.security import check_password_hash
 from app.models.user import User
 from app import db, bcrypt
 from app.utils.logger import log_operation
+from app.utils.rate_limiter import login_rate_limit, password_reset_rate_limit, registration_rate_limit
 
 # 创建蓝图
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@login_rate_limit
 def login():
     """用户登录页面"""
     if request.method == 'POST':
@@ -100,6 +102,7 @@ def logout():
     return redirect(url_for('auth.login'))
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
+@registration_rate_limit
 def register():
     """用户注册页面"""
     if request.method == 'POST':
@@ -178,6 +181,7 @@ def profile():
 
 @auth_bp.route('/change-password', methods=['GET', 'POST'])
 @login_required
+@password_reset_rate_limit
 def change_password():
     """修改密码页面"""
     if request.method == 'POST':
