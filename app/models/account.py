@@ -21,8 +21,7 @@ class Account(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # 关联关系
-    instance = db.relationship('Instance', backref='accounts')
+    # 关联关系 - 注意：backref在Instance模型中定义
     
     def __repr__(self):
         return f'<Account {self.username}@{self.instance.name if self.instance else "Unknown"}>'
