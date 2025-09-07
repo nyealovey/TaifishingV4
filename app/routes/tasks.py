@@ -8,6 +8,7 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from flask_login import login_required, current_user
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.task import Task
+from app.services.task_executor import TaskExecutor
 from app.models.instance import Instance
 from app import db, celery
 from app.services.database_service import DatabaseService
@@ -24,12 +25,23 @@ def index():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     status = request.args.get('status', '', type=str)
+    db_type = request.args.get('db_type', '', type=str)
+    task_type = request.args.get('task_type', '', type=str)
     
     # 构建查询
     query = Task.query
     
     if status:
-        query = query.filter(Task.status == status)
+        if status == 'active':
+            query = query.filter(Task.is_active == True)
+        elif status == 'inactive':
+            query = query.filter(Task.is_active == False)
+    
+    if db_type:
+        query = query.filter(Task.db_type == db_type)
+    
+    if task_type:
+        query = query.filter(Task.task_type == task_type)
     
     # 分页查询
     tasks = query.order_by(Task.created_at.desc()).paginate(
@@ -56,7 +68,9 @@ def index():
     return render_template('tasks/index.html', 
                          tasks=tasks,
                          instances=instances,
-                         status=status)
+                         status=status,
+                         db_type=db_type,
+                         task_type=task_type)
 
 @tasks_bp.route('/create', methods=['GET', 'POST'])
 @login_required
@@ -66,14 +80,26 @@ def create():
         data = request.get_json() if request.is_json else request.form
         
         try:
+            # 解析配置参数
+            config = {}
+            if data.get('config'):
+                import json
+                try:
+                    config = json.loads(data.get('config'))
+                except json.JSONDecodeError:
+                    config = {}
+            
             # 创建新任务
             task = Task(
                 name=data.get('name'),
                 task_type=data.get('task_type'),
-                instance_id=data.get('instance_id'),
+                db_type=data.get('db_type'),
                 schedule=data.get('schedule'),
                 description=data.get('description', ''),
-                is_active=data.get('is_active', True)
+                python_code=data.get('python_code'),
+                config=config,
+                is_active=data.get('is_active', True),
+                is_builtin=data.get('is_builtin', False)
             )
             
             db.session.add(task)
@@ -355,3 +381,79 @@ def api_run_now(task_id):
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@tasks_bp.route('/create-builtin', methods=['POST'])
+@login_required
+def create_builtin_tasks():
+    """创建内置任务"""
+    try:
+        executor = TaskExecutor()
+        result = executor.create_builtin_tasks()
+        
+        if result['success']:
+            if request.is_json:
+                return jsonify(result)
+            flash(result['message'], 'success')
+        else:
+            if request.is_json:
+                return jsonify(result), 400
+            flash(result['error'], 'error')
+            
+    except Exception as e:
+        logging.error(f"创建内置任务失败: {e}")
+        error_msg = f'创建内置任务失败: {str(e)}'
+        if request.is_json:
+            return jsonify({'error': error_msg}), 500
+        flash(error_msg, 'error')
+    
+    return redirect(url_for('tasks.index'))
+
+@tasks_bp.route('/<int:task_id>/execute', methods=['POST'])
+@login_required
+def execute_task_direct(task_id):
+    """直接执行指定任务"""
+    try:
+        executor = TaskExecutor()
+        result = executor.execute_task(task_id)
+        
+        if request.is_json:
+            return jsonify(result)
+        
+        if result['success']:
+            flash(result['message'], 'success')
+        else:
+            flash(result['error'], 'error')
+            
+    except Exception as e:
+        logging.error(f"执行任务失败: {e}")
+        error_msg = f'执行任务失败: {str(e)}'
+        if request.is_json:
+            return jsonify({'error': error_msg}), 500
+        flash(error_msg, 'error')
+    
+    return redirect(url_for('tasks.index'))
+
+@tasks_bp.route('/execute-all', methods=['POST'])
+@login_required
+def execute_all_tasks():
+    """执行所有活跃任务"""
+    try:
+        executor = TaskExecutor()
+        result = executor.execute_all_active_tasks()
+        
+        if request.is_json:
+            return jsonify(result)
+        
+        if result['success']:
+            flash(result['message'], 'success')
+        else:
+            flash(result['error'], 'error')
+            
+    except Exception as e:
+        logging.error(f"批量执行任务失败: {e}")
+        error_msg = f'批量执行任务失败: {str(e)}'
+        if request.is_json:
+            return jsonify({'error': error_msg}), 500
+        flash(error_msg, 'error')
+    
+    return redirect(url_for('tasks.index'))
