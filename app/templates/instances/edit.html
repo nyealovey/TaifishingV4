@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}编辑实例 - 泰摸鱼吧{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-edit me-2"></i>编辑数据库实例
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="instanceForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">实例名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       value="{{ instance.name }}" required>
+                                <div class="form-text">用于标识此数据库实例的名称</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="db_type" class="form-label">数据库类型 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="db_type" name="db_type" required>
+                                    <option value="">请选择数据库类型</option>
+                                    <option value="postgresql" {% if instance.db_type == 'postgresql' %}selected{% endif %}>PostgreSQL</option>
+                                    <option value="mysql" {% if instance.db_type == 'mysql' %}selected{% endif %}>MySQL</option>
+                                    <option value="sqlserver" {% if instance.db_type == 'sqlserver' %}selected{% endif %}>SQL Server</option>
+                                    <option value="oracle" {% if instance.db_type == 'oracle' %}selected{% endif %}>Oracle</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="host" class="form-label">主机地址 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="host" name="host" 
+                                       value="{{ instance.host }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="port" class="form-label">端口号 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="port" name="port" 
+                                       value="{{ instance.port }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="database_name" class="form-label">数据库名</label>
+                                <input type="text" class="form-control" id="database_name" name="database_name" 
+                                       value="{{ instance.database_name or '' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="credential_id" class="form-label">凭据 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="credential_id" name="credential_id" required>
+                                    <option value="">请选择凭据</option>
+                                    {% for cred in credentials %}
+                                    <option value="{{ cred.id }}" {% if instance.credential_id == cred.id %}selected{% endif %}>
+                                        {{ cred.name }} ({{ cred.credential_type }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    <a href="{{ url_for('credentials.create') }}" class="text-decoration-none">
+                                        <i class="fas fa-plus me-1"></i>添加新凭据
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">描述</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ instance.description or '' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active" 
+                               {% if instance.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">
+                            启用此实例
+                        </label>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('instances.index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>返回列表
+                        </a>
+                        <a href="{{ url_for('instances.detail', instance_id=instance.id) }}" class="btn btn-outline-info">
+                            <i class="fas fa-eye me-2"></i>查看详情
+                        </a>
+                        <button type="button" class="btn btn-outline-warning" onclick="testConnection()">
+                            <i class="fas fa-plug me-2"></i>测试连接
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>保存更改
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 连接测试结果 -->
+        <div class="card mt-3" id="testResult" style="display: none;">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="fas fa-plug me-2"></i>连接测试结果
+                </h6>
+                <div id="testResultContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 根据数据库类型设置默认端口
+document.getElementById('db_type').addEventListener('change', function() {
+    const portInput = document.getElementById('port');
+    const dbType = this.value;
+    
+    const defaultPorts = {
+        'postgresql': 5432,
+        'mysql': 3306,
+        'sqlserver': 1433,
+        'oracle': 1521
+    };
+    
+    if (defaultPorts[dbType]) {
+        portInput.value = defaultPorts[dbType];
+    }
+});
+
+// 表单提交处理
+document.getElementById('instanceForm').addEventListener('submit', function(e) {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>保存中...';
+    submitBtn.disabled = true;
+    
+    // 如果保存失败，恢复按钮状态
+    setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }, 5000);
+});
+
+// 测试连接功能
+function testConnection() {
+    const form = document.getElementById('instanceForm');
+    const formData = new FormData(form);
+    
+    // 检查必填字段
+    const requiredFields = ['name', 'db_type', 'host', 'port', 'credential_id'];
+    for (const field of requiredFields) {
+        if (!formData.get(field)) {
+            showAlert('warning', '请先填写必填字段');
+            return;
+        }
+    }
+    
+    const testBtn = event.target;
+    const originalText = testBtn.innerHTML;
+    
+    testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>测试中...';
+    testBtn.disabled = true;
+    
+    // 创建临时实例对象进行测试
+    const testData = {
+        name: formData.get('name'),
+        db_type: formData.get('db_type'),
+        host: formData.get('host'),
+        port: parseInt(formData.get('port')),
+        database_name: formData.get('database_name'),
+        credential_id: formData.get('credential_id')
+    };
+    
+    fetch('/instances/test-connection', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(testData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        const resultDiv = document.getElementById('testResult');
+        const contentDiv = document.getElementById('testResultContent');
+        
+        if (data.success) {
+            contentDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>连接成功！</strong><br>
+                    ${data.message || '数据库连接正常'}
+                </div>
+            `;
+        } else {
+            contentDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>连接失败！</strong><br>
+                    ${data.error || '未知错误'}
+                </div>
+            `;
+        }
+        
+        resultDiv.style.display = 'block';
+    })
+    .catch(error => {
+        document.getElementById('testResultContent').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>测试失败！</strong><br>
+                网络错误或服务器无响应
+            </div>
+        `;
+        document.getElementById('testResult').style.display = 'block';
+    })
+    .finally(() => {
+        testBtn.innerHTML = originalText;
+        testBtn.disabled = false;
+    });
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

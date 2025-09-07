@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+
+{% block title %}系统仪表板 - 泰摸鱼吧{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-card {
+    transition: transform 0.2s;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+.activity-item {
+    border-left: 3px solid #dee2e6;
+    padding-left: 15px;
+    margin-bottom: 15px;
+}
+.activity-item.log-ERROR {
+    border-left-color: #dc3545;
+}
+.activity-item.log-WARNING {
+    border-left-color: #ffc107;
+}
+.activity-item.log-INFO {
+    border-left-color: #17a2b8;
+}
+.activity-item.log-DEBUG {
+    border-left-color: #6c757d;
+}
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+.status-healthy {
+    background-color: #28a745;
+}
+.status-error {
+    background-color: #dc3545;
+}
+.status-warning {
+    background-color: #ffc107;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-tachometer-alt me-2"></i>系统仪表板</h2>
+    <div>
+        <button type="button" class="btn btn-outline-primary" onclick="refreshDashboard()">
+            <i class="fas fa-sync-alt me-2"></i>刷新数据
+        </button>
+        <button type="button" class="btn btn-outline-info" onclick="toggleAutoRefresh()">
+            <i class="fas fa-clock me-2"></i>自动刷新
+        </button>
+    </div>
+</div>
+
+<!-- 系统概览卡片 -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card stat-card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ overview.users.total if overview and overview.users else 0 }}</h4>
+                        <p class="card-text">用户总数</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ overview.instances.total if overview and overview.instances else 0 }}</h4>
+                        <p class="card-text">数据库实例</p>
+                        <small>{{ overview.instances.active if overview and overview.instances else 0 }} 活跃</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-database fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ overview.credentials.total if overview and overview.credentials else 0 }}</h4>
+                        <p class="card-text">凭据总数</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-key fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ overview.tasks.total if overview and overview.tasks else 0 }}</h4>
+                        <p class="card-text">定时任务</p>
+                        <small>{{ overview.tasks.active if overview and overview.tasks else 0 }} 活跃</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-tasks fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ overview.logs.today if overview and overview.logs else 0 }}</h4>
+                        <p class="card-text">今日日志</p>
+                        <small>{{ overview.logs.errors if overview and overview.logs else 0 }} 错误</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-list-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stat-card bg-secondary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ overview.syncs.recent if overview and overview.syncs else 0 }}</h4>
+                        <p class="card-text">最近同步</p>
+                        <small>7天内</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-sync fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 图表区域 -->
+    <div class="col-lg-8">
+        <!-- 日志趋势图 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>日志趋势（最近7天）
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="logTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 实例类型分布 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>数据库实例类型分布
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="instanceTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 侧边栏 -->
+    <div class="col-lg-4">
+        <!-- 系统状态 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-server me-2"></i>系统状态
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>CPU使用率</span>
+                        <span class="badge bg-{{ 'danger' if status and status.system and status.system.cpu > 80 else 'warning' if status and status.system and status.system.cpu > 60 else 'success' }}">
+                            {{ "%.1f"|format(status.system.cpu) if status and status.system else 0 }}%
+                        </span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-{{ 'danger' if status and status.system and status.system.cpu > 80 else 'warning' if status and status.system and status.system.cpu > 60 else 'success' }}" 
+                             style="width: {{ status.system.cpu if status and status.system else 0 }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>内存使用率</span>
+                        <span class="badge bg-{{ 'danger' if status and status.system and status.system.memory and status.system.memory.percent > 80 else 'warning' if status and status.system and status.system.memory and status.system.memory.percent > 60 else 'success' }}">
+                            {{ "%.1f"|format(status.system.memory.percent) if status and status.system and status.system.memory else 0 }}%
+                        </span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-{{ 'danger' if status and status.system and status.system.memory and status.system.memory.percent > 80 else 'warning' if status and status.system and status.system.memory and status.system.memory.percent > 60 else 'success' }}" 
+                             style="width: {{ status.system.memory.percent if status and status.system and status.system.memory else 0 }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>磁盘使用率</span>
+                        <span class="badge bg-{{ 'danger' if status and status.system and status.system.disk and status.system.disk.percent > 80 else 'warning' if status and status.system and status.system.disk and status.system.disk.percent > 60 else 'success' }}">
+                            {{ "%.1f"|format(status.system.disk.percent) if status and status.system and status.system.disk else 0 }}%
+                        </span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-{{ 'danger' if status and status.system and status.system.disk and status.system.disk.percent > 80 else 'warning' if status and status.system and status.system.disk and status.system.disk.percent > 60 else 'success' }}" 
+                             style="width: {{ status.system.disk.percent if status and status.system and status.system.disk else 0 }}%"></div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="mb-2">
+                    <span class="status-indicator status-{{ status.services.database if status and status.services else 'error' }}"></span>
+                    <strong>数据库:</strong> 
+                    <span class="text-{{ 'success' if status and status.services and status.services.database == 'healthy' else 'danger' }}">
+                        {{ '正常' if status and status.services and status.services.database == 'healthy' else '异常' }}
+                    </span>
+                </div>
+                
+                <div class="mb-2">
+                    <span class="status-indicator status-{{ status.services.redis if status and status.services else 'error' }}"></span>
+                    <strong>Redis:</strong> 
+                    <span class="text-{{ 'success' if status and status.services and status.services.redis == 'healthy' else 'danger' }}">
+                        {{ '正常' if status and status.services and status.services.redis == 'healthy' else '异常' }}
+                    </span>
+                </div>
+                
+                <div class="mb-2">
+                    <span class="status-indicator status-{{ status.services.application if status and status.services else 'error' }}"></span>
+                    <strong>应用:</strong> 
+                    <span class="text-{{ 'success' if status and status.services and status.services.application == 'running' else 'danger' }}">
+                        {{ '运行中' if status and status.services and status.services.application == 'running' else '停止' }}
+                    </span>
+                </div>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        系统运行时间: {{ status.uptime if status else '未知' }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 最近活动 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>最近活动
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if activities %}
+                <div id="recentActivities">
+                    {% for activity in activities %}
+                    <div class="activity-item log-{{ activity.level }}">
+                        <div class="d-flex align-items-start">
+                            <i class="{{ activity.icon }} me-2 mt-1 text-{{ 'danger' if activity.level == 'ERROR' else 'warning' if activity.level == 'WARNING' else 'info' }}"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">{{ activity.message }}</div>
+                                <small class="text-muted">
+                                    {{ activity.user }} • {{ activity.module }} • {{ activity.time[:19] if activity.time else '未知时间' }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">暂无最近活动</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let autoRefreshInterval = null;
+let logTrendChart = null;
+let instanceTypeChart = null;
+
+// 页面加载完成后初始化图表
+document.addEventListener('DOMContentLoaded', function() {
+    initCharts();
+    startAutoRefresh();
+});
+
+function initCharts() {
+    // 初始化日志趋势图
+    initLogTrendChart();
+    // 初始化实例类型分布图
+    initInstanceTypeChart();
+}
+
+function initLogTrendChart() {
+    const ctx = document.getElementById('logTrendChart').getContext('2d');
+    
+    // 获取日志趋势数据
+    fetch('/dashboard/api/charts?type=logs')
+    .then(response => response.json())
+    .then(data => {
+        const logTrend = data.log_trend || [];
+        
+        logTrendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: logTrend.map(item => item.date),
+                datasets: [{
+                    label: '日志数量',
+                    data: logTrend.map(item => item.count),
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    })
+    .catch(error => {
+        console.error('加载日志趋势数据失败:', error);
+    });
+}
+
+function initInstanceTypeChart() {
+    const ctx = document.getElementById('instanceTypeChart').getContext('2d');
+    
+    // 获取实例类型分布数据
+    fetch('/dashboard/api/charts?type=instances')
+    .then(response => response.json())
+    .then(data => {
+        const instanceTypes = data.instance_types || [];
+        
+        instanceTypeChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: instanceTypes.map(item => item.type),
+                datasets: [{
+                    data: instanceTypes.map(item => item.count),
+                    backgroundColor: [
+                        '#FF6384',
+                        '#36A2EB',
+                        '#FFCE56',
+                        '#4BC0C0',
+                        '#9966FF'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    })
+    .catch(error => {
+        console.error('加载实例类型分布数据失败:', error);
+    });
+}
+
+function refreshDashboard() {
+    // 刷新页面数据
+    location.reload();
+}
+
+function toggleAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+        document.querySelector('button[onclick="toggleAutoRefresh()"]').innerHTML = 
+            '<i class="fas fa-clock me-2"></i>自动刷新';
+    } else {
+        startAutoRefresh();
+        document.querySelector('button[onclick="toggleAutoRefresh()"]').innerHTML = 
+            '<i class="fas fa-pause me-2"></i>停止刷新';
+    }
+}
+
+function startAutoRefresh() {
+    autoRefreshInterval = setInterval(() => {
+        // 刷新最近活动
+        fetch('/dashboard/api/activities')
+        .then(response => response.json())
+        .then(data => {
+            updateRecentActivities(data);
+        })
+        .catch(error => {
+            console.error('刷新活动数据失败:', error);
+        });
+        
+        // 刷新系统状态
+        fetch('/dashboard/api/status')
+        .then(response => response.json())
+        .then(data => {
+            updateSystemStatus(data);
+        })
+        .catch(error => {
+            console.error('刷新系统状态失败:', error);
+        });
+    }, 30000); // 30秒刷新一次
+}
+
+function updateRecentActivities(activities) {
+    const container = document.getElementById('recentActivities');
+    if (!container) return;
+    
+    if (activities.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                <p class="text-muted">暂无最近活动</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = activities.map(activity => `
+        <div class="activity-item log-${activity.level}">
+            <div class="d-flex align-items-start">
+                <i class="${activity.icon} me-2 mt-1 text-${activity.level === 'ERROR' ? 'danger' : activity.level === 'WARNING' ? 'warning' : 'info'}"></i>
+                <div class="flex-grow-1">
+                    <div class="fw-bold">${activity.message}</div>
+                    <small class="text-muted">
+                        ${activity.user} • ${activity.module} • ${activity.time ? activity.time.substring(0, 19) : '未知时间'}
+                    </small>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateSystemStatus(status) {
+    // 更新CPU使用率
+    const cpuElement = document.querySelector('.card-body .mb-3:first-child .badge');
+    const cpuBar = document.querySelector('.card-body .mb-3:first-child .progress-bar');
+    if (cpuElement && cpuBar) {
+        cpuElement.textContent = `${status.system.cpu.toFixed(1)}%`;
+        cpuElement.className = `badge bg-${status.system.cpu > 80 ? 'danger' : status.system.cpu > 60 ? 'warning' : 'success'}`;
+        cpuBar.style.width = `${status.system.cpu}%`;
+        cpuBar.className = `progress-bar bg-${status.system.cpu > 80 ? 'danger' : status.system.cpu > 60 ? 'warning' : 'success'}`;
+    }
+    
+    // 更新内存使用率
+    const memoryElement = document.querySelector('.card-body .mb-3:nth-child(2) .badge');
+    const memoryBar = document.querySelector('.card-body .mb-3:nth-child(2) .progress-bar');
+    if (memoryElement && memoryBar) {
+        memoryElement.textContent = `${status.system.memory.percent.toFixed(1)}%`;
+        memoryElement.className = `badge bg-${status.system.memory.percent > 80 ? 'danger' : status.system.memory.percent > 60 ? 'warning' : 'success'}`;
+        memoryBar.style.width = `${status.system.memory.percent}%`;
+        memoryBar.className = `progress-bar bg-${status.system.memory.percent > 80 ? 'danger' : status.system.memory.percent > 60 ? 'warning' : 'success'}`;
+    }
+    
+    // 更新磁盘使用率
+    const diskElement = document.querySelector('.card-body .mb-3:nth-child(3) .badge');
+    const diskBar = document.querySelector('.card-body .mb-3:nth-child(3) .progress-bar');
+    if (diskElement && diskBar) {
+        diskElement.textContent = `${status.system.disk.percent.toFixed(1)}%`;
+        diskElement.className = `badge bg-${status.system.disk.percent > 80 ? 'danger' : status.system.disk.percent > 60 ? 'warning' : 'success'}`;
+        diskBar.style.width = `${status.system.disk.percent}%`;
+        diskBar.className = `progress-bar bg-${status.system.disk.percent > 80 ? 'danger' : status.system.disk.percent > 60 ? 'warning' : 'success'}`;
+    }
+}
+
+// 页面卸载时清理定时器
+window.addEventListener('beforeunload', function() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+});
+</script>
+{% endblock %}

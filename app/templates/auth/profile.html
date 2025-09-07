@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}个人资料 - 泰摸鱼吧{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-user-circle me-2"></i>个人资料
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">用户名</label>
+                            <p class="form-control-plaintext">{{ user.username }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">邮箱地址</label>
+                            <p class="form-control-plaintext">{{ user.email or '未设置' }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">角色</label>
+                            <p class="form-control-plaintext">
+                                <span class="badge bg-{{ 'primary' if user.role == 'admin' else 'success' }}">
+                                    {{ '管理员' if user.role == 'admin' else '普通用户' }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">账户状态</label>
+                            <p class="form-control-plaintext">
+                                <span class="badge bg-{{ 'success' if user.is_active else 'danger' }}">
+                                    {{ '正常' if user.is_active else '已禁用' }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">注册时间</label>
+                            <p class="form-control-plaintext">
+                                {{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') if user.created_at else '未知' }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">最后登录</label>
+                            <p class="form-control-plaintext">
+                                {{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else '从未登录' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('auth.change_password') }}" class="btn btn-primary">
+                        <i class="fas fa-key me-2"></i>修改密码
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>账户统计
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary mb-1">0</h4>
+                            <small class="text-muted">管理的实例</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success mb-1">0</h4>
+                        <small class="text-muted">同步任务</small>
+                    </div>
+                </div>
+                
+                <hr class="my-3">
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-info mb-1">0</h4>
+                            <small class="text-muted">凭据数量</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-warning mb-1">0</h4>
+                        <small class="text-muted">操作日志</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-cog me-2"></i>快速操作
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-database me-2"></i>管理实例
+                    </a>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-key me-2"></i>管理凭据
+                    </a>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-chart-line me-2"></i>查看统计
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+错误修复请遵循以下原则:
+
+    在遇到复杂错误时提示 ,需要重新扫描全部相关文件并彻底修复

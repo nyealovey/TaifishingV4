@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+
+{% block title %}系统参数 - 泰摸鱼吧{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-cogs me-2"></i>系统参数</h2>
+    <div>
+        <button type="button" class="btn btn-warning" onclick="resetToDefault()">
+            <i class="fas fa-undo me-2"></i>重置为默认值
+        </button>
+        <a href="{{ url_for('params.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>添加参数
+        </a>
+    </div>
+</div>
+
+<!-- 搜索和筛选 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">搜索</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ search }}" placeholder="搜索参数名称或描述">
+            </div>
+            <div class="col-md-3">
+                <label for="category" class="form-label">分类</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="">全部分类</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search me-1"></i>搜索
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <a href="{{ url_for('params.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>清除
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <a href="{{ url_for('params.export', format='csv') }}" class="btn btn-outline-success">
+                        <i class="fas fa-download me-1"></i>导出
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 参数列表 -->
+<div class="card">
+    <div class="card-body">
+        {% if params.items %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>参数名</th>
+                        <th>值</th>
+                        <th>类型</th>
+                        <th>分类</th>
+                        <th>描述</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for param in params.items %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-{{ 'cog' if param.is_system else 'edit' }} text-{{ 'danger' if param.is_system else 'primary' }} me-2"></i>
+                                <div>
+                                    <strong>{{ param.name }}</strong>
+                                    {% if param.is_system %}
+                                    <br><small class="text-danger">系统参数</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 200px;" title="{{ param.value }}">
+                                <code>{{ param.value }}</code>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'primary' if param.param_type == 'string' else 'success' if param.param_type == 'int' else 'info' if param.param_type == 'float' else 'warning' if param.param_type == 'bool' else 'secondary' }}">
+                                {{ param.param_type }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">{{ param.category }}</span>
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 150px;" title="{{ param.description or '-' }}">
+                                {{ param.description or '-' }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if param.is_system %}
+                            <span class="badge bg-danger">系统</span>
+                            {% else %}
+                            <span class="badge bg-success">用户</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ url_for('params.detail', param_id=param.id) }}" 
+                                   class="btn btn-outline-primary" title="查看详情">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if not param.is_system %}
+                                <a href="{{ url_for('params.edit', param_id=param.id) }}" 
+                                   class="btn btn-outline-warning" title="编辑">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger" 
+                                        onclick="deleteParam({{ param.id }}, '{{ param.name }}')" title="删除">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% else %}
+                                <button type="button" class="btn btn-outline-secondary" disabled title="系统参数不可编辑">
+                                    <i class="fas fa-lock"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 分页 -->
+        {% if params.pages > 1 %}
+        <nav aria-label="参数分页">
+            <ul class="pagination justify-content-center">
+                {% if params.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('params.index', page=params.prev_num, search=search, category=category) }}">
+                        上一页
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in params.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != params.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('params.index', page=page_num, search=search, category=category) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">…</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if params.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('params.index', page=params.next_num, search=search, category=category) }}">
+                        下一页
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">暂无参数</h5>
+            <p class="text-muted">点击"添加参数"按钮创建第一个系统参数</p>
+            <a href="{{ url_for('params.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>添加参数
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除参数 <strong id="deleteParamName"></strong> 吗？</p>
+                <p class="text-danger">此操作不可撤销！</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 重置确认模态框 -->
+<div class="modal fade" id="resetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认重置</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定要将所有用户参数重置为默认值吗？</p>
+                <p class="text-warning">系统参数不会被重置！</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-warning" id="confirmReset">重置</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let deleteParamId = null;
+
+function deleteParam(paramId, paramName) {
+    deleteParamId = paramId;
+    document.getElementById('deleteParamName').textContent = paramName;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+document.getElementById('confirmDelete').addEventListener('click', function() {
+    if (deleteParamId) {
+        fetch(`/params/${deleteParamId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                showAlert('success', data.message);
+                setTimeout(() => location.reload(), 1000);
+            } else if (data.error) {
+                showAlert('danger', data.error);
+            }
+        })
+        .catch(error => {
+            showAlert('danger', '删除失败');
+        });
+    }
+});
+
+function resetToDefault() {
+    new bootstrap.Modal(document.getElementById('resetModal')).show();
+}
+
+document.getElementById('confirmReset').addEventListener('click', function() {
+    fetch('/params/reset', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showAlert('success', data.message);
+            setTimeout(() => location.reload(), 2000);
+        } else if (data.error) {
+            showAlert('danger', data.error);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', '重置失败');
+    });
+});
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

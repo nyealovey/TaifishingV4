@@ -1,0 +1,122 @@
+# 泰摸鱼吧 - Docker Compose生产环境配置
+version: '3.8'
+
+services:
+  # Flask应用服务
+  flask:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://taifish_user:${POSTGRES_PASSWORD}@postgres:5432/taifish_prod
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    volumes:
+      - ./userdata:/app/userdata
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - taifish-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # PostgreSQL数据库服务
+  postgres:
+    image: postgres:13.5
+    environment:
+      - POSTGRES_DB=taifish_prod
+      - POSTGRES_USER=taifish_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./userdata/backups:/backups
+    networks:
+      - taifish-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # Redis缓存服务
+  redis:
+    image: redis:4.0.2
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - taifish-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # Celery Worker服务
+  celery-worker:
+    build: .
+    command: celery -A app.celery worker --loglevel=info --concurrency=4
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://taifish_user:${POSTGRES_PASSWORD}@postgres:5432/taifish_prod
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    volumes:
+      - ./userdata:/app/userdata
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - taifish-network
+    restart: always
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # Celery Beat调度服务
+  celery-beat:
+    build: .
+    command: celery -A app.celery beat --loglevel=info
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://taifish_user:${POSTGRES_PASSWORD}@postgres:5432/taifish_prod
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    volumes:
+      - ./userdata:/app/userdata
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - taifish-network
+    restart: always
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  taifish-network:
+    driver: bridge

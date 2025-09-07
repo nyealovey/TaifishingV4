@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}任务详情 - 泰摸鱼吧{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-tasks me-2"></i>任务详情</h2>
+    <div>
+        <a href="{{ url_for('tasks.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>返回列表
+        </a>
+        <a href="{{ url_for('tasks.edit', task_id=task.id) }}" class="btn btn-outline-warning">
+            <i class="fas fa-edit me-2"></i>编辑
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>基本信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">任务名称</label>
+                            <p class="form-control-plaintext">{{ task.name }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">任务类型</label>
+                            <p class="form-control-plaintext">
+                                <span class="badge bg-primary">{{ task.task_type }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">调度表达式</label>
+                            <p class="form-control-plaintext">
+                                <code>{{ task.schedule }}</code>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">状态</label>
+                            <p class="form-control-plaintext">
+                                {% if task.is_active %}
+                                <span class="badge bg-success">启用</span>
+                                {% else %}
+                                <span class="badge bg-danger">禁用</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if task.instance %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">关联实例</label>
+                    <p class="form-control-plaintext">
+                        <a href="{{ url_for('instances.detail', instance_id=task.instance.id) }}" class="text-decoration-none">
+                            {{ task.instance.name }} ({{ task.instance.db_type }})
+                        </a>
+                    </p>
+                </div>
+                {% endif %}
+                
+                {% if task.description %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">描述</label>
+                    <p class="form-control-plaintext">{{ task.description }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">最后运行时间</label>
+                            <p class="form-control-plaintext">
+                                {{ task.last_run_at.strftime('%Y-%m-%d %H:%M:%S') if task.last_run_at else '未运行' }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">最后状态</label>
+                            <p class="form-control-plaintext">
+                                {% if task.last_status %}
+                                <span class="badge bg-{{ 'success' if task.last_status == 'success' else 'danger' if task.last_status == 'failed' else 'warning' }}">
+                                    {{ task.last_status }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">未知</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if task.last_message %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">最后消息</label>
+                    <p class="form-control-plaintext">{{ task.last_message }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">创建时间</label>
+                            <p class="form-control-plaintext">
+                                {{ task.created_at.strftime('%Y-%m-%d %H:%M:%S') if task.created_at else '未知' }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">更新时间</label>
+                            <p class="form-control-plaintext">
+                                {{ task.updated_at.strftime('%Y-%m-%d %H:%M:%S') if task.updated_at else '未知' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-cog me-2"></i>操作
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('tasks.edit', task_id=task.id) }}" class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>编辑任务
+                    </a>
+                    <a href="{{ url_for('tasks.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-2"></i>返回列表
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

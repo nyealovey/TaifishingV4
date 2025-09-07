@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}登录 - 泰摸鱼吧{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <i class="fas fa-fish fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title">欢迎回来</h3>
+                    <p class="text-muted">登录到泰摸鱼吧管理平台</p>
+                </div>
+                
+                <form method="POST" id="loginForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user me-2"></i>用户名
+                        </label>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               placeholder="请输入用户名" required autofocus>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock me-2"></i>密码
+                        </label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   placeholder="请输入密码" required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                        <label class="form-check-label" for="remember">
+                            记住我
+                        </label>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>登录
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-4">
+                    <p class="mb-0">
+                        还没有账户？ 
+                        <a href="{{ url_for('auth.register') }}" class="text-decoration-none">
+                            立即注册
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 快速登录提示 -->
+        <div class="card mt-3">
+            <div class="card-body text-center">
+                <h6 class="card-title text-muted">开发环境快速登录</h6>
+                <p class="card-text small text-muted">
+                    用户名: <code>admin</code> | 密码: <code>admin123</code>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 密码显示/隐藏切换
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    
+    togglePassword.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        
+        const icon = this.querySelector('i');
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
+    });
+    
+    // 表单提交处理
+    const loginForm = document.getElementById('loginForm');
+    loginForm.addEventListener('submit', function(e) {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        
+        if (!username || !password) {
+            e.preventDefault();
+            alert('请输入用户名和密码');
+            return;
+        }
+        
+        // 显示加载状态
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>登录中...';
+        submitBtn.disabled = true;
+        
+        // 如果登录失败，恢复按钮状态
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 3000);
+    });
+});
+</script>
+{% endblock %}

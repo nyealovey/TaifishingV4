@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 泰摸鱼吧{% endblock %}
+
+{% block page_title %}首页{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">
+                <i class="fas fa-fish text-primary"></i> 泰摸鱼吧
+            </h1>
+            <p class="lead">专业的DBA数据库管理工具</p>
+            <hr class="my-4">
+            <p>支持SQL Server、MySQL、Oracle等多种数据库类型，提供实例管理、凭据管理、账户统计、定时任务等功能。</p>
+            <a class="btn btn-primary btn-lg" href="{{ url_for('instances.index') }}" role="button">
+                <i class="fas fa-database"></i> 开始管理数据库
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-database fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">实例管理</h5>
+                <p class="card-text">管理数据库实例，支持连接测试和手动同步</p>
+                <a href="{{ url_for('instances.index') }}" class="btn btn-outline-primary">进入管理</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-key fa-3x text-success mb-3"></i>
+                <h5 class="card-title">凭据管理</h5>
+                <p class="card-text">安全存储和管理数据库凭据信息</p>
+                <a href="{{ url_for('credentials.index') }}" class="btn btn-outline-success">进入管理</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-3x text-info mb-3"></i>
+                <h5 class="card-title">账户统计</h5>
+                <p class="card-text">统计和分析数据库账户信息</p>
+                <a href="{{ url_for('accounts.index') }}" class="btn btn-outline-info">进入管理</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-tasks fa-3x text-warning mb-3"></i>
+                <h5 class="card-title">定时任务</h5>
+                <p class="card-text">配置和管理数据同步任务</p>
+                <a href="{{ url_for('tasks.index') }}" class="btn btn-outline-warning">进入管理</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">系统状态</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-circle text-success"></i>
+                            <span class="ms-2">数据库连接正常</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-circle text-success"></i>
+                            <span class="ms-2">Redis缓存正常</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-circle text-success"></i>
+                            <span class="ms-2">任务调度正常</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-circle text-success"></i>
+                            <span class="ms-2">系统运行正常</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

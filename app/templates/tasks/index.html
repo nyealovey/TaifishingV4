@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+
+{% block title %}任务管理 - 泰摸鱼吧{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-tasks me-2"></i>任务管理</h2>
+    <a href="{{ url_for('tasks.create') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>创建任务
+    </a>
+</div>
+
+<!-- 搜索和筛选 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="status" class="form-label">状态</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">全部状态</option>
+                    <option value="active" {% if status == 'active' %}selected{% endif %}>启用</option>
+                    <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>禁用</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search me-1"></i>筛选
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <a href="{{ url_for('tasks.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>清除
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 任务列表 -->
+<div class="card">
+    <div class="card-body">
+        {% if tasks.items %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>任务名称</th>
+                        <th>类型</th>
+                        <th>实例</th>
+                        <th>调度</th>
+                        <th>状态</th>
+                        <th>最后运行</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks.items %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-tasks text-primary me-2"></i>
+                                <div>
+                                    <strong>{{ task.name }}</strong>
+                                    {% if task.description %}
+                                    <br><small class="text-muted">{{ task.description }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'primary' if task.task_type == 'sync_accounts' else 'success' if task.task_type == 'backup' else 'info' }}">
+                                {{ task.task_type.replace('_', ' ').title() }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if task.instance %}
+                            <i class="fas fa-database text-primary me-1"></i>
+                            {{ task.instance.name }}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if task.schedule %}
+                            <code>{{ task.schedule }}</code>
+                            {% else %}
+                            <span class="text-muted">手动</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if task.is_active %}
+                                <span class="badge bg-success me-2">启用</span>
+                                {% else %}
+                                <span class="badge bg-danger me-2">禁用</span>
+                                {% endif %}
+                                
+                                {% if task.last_status %}
+                                <span class="badge bg-{{ 'success' if task.last_status == 'success' else 'danger' }}">
+                                    {{ task.last_status }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% if task.last_run %}
+                            <div>
+                                <strong>{{ task.last_run.strftime('%Y-%m-%d') }}</strong>
+                                <br><small class="text-muted">{{ task.last_run.strftime('%H:%M:%S') }}</small>
+                            </div>
+                            {% else %}
+                            <span class="text-muted">从未运行</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ url_for('tasks.detail', task_id=task.id) }}" 
+                                   class="btn btn-outline-primary" title="查看详情">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('tasks.edit', task_id=task.id) }}" 
+                                   class="btn btn-outline-warning" title="编辑">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-success" 
+                                        onclick="runTask({{ task.id }})" title="立即运行">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-{{ 'danger' if task.is_active else 'success' }}" 
+                                        onclick="toggleTask({{ task.id }})" title="{{ '禁用' if task.is_active else '启用' }}">
+                                    <i class="fas fa-{{ 'pause' if task.is_active else 'play' }}"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" 
+                                        onclick="deleteTask({{ task.id }}, '{{ task.name }}')" title="删除">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 分页 -->
+        {% if tasks.pages > 1 %}
+        <nav aria-label="任务分页">
+            <ul class="pagination justify-content-center">
+                {% if tasks.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('tasks.index', page=tasks.prev_num, status=status) }}">
+                        上一页
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in tasks.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != tasks.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('tasks.index', page=page_num, status=status) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">…</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if tasks.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('tasks.index', page=tasks.next_num, status=status) }}">
+                        下一页
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">暂无任务</h5>
+            <p class="text-muted">点击"创建任务"按钮创建第一个定时任务</p>
+            <a href="{{ url_for('tasks.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>创建任务
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除任务 <strong id="deleteTaskName"></strong> 吗？</p>
+                <p class="text-danger">此操作不可撤销！</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">删除</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let deleteTaskId = null;
+
+function runTask(taskId) {
+    const btn = event.target.closest('button');
+    const originalHtml = btn.innerHTML;
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+    
+    fetch(`/tasks/${taskId}/run`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showAlert('success', data.message);
+        } else if (data.error) {
+            showAlert('danger', data.error);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', '运行任务失败');
+    })
+    .finally(() => {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+    });
+}
+
+function toggleTask(taskId) {
+    fetch(`/tasks/${taskId}/toggle`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showAlert('success', data.message);
+            setTimeout(() => location.reload(), 1000);
+        } else if (data.error) {
+            showAlert('danger', data.error);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', '切换任务状态失败');
+    });
+}
+
+function deleteTask(taskId, taskName) {
+    deleteTaskId = taskId;
+    document.getElementById('deleteTaskName').textContent = taskName;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+document.getElementById('confirmDelete').addEventListener('click', function() {
+    if (deleteTaskId) {
+        fetch(`/tasks/${deleteTaskId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                showAlert('success', data.message);
+                setTimeout(() => location.reload(), 1000);
+            } else if (data.error) {
+                showAlert('danger', data.error);
+            }
+        })
+        .catch(error => {
+            showAlert('danger', '删除失败');
+        });
+    }
+});
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

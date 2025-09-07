@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}{{ instance.name }} - 实例详情{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-database me-2"></i>{{ instance.name }}
+        <span class="badge bg-{{ 'primary' if instance.db_type == 'postgresql' else 'success' if instance.db_type == 'mysql' else 'warning' if instance.db_type == 'sqlserver' else 'info' }} ms-2">
+            {{ instance.db_type.upper() }}
+        </span>
+    </h2>
+    <div>
+        <a href="{{ url_for('instances.edit', instance_id=instance.id) }}" class="btn btn-warning">
+            <i class="fas fa-edit me-2"></i>编辑
+        </a>
+        <button type="button" class="btn btn-success" onclick="testConnection()">
+            <i class="fas fa-plug me-2"></i>测试连接
+        </button>
+        <button type="button" class="btn btn-info" onclick="syncAccounts()">
+            <i class="fas fa-sync me-2"></i>同步账户
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- 基本信息 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>基本信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">实例名称</label>
+                            <p class="form-control-plaintext">{{ instance.name }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">数据库类型</label>
+                            <p class="form-control-plaintext">
+                                <span class="badge bg-{{ 'primary' if instance.db_type == 'postgresql' else 'success' if instance.db_type == 'mysql' else 'warning' if instance.db_type == 'sqlserver' else 'info' }}">
+                                    {{ instance.db_type.upper() }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">主机地址</label>
+                            <p class="form-control-plaintext">{{ instance.host }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">端口号</label>
+                            <p class="form-control-plaintext">{{ instance.port }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">数据库名</label>
+                            <p class="form-control-plaintext">{{ instance.database_name or '未指定' }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">状态</label>
+                            <p class="form-control-plaintext">
+                                {% if instance.is_active %}
+                                <span class="badge bg-success">正常</span>
+                                {% else %}
+                                <span class="badge bg-danger">禁用</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if instance.description %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">描述</label>
+                    <p class="form-control-plaintext">{{ instance.description }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- 连接信息 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plug me-2"></i>连接信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">最后连接时间</label>
+                            <p class="form-control-plaintext">
+                                {% if instance.last_connected %}
+                                {{ instance.last_connected.strftime('%Y-%m-%d %H:%M:%S') }}
+                                {% else %}
+                                <span class="text-muted">从未连接</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">连接状态</label>
+                            <p class="form-control-plaintext">
+                                <span id="connectionStatus" class="badge bg-secondary">未知</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">创建时间</label>
+                            <p class="form-control-plaintext">
+                                {{ instance.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">更新时间</label>
+                            <p class="form-control-plaintext">
+                                {{ instance.updated_at.strftime('%Y-%m-%d %H:%M:%S') if instance.updated_at else '从未更新' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 操作日志 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>操作日志
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-clipboard-list fa-2x mb-2"></i>
+                    <p>暂无操作日志</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- 快速操作 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>快速操作
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-success" onclick="testConnection()">
+                        <i class="fas fa-plug me-2"></i>测试连接
+                    </button>
+                    <button type="button" class="btn btn-outline-info" onclick="syncAccounts()">
+                        <i class="fas fa-sync me-2"></i>同步账户
+                    </button>
+                    <a href="{{ url_for('instances.edit', instance_id=instance.id) }}" class="btn btn-outline-warning">
+                        <i class="fas fa-edit me-2"></i>编辑实例
+                    </a>
+                    <a href="{{ url_for('instances.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>返回列表
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 统计信息 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>统计信息
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary mb-1">0</h4>
+                            <small class="text-muted">账户数量</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success mb-1">0</h4>
+                        <small class="text-muted">同步次数</small>
+                    </div>
+                </div>
+                
+                <hr class="my-3">
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-info mb-1">0</h4>
+                            <small class="text-muted">成功次数</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-warning mb-1">0</h4>
+                        <small class="text-muted">失败次数</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 连接测试结果 -->
+        <div class="card" id="testResult" style="display: none;">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-plug me-2"></i>连接测试结果
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="testResultContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 页面加载时自动测试连接
+document.addEventListener('DOMContentLoaded', function() {
+    testConnection();
+});
+
+function testConnection() {
+    const testBtn = event ? event.target : document.querySelector('button[onclick="testConnection()"]');
+    const originalText = testBtn.innerHTML;
+    
+    testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>测试中...';
+    testBtn.disabled = true;
+    
+    fetch(`/instances/{{ instance.id }}/test`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const statusBadge = document.getElementById('connectionStatus');
+        const resultDiv = document.getElementById('testResult');
+        const contentDiv = document.getElementById('testResultContent');
+        
+        if (data.message) {
+            statusBadge.textContent = '正常';
+            statusBadge.className = 'badge bg-success';
+            
+            contentDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>连接成功！</strong><br>
+                    ${data.message}
+                </div>
+            `;
+        } else if (data.error) {
+            statusBadge.textContent = '失败';
+            statusBadge.className = 'badge bg-danger';
+            
+            contentDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>连接失败！</strong><br>
+                    ${data.error}
+                </div>
+            `;
+        }
+        
+        resultDiv.style.display = 'block';
+    })
+    .catch(error => {
+        const statusBadge = document.getElementById('connectionStatus');
+        statusBadge.textContent = '错误';
+        statusBadge.className = 'badge bg-danger';
+        
+        document.getElementById('testResultContent').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>测试失败！</strong><br>
+                网络错误或服务器无响应
+            </div>
+        `;
+        document.getElementById('testResult').style.display = 'block';
+    })
+    .finally(() => {
+        testBtn.innerHTML = originalText;
+        testBtn.disabled = false;
+    });
+}
+
+function syncAccounts() {
+    const syncBtn = event.target;
+    const originalText = syncBtn.innerHTML;
+    
+    syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>同步中...';
+    syncBtn.disabled = true;
+    
+    fetch(`/instances/{{ instance.id }}/sync`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showAlert('success', data.message);
+        } else if (data.error) {
+            showAlert('danger', data.error);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', '同步失败');
+    })
+    .finally(() => {
+        syncBtn.innerHTML = originalText;
+        syncBtn.disabled = false;
+    });
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

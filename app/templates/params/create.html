@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}添加参数 - 泰摸鱼吧{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plus me-2"></i>添加系统参数
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="paramForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">参数名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       placeholder="请输入参数名称" required>
+                                <div class="form-text">用于标识此参数的唯一名称</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="param_type" class="form-label">参数类型 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="param_type" name="param_type" required>
+                                    <option value="">请选择参数类型</option>
+                                    <option value="string">字符串</option>
+                                    <option value="int">整数</option>
+                                    <option value="float">浮点数</option>
+                                    <option value="bool">布尔值</option>
+                                    <option value="json">JSON</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="value" class="form-label">参数值 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="value" name="value" 
+                                       placeholder="请输入参数值" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category" class="form-label">分类 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">请选择分类</option>
+                                    <option value="system">系统</option>
+                                    <option value="database">数据库</option>
+                                    <option value="sync">同步</option>
+                                    <option value="task">任务</option>
+                                    <option value="security">安全</option>
+                                    <option value="logging">日志</option>
+                                    <option value="general">通用</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">描述</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                                  placeholder="请输入参数描述（可选）"></textarea>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="is_system" name="is_system">
+                        <label class="form-check-label" for="is_system">
+                            系统参数（系统参数不允许编辑和删除）
+                        </label>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('params.index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>返回列表
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>创建参数
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 表单提交处理
+document.getElementById('paramForm').addEventListener('submit', function(e) {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>创建中...';
+    submitBtn.disabled = true;
+    
+    // 如果创建失败，恢复按钮状态
+    setTimeout(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }, 5000);
+});
+</script>
+{% endblock %}

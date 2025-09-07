@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}账户统计 - 泰摸鱼吧{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-chart-bar me-2"></i>账户统计</h2>
+    <div>
+        <button type="button" class="btn btn-success" onclick="syncAllAccounts()">
+            <i class="fas fa-sync me-2"></i>同步所有账户
+        </button>
+        <a href="{{ url_for('accounts.history') }}" class="btn btn-outline-info">
+            <i class="fas fa-history me-2"></i>同步历史
+        </a>
+    </div>
+</div>
+
+<!-- 统计卡片 -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ stats.total_instances }}</h4>
+                        <p class="card-text">活跃实例</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-database fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ stats.total_syncs }}</h4>
+                        <p class="card-text">总同步次数</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-sync fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ stats.successful_syncs }}</h4>
+                        <p class="card-text">成功同步</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ "%.1f"|format(stats.success_rate) }}%</h4>
+                        <p class="card-text">成功率</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-percentage fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 详细统计 -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calendar-day me-2"></i>今日统计
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h3 class="text-primary">{{ stats.today_syncs }}</h3>
+                        <p class="text-muted">今日同步</p>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-info">{{ stats.week_syncs }}</h3>
+                        <p class="text-muted">本周同步</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>失败统计
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h3 class="text-danger">{{ stats.failed_syncs }}</h3>
+                        <p class="text-muted">失败次数</p>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-warning">{{ "%.1f"|format(100 - stats.success_rate) }}%</h3>
+                        <p class="text-muted">失败率</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 实例统计表格 -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-table me-2"></i>实例同步统计
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if stats.instance_stats %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>实例名称</th>
+                        <th>同步次数</th>
+                        <th>成功次数</th>
+                        <th>成功率</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in stats.instance_stats %}
+                    <tr>
+                        <td>
+                            <i class="fas fa-database text-primary me-2"></i>
+                            {{ stat.name }}
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ stat.sync_count }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">{{ stat.success_count }}</span>
+                        </td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-{{ 'success' if stat.success_rate >= 80 else 'warning' if stat.success_rate >= 60 else 'danger' }}" 
+                                     role="progressbar" style="width: {{ stat.success_rate }}%">
+                                    {{ "%.1f"|format(stat.success_rate) }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                    onclick="syncInstance({{ stat.name }})">
+                                <i class="fas fa-sync me-1"></i>同步
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-database fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">暂无实例数据</h5>
+            <p class="text-muted">请先添加数据库实例</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 最近同步记录 -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-clock me-2"></i>最近同步记录
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if recent_syncs %}
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>实例</th>
+                        <th>类型</th>
+                        <th>状态</th>
+                        <th>数量</th>
+                        <th>消息</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sync in recent_syncs %}
+                    <tr>
+                        <td>
+                            <small class="text-muted">{{ sync.sync_time.strftime('%m-%d %H:%M') }}</small>
+                        </td>
+                        <td>
+                            <i class="fas fa-database text-primary me-1"></i>
+                            {{ sync.instance.name if sync.instance else '未知实例' }}
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'primary' if sync.sync_type == 'manual' else 'info' }}">
+                                {{ sync.sync_type }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if sync.status == 'success' else 'danger' }}">
+                                {{ sync.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ sync.synced_count or 0 }}</span>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ sync.message or sync.error_message or '-' }}</small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">暂无同步记录</h5>
+            <p class="text-muted">开始同步账户数据以查看记录</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function syncAllAccounts() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>同步中...';
+    btn.disabled = true;
+    
+    fetch('/accounts/sync-all', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showAlert('info', data.message);
+            // 刷新页面显示最新数据
+            setTimeout(() => location.reload(), 2000);
+        } else if (data.error) {
+            showAlert('danger', data.error);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', '同步失败');
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+function syncInstance(instanceName) {
+    // 这里需要根据实例名称找到实例ID
+    // 暂时显示提示
+    showAlert('info', `开始同步实例: ${instanceName}`);
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// 自动刷新统计数据（每30秒）
+setInterval(() => {
+    fetch('/accounts/api/statistics')
+    .then(response => response.json())
+    .then(data => {
+        // 更新统计数据显示
+        updateStatistics(data);
+    })
+    .catch(error => {
+        console.log('刷新统计数据失败:', error);
+    });
+}, 30000);
+
+function updateStatistics(stats) {
+    // 更新统计卡片
+    document.querySelector('.card.bg-primary .card-title').textContent = stats.total_instances;
+    document.querySelector('.card.bg-success .card-title').textContent = stats.total_syncs;
+    document.querySelector('.card.bg-info .card-title').textContent = stats.successful_syncs;
+    document.querySelector('.card.bg-warning .card-title').textContent = stats.success_rate.toFixed(1) + '%';
+}
+</script>
+{% endblock %}
