@@ -41,6 +41,26 @@ def format_china_time(dt, format_str='%Y-%m-%d %H:%M:%S'):
     if dt is None:
         return None
     
+    # 如果已经是字符串，尝试解析为datetime对象
+    if isinstance(dt, str):
+        try:
+            # 尝试解析ISO格式字符串
+            if 'T' in dt and ('+' in dt or 'Z' in dt):
+                # ISO格式，包含时区信息
+                from datetime import datetime
+                dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+            elif 'T' in dt:
+                # ISO格式，无时区信息，假设为UTC
+                from datetime import datetime
+                dt = datetime.fromisoformat(dt)
+                dt = pytz.utc.localize(dt)
+            else:
+                # 其他格式字符串，直接返回
+                return dt
+        except (ValueError, TypeError):
+            # 解析失败，直接返回原字符串
+            return dt
+    
     china_dt = utc_to_china(dt)
     return china_dt.strftime(format_str)
 

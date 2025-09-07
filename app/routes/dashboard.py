@@ -291,7 +291,7 @@ def get_recent_activities(limit=10):
                 'message': log.message,
                 'module': log.module,
                 'user': log.user.username if log.user else '系统',
-                'time': format_china_time(log.created_at) if log.created_at else None,
+                'time': log.created_at.isoformat() if log.created_at else None,
                 'icon': get_activity_icon(log.level, log.log_type)
             })
         
