@@ -10,6 +10,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.instance import Instance
 from app.models.credential import Credential
 from app.models.sync_data import SyncData
+from app.models.account import Account
 from app import db
 from app.services.database_service import DatabaseService
 import logging
@@ -42,6 +43,66 @@ def index():
                          stats=stats,
                          recent_syncs=recent_syncs,
                          instances=instances)
+
+@accounts_bp.route('/list')
+@login_required
+def list():
+    """账户列表页面"""
+    # 获取筛选参数
+    search = request.args.get('search', '', type=str)
+    db_type = request.args.get('db_type', '', type=str)
+    account_type = request.args.get('account_type', '', type=str)
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    
+    # 构建查询
+    query = db.session.query(Account).join(Instance, Account.instance_id == Instance.id)
+    
+    # 搜索条件
+    if search:
+        query = query.filter(
+            db.or_(
+                Account.username.contains(search),
+                Account.database_name.contains(search)
+            )
+        )
+    
+    # 数据库类型筛选
+    if db_type:
+        query = query.filter(Instance.db_type == db_type)
+    
+    # 账户类型筛选
+    if account_type:
+        query = query.filter(Account.account_type == account_type)
+    
+    # 分页查询
+    accounts = query.order_by(Account.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    # 获取统计信息
+    stats = get_account_list_statistics()
+    
+    if request.is_json:
+        return jsonify({
+            'accounts': [account.to_dict() for account in accounts.items],
+            'pagination': {
+                'page': accounts.page,
+                'pages': accounts.pages,
+                'per_page': accounts.per_page,
+                'total': accounts.total,
+                'has_next': accounts.has_next,
+                'has_prev': accounts.has_prev
+            },
+            'stats': stats
+        })
+    
+    return render_template('accounts/list.html', 
+                         accounts=accounts,
+                         stats=stats,
+                         search=search,
+                         db_type=db_type,
+                         account_type=account_type)
 
 @accounts_bp.route('/sync/<int:instance_id>', methods=['POST'])
 @login_required
@@ -340,6 +401,36 @@ def get_account_statistics():
             'today_syncs': 0,
             'week_syncs': 0,
             'instance_stats': []
+        }
+
+def get_account_list_statistics():
+    """获取账户列表统计信息"""
+    try:
+        # 总账户数
+        total_accounts = Account.query.count()
+        
+        # 活跃账户数
+        active_accounts = Account.query.filter_by(is_active=True).count()
+        
+        # 数据库类型数量
+        db_types_count = db.session.query(Instance.db_type).distinct().count()
+        
+        # 实例数量
+        instances_count = Instance.query.filter_by(is_active=True).count()
+        
+        return {
+            'total_accounts': total_accounts,
+            'active_accounts': active_accounts,
+            'db_types_count': db_types_count,
+            'instances_count': instances_count
+        }
+    except Exception as e:
+        logging.error(f"获取账户列表统计失败: {e}")
+        return {
+            'total_accounts': 0,
+            'active_accounts': 0,
+            'db_types_count': 0,
+            'instances_count': 0
         }
 
 # API路由

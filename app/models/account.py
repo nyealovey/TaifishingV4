@@ -1,23 +1,44 @@
+# -*- coding: utf-8 -*-
+
 """
-泰摸鱼吧 - 账户模型
+泰摸鱼吧 - 账户数据模型
 """
 
-from datetime import datetime
 from app import db
+from datetime import datetime
 
 class Account(db.Model):
-    """账户模型"""
-    
+    """账户数据模型"""
     __tablename__ = 'accounts'
     
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(255), nullable=False)
-    db_type = db.Column(db.String(50), nullable=False)
     instance_id = db.Column(db.Integer, db.ForeignKey('instances.id'), nullable=False)
+    username = db.Column(db.String(255), nullable=False)
+    database_name = db.Column(db.String(255), nullable=True)
+    account_type = db.Column(db.String(50), nullable=True)  # user, role, group等
+    is_active = db.Column(db.Boolean, default=True)
+    last_login = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    last_active = db.Column(db.DateTime, nullable=True)
-    permissions = db.Column(db.JSON, nullable=True)
-    category_id = db.Column(db.Integer, nullable=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 关联关系
+    instance = db.relationship('Instance', backref='accounts')
     
     def __repr__(self):
-        return f'<Account {self.username}>'
+        return f'<Account {self.username}@{self.instance.name if self.instance else "Unknown"}>'
+    
+    def to_dict(self):
+        """转换为字典"""
+        return {
+            'id': self.id,
+            'instance_id': self.instance_id,
+            'username': self.username,
+            'database_name': self.database_name,
+            'account_type': self.account_type,
+            'is_active': self.is_active,
+            'last_login': self.last_login.isoformat() if self.last_login else None,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+            'instance_name': self.instance.name if self.instance else None,
+            'instance_type': self.instance.db_type if self.instance else None
+        }
