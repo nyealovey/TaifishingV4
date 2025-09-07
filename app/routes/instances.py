@@ -249,6 +249,24 @@ def detail(instance_id):
     
     return render_template('instances/detail.html', instance=instance)
 
+@instances_bp.route('/statistics')
+@login_required
+def statistics():
+    """实例统计页面"""
+    stats = get_instance_statistics()
+    
+    if request.is_json:
+        return jsonify(stats)
+    
+    return render_template('instances/statistics.html', stats=stats)
+
+@instances_bp.route('/api/statistics')
+@login_required
+def api_statistics():
+    """获取实例统计API"""
+    stats = get_instance_statistics()
+    return jsonify(stats)
+
 @instances_bp.route('/<int:instance_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit(instance_id):
@@ -538,3 +556,94 @@ def api_test_connection(instance_id):
         return jsonify(result)
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+def get_instance_statistics():
+    """获取实例统计数据"""
+    try:
+        # 基础统计
+        total_instances = Instance.query.count()
+        active_instances = Instance.query.filter_by(is_active=True).count()
+        inactive_instances = Instance.query.filter_by(is_active=False).count()
+        
+        # 数据库类型统计
+        db_type_stats = db.session.query(
+            Instance.db_type,
+            db.func.count(Instance.id).label('count')
+        ).group_by(Instance.db_type).all()
+        
+        # 端口统计
+        port_stats = db.session.query(
+            Instance.port,
+            db.func.count(Instance.id).label('count')
+        ).group_by(Instance.port).order_by(db.func.count(Instance.id).desc()).limit(10).all()
+        
+        # 数据库版本统计（这里简化处理，实际应该从数据库连接中获取版本信息）
+        version_stats = db.session.query(
+            Instance.db_type,
+            db.func.count(Instance.id).label('count')
+        ).group_by(Instance.db_type).all()
+        
+        # 转换为版本统计格式
+        version_stats = [
+            {
+                'db_type': stat.db_type,
+                'version': get_default_version(stat.db_type),
+                'count': stat.count
+            }
+            for stat in version_stats
+        ]
+        
+        # 最近连接的实例（按最后连接时间排序）
+        recent_connections = Instance.query.order_by(
+            Instance.last_connected.desc().nullslast()
+        ).limit(10).all()
+        
+        # 数据库类型数量
+        db_types_count = len(db_type_stats)
+        
+        return {
+            'total_instances': total_instances,
+            'active_instances': active_instances,
+            'inactive_instances': inactive_instances,
+            'db_types_count': db_types_count,
+            'db_type_stats': [
+                {
+                    'db_type': stat.db_type,
+                    'count': stat.count
+                }
+                for stat in db_type_stats
+            ],
+            'port_stats': [
+                {
+                    'port': stat.port,
+                    'count': stat.count
+                }
+                for stat in port_stats
+            ],
+            'version_stats': version_stats,
+            'recent_connections': recent_connections
+        }
+        
+    except Exception as e:
+        logging.error(f"获取实例统计失败: {e}", exc_info=True)
+        return {
+            'total_instances': 0,
+            'active_instances': 0,
+            'inactive_instances': 0,
+            'db_types_count': 0,
+            'db_type_stats': [],
+            'port_stats': [],
+            'version_stats': [],
+            'recent_connections': []
+        }
+
+def get_default_version(db_type):
+    """获取数据库类型的默认版本"""
+    default_versions = {
+        'postgresql': '15.x',
+        'mysql': '8.0.x',
+        'sqlserver': '2019',
+        'oracle': '19c',
+        'sqlite': '3.x'
+    }
+    return default_versions.get(db_type, '未知版本')
