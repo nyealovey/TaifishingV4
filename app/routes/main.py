@@ -6,6 +6,7 @@
 
 from flask import Blueprint, render_template, jsonify, request
 from flask_login import login_required, current_user
+import psutil
 
 # 创建蓝图
 main_bp = Blueprint('main', __name__)
@@ -21,6 +22,12 @@ def api_status_page():
     """API状态页面"""
     return render_template('api_status.html')
 
+@main_bp.route('/admin')
+@login_required
+def admin():
+    """系统管理页面"""
+    return render_template('admin/index.html')
+
 @main_bp.route('/api/status')
 def api_status():
     """API状态检查"""
@@ -34,9 +41,51 @@ def api_status():
 @main_bp.route('/api/health')
 def api_health():
     """健康检查"""
+    from datetime import datetime
+    from app import db
+    
+    # 检查数据库状态
+    db_status = 'connected'
+    try:
+        from sqlalchemy import text
+        db.session.execute(text('SELECT 1'))
+    except Exception:
+        db_status = 'error'
+    
+    # 检查Redis状态
+    redis_status = 'connected'
+    try:
+        from flask import current_app
+        redis_client = getattr(current_app, 'redis_client', None)
+        if redis_client:
+            redis_client.ping()
+        else:
+            redis_status = 'error'
+    except Exception:
+        redis_status = 'error'
+    
+    # 整体状态
+    overall_status = 'healthy' if db_status == 'connected' and redis_status == 'connected' else 'unhealthy'
+    
     return jsonify({
-        'status': 'healthy',
-        'database': 'connected',
-        'redis': 'connected',
-        'timestamp': request.environ.get('REQUEST_TIME', 'unknown')
+        'status': overall_status,
+        'database': db_status,
+        'redis': redis_status,
+        'timestamp': datetime.utcnow().isoformat(),
+        'uptime': get_system_uptime()
     })
+
+def get_system_uptime():
+    """获取系统运行时间"""
+    try:
+        from datetime import datetime
+        uptime_seconds = psutil.boot_time()
+        uptime = datetime.utcnow() - datetime.fromtimestamp(uptime_seconds)
+        
+        days = uptime.days
+        hours, remainder = divmod(uptime.seconds, 3600)
+        minutes, _ = divmod(remainder, 60)
+        
+        return f"{days}天 {hours}小时 {minutes}分钟"
+    except Exception:
+        return "未知"

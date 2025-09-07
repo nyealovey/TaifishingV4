@@ -93,6 +93,14 @@ def create():
             db.session.add(instance)
             db.session.commit()
             
+            # 记录操作日志
+            log_operation('CREATE_INSTANCE', current_user.id, {
+                'instance_id': instance.id,
+                'instance_name': instance.name,
+                'db_type': instance.db_type,
+                'host': instance.host
+            })
+            
             if request.is_json:
                 return jsonify({
                     'message': '实例创建成功',

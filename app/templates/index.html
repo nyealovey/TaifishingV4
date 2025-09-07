@@ -82,9 +82,9 @@ async function checkStatus() {
         const response = await fetch('/api/health');
         const data = await response.json();
         
-        updateStatus('db-status', data.database || '未知');
-        updateStatus('redis-status', data.redis || '未知');
-        updateStatus('api-status', data.status || '未知');
+        updateStatus('db-status', data.database === 'connected' ? '正常' : '异常', data.database === 'connected' ? 'success' : 'danger');
+        updateStatus('redis-status', data.redis === 'connected' ? '正常' : '异常', data.redis === 'connected' ? 'success' : 'danger');
+        updateStatus('api-status', data.status === 'healthy' ? '正常' : '异常', data.status === 'healthy' ? 'success' : 'danger');
     } catch (error) {
         updateStatus('db-status', '错误', 'danger');
         updateStatus('redis-status', '错误', 'danger');

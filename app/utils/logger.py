@@ -88,6 +88,28 @@ def log_operation(operation_type, user_id=None, details=None):
     }
     
     logger.info(f"操作日志: {log_data}")
+    
+    # 同时保存到数据库
+    try:
+        from app.models.log import Log
+        from app import db
+        from flask import request
+        
+        log_entry = Log(
+            log_type='operation',
+            level='INFO',
+            module='system',
+            message=f"操作: {operation_type}",
+            details=str(details) if details else None,
+            user_id=user_id,
+            ip_address=request.remote_addr if request else None,
+            user_agent=request.headers.get('User-Agent') if request else None
+        )
+        
+        db.session.add(log_entry)
+        db.session.commit()
+    except Exception as e:
+        logger.error(f"保存操作日志到数据库失败: {e}")
 
 def log_error(error, user_id=None, context=None):
     """

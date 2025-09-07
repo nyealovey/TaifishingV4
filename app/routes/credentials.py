@@ -83,6 +83,14 @@ def create():
             db.session.add(credential)
             db.session.commit()
             
+            # 记录操作日志
+            log_operation('CREATE_CREDENTIAL', current_user.id, {
+                'credential_id': credential.id,
+                'credential_name': credential.name,
+                'credential_type': credential.credential_type,
+                'db_type': credential.db_type
+            })
+            
             if request.is_json:
                 return jsonify({
                     'message': '凭据创建成功',
