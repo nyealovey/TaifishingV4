@@ -329,7 +329,12 @@ def edit(instance_id):
             instance.description = data.get('description', instance.description)
             if data.get('description'):
                 instance.description = data.get('description').strip()
-            instance.is_active = data.get('is_active', instance.is_active)
+            # 正确处理布尔值
+            is_active_value = data.get('is_active', instance.is_active)
+            if isinstance(is_active_value, str):
+                instance.is_active = is_active_value in ['on', 'true', '1', 'yes']
+            else:
+                instance.is_active = bool(is_active_value)
             
             db.session.commit()
             

@@ -202,14 +202,80 @@ def edit(credential_id):
     if request.method == 'POST':
         data = request.get_json() if request.is_json else request.form
         
+        # 清理输入数据
+        data = sanitize_form_data(data)
+        
+        # 输入验证
+        required_fields = ['name', 'credential_type', 'username']
+        validation_error = validate_required_fields(data, required_fields)
+        if validation_error:
+            if request.is_json:
+                return jsonify({'error': validation_error}), 400
+            flash(validation_error, 'error')
+            return render_template('credentials/edit.html', credential=credential)
+        
+        # 验证用户名格式
+        username_error = validate_username(data.get('username'))
+        if username_error:
+            if request.is_json:
+                return jsonify({'error': username_error}), 400
+            flash(username_error, 'error')
+            return render_template('credentials/edit.html', credential=credential)
+        
+        # 验证密码强度（如果提供了新密码）
+        if data.get('password'):
+            password_error = validate_password(data.get('password'))
+            if password_error:
+                if request.is_json:
+                    return jsonify({'error': password_error}), 400
+                flash(password_error, 'error')
+                return render_template('credentials/edit.html', credential=credential)
+        
+        # 验证数据库类型
+        if data.get('db_type'):
+            db_type_error = validate_db_type(data.get('db_type'))
+            if db_type_error:
+                if request.is_json:
+                    return jsonify({'error': db_type_error}), 400
+                flash(db_type_error, 'error')
+                return render_template('credentials/edit.html', credential=credential)
+        
+        # 验证凭据类型
+        credential_type_error = validate_credential_type(data.get('credential_type'))
+        if credential_type_error:
+            if request.is_json:
+                return jsonify({'error': credential_type_error}), 400
+            flash(credential_type_error, 'error')
+            return render_template('credentials/edit.html', credential=credential)
+        
+        # 验证凭据名称唯一性（排除当前凭据）
+        existing_credential = Credential.query.filter(
+            Credential.name == data.get('name'),
+            Credential.id != credential_id
+        ).first()
+        if existing_credential:
+            error_msg = '凭据名称已存在'
+            if request.is_json:
+                return jsonify({'error': error_msg}), 400
+            flash(error_msg, 'error')
+            return render_template('credentials/edit.html', credential=credential)
+        
         try:
             # 更新凭据信息
-            credential.name = data.get('name', credential.name)
+            credential.name = data.get('name', credential.name).strip()
             credential.credential_type = data.get('credential_type', credential.credential_type)
             credential.db_type = data.get('db_type', credential.db_type)
-            credential.username = data.get('username', credential.username)
+            credential.username = data.get('username', credential.username).strip()
             credential.description = data.get('description', credential.description)
-            credential.is_active = data.get('is_active', credential.is_active)
+            if data.get('description'):
+                credential.description = data.get('description').strip()
+            
+            # 正确处理布尔值
+            is_active_value = data.get('is_active', credential.is_active)
+            if isinstance(is_active_value, str):
+                credential.is_active = is_active_value in ['on', 'true', '1', 'yes']
+            else:
+                credential.is_active = bool(is_active_value)
             
             # 如果提供了新密码，则更新密码
             if data.get('password'):
@@ -228,12 +294,20 @@ def edit(credential_id):
             
         except Exception as e:
             db.session.rollback()
-            logging.error(f"更新凭据失败: {e}")
+            logging.error(f"更新凭据失败: {e}", exc_info=True)
+            
+            # 根据错误类型提供更具体的错误信息
+            if 'UNIQUE constraint failed' in str(e):
+                error_msg = '凭据名称已存在，请使用其他名称'
+            elif 'NOT NULL constraint failed' in str(e):
+                error_msg = '必填字段不能为空'
+            else:
+                error_msg = f'更新凭据失败: {str(e)}'
             
             if request.is_json:
-                return jsonify({'error': '更新凭据失败，请重试'}), 500
+                return jsonify({'error': error_msg}), 500
             
-            flash('更新凭据失败，请重试', 'error')
+            flash(error_msg, 'error')
     
     # GET请求，显示编辑表单
     if request.is_json:
