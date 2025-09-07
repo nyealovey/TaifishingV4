@@ -11,6 +11,10 @@ from app.models.instance import Instance
 from app.models.credential import Credential
 from app import db
 from app.utils.logger import log_operation
+from app.utils.security import (
+    sanitize_form_data, validate_required_fields, 
+    validate_username, validate_db_type
+)
 from app.services.database_service import DatabaseService
 import logging
 
@@ -76,19 +80,75 @@ def create():
     if request.method == 'POST':
         data = request.get_json() if request.is_json else request.form
         
+        # 清理输入数据
+        data = sanitize_form_data(data)
+        
+        # 输入验证
+        required_fields = ['name', 'db_type', 'host', 'port']
+        validation_error = validate_required_fields(data, required_fields)
+        if validation_error:
+            if request.is_json:
+                return jsonify({'error': validation_error}), 400
+            flash(validation_error, 'error')
+            return render_template('instances/create.html', credentials=credentials)
+        
+        # 验证数据库类型
+        db_type_error = validate_db_type(data.get('db_type'))
+        if db_type_error:
+            if request.is_json:
+                return jsonify({'error': db_type_error}), 400
+            flash(db_type_error, 'error')
+            return render_template('instances/create.html', credentials=credentials)
+        
+        # 验证端口号
+        try:
+            port = int(data.get('port'))
+            if port < 1 or port > 65535:
+                raise ValueError("端口号必须在1-65535之间")
+        except (ValueError, TypeError):
+            error_msg = "端口号必须是1-65535之间的整数"
+            if request.is_json:
+                return jsonify({'error': error_msg}), 400
+            flash(error_msg, 'error')
+            return render_template('instances/create.html', credentials=credentials)
+        
+        # 验证凭据ID
+        if data.get('credential_id'):
+            try:
+                credential_id = int(data.get('credential_id'))
+                credential = Credential.query.get(credential_id)
+                if not credential:
+                    raise ValueError("凭据不存在")
+            except (ValueError, TypeError):
+                error_msg = "无效的凭据ID"
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 400
+                flash(error_msg, 'error')
+                return render_template('instances/create.html', credentials=credentials)
+        
+        # 验证实例名称唯一性
+        existing_instance = Instance.query.filter_by(name=data.get('name')).first()
+        if existing_instance:
+            error_msg = '实例名称已存在'
+            if request.is_json:
+                return jsonify({'error': error_msg}), 400
+            flash(error_msg, 'error')
+            return render_template('instances/create.html', credentials=credentials)
+        
         try:
             # 创建新实例
             instance = Instance(
-                name=data.get('name'),
+                name=data.get('name').strip(),
                 db_type=data.get('db_type'),
-                host=data.get('host'),
-                port=int(data.get('port', 0)),
+                host=data.get('host').strip(),
+                port=int(data.get('port')),
                 credential_id=int(data.get('credential_id')) if data.get('credential_id') else None,
-                description=data.get('description', '')
+                description=data.get('description', '').strip()
             )
             
             # 设置其他属性
-            instance.database_name = data.get('database_name')
+            if data.get('database_name'):
+                instance.database_name = data.get('database_name').strip()
             instance.is_active = data.get('is_active', True) in [True, 'on', '1', 1]
             
             db.session.add(instance)
@@ -113,12 +173,22 @@ def create():
             
         except Exception as e:
             db.session.rollback()
-            logging.error(f"创建实例失败: {e}")
+            logging.error(f"创建实例失败: {e}", exc_info=True)
+            
+            # 根据错误类型提供更具体的错误信息
+            if 'UNIQUE constraint failed' in str(e):
+                error_msg = '实例名称已存在，请使用其他名称'
+            elif 'NOT NULL constraint failed' in str(e):
+                error_msg = '必填字段不能为空'
+            elif 'FOREIGN KEY constraint failed' in str(e):
+                error_msg = '关联的凭据不存在'
+            else:
+                error_msg = f'创建实例失败: {str(e)}'
             
             if request.is_json:
-                return jsonify({'error': '创建实例失败，请重试'}), 500
+                return jsonify({'error': error_msg}), 500
             
-            flash('创建实例失败，请重试', 'error')
+            flash(error_msg, 'error')
     
     # GET请求，显示创建表单
     credentials = Credential.query.filter_by(is_active=True).all()
@@ -188,15 +258,77 @@ def edit(instance_id):
     if request.method == 'POST':
         data = request.get_json() if request.is_json else request.form
         
+        # 清理输入数据
+        data = sanitize_form_data(data)
+        
+        # 输入验证
+        required_fields = ['name', 'db_type', 'host', 'port']
+        validation_error = validate_required_fields(data, required_fields)
+        if validation_error:
+            if request.is_json:
+                return jsonify({'error': validation_error}), 400
+            flash(validation_error, 'error')
+            return render_template('instances/edit.html', instance=instance)
+        
+        # 验证数据库类型
+        db_type_error = validate_db_type(data.get('db_type'))
+        if db_type_error:
+            if request.is_json:
+                return jsonify({'error': db_type_error}), 400
+            flash(db_type_error, 'error')
+            return render_template('instances/edit.html', instance=instance)
+        
+        # 验证端口号
+        try:
+            port = int(data.get('port'))
+            if port < 1 or port > 65535:
+                raise ValueError("端口号必须在1-65535之间")
+        except (ValueError, TypeError):
+            error_msg = "端口号必须是1-65535之间的整数"
+            if request.is_json:
+                return jsonify({'error': error_msg}), 400
+            flash(error_msg, 'error')
+            return render_template('instances/edit.html', instance=instance)
+        
+        # 验证凭据ID
+        if data.get('credential_id'):
+            try:
+                credential_id = int(data.get('credential_id'))
+                credential = Credential.query.get(credential_id)
+                if not credential:
+                    raise ValueError("凭据不存在")
+            except (ValueError, TypeError):
+                error_msg = "无效的凭据ID"
+                if request.is_json:
+                    return jsonify({'error': error_msg}), 400
+                flash(error_msg, 'error')
+                return render_template('instances/edit.html', instance=instance)
+        
+        # 验证实例名称唯一性（排除当前实例）
+        existing_instance = Instance.query.filter(
+            Instance.name == data.get('name'),
+            Instance.id != instance_id
+        ).first()
+        if existing_instance:
+            error_msg = '实例名称已存在'
+            if request.is_json:
+                return jsonify({'error': error_msg}), 400
+            flash(error_msg, 'error')
+            return render_template('instances/edit.html', instance=instance)
+        
         try:
             # 更新实例信息
-            instance.name = data.get('name', instance.name)
+            instance.name = data.get('name', instance.name).strip()
             instance.db_type = data.get('db_type', instance.db_type)
-            instance.host = data.get('host', instance.host)
-            instance.port = data.get('port', instance.port)
+            instance.host = data.get('host', instance.host).strip()
+            instance.port = int(data.get('port', instance.port))
             instance.database_name = data.get('database_name', instance.database_name)
-            instance.credential_id = data.get('credential_id', instance.credential_id)
+            if data.get('database_name'):
+                instance.database_name = data.get('database_name').strip()
+            instance.credential_id = int(data.get('credential_id')) if data.get('credential_id') else None
             instance.description = data.get('description', instance.description)
+            if data.get('description'):
+                instance.description = data.get('description').strip()
             instance.is_active = data.get('is_active', instance.is_active)
             
             db.session.commit()
@@ -230,12 +362,22 @@ def edit(instance_id):
             
         except Exception as e:
             db.session.rollback()
-            logging.error(f"更新实例失败: {e}")
+            logging.error(f"更新实例失败: {e}", exc_info=True)
+            
+            # 根据错误类型提供更具体的错误信息
+            if 'UNIQUE constraint failed' in str(e):
+                error_msg = '实例名称已存在，请使用其他名称'
+            elif 'NOT NULL constraint failed' in str(e):
+                error_msg = '必填字段不能为空'
+            elif 'FOREIGN KEY constraint failed' in str(e):
+                error_msg = '关联的凭据不存在'
+            else:
+                error_msg = f'更新实例失败: {str(e)}'
             
             if request.is_json:
-                return jsonify({'error': '更新实例失败，请重试'}), 500
+                return jsonify({'error': error_msg}), 500
             
-            flash('更新实例失败，请重试', 'error')
+            flash(error_msg, 'error')
     
     # GET请求，显示编辑表单
     credentials = Credential.query.filter_by(is_active=True).all()
