@@ -107,15 +107,10 @@
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}">
-                            <i class="fas fa-home me-1"></i>首页
-                        </a>
-                    </li>
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('dashboard.index') }}">
-                            <i class="fas fa-tachometer-alt me-1"></i>仪表板
+                            <i class="fas fa-tachometer-alt me-1"></i>仪表盘
                         </a>
                     </li>
                     <li class="nav-item">
@@ -218,8 +213,8 @@
         <div class="container">
             <p class="mb-0">
                 &copy; 2025 泰摸鱼吧 - 数据同步管理平台 | 
-                <a href="{{ url_for('main.index') }}" class="text-white text-decoration-none">首页</a> | 
-                <a href="{{ url_for('main.index') }}" class="text-white text-decoration-none">API文档</a>
+                <a href="{{ url_for('auth.login') }}" class="text-white text-decoration-none">登录</a> | 
+                <a href="/api/health" class="text-white text-decoration-none">API状态</a>
             </p>
         </div>
     </footer>

@@ -4,7 +4,7 @@
 泰摸鱼吧 - 主要路由
 """
 
-from flask import Blueprint, render_template, jsonify, request
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for
 from flask_login import login_required, current_user
 import psutil
 from app.utils.timezone import get_china_time, format_china_time
@@ -14,8 +14,8 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
-    """首页"""
-    return render_template('index.html')
+    """首页 - 重定向到登录页面"""
+    return redirect(url_for('auth.login'))
 
 @main_bp.route('/api-status')
 @login_required

@@ -66,7 +66,7 @@ def login():
                     # Web登录，重定向到首页
                     flash('登录成功！', 'success')
                     next_page = request.args.get('next')
-                    return redirect(next_page) if next_page else redirect(url_for('main.index'))
+                    return redirect(next_page) if next_page else redirect(url_for('dashboard.index'))
             else:
                 if request.is_json:
                     return jsonify({'error': '账户已被禁用'}), 403
