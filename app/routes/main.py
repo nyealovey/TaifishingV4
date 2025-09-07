@@ -7,6 +7,7 @@
 from flask import Blueprint, render_template, jsonify, request
 from flask_login import login_required, current_user
 import psutil
+from app.utils.timezone import get_china_time, format_china_time
 
 # 创建蓝图
 main_bp = Blueprint('main', __name__)
@@ -71,7 +72,7 @@ def api_health():
         'status': overall_status,
         'database': db_status,
         'redis': redis_status,
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': get_china_time().isoformat(),
         'uptime': get_system_uptime()
     })
 
@@ -80,7 +81,7 @@ def get_system_uptime():
     try:
         from datetime import datetime
         uptime_seconds = psutil.boot_time()
-        uptime = datetime.utcnow() - datetime.fromtimestamp(uptime_seconds)
+        uptime = get_china_time() - datetime.fromtimestamp(uptime_seconds)
         
         days = uptime.days
         hours, remainder = divmod(uptime.seconds, 3600)

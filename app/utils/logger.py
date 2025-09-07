@@ -8,6 +8,7 @@ import logging.handlers
 from datetime import datetime
 from flask import current_app
 from functools import wraps
+from app.utils.timezone import get_china_time
 
 def setup_logger(name, log_file, level=logging.INFO):
     """
@@ -83,7 +84,7 @@ def log_operation(operation_type, user_id=None, details=None):
     log_data = {
         'operation_type': operation_type,
         'user_id': user_id,
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': get_china_time().isoformat(),
         'details': details or {}
     }
     
@@ -126,7 +127,7 @@ def log_error(error, user_id=None, context=None):
         'error_type': type(error).__name__ if hasattr(error, '__class__') else 'Unknown',
         'error_message': str(error),
         'user_id': user_id,
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': get_china_time().isoformat(),
         'context': context or {}
     }
     
@@ -279,16 +280,16 @@ def log_decorator(operation_type):
         @wraps(func)
         def wrapper(*args, **kwargs):
             logger = get_app_logger()
-            start_time = datetime.utcnow()
+            start_time = get_china_time()
             
             try:
                 logger.info(f"开始执行: {operation_type}")
                 result = func(*args, **kwargs)
-                duration = (datetime.utcnow() - start_time).total_seconds()
+                duration = (get_china_time() - start_time).total_seconds()
                 logger.info(f"完成执行: {operation_type}, 耗时: {duration:.2f}秒")
                 return result
             except Exception as e:
-                duration = (datetime.utcnow() - start_time).total_seconds()
+                duration = (get_china_time() - start_time).total_seconds()
                 logger.error(f"执行失败: {operation_type}, 耗时: {duration:.2f}秒, 错误: {str(e)}")
                 raise
         return wrapper

@@ -18,6 +18,8 @@ import logging
 from datetime import datetime, timedelta
 import psutil
 import os
+from sqlalchemy import text
+from app.utils.timezone import get_china_time, utc_to_china, format_china_time, get_china_today
 
 # 创建蓝图
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -98,8 +100,8 @@ def get_system_overview():
         # 活跃任务数
         active_tasks = Task.query.filter_by(is_active=True).count()
         
-        # 今日日志数
-        today = datetime.utcnow().date()
+        # 今日日志数（东八区）
+        today = get_china_today().date()
         today_logs = Log.query.filter(
             db.func.date(Log.created_at) == today
         ).count()
@@ -109,9 +111,9 @@ def get_system_overview():
             Log.level.in_(['ERROR', 'CRITICAL'])
         ).count()
         
-        # 最近同步数据
+        # 最近同步数据（东八区）
         recent_syncs = SyncData.query.filter(
-            SyncData.sync_time >= datetime.utcnow() - timedelta(days=7)
+            SyncData.sync_time >= get_china_today() - timedelta(days=7)
         ).count()
         
         return {
@@ -183,8 +185,8 @@ def get_chart_data(chart_type='all'):
 def get_log_trend_data():
     """获取日志趋势数据"""
     try:
-        # 最近7天的日志数据
-        end_date = datetime.utcnow().date()
+        # 最近7天的日志数据（东八区）
+        end_date = get_china_today().date()
         start_date = end_date - timedelta(days=6)
         
         trend_data = []
@@ -254,8 +256,8 @@ def get_task_status_distribution():
 def get_sync_trend_data():
     """获取同步趋势数据"""
     try:
-        # 最近7天的同步数据
-        end_date = datetime.utcnow().date()
+        # 最近7天的同步数据（东八区）
+        end_date = get_china_today().date()
         start_date = end_date - timedelta(days=6)
         
         trend_data = []
@@ -289,7 +291,7 @@ def get_recent_activities(limit=10):
                 'message': log.message,
                 'module': log.module,
                 'user': log.user.username if log.user else '系统',
-                'time': log.created_at.isoformat() if log.created_at else None,
+                'time': format_china_time(log.created_at) if log.created_at else None,
                 'icon': get_activity_icon(log.level, log.log_type)
             })
         
@@ -326,7 +328,7 @@ def get_system_status():
         # 数据库状态
         db_status = 'healthy'
         try:
-            db.session.execute('SELECT 1')
+            db.session.execute(text('SELECT 1'))
         except Exception:
             db_status = 'error'
         
@@ -387,7 +389,7 @@ def get_system_uptime():
     """获取系统运行时间"""
     try:
         uptime_seconds = psutil.boot_time()
-        uptime = datetime.utcnow() - datetime.fromtimestamp(uptime_seconds)
+        uptime = get_china_time() - datetime.fromtimestamp(uptime_seconds)
         
         days = uptime.days
         hours, remainder = divmod(uptime.seconds, 3600)

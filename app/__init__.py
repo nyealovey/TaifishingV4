@@ -59,6 +59,9 @@ def create_app(config_name=None):
     # 配置错误处理
     configure_error_handlers(app)
     
+    # 配置模板过滤器
+    configure_template_filters(app)
+    
     return app
 
 def configure_app(app, config_name):
@@ -307,6 +310,30 @@ def configure_error_handlers(app):
     @app.errorhandler(401)
     def unauthorized_error(error):
         return {'error': 'Unauthorized', 'message': '未授权访问'}, 401
+
+def configure_template_filters(app):
+    """
+    配置模板过滤器
+    
+    Args:
+        app: Flask应用实例
+    """
+    from app.utils.timezone import format_china_time
+    
+    @app.template_filter('china_time')
+    def china_time_filter(dt, format_str='%Y-%m-%d %H:%M:%S'):
+        """东八区时间格式化过滤器"""
+        return format_china_time(dt, format_str)
+    
+    @app.template_filter('china_date')
+    def china_date_filter(dt):
+        """东八区日期格式化过滤器"""
+        return format_china_time(dt, '%Y-%m-%d')
+    
+    @app.template_filter('china_datetime')
+    def china_datetime_filter(dt):
+        """东八区日期时间格式化过滤器"""
+        return format_china_time(dt, '%Y-%m-%d %H:%M:%S')
 
 # 创建应用实例
 app = create_app()

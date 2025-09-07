@@ -294,7 +294,7 @@
                             <div class="flex-grow-1">
                                 <div class="fw-bold">{{ activity.message }}</div>
                                 <small class="text-muted">
-                                    {{ activity.user }} • {{ activity.module }} • {{ activity.time[:19] if activity.time else '未知时间' }}
+                                    {{ activity.user }} • {{ activity.module }} • {{ activity.time | china_datetime if activity.time else '未知时间' }}
                                 </small>
                             </div>
                         </div>
