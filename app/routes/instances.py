@@ -10,6 +10,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.instance import Instance
 from app.models.credential import Credential
 from app import db
+from app.utils.logger import log_operation
 from app.services.database_service import DatabaseService
 import logging
 
@@ -200,6 +201,24 @@ def edit(instance_id):
             
             db.session.commit()
             
+            # 记录操作日志
+            log_operation('UPDATE_INSTANCE', current_user.id, {
+                'instance_id': instance.id,
+                'instance_name': instance.name,
+                'db_type': instance.db_type,
+                'host': instance.host,
+                'changes': {
+                    'name': data.get('name'),
+                    'db_type': data.get('db_type'),
+                    'host': data.get('host'),
+                    'port': data.get('port'),
+                    'database_name': data.get('database_name'),
+                    'credential_id': data.get('credential_id'),
+                    'description': data.get('description'),
+                    'is_active': data.get('is_active')
+                }
+            })
+            
             if request.is_json:
                 return jsonify({
                     'message': '实例更新成功',
@@ -238,6 +257,14 @@ def delete(instance_id):
     instance = Instance.query.get_or_404(instance_id)
     
     try:
+        # 记录操作日志
+        log_operation('DELETE_INSTANCE', current_user.id, {
+            'instance_id': instance.id,
+            'instance_name': instance.name,
+            'db_type': instance.db_type,
+            'host': instance.host
+        })
+        
         db.session.delete(instance)
         db.session.commit()
         

@@ -10,6 +10,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token, jwt_re
 from werkzeug.security import check_password_hash
 from app.models.user import User
 from app import db, bcrypt
+from app.utils.logger import log_operation
 
 # 创建蓝图
 auth_bp = Blueprint('auth', __name__)
@@ -35,6 +36,13 @@ def login():
             if user.is_active:
                 # 登录成功
                 login_user(user, remember=True)
+                
+                # 记录登录日志
+                log_operation('USER_LOGIN', user.id, {
+                    'username': user.username,
+                    'ip_address': request.remote_addr,
+                    'user_agent': request.headers.get('User-Agent')
+                })
                 
                 if request.is_json:
                     # API登录，返回JWT token
@@ -76,6 +84,13 @@ def login():
 @login_required
 def logout():
     """用户登出"""
+    # 记录登出日志
+    log_operation('USER_LOGOUT', current_user.id, {
+        'username': current_user.username,
+        'ip_address': request.remote_addr,
+        'user_agent': request.headers.get('User-Agent')
+    })
+    
     logout_user()
     
     if request.is_json:

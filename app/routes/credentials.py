@@ -9,6 +9,7 @@ from flask_login import login_required, current_user
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.credential import Credential
 from app import db
+from app.utils.logger import log_operation
 import logging
 
 # 创建蓝图
