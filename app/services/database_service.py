@@ -54,12 +54,37 @@ class DatabaseService:
             Dict: 同步结果
         """
         try:
-            # 这里实现账户同步逻辑
-            # 暂时返回成功
+            from app.models.account import Account
+            from app import db
+            
+            # 获取数据库连接
+            conn = self.get_connection(instance)
+            if not conn:
+                return {
+                    'success': False,
+                    'error': '无法获取数据库连接'
+                }
+            
+            synced_count = 0
+            
+            if instance.db_type == 'mysql':
+                synced_count = self._sync_mysql_accounts(instance, conn)
+            elif instance.db_type == 'postgresql':
+                synced_count = self._sync_postgresql_accounts(instance, conn)
+            elif instance.db_type == 'sqlserver':
+                synced_count = self._sync_sqlserver_accounts(instance, conn)
+            elif instance.db_type == 'oracle':
+                synced_count = self._sync_oracle_accounts(instance, conn)
+            else:
+                return {
+                    'success': False,
+                    'error': f'不支持的数据库类型: {instance.db_type}'
+                }
+            
             return {
                 'success': True,
-                'message': '账户同步功能开发中',
-                'synced_count': 0
+                'message': f'账户同步完成，共同步 {synced_count} 个账户',
+                'synced_count': synced_count
             }
         except Exception as e:
             return {
@@ -67,12 +92,172 @@ class DatabaseService:
                 'error': f'账户同步失败: {str(e)}'
             }
     
+    def _sync_mysql_accounts(self, instance: Instance, conn) -> int:
+        """同步MySQL账户"""
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT User, Host, authentication_string, plugin, account_locked, password_expired
+            FROM mysql.user
+            WHERE User != 'root' AND User != 'mysql.sys'
+        """)
+        
+        synced_count = 0
+        for row in cursor.fetchall():
+            username, host, password_hash, plugin, locked, expired = row
+            
+            # 检查账户是否已存在
+            existing = Account.query.filter_by(
+                instance_id=instance.id,
+                username=username,
+                database_name='mysql'
+            ).first()
+            
+            if not existing:
+                account = Account(
+                    instance_id=instance.id,
+                    username=username,
+                    database_name='mysql',
+                    account_type='user',
+                    is_active=not locked and not expired
+                )
+                db.session.add(account)
+                synced_count += 1
+        
+        db.session.commit()
+        cursor.close()
+        return synced_count
+    
+    def _sync_postgresql_accounts(self, instance: Instance, conn) -> int:
+        """同步PostgreSQL账户"""
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, rolconnlimit, rolvaliduntil
+            FROM pg_roles
+            WHERE rolname NOT LIKE 'pg_%'
+        """)
+        
+        synced_count = 0
+        for row in cursor.fetchall():
+            username, is_super, inherits, can_create_role, can_create_db, can_login, conn_limit, valid_until = row
+            
+            # 检查账户是否已存在
+            existing = Account.query.filter_by(
+                instance_id=instance.id,
+                username=username,
+                database_name='postgres'
+            ).first()
+            
+            if not existing:
+                account = Account(
+                    instance_id=instance.id,
+                    username=username,
+                    database_name='postgres',
+                    account_type='superuser' if is_super else 'user',
+                    is_active=can_login
+                )
+                db.session.add(account)
+                synced_count += 1
+        
+        db.session.commit()
+        cursor.close()
+        return synced_count
+    
+    def _sync_sqlserver_accounts(self, instance: Instance, conn) -> int:
+        """同步SQL Server账户"""
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT name, type_desc, is_disabled, create_date, modify_date
+            FROM sys.server_principals
+            WHERE type IN ('S', 'U', 'G') AND name NOT LIKE '##%'
+        """)
+        
+        synced_count = 0
+        for row in cursor.fetchall():
+            username, type_desc, is_disabled, create_date, modify_date = row
+            
+            # 检查账户是否已存在
+            existing = Account.query.filter_by(
+                instance_id=instance.id,
+                username=username,
+                database_name='master'
+            ).first()
+            
+            if not existing:
+                account = Account(
+                    instance_id=instance.id,
+                    username=username,
+                    database_name='master',
+                    account_type=type_desc.lower(),
+                    is_active=not is_disabled
+                )
+                db.session.add(account)
+                synced_count += 1
+        
+        db.session.commit()
+        cursor.close()
+        return synced_count
+    
+    def _sync_oracle_accounts(self, instance: Instance, conn) -> int:
+        """同步Oracle账户"""
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT username, account_status, created, expiry_date, profile
+            FROM dba_users
+            WHERE username NOT IN ('SYS', 'SYSTEM', 'SYSAUX', 'TEMP', 'USERS')
+        """)
+        
+        synced_count = 0
+        for row in cursor.fetchall():
+            username, status, created, expiry, profile = row
+            
+            # 检查账户是否已存在
+            existing = Account.query.filter_by(
+                instance_id=instance.id,
+                username=username,
+                database_name=instance.database_name or 'ORCL'
+            ).first()
+            
+            if not existing:
+                account = Account(
+                    instance_id=instance.id,
+                    username=username,
+                    database_name=instance.database_name or 'ORCL',
+                    account_type='user',
+                    is_active=status == 'OPEN'
+                )
+                db.session.add(account)
+                synced_count += 1
+        
+        db.session.commit()
+        cursor.close()
+        return synced_count
+    
     def _test_postgresql_connection(self, instance: Instance) -> Dict[str, Any]:
         """测试PostgreSQL连接"""
-        return {
-            'success': False,
-            'error': 'PostgreSQL驱动未安装，请安装psycopg2'
-        }
+        try:
+            import psycopg2
+            conn = psycopg2.connect(
+                host=instance.host,
+                port=instance.port,
+                database=instance.database_name or 'postgres',
+                user=instance.credential.username if instance.credential else '',
+                password=instance.credential.password if instance.credential else ''
+            )
+            conn.close()
+            return {
+                'success': True,
+                'message': 'PostgreSQL连接成功'
+            }
+        except ImportError:
+            return {
+                'success': False,
+                'error': 'PostgreSQL驱动未安装，请安装psycopg2-binary'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'PostgreSQL连接失败: {str(e)}'
+            }
     
     def _test_mysql_connection(self, instance: Instance) -> Dict[str, Any]:
         """测试MySQL连接"""
@@ -97,21 +282,60 @@ class DatabaseService:
     
     def _test_sqlserver_connection(self, instance: Instance) -> Dict[str, Any]:
         """测试SQL Server连接"""
-        return {
-            'success': False,
-            'error': 'SQL Server驱动未安装，请安装pymssql'
-        }
+        try:
+            import pymssql
+            conn = pymssql.connect(
+                server=instance.host,
+                port=instance.port,
+                database=instance.database_name or 'master',
+                user=instance.credential.username if instance.credential else '',
+                password=instance.credential.password if instance.credential else ''
+            )
+            conn.close()
+            return {
+                'success': True,
+                'message': 'SQL Server连接成功'
+            }
+        except ImportError:
+            return {
+                'success': False,
+                'error': 'SQL Server驱动未安装，请安装pymssql或pyodbc'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'SQL Server连接失败: {str(e)}'
+            }
     
     def _test_oracle_connection(self, instance: Instance) -> Dict[str, Any]:
         """测试Oracle连接"""
-        return {
-            'success': False,
-            'error': 'Oracle驱动未安装，请安装cx_Oracle'
-        }
+        try:
+            import cx_Oracle
+            dsn = cx_Oracle.makedsn(instance.host, instance.port, service_name=instance.database_name or 'ORCL')
+            conn = cx_Oracle.connect(
+                user=instance.credential.username if instance.credential else '',
+                password=instance.credential.password if instance.credential else '',
+                dsn=dsn
+            )
+            conn.close()
+            return {
+                'success': True,
+                'message': 'Oracle连接成功'
+            }
+        except ImportError:
+            return {
+                'success': False,
+                'error': 'Oracle驱动未安装，请安装cx_Oracle和Oracle Instant Client'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Oracle连接失败: {str(e)}'
+            }
 
     def get_connection(self, instance: Instance) -> Optional[Any]:
         """
-        获取数据库连接
+        获取数据库连接（改进版本，支持连接池）
         
         Args:
             instance: 数据库实例
@@ -120,14 +344,58 @@ class DatabaseService:
             Any: 数据库连接对象
         """
         try:
+            # 检查是否已有连接
+            if instance.id in self.connections:
+                conn = self.connections[instance.id]
+                # 测试连接是否有效
+                if self._test_connection_validity(conn, instance.db_type):
+                    return conn
+                else:
+                    # 连接无效，关闭并移除
+                    self.close_connection(instance)
+            
+            # 创建新连接
             if instance.db_type == 'mysql':
-                return self._get_mysql_connection(instance)
+                conn = self._get_mysql_connection(instance)
+            elif instance.db_type == 'postgresql':
+                conn = self._get_postgresql_connection(instance)
+            elif instance.db_type == 'sqlserver':
+                conn = self._get_sqlserver_connection(instance)
+            elif instance.db_type == 'oracle':
+                conn = self._get_oracle_connection(instance)
             else:
                 log_error(f"不支持的数据库类型: {instance.db_type}")
                 return None
+            
+            if conn:
+                # 存储连接
+                self.connections[instance.id] = conn
+                log_operation('database_connect', details={
+                    'instance_id': instance.id,
+                    'db_type': instance.db_type,
+                    'host': instance.host
+                })
+            
+            return conn
+            
         except Exception as e:
             log_error(e, context={'instance_id': instance.id, 'instance_name': instance.name})
             return None
+    
+    def _test_connection_validity(self, conn, db_type: str) -> bool:
+        """测试连接有效性"""
+        try:
+            if db_type == 'mysql':
+                conn.ping(reconnect=False)
+            elif db_type == 'postgresql':
+                conn.execute('SELECT 1')
+            elif db_type == 'sqlserver':
+                conn.execute('SELECT 1')
+            elif db_type == 'oracle':
+                conn.execute('SELECT 1 FROM DUAL')
+            return True
+        except:
+            return False
     
     def _get_mysql_connection(self, instance: Instance) -> Optional[Any]:
         """获取MySQL连接"""
@@ -139,16 +407,65 @@ class DatabaseService:
                 user=instance.credential.username if instance.credential else '',
                 password=instance.credential.password if instance.credential else '',
                 charset='utf8mb4',
-                autocommit=True
+                autocommit=True,
+                connect_timeout=30,  # 连接超时30秒
+                read_timeout=60,     # 读取超时60秒
+                write_timeout=60,    # 写入超时60秒
+                sql_mode='TRADITIONAL'
             )
-            log_operation('database_connect', details={
-                'instance_id': instance.id,
-                'db_type': 'MySQL',
-                'host': instance.host
-            })
             return conn
         except Exception as e:
             log_error(e, context={'instance_id': instance.id, 'db_type': 'MySQL'})
+            return None
+    
+    def _get_postgresql_connection(self, instance: Instance) -> Optional[Any]:
+        """获取PostgreSQL连接"""
+        try:
+            import psycopg2
+            conn = psycopg2.connect(
+                host=instance.host,
+                port=instance.port,
+                database=instance.database_name or 'postgres',
+                user=instance.credential.username if instance.credential else '',
+                password=instance.credential.password if instance.credential else '',
+                connect_timeout=30
+            )
+            return conn
+        except Exception as e:
+            log_error(e, context={'instance_id': instance.id, 'db_type': 'PostgreSQL'})
+            return None
+    
+    def _get_sqlserver_connection(self, instance: Instance) -> Optional[Any]:
+        """获取SQL Server连接"""
+        try:
+            import pymssql
+            conn = pymssql.connect(
+                server=instance.host,
+                port=instance.port,
+                database=instance.database_name or 'master',
+                user=instance.credential.username if instance.credential else '',
+                password=instance.credential.password if instance.credential else '',
+                timeout=30
+            )
+            return conn
+        except Exception as e:
+            log_error(e, context={'instance_id': instance.id, 'db_type': 'SQL Server'})
+            return None
+    
+    def _get_oracle_connection(self, instance: Instance) -> Optional[Any]:
+        """获取Oracle连接"""
+        try:
+            import cx_Oracle
+            dsn = cx_Oracle.makedsn(instance.host, instance.port, 
+                                  service_name=instance.database_name or 'ORCL')
+            conn = cx_Oracle.connect(
+                user=instance.credential.username if instance.credential else '',
+                password=instance.credential.password if instance.credential else '',
+                dsn=dsn
+            )
+            return conn
+        except Exception as e:
+            log_error(e, context={'instance_id': instance.id, 'db_type': 'Oracle'})
             return None
     
     def close_connection(self, instance: Instance):

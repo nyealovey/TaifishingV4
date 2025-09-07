@@ -20,10 +20,65 @@ def health():
 @jwt_required()
 def status():
     """服务状态"""
-    # TODO: 实现服务状态检查逻辑
-    return jsonify({
+    from app import db, cache
+    from app.models.user import User
+    from app.models.instance import Instance
+    from app.models.task import Task
+    import redis
+    import psutil
+    from datetime import datetime
+    
+    status_info = {
         'status': 'running',
-        'database': 'connected',
-        'redis': 'connected',
-        'celery': 'running'
-    })
+        'timestamp': datetime.utcnow().isoformat(),
+        'uptime': 'unknown'
+    }
+    
+    # 检查数据库连接
+    try:
+        db.session.execute('SELECT 1')
+        status_info['database'] = 'connected'
+    except Exception as e:
+        status_info['database'] = f'error: {str(e)}'
+    
+    # 检查Redis连接
+    try:
+        cache.cache._write_client.ping()
+        status_info['redis'] = 'connected'
+    except Exception as e:
+        status_info['redis'] = f'error: {str(e)}'
+    
+    # 检查Celery状态
+    try:
+        from app import celery
+        inspect = celery.control.inspect()
+        stats = inspect.stats()
+        if stats:
+            status_info['celery'] = 'running'
+        else:
+            status_info['celery'] = 'no workers'
+    except Exception as e:
+        status_info['celery'] = f'error: {str(e)}'
+    
+    # 系统资源状态
+    try:
+        status_info['system'] = {
+            'cpu_percent': psutil.cpu_percent(),
+            'memory_percent': psutil.virtual_memory().percent,
+            'disk_percent': psutil.disk_usage('/').percent
+        }
+    except Exception as e:
+        status_info['system'] = f'error: {str(e)}'
+    
+    # 数据库统计
+    try:
+        status_info['stats'] = {
+            'users': User.query.count(),
+            'instances': Instance.query.count(),
+            'tasks': Task.query.count(),
+            'active_tasks': Task.query.filter_by(is_active=True).count()
+        }
+    except Exception as e:
+        status_info['stats'] = f'error: {str(e)}'
+    
+    return jsonify(status_info)

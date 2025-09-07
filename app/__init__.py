@@ -61,9 +61,6 @@ def create_app(config_name=None):
     # 配置日志
     configure_logging(app)
     
-    # 配置错误处理
-    configure_error_handlers(app)
-    
     # 注册全局错误处理器
     from app.utils.error_handler import register_error_handlers
     register_error_handlers(app)
@@ -239,10 +236,13 @@ def initialize_extensions(app):
         r"/api/*": {
             "origins": allowed_origins,
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
+            "allow_headers": ["Content-Type", "Authorization", "X-CSRFToken"],
             "supports_credentials": True
         }
     })
+    
+    # 初始化CSRF保护
+    csrf.init_app(app)
     
     # 初始化Celery (仅在Redis可用时)
     redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
@@ -351,27 +351,9 @@ def configure_logging(app):
 
 def configure_error_handlers(app):
     """
-    配置错误处理器
-    
-    Args:
-        app: Flask应用实例
+    配置错误处理器 - 已移除，使用统一的错误处理器
     """
-    @app.errorhandler(404)
-    def not_found_error(error):
-        return {'error': 'Not Found', 'message': '请求的资源不存在'}, 404
-    
-    @app.errorhandler(500)
-    def internal_error(error):
-        db.session.rollback()
-        return {'error': 'Internal Server Error', 'message': '服务器内部错误'}, 500
-    
-    @app.errorhandler(403)
-    def forbidden_error(error):
-        return {'error': 'Forbidden', 'message': '访问被拒绝'}, 403
-    
-    @app.errorhandler(401)
-    def unauthorized_error(error):
-        return {'error': 'Unauthorized', 'message': '未授权访问'}, 401
+    pass
 
 def configure_template_filters(app):
     """

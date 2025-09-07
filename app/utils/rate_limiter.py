@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 泰摸鱼吧 - 速率限制工具
 """
@@ -6,44 +8,27 @@ import time
 import redis
 from functools import wraps
 from flask import request, jsonify, current_app
-from typing import Dict, Optional
+from typing import Dict, Optional, Callable
+import logging
+
+logger = logging.getLogger(__name__)
 
 class RateLimiter:
     """速率限制器"""
     
-    def __init__(self, redis_client: Optional[redis.Redis] = None):
-        """
-        初始化速率限制器
-        
-        Args:
-            redis_client: Redis客户端实例
-        """
+    def __init__(self, redis_client=None):
         self.redis_client = redis_client
-        self.memory_store = {}  # 内存存储（备用）
+        self.memory_store = {}  # 内存存储，用于无Redis环境
     
     def _get_key(self, identifier: str, endpoint: str) -> str:
-        """
-        生成Redis键
-        
-        Args:
-            identifier: 标识符（IP地址或用户ID）
-            endpoint: 端点名称
-            
-        Returns:
-            str: Redis键
-        """
+        """生成Redis键"""
         return f"rate_limit:{endpoint}:{identifier}"
     
-    def _get_current_window(self) -> int:
-        """
-        获取当前时间窗口
-        
-        Returns:
-            int: 时间窗口（秒）
-        """
-        return int(time.time() // 60)  # 1分钟窗口
+    def _get_memory_key(self, identifier: str, endpoint: str) -> str:
+        """生成内存键"""
+        return f"{endpoint}:{identifier}"
     
-    def is_allowed(self, identifier: str, endpoint: str, limit: int, window: int = 60) -> bool:
+    def is_allowed(self, identifier: str, endpoint: str, limit: int, window: int) -> Dict[str, any]:
         """
         检查是否允许请求
         
@@ -54,157 +39,212 @@ class RateLimiter:
             window: 时间窗口（秒）
             
         Returns:
-            bool: 是否允许
+            dict: 包含是否允许、剩余次数、重置时间等信息
         """
+        current_time = int(time.time())
+        window_start = current_time - window
+        
         if self.redis_client:
-            return self._check_redis_limit(identifier, endpoint, limit, window)
+            return self._check_redis(identifier, endpoint, limit, window, current_time, window_start)
         else:
-            return self._check_memory_limit(identifier, endpoint, limit, window)
+            return self._check_memory(identifier, endpoint, limit, window, current_time, window_start)
     
-    def _check_redis_limit(self, identifier: str, endpoint: str, limit: int, window: int) -> bool:
-        """
-        使用Redis检查限制
+    def _check_redis(self, identifier: str, endpoint: str, limit: int, window: int, 
+                    current_time: int, window_start: int) -> Dict[str, any]:
+        """使用Redis检查速率限制"""
+        key = self._get_key(identifier, endpoint)
+        pipe = self.redis_client.pipeline()
         
-        Args:
-            identifier: 标识符
-            endpoint: 端点名称
-            limit: 限制次数
-            window: 时间窗口
-            
-        Returns:
-            bool: 是否允许
-        """
-        try:
-            key = self._get_key(identifier, endpoint)
-            current_time = time.time()
-            
-            # 使用滑动窗口算法
-            pipe = self.redis_client.pipeline()
-            
-            # 移除过期的记录
-            pipe.zremrangebyscore(key, 0, current_time - window)
-            
-            # 获取当前窗口内的请求数
-            pipe.zcard(key)
-            
-            # 添加当前请求
-            pipe.zadd(key, {str(current_time): current_time})
-            
-            # 设置过期时间
-            pipe.expire(key, window)
-            
-            results = pipe.execute()
-            current_count = results[1]
-            
-            return current_count < limit
-            
-        except Exception as e:
-            current_app.logger.error(f"Redis速率限制检查失败: {e}")
-            return True  # 失败时允许请求
+        # 移除过期的记录
+        pipe.zremrangebyscore(key, 0, window_start)
+        
+        # 获取当前窗口内的请求数
+        pipe.zcard(key)
+        
+        # 添加当前请求
+        pipe.zadd(key, {str(current_time): current_time})
+        
+        # 设置过期时间
+        pipe.expire(key, window)
+        
+        results = pipe.execute()
+        current_count = results[1]
+        
+        if current_count >= limit:
+            return {
+                'allowed': False,
+                'remaining': 0,
+                'reset_time': current_time + window,
+                'retry_after': window
+            }
+        
+        return {
+            'allowed': True,
+            'remaining': limit - current_count - 1,
+            'reset_time': current_time + window,
+            'retry_after': 0
+        }
     
-    def _check_memory_limit(self, identifier: str, endpoint: str, limit: int, window: int) -> bool:
-        """
-        使用内存检查限制
-        
-        Args:
-            identifier: 标识符
-            endpoint: 端点名称
-            limit: 限制次数
-            window: 时间窗口
-            
-        Returns:
-            bool: 是否允许
-        """
-        key = f"{identifier}:{endpoint}"
-        current_time = time.time()
+    def _check_memory(self, identifier: str, endpoint: str, limit: int, window: int,
+                     current_time: int, window_start: int) -> Dict[str, any]:
+        """使用内存检查速率限制"""
+        key = self._get_memory_key(identifier, endpoint)
         
         if key not in self.memory_store:
             self.memory_store[key] = []
         
         # 清理过期记录
         self.memory_store[key] = [
-            timestamp for timestamp in self.memory_store[key]
-            if current_time - timestamp < window
+            timestamp for timestamp in self.memory_store[key] 
+            if timestamp > window_start
         ]
         
-        # 检查是否超过限制
-        if len(self.memory_store[key]) >= limit:
-            return False
+        current_count = len(self.memory_store[key])
+        
+        if current_count >= limit:
+            return {
+                'allowed': False,
+                'remaining': 0,
+                'reset_time': current_time + window,
+                'retry_after': window
+            }
         
         # 添加当前请求
         self.memory_store[key].append(current_time)
-        return True
+        
+        return {
+            'allowed': True,
+            'remaining': limit - current_count - 1,
+            'reset_time': current_time + window,
+            'retry_after': 0
+        }
+    
+    def get_remaining(self, identifier: str, endpoint: str, limit: int, window: int) -> int:
+        """获取剩余请求次数"""
+        result = self.is_allowed(identifier, endpoint, limit, window)
+        return result['remaining']
+    
+    def reset(self, identifier: str, endpoint: str):
+        """重置速率限制"""
+        if self.redis_client:
+            key = self._get_key(identifier, endpoint)
+            self.redis_client.delete(key)
+        else:
+            key = self._get_memory_key(identifier, endpoint)
+            if key in self.memory_store:
+                del self.memory_store[key]
 
 # 全局速率限制器实例
-rate_limiter = None
+rate_limiter = RateLimiter()
 
-def init_rate_limiter(redis_client: Optional[redis.Redis] = None):
-    """
-    初始化全局速率限制器
-    
-    Args:
-        redis_client: Redis客户端实例
-    """
-    global rate_limiter
-    rate_limiter = RateLimiter(redis_client)
-
-def rate_limit(endpoint: str, limit: int, window: int = 60, per: str = 'ip'):
+def rate_limit(limit: int, window: int = 60, per: str = 'ip', 
+               identifier_func: Optional[Callable] = None):
     """
     速率限制装饰器
     
     Args:
-        endpoint: 端点名称
         limit: 限制次数
         window: 时间窗口（秒）
         per: 限制类型（'ip' 或 'user'）
+        identifier_func: 自定义标识符函数
     """
-    def decorator(f):
+    def rate_limit_decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            if not rate_limiter:
-                return f(*args, **kwargs)
-            
             # 获取标识符
-            if per == 'ip':
-                identifier = request.remote_addr
+            if identifier_func:
+                identifier = identifier_func()
             elif per == 'user':
                 from flask_login import current_user
-                if current_user.is_authenticated:
-                    identifier = str(current_user.id)
-                else:
-                    identifier = request.remote_addr
+                identifier = str(current_user.id) if current_user.is_authenticated else request.remote_addr
             else:
                 identifier = request.remote_addr
             
             # 检查速率限制
-            if not rate_limiter.is_allowed(identifier, endpoint, limit, window):
-                if request.is_json:
-                    return jsonify({
-                        'error': '请求过于频繁，请稍后再试',
-                        'retry_after': window
-                    }), 429
-                else:
-                    from flask import flash, redirect, url_for
-                    flash('请求过于频繁，请稍后再试', 'error')
-                    return redirect(request.url)
+            result = rate_limiter.is_allowed(identifier, f.__name__, limit, window)
             
-            return f(*args, **kwargs)
+            if not result['allowed']:
+                response = jsonify({
+                    'error': '请求过于频繁',
+                    'message': f'每分钟最多允许 {limit} 次请求',
+                    'retry_after': result['retry_after']
+                })
+                response.status_code = 429
+                response.headers['Retry-After'] = str(result['retry_after'])
+                response.headers['X-RateLimit-Limit'] = str(limit)
+                response.headers['X-RateLimit-Remaining'] = str(result['remaining'])
+                response.headers['X-RateLimit-Reset'] = str(result['reset_time'])
+                return response
+            
+            # 添加速率限制头
+            response = f(*args, **kwargs)
+            if hasattr(response, 'headers'):
+                response.headers['X-RateLimit-Limit'] = str(limit)
+                response.headers['X-RateLimit-Remaining'] = str(result['remaining'])
+                response.headers['X-RateLimit-Reset'] = str(result['reset_time'])
+            
+            return response
+        
         return decorated_function
-    return decorator
+    return rate_limit_decorator
 
-# 预定义的速率限制
-def login_rate_limit(f):
-    """登录速率限制：5次/分钟"""
-    return rate_limit('login', 5, 60, 'ip')(f)
+def login_rate_limit(func=None, *, limit: int = 5, window: int = 300):
+    """登录速率限制"""
+    if func is None:
+        return lambda f: rate_limit(limit, window, per='ip')(f)
+    return rate_limit(limit, window, per='ip')(func)
 
-def api_rate_limit(f):
-    """API速率限制：100次/分钟"""
-    return rate_limit('api', 100, 60, 'user')(f)
+def api_rate_limit(func=None, *, limit: int = 100, window: int = 60):
+    """API速率限制"""
+    if func is None:
+        return lambda f: rate_limit(limit, window, per='user')(f)
+    return rate_limit(limit, window, per='user')(func)
 
-def password_reset_rate_limit(f):
-    """密码重置速率限制：3次/小时"""
-    return rate_limit('password_reset', 3, 3600, 'ip')(f)
+def password_reset_rate_limit(func=None, *, limit: int = 3, window: int = 3600):
+    """密码重置速率限制"""
+    if func is None:
+        return lambda f: rate_limit(limit, window, per='ip')(f)
+    return rate_limit(limit, window, per='ip')(func)
 
-def registration_rate_limit(f):
-    """注册速率限制：3次/小时"""
-    return rate_limit('registration', 3, 3600, 'ip')(f)
+def registration_rate_limit(func=None, *, limit: int = 3, window: int = 3600):
+    """注册速率限制"""
+    if func is None:
+        return lambda f: rate_limit(limit, window, per='ip')(f)
+    return rate_limit(limit, window, per='ip')(func)
+
+def task_execution_rate_limit(func=None, *, limit: int = 10, window: int = 60):
+    """任务执行速率限制"""
+    if func is None:
+        return lambda f: rate_limit(limit, window, per='user')(f)
+    return rate_limit(limit, window, per='user')(func)
+
+# 初始化速率限制器
+def init_rate_limiter(redis_client=None):
+    """初始化速率限制器"""
+    global rate_limiter
+    rate_limiter = RateLimiter(redis_client)
+    logger.info("速率限制器初始化完成")
+
+# 获取速率限制状态
+def get_rate_limit_status(identifier: str, endpoint: str, limit: int, window: int) -> Dict[str, any]:
+    """获取速率限制状态"""
+    return rate_limiter.is_allowed(identifier, endpoint, limit, window)
+
+# 清理过期的速率限制记录
+def cleanup_rate_limits():
+    """清理过期的速率限制记录"""
+    if rate_limiter.redis_client:
+        # Redis会自动清理过期键
+        pass
+    else:
+        # 清理内存中的过期记录
+        current_time = int(time.time())
+        for key in list(rate_limiter.memory_store.keys()):
+            timestamps = rate_limiter.memory_store[key]
+            # 保留最近1小时的记录
+            rate_limiter.memory_store[key] = [
+                ts for ts in timestamps if ts > current_time - 3600
+            ]
+            # 如果列表为空，删除键
+            if not rate_limiter.memory_store[key]:
+                del rate_limiter.memory_store[key]

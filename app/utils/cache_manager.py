@@ -1,370 +1,285 @@
+# -*- coding: utf-8 -*-
+
 """
 泰摸鱼吧 - 缓存管理工具
 """
 
-import time
 import json
 import hashlib
+import time
 from functools import wraps
-from typing import Any, Optional, Callable
+from typing import Any, Optional, Callable, Dict, Union
 from flask import current_app, request
 from flask_caching import Cache
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CacheManager:
     """缓存管理器"""
     
     def __init__(self, cache: Cache):
-        """
-        初始化缓存管理器
-        
-        Args:
-            cache: Flask-Caching实例
-        """
         self.cache = cache
         self.default_timeout = 300  # 5分钟默认超时
     
-    def get_cache_key(self, prefix: str, *args, **kwargs) -> str:
-        """
-        生成缓存键
-        
-        Args:
-            prefix: 键前缀
-            *args: 位置参数
-            **kwargs: 关键字参数
-            
-        Returns:
-            str: 缓存键
-        """
-        # 创建键的字符串表示
+    def _generate_key(self, prefix: str, *args, **kwargs) -> str:
+        """生成缓存键"""
+        # 将参数序列化为字符串
         key_data = {
-            'prefix': prefix,
             'args': args,
             'kwargs': sorted(kwargs.items())
         }
+        key_string = json.dumps(key_data, sort_keys=True, default=str)
         
         # 生成哈希值
-        key_string = json.dumps(key_data, sort_keys=True)
         key_hash = hashlib.md5(key_string.encode()).hexdigest()
         
         return f"{prefix}:{key_hash}"
     
     def get(self, key: str) -> Optional[Any]:
-        """
-        获取缓存值
-        
-        Args:
-            key: 缓存键
-            
-        Returns:
-            Any: 缓存值
-        """
+        """获取缓存值"""
         try:
             return self.cache.get(key)
         except Exception as e:
-            current_app.logger.error(f"获取缓存失败: {e}")
+            logger.warning(f"获取缓存失败: {key}, 错误: {e}")
             return None
     
     def set(self, key: str, value: Any, timeout: Optional[int] = None) -> bool:
-        """
-        设置缓存值
-        
-        Args:
-            key: 缓存键
-            value: 缓存值
-            timeout: 超时时间（秒）
-            
-        Returns:
-            bool: 是否成功
-        """
+        """设置缓存值"""
         try:
-            if timeout is None:
-                timeout = self.default_timeout
-            
+            timeout = timeout or self.default_timeout
             self.cache.set(key, value, timeout=timeout)
             return True
         except Exception as e:
-            current_app.logger.error(f"设置缓存失败: {e}")
+            logger.warning(f"设置缓存失败: {key}, 错误: {e}")
             return False
     
     def delete(self, key: str) -> bool:
-        """
-        删除缓存
-        
-        Args:
-            key: 缓存键
-            
-        Returns:
-            bool: 是否成功
-        """
+        """删除缓存值"""
         try:
             self.cache.delete(key)
             return True
         except Exception as e:
-            current_app.logger.error(f"删除缓存失败: {e}")
+            logger.warning(f"删除缓存失败: {key}, 错误: {e}")
             return False
     
     def clear(self) -> bool:
-        """
-        清空所有缓存
-        
-        Returns:
-            bool: 是否成功
-        """
+        """清空所有缓存"""
         try:
             self.cache.clear()
             return True
         except Exception as e:
-            current_app.logger.error(f"清空缓存失败: {e}")
+            logger.warning(f"清空缓存失败: {e}")
             return False
     
-    def delete_pattern(self, pattern: str) -> bool:
-        """
-        删除匹配模式的缓存
-        
-        Args:
-            pattern: 匹配模式
-            
-        Returns:
-            bool: 是否成功
-        """
-        try:
-            # 注意：这个功能需要Redis支持
-            if hasattr(self.cache, 'cache') and hasattr(self.cache.cache, 'delete_pattern'):
-                self.cache.cache.delete_pattern(pattern)
-                return True
-            else:
-                current_app.logger.warning("当前缓存后端不支持模式删除")
-                return False
-        except Exception as e:
-            current_app.logger.error(f"删除模式缓存失败: {e}")
-            return False
-    
-    def get_or_set(self, key: str, func: Callable, timeout: Optional[int] = None) -> Any:
-        """
-        获取缓存值，如果不存在则设置
-        
-        Args:
-            key: 缓存键
-            func: 生成值的函数
-            timeout: 超时时间
-            
-        Returns:
-            Any: 缓存值
-        """
+    def get_or_set(self, key: str, func: Callable, timeout: Optional[int] = None, *args, **kwargs) -> Any:
+        """获取缓存值，如果不存在则设置"""
         value = self.get(key)
         if value is None:
-            value = func()
+            value = func(*args, **kwargs)
             self.set(key, value, timeout)
         return value
+    
+    def invalidate_pattern(self, pattern: str) -> int:
+        """根据模式删除缓存"""
+        try:
+            # 这里需要根据具体的缓存后端实现
+            # Redis支持模式匹配，其他后端可能需要遍历
+            if hasattr(self.cache.cache, 'delete_pattern'):
+                return self.cache.cache.delete_pattern(pattern)
+            else:
+                logger.warning("当前缓存后端不支持模式删除")
+                return 0
+        except Exception as e:
+            logger.warning(f"模式删除缓存失败: {pattern}, 错误: {e}")
+            return 0
 
 # 全局缓存管理器实例
 cache_manager = None
 
 def init_cache_manager(cache: Cache):
-    """
-    初始化全局缓存管理器
-    
-    Args:
-        cache: Flask-Caching实例
-    """
+    """初始化缓存管理器"""
     global cache_manager
     cache_manager = CacheManager(cache)
+    logger.info("缓存管理器初始化完成")
 
-def cached(timeout: int = 300, key_prefix: str = 'default'):
+def cached(timeout: int = 300, key_prefix: str = 'default', 
+           unless: Optional[Callable] = None, 
+           key_func: Optional[Callable] = None):
     """
     缓存装饰器
     
     Args:
-        timeout: 超时时间（秒）
+        timeout: 缓存超时时间（秒）
         key_prefix: 键前缀
+        unless: 条件函数，返回True时跳过缓存
+        key_func: 自定义键生成函数
     """
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            if not cache_manager:
-                return func(*args, **kwargs)
+    def cache_decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # 检查是否跳过缓存
+            if unless and unless():
+                return f(*args, **kwargs)
             
             # 生成缓存键
-            cache_key = cache_manager.get_cache_key(
-                key_prefix, 
-                func.__name__, 
-                *args, 
-                **kwargs
-            )
+            if key_func:
+                cache_key = key_func(*args, **kwargs)
+            else:
+                cache_key = cache_manager._generate_key(
+                    f"{key_prefix}:{f.__name__}", 
+                    *args, 
+                    **kwargs
+                )
             
             # 尝试获取缓存
             cached_value = cache_manager.get(cache_key)
             if cached_value is not None:
+                logger.debug(f"缓存命中: {cache_key}")
                 return cached_value
             
             # 执行函数并缓存结果
-            result = func(*args, **kwargs)
+            result = f(*args, **kwargs)
             cache_manager.set(cache_key, result, timeout)
+            logger.debug(f"缓存设置: {cache_key}")
             
             return result
-        return wrapper
-    return decorator
-
-def invalidate_cache(pattern: str):
-    """
-    使缓存失效
-    
-    Args:
-        pattern: 匹配模式
-    """
-    if cache_manager:
-        cache_manager.delete_pattern(pattern)
-
-def cache_user_data(user_id: int, data: Any, timeout: int = 1800):
-    """
-    缓存用户数据
-    
-    Args:
-        user_id: 用户ID
-        data: 数据
-        timeout: 超时时间（秒）
-    """
-    if cache_manager:
-        key = f"user:{user_id}:data"
-        cache_manager.set(key, data, timeout)
-
-def get_cached_user_data(user_id: int) -> Optional[Any]:
-    """
-    获取缓存的用户数据
-    
-    Args:
-        user_id: 用户ID
         
-    Returns:
-        Any: 缓存的数据
-    """
-    if cache_manager:
-        key = f"user:{user_id}:data"
-        return cache_manager.get(key)
-    return None
+        return decorated_function
+    return cache_decorator
 
-def invalidate_user_cache(user_id: int):
-    """
-    使用户缓存失效
-    
-    Args:
-        user_id: 用户ID
-    """
-    if cache_manager:
-        pattern = f"user:{user_id}:*"
-        cache_manager.delete_pattern(pattern)
+def cache_invalidate(pattern: str):
+    """缓存失效装饰器"""
+    def cache_decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            result = f(*args, **kwargs)
+            cache_manager.invalidate_pattern(pattern)
+            logger.debug(f"缓存失效: {pattern}")
+            return result
+        return decorated_function
+    return cache_decorator
 
-def cache_instance_data(instance_id: int, data: Any, timeout: int = 3600):
-    """
-    缓存实例数据
-    
-    Args:
-        instance_id: 实例ID
-        data: 数据
-        timeout: 超时时间（秒）
-    """
-    if cache_manager:
-        key = f"instance:{instance_id}:data"
-        cache_manager.set(key, data, timeout)
+# 特定功能的缓存装饰器
+def user_cache(timeout: int = 600):
+    """用户相关缓存"""
+    return cached(timeout=timeout, key_prefix='user')
 
-def get_cached_instance_data(instance_id: int) -> Optional[Any]:
-    """
-    获取缓存的实例数据
-    
-    Args:
-        instance_id: 实例ID
-        
-    Returns:
-        Any: 缓存的数据
-    """
-    if cache_manager:
-        key = f"instance:{instance_id}:data"
-        return cache_manager.get(key)
-    return None
+def instance_cache(timeout: int = 300):
+    """实例相关缓存"""
+    return cached(timeout=timeout, key_prefix='instance')
 
-def invalidate_instance_cache(instance_id: int):
-    """
-    使实例缓存失效
-    
-    Args:
-        instance_id: 实例ID
-    """
-    if cache_manager:
-        pattern = f"instance:{instance_id}:*"
-        cache_manager.delete_pattern(pattern)
+def task_cache(timeout: int = 180):
+    """任务相关缓存"""
+    return cached(timeout=timeout, key_prefix='task')
 
-def cache_dashboard_data(data: Any, timeout: int = 300):
-    """
-    缓存仪表盘数据
-    
-    Args:
-        data: 数据
-        timeout: 超时时间（秒）
-    """
-    if cache_manager:
-        key = "dashboard:overview"
-        cache_manager.set(key, data, timeout)
+def dashboard_cache(timeout: int = 60):
+    """仪表板缓存"""
+    return cached(timeout=timeout, key_prefix='dashboard')
 
-def get_cached_dashboard_data() -> Optional[Any]:
-    """
-    获取缓存的仪表盘数据
-    
-    Returns:
-        Any: 缓存的数据
-    """
-    if cache_manager:
-        key = "dashboard:overview"
-        return cache_manager.get(key)
-    return None
+def api_cache(timeout: int = 300):
+    """API缓存"""
+    return cached(timeout=timeout, key_prefix='api')
+
+# 缓存键生成函数
+def user_key_func(user_id: int, *args, **kwargs) -> str:
+    """用户缓存键生成函数"""
+    return f"user:{user_id}"
+
+def instance_key_func(instance_id: int, *args, **kwargs) -> str:
+    """实例缓存键生成函数"""
+    return f"instance:{instance_id}"
+
+def task_key_func(task_id: int, *args, **kwargs) -> str:
+    """任务缓存键生成函数"""
+    return f"task:{task_id}"
+
+def dashboard_key_func(*args, **kwargs) -> str:
+    """仪表板缓存键生成函数"""
+    from flask_login import current_user
+    user_id = current_user.id if current_user.is_authenticated else 'anonymous'
+    return f"dashboard:{user_id}"
+
+# 仪表板缓存相关函数
+def cache_dashboard_data(data, timeout=300):
+    """缓存仪表板数据"""
+    cache_manager.set('dashboard_data', data, timeout)
+
+def get_cached_dashboard_data():
+    """获取缓存的仪表板数据"""
+    return cache_manager.get('dashboard_data')
 
 def invalidate_dashboard_cache():
-    """
-    使仪表盘缓存失效
-    """
-    if cache_manager:
-        pattern = "dashboard:*"
-        cache_manager.delete_pattern(pattern)
+    """使仪表板缓存失效"""
+    cache_manager.delete('dashboard_data')
+
+# 缓存管理函数
+def clear_user_cache(user_id: int):
+    """清除用户相关缓存"""
+    cache_manager.invalidate_pattern(f"user:{user_id}*")
+
+def clear_instance_cache(instance_id: int):
+    """清除实例相关缓存"""
+    cache_manager.invalidate_pattern(f"instance:{instance_id}*")
+
+def clear_task_cache(task_id: int):
+    """清除任务相关缓存"""
+    cache_manager.invalidate_pattern(f"task:{task_id}*")
+
+def clear_dashboard_cache():
+    """清除仪表板缓存"""
+    cache_manager.invalidate_pattern("dashboard:*")
+
+def clear_all_cache():
+    """清除所有缓存"""
+    cache_manager.clear()
 
 # 缓存统计
-class CacheStats:
-    """缓存统计"""
-    
-    def __init__(self):
-        self.hits = 0
-        self.misses = 0
-        self.sets = 0
-        self.deletes = 0
-    
-    def hit(self):
-        """缓存命中"""
-        self.hits += 1
-    
-    def miss(self):
-        """缓存未命中"""
-        self.misses += 1
-    
-    def set(self):
-        """缓存设置"""
-        self.sets += 1
-    
-    def delete(self):
-        """缓存删除"""
-        self.deletes += 1
-    
-    def get_hit_rate(self) -> float:
-        """获取命中率"""
-        total = self.hits + self.misses
-        return self.hits / total if total > 0 else 0.0
-    
-    def get_stats(self) -> dict:
-        """获取统计信息"""
+def get_cache_stats() -> Dict[str, Any]:
+    """获取缓存统计信息"""
+    try:
+        if hasattr(cache_manager.cache.cache, 'info'):
+            info = cache_manager.cache.cache.info()
+            return {
+                'status': 'connected',
+                'info': info
+            }
+        else:
+            return {
+                'status': 'connected',
+                'info': 'No detailed info available'
+            }
+    except Exception as e:
         return {
-            'hits': self.hits,
-            'misses': self.misses,
-            'sets': self.sets,
-            'deletes': self.deletes,
-            'hit_rate': self.get_hit_rate()
+            'status': 'error',
+            'error': str(e)
         }
 
-# 全局缓存统计
-cache_stats = CacheStats()
+# 缓存预热
+def warm_up_cache():
+    """缓存预热"""
+    try:
+        from app.models.user import User
+        from app.models.instance import Instance
+        from app.models.task import Task
+        
+        # 预热用户缓存
+        users = User.query.limit(10).all()
+        for user in users:
+            cache_manager.set(f"user:{user.id}", user.to_dict(), 600)
+        
+        # 预热实例缓存
+        instances = Instance.query.limit(10).all()
+        for instance in instances:
+            cache_manager.set(f"instance:{instance.id}", instance.to_dict(), 300)
+        
+        # 预热任务缓存
+        tasks = Task.query.limit(10).all()
+        for task in tasks:
+            cache_manager.set(f"task:{task.id}", task.to_dict(), 180)
+        
+        logger.info("缓存预热完成")
+        return True
+    except Exception as e:
+        logger.error(f"缓存预热失败: {e}")
+        return False

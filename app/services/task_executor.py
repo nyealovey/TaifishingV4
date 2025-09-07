@@ -19,16 +19,20 @@ class TaskExecutor:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
     
-    def execute_task(self, task_id):
+    def execute_task(self, task_id, timeout=300):
         """
         执行指定任务
         
         Args:
             task_id: 任务ID
+            timeout: 执行超时时间（秒）
             
         Returns:
             dict: 执行结果
         """
+        import signal
+        import threading
+        
         task = Task.query.get(task_id)
         if not task:
             return {
@@ -50,50 +54,78 @@ class TaskExecutor:
                 'error': f'没有找到匹配的 {task.db_type} 类型实例'
             }
         
-        self.logger.info(f"开始执行任务: {task.name}, 匹配到 {len(instances)} 个实例")
+        self.logger.info(f"开始执行任务: {task.name}, 匹配到 {len(instances)} 个实例, 超时: {timeout}秒")
         
-        total_success = 0
-        total_failed = 0
-        results = []
+        # 使用超时机制执行任务
+        result = {'success': False, 'error': '任务执行超时'}
         
-        # 逐一执行实例
-        for instance in instances:
+        def run_task():
+            nonlocal result
             try:
-                result = self._execute_task_for_instance(task, instance)
-                if result['success']:
-                    total_success += 1
-                else:
-                    total_failed += 1
+                total_success = 0
+                total_failed = 0
+                results = []
                 
-                results.append({
-                    'instance_name': instance.name,
-                    'result': result
-                })
+                # 逐一执行实例
+                for instance in instances:
+                    try:
+                        instance_result = self._execute_task_for_instance(task, instance)
+                        if instance_result['success']:
+                            total_success += 1
+                        else:
+                            total_failed += 1
+                        
+                        results.append({
+                            'instance_name': instance.name,
+                            'result': instance_result
+                        })
+                        
+                        # 记录同步数据
+                        self._record_sync_data(task, instance, instance_result)
+                        
+                    except Exception as e:
+                        self.logger.error(f"执行任务 {task.name} 在实例 {instance.name} 时出错: {e}")
+                        total_failed += 1
+                        results.append({
+                            'instance_name': instance.name,
+                            'result': {
+                                'success': False,
+                                'error': str(e)
+                            }
+                        })
                 
-                # 记录同步数据
-                self._record_sync_data(task, instance, result)
+                # 更新任务状态
+                self._update_task_status(task, total_success, total_failed, results)
                 
+                result = {
+                    'success': total_failed == 0,
+                    'message': f'任务执行完成，成功: {total_success}, 失败: {total_failed}',
+                    'total_success': total_success,
+                    'total_failed': total_failed,
+                    'results': results
+                }
             except Exception as e:
-                self.logger.error(f"执行任务 {task.name} 在实例 {instance.name} 时出错: {e}")
-                total_failed += 1
-                results.append({
-                    'instance_name': instance.name,
-                    'result': {
-                        'success': False,
-                        'error': str(e)
-                    }
-                })
+                self.logger.error(f"任务执行失败: {e}")
+                result = {
+                    'success': False,
+                    'error': str(e)
+                }
         
-        # 更新任务状态
-        self._update_task_status(task, total_success, total_failed, results)
+        # 使用线程执行任务，支持超时
+        import threading
+        thread = threading.Thread(target=run_task)
+        thread.daemon = True
+        thread.start()
+        thread.join(timeout=timeout)
         
-        return {
-            'success': total_failed == 0,
-            'message': f'任务执行完成，成功: {total_success}, 失败: {total_failed}',
-            'total_success': total_success,
-            'total_failed': total_failed,
-            'results': results
-        }
+        if thread.is_alive():
+            self.logger.warning(f"任务 {task.name} 执行超时 ({timeout}秒)")
+            return {
+                'success': False,
+                'error': f'任务执行超时 ({timeout}秒)'
+            }
+        
+        return result
     
     def _execute_task_for_instance(self, task, instance):
         """

@@ -206,39 +206,48 @@
                 <div class="mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span>CPU使用率</span>
-                        <span class="badge bg-{{ 'danger' if status and status.system and status.system.cpu > 80 else 'warning' if status and status.system and status.system.cpu > 60 else 'success' }}">
+                        {% set cpu_badge_class = 'danger' if status and status.system and status.system.cpu > 80 else 'warning' if status and status.system and status.system.cpu > 60 else 'success' %}
+                        <span class="badge bg-{{ cpu_badge_class }}">
                             {{ "%.1f"|format(status.system.cpu) if status and status.system else 0 }}%
                         </span>
                     </div>
                     <div class="progress">
-                        <div class="progress-bar bg-{{ 'danger' if status and status.system and status.system.cpu > 80 else 'warning' if status and status.system and status.system.cpu > 60 else 'success' }}" 
-                             style="width: {{ status.system.cpu if status and status.system else 0 }}%"></div>
+                        {% set cpu_percent = status.system.cpu if status and status.system else 0 %}
+                        {% set cpu_class = 'danger' if cpu_percent > 80 else 'warning' if cpu_percent > 60 else 'success' %}
+                        <div class="progress-bar bg-{{ cpu_class }}" 
+                             style="width: {{ cpu_percent }}%"></div>
                     </div>
                 </div>
                 
                 <div class="mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span>内存使用率</span>
-                        <span class="badge bg-{{ 'danger' if status and status.system and status.system.memory and status.system.memory.percent > 80 else 'warning' if status and status.system and status.system.memory and status.system.memory.percent > 60 else 'success' }}">
+                        {% set memory_badge_class = 'danger' if status and status.system and status.system.memory and status.system.memory.percent > 80 else 'warning' if status and status.system and status.system.memory and status.system.memory.percent > 60 else 'success' %}
+                        <span class="badge bg-{{ memory_badge_class }}">
                             {{ "%.1f"|format(status.system.memory.percent) if status and status.system and status.system.memory else 0 }}%
                         </span>
                     </div>
                     <div class="progress">
-                        <div class="progress-bar bg-{{ 'danger' if status and status.system and status.system.memory and status.system.memory.percent > 80 else 'warning' if status and status.system and status.system.memory and status.system.memory.percent > 60 else 'success' }}" 
-                             style="width: {{ status.system.memory.percent if status and status.system and status.system.memory else 0 }}%"></div>
+                        {% set memory_percent = status.system.memory.percent if status and status.system and status.system.memory else 0 %}
+                        {% set memory_class = 'danger' if memory_percent > 80 else 'warning' if memory_percent > 60 else 'success' %}
+                        <div class="progress-bar bg-{{ memory_class }}" 
+                             style="width: {{ memory_percent }}%"></div>
                     </div>
                 </div>
                 
                 <div class="mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span>磁盘使用率</span>
-                        <span class="badge bg-{{ 'danger' if status and status.system and status.system.disk and status.system.disk.percent > 80 else 'warning' if status and status.system and status.system.disk and status.system.disk.percent > 60 else 'success' }}">
+                        {% set disk_badge_class = 'danger' if status and status.system and status.system.disk and status.system.disk.percent > 80 else 'warning' if status and status.system and status.system.disk and status.system.disk.percent > 60 else 'success' %}
+                        <span class="badge bg-{{ disk_badge_class }}">
                             {{ "%.1f"|format(status.system.disk.percent) if status and status.system and status.system.disk else 0 }}%
                         </span>
                     </div>
                     <div class="progress">
-                        <div class="progress-bar bg-{{ 'danger' if status and status.system and status.system.disk and status.system.disk.percent > 80 else 'warning' if status and status.system and status.system.disk and status.system.disk.percent > 60 else 'success' }}" 
-                             style="width: {{ status.system.disk.percent if status and status.system and status.system.disk else 0 }}%"></div>
+                        {% set disk_percent = status.system.disk.percent if status and status.system and status.system.disk else 0 %}
+                        {% set disk_class = 'danger' if disk_percent > 80 else 'warning' if disk_percent > 60 else 'success' %}
+                        <div class="progress-bar bg-{{ disk_class }}" 
+                             style="width: {{ disk_percent }}%"></div>
                     </div>
                 </div>
                 

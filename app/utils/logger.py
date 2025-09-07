@@ -314,7 +314,7 @@ def log_decorator(operation_type):
     Args:
         operation_type: 操作类型
     """
-    def decorator(func):
+    def log_decorator_wrapper(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             logger = get_app_logger()
@@ -331,7 +331,7 @@ def log_decorator(operation_type):
                 logger.error(f"执行失败: {operation_type}, 耗时: {duration:.2f}秒, 错误: {str(e)}")
                 raise
         return wrapper
-    return decorator
+    return log_decorator_wrapper
 
 # 创建各种专用日志记录器
 app_logger = setup_logger('taifish.app', 'userdata/logs/app.log')
