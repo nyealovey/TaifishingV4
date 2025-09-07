@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 import psutil
 import os
 from sqlalchemy import text
-from app.utils.timezone import get_china_time, utc_to_china, format_china_time, get_china_today
+from app.utils.timezone import get_china_time, utc_to_china, format_china_time, get_china_today, get_china_date, china_to_utc, CHINA_TZ
 
 # 创建蓝图
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -186,15 +186,22 @@ def get_log_trend_data():
     """获取日志趋势数据"""
     try:
         # 最近7天的日志数据（东八区）
-        end_date = get_china_today().date()
-        start_date = end_date - timedelta(days=6)
+        china_today = get_china_date()
+        start_date = china_today - timedelta(days=6)
         
         trend_data = []
         for i in range(7):
             date = start_date + timedelta(days=i)
+            
+            # 计算该日期的UTC时间范围（东八区转UTC）
+            start_utc = china_to_utc(CHINA_TZ.localize(datetime.combine(date, datetime.min.time())))
+            end_utc = china_to_utc(CHINA_TZ.localize(datetime.combine(date, datetime.max.time())))
+            
             count = Log.query.filter(
-                db.func.date(Log.created_at) == date
+                Log.created_at >= start_utc,
+                Log.created_at <= end_utc
             ).count()
+            
             trend_data.append({
                 'date': date.strftime('%Y-%m-%d'),
                 'count': count
