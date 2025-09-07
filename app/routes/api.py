@@ -4,12 +4,16 @@
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.utils.logger import log_operation, log_api_request
 
 api_bp = Blueprint('api', __name__)
 
 @api_bp.route('/health')
 def health():
     """健康检查"""
+    # 记录API调用
+    log_api_request('GET', '/api/health', 200, 0, None, request.remote_addr)
+    
     return jsonify({
         'status': 'healthy',
         'message': '泰摸鱼吧服务正常运行',
@@ -27,6 +31,9 @@ def status():
     import redis
     import psutil
     from datetime import datetime
+    import time
+    
+    start_time = time.time()
     
     status_info = {
         'status': 'running',
@@ -80,5 +87,10 @@ def status():
         }
     except Exception as e:
         status_info['stats'] = f'error: {str(e)}'
+    
+    # 记录API调用
+    duration = (time.time() - start_time) * 1000  # 转换为毫秒
+    user_id = get_jwt_identity()
+    log_api_request('GET', '/api/status', 200, duration, user_id, request.remote_addr)
     
     return jsonify(status_info)

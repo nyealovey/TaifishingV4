@@ -6,6 +6,7 @@
 
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for
 from flask_login import login_required, current_user
+from app.utils.logger import log_operation, log_api_request
 import psutil
 from app.utils.timezone import get_china_time, format_china_time
 
@@ -32,16 +33,28 @@ def admin():
 @main_bp.route('/api/status')
 def api_status():
     """API状态检查"""
-    return jsonify({
+    import time
+    start_time = time.time()
+    
+    result = {
         'status': 'success',
         'message': '泰摸鱼吧API运行正常',
         'version': '1.0.0',
         'user': current_user.username if current_user.is_authenticated else None
-    })
+    }
+    
+    # 记录API调用
+    duration = (time.time() - start_time) * 1000
+    user_id = current_user.id if current_user.is_authenticated else None
+    log_api_request('GET', '/api/status', 200, duration, user_id, request.remote_addr)
+    
+    return jsonify(result)
 
 @main_bp.route('/api/health')
 def api_health():
     """健康检查"""
+    import time
+    start_time = time.time()
     from datetime import datetime
     from app import db
     
@@ -68,13 +81,20 @@ def api_health():
     # 整体状态
     overall_status = 'healthy' if db_status == 'connected' and redis_status == 'connected' else 'unhealthy'
     
-    return jsonify({
+    result = {
         'status': overall_status,
         'database': db_status,
         'redis': redis_status,
         'timestamp': get_china_time().isoformat(),
         'uptime': get_system_uptime()
-    })
+    }
+    
+    # 记录API调用
+    import time
+    duration = (time.time() - start_time) * 1000
+    log_api_request('GET', '/api/health', 200, duration, None, request.remote_addr)
+    
+    return jsonify(result)
 
 def get_system_uptime():
     """获取系统运行时间"""

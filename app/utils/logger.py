@@ -293,7 +293,8 @@ def log_api_request(method, endpoint, status_code, duration, user_id=None, ip_ad
         user_id: 用户ID
         ip_address: IP地址
     """
-    logger = get_app_logger()
+    # 使用专用的API日志记录器
+    api_logger = setup_logger('api', 'userdata/logs/api.log')
     
     api_data = {
         'method': method,
@@ -305,7 +306,19 @@ def log_api_request(method, endpoint, status_code, duration, user_id=None, ip_ad
         'timestamp': datetime.utcnow().isoformat()
     }
     
-    logger.info(f"API请求: {api_data}")
+    api_logger.info(f"API请求: {api_data}")
+    
+    # 同时记录到主日志（强制记录，不管调试模式）
+    main_logger = setup_logger('main', 'userdata/logs/app.log')
+    main_logger.info(f"API请求: {api_data}")
+    
+    # 如果Flask应用存在，也记录到Flask logger
+    try:
+        from flask import current_app
+        if current_app:
+            current_app.logger.info(f"API请求: {api_data}")
+    except:
+        pass
 
 def log_decorator(operation_type):
     """

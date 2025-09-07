@@ -21,6 +21,7 @@ import os
 from sqlalchemy import text
 from app.utils.timezone import get_china_time, utc_to_china, format_china_time, get_china_today, get_china_date, china_to_utc, CHINA_TZ
 from app.utils.cache_manager import cached, cache_dashboard_data, get_cached_dashboard_data, invalidate_dashboard_cache
+from app.utils.logger import log_operation, log_api_request
 
 # 创建蓝图
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -29,6 +30,9 @@ dashboard_bp = Blueprint('dashboard', __name__)
 @login_required
 def index():
     """系统仪表板首页"""
+    import time
+    start_time = time.time()
+    
     # 获取系统概览数据
     overview_data = get_system_overview()
     
@@ -40,6 +44,14 @@ def index():
     
     # 获取系统状态
     system_status = get_system_status()
+    
+    # 记录操作日志
+    duration = (time.time() - start_time) * 1000
+    log_operation('DASHBOARD_VIEW', current_user.id, {
+        'ip_address': request.remote_addr,
+        'user_agent': request.headers.get('User-Agent'),
+        'duration_ms': duration
+    })
     
     if request.is_json:
         return jsonify({
@@ -59,30 +71,62 @@ def index():
 @login_required
 def api_overview():
     """获取系统概览API"""
+    import time
+    start_time = time.time()
+    
     overview = get_system_overview()
+    
+    # 记录API调用
+    duration = (time.time() - start_time) * 1000
+    log_api_request('GET', '/dashboard/api/overview', 200, duration, current_user.id, request.remote_addr)
+    
     return jsonify(overview)
 
 @dashboard_bp.route('/api/charts')
 @login_required
 def api_charts():
     """获取图表数据API"""
+    import time
+    start_time = time.time()
+    
     chart_type = request.args.get('type', 'all', type=str)
     charts = get_chart_data(chart_type)
+    
+    # 记录API调用
+    duration = (time.time() - start_time) * 1000
+    log_api_request('GET', '/dashboard/api/charts', 200, duration, current_user.id, request.remote_addr)
+    
     return jsonify(charts)
 
 @dashboard_bp.route('/api/activities')
 @login_required
 def api_activities():
     """获取最近活动API"""
+    import time
+    start_time = time.time()
+    
     limit = request.args.get('limit', 10, type=int)
     activities = get_recent_activities(limit)
+    
+    # 记录API调用
+    duration = (time.time() - start_time) * 1000
+    log_api_request('GET', '/dashboard/api/activities', 200, duration, current_user.id, request.remote_addr)
+    
     return jsonify(activities)
 
 @dashboard_bp.route('/api/status')
 @login_required
 def api_status():
     """获取系统状态API"""
+    import time
+    start_time = time.time()
+    
     status = get_system_status()
+    
+    # 记录API调用
+    duration = (time.time() - start_time) * 1000
+    log_api_request('GET', '/dashboard/api/status', 200, duration, current_user.id, request.remote_addr)
+    
     return jsonify(status)
 
 @cached(timeout=300, key_prefix='dashboard')
