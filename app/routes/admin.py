@@ -16,8 +16,6 @@ from app.constants import UserRole, ErrorMessages, SuccessMessages
 from app.utils.api_response import APIResponse
 from app.utils.performance_monitor import performance_monitor
 from app.utils.advanced_error_handler import advanced_error_handler
-from app.utils.code_quality_analyzer import code_quality_analyzer
-# from app.utils.advanced_test_framework import test_framework  # 避免循环导入
 
 logger = logging.getLogger(__name__)
 
@@ -78,42 +76,7 @@ def error_metrics():
         logger.error(f"获取错误统计失败: {e}")
         return APIResponse.server_error("获取错误统计失败")
 
-@admin_bp.route('/code-quality', methods=['GET'])
-@login_required
-@admin_required
-def code_quality_analysis():
-    """代码质量分析"""
-    try:
-        # 运行代码质量分析
-        analysis_result = code_quality_analyzer.analyze_project()
-        
-        return APIResponse.success(data=analysis_result)
-        
-    except Exception as e:
-        logger.error(f"代码质量分析失败: {e}")
-        return APIResponse.server_error("代码质量分析失败")
 
-@admin_bp.route('/tests', methods=['POST'])
-@login_required
-@admin_required
-def run_tests():
-    """运行测试"""
-    try:
-        test_type = request.json.get('test_type', 'all')
-        
-        if test_type == 'all':
-            # 动态导入避免循环导入
-            from app.utils.advanced_test_framework import test_framework
-            results = test_framework.run_comprehensive_tests()
-        else:
-            # 可以添加特定类型的测试
-            results = {'error': '不支持的测试类型'}
-        
-        return APIResponse.success(data=results)
-        
-    except Exception as e:
-        logger.error(f"运行测试失败: {e}")
-        return APIResponse.server_error("运行测试失败")
 
 @admin_bp.route('/system-info', methods=['GET'])
 @login_required
@@ -161,43 +124,6 @@ def system_info():
         logger.error(f"获取系统信息失败: {e}")
         return APIResponse.server_error("获取系统信息失败")
 
-@admin_bp.route('/logs', methods=['GET'])
-@login_required
-@admin_required
-def system_logs():
-    """系统日志"""
-    try:
-        from app.models.log import Log
-        from app import db
-        
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 50, type=int)
-        level = request.args.get('level')
-        log_type = request.args.get('type')
-        
-        query = Log.query
-        
-        if level:
-            query = query.filter(Log.level == level)
-        
-        if log_type:
-            query = query.filter(Log.log_type == log_type)
-        
-        logs = query.order_by(Log.created_at.desc()).paginate(
-            page=page, per_page=per_page, error_out=False
-        )
-        
-        return APIResponse.paginated(
-            data=[log.to_dict() for log in logs.items],
-            page=page,
-            per_page=per_page,
-            total=logs.total,
-            pages=logs.pages
-        )
-        
-    except Exception as e:
-        logger.error(f"获取系统日志失败: {e}")
-        return APIResponse.server_error("获取系统日志失败")
 
 @admin_bp.route('/maintenance', methods=['POST'])
 @login_required
@@ -412,6 +338,22 @@ def get_error_metrics():
     """获取错误指标"""
     try:
         metrics = advanced_error_handler.get_error_metrics()
+        
+        # 如果没有错误数据，返回默认统计
+        if not metrics:
+            metrics = {
+                'critical_errors': 0,
+                'high_errors': 0,
+                'medium_errors': 0,
+                'low_errors': 0,
+                'total_errors': 0,
+                'recovery_success': 0,
+                'recovery_failed': 0,
+                'error_rate': 0.0,
+                'last_error_time': None,
+                'error_trend': 'stable'
+            }
+        
         return APIResponse.success(data=metrics)
     except Exception as e:
         logger.error(f"获取错误指标失败: {e}")
@@ -480,20 +422,6 @@ def test_error_handling():
         logger.error(f"测试错误处理失败: {e}")
         return APIResponse.server_error("测试错误处理失败")
 
-@admin_bp.route('/error-config', methods=['POST'])
-@login_required
-@admin_required
-def save_error_config():
-    """保存错误处理配置"""
-    try:
-        config = request.json
-        # 这里应该保存配置到数据库或配置文件
-        # 暂时只记录日志
-        logger.info(f"保存错误处理配置: {config}")
-        return APIResponse.success(message="配置保存成功")
-    except Exception as e:
-        logger.error(f"保存错误处理配置失败: {e}")
-        return APIResponse.server_error("保存错误处理配置失败")
 
 @admin_bp.route('/error-management', methods=['GET'])
 @login_required
@@ -567,6 +495,13 @@ def get_system_info():
         return APIResponse.server_error("获取系统信息失败")
 
 @admin_bp.route('/system-logs', methods=['GET'])
+@login_required
+@admin_required
+def system_logs_page():
+    """系统日志页面"""
+    return render_template('admin/system_logs.html')
+
+@admin_bp.route('/system-logs/api', methods=['GET'])
 @login_required
 @admin_required
 def get_system_logs():
@@ -840,63 +775,6 @@ def refresh_system_data():
         return APIResponse.server_error("刷新系统数据失败")
 
 
-@admin_bp.route('/deployment', methods=['POST'])
-@login_required
-@admin_required
-def deployment_management():
-    """部署管理"""
-    try:
-        action = request.json.get('action')  # 'deploy', 'rollback', 'status'
-        environment = request.json.get('environment', 'production')
-        
-        if action == 'deploy':
-            # 执行部署
-            import subprocess
-            result = subprocess.run(
-                ['python', 'scripts/automated_deployment.py', 'deploy', '--environment', environment],
-                capture_output=True,
-                text=True
-            )
-            
-            if result.returncode == 0:
-                return APIResponse.success(message="部署成功")
-            else:
-                return APIResponse.error(f"部署失败: {result.stderr}")
-                
-        elif action == 'rollback':
-            # 执行回滚
-            deployment_id = request.json.get('deployment_id')
-            cmd = ['python', 'scripts/automated_deployment.py', 'rollback']
-            if deployment_id:
-                cmd.extend(['--deployment-id', deployment_id])
-            
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            
-            if result.returncode == 0:
-                return APIResponse.success(message="回滚成功")
-            else:
-                return APIResponse.error(f"回滚失败: {result.stderr}")
-                
-        elif action == 'status':
-            # 获取部署状态
-            result = subprocess.run(
-                ['python', 'scripts/automated_deployment.py', 'status'],
-                capture_output=True,
-                text=True
-            )
-            
-            if result.returncode == 0:
-                status_data = json.loads(result.stdout)
-                return APIResponse.success(data=status_data)
-            else:
-                return APIResponse.error(f"获取状态失败: {result.stderr}")
-        
-        else:
-            return APIResponse.error("无效的操作", code=400)
-        
-    except Exception as e:
-        logger.error(f"部署管理操作失败: {e}")
-        return APIResponse.server_error("部署管理操作失败")
 
 # 辅助函数
 def get_user_count():
@@ -931,18 +809,6 @@ def get_system_uptime():
     except:
         return 0
 
-def get_last_deployment():
-    """获取最后部署时间"""
-    try:
-        deployment_file = 'deployments/deployment_history.json'
-        if os.path.exists(deployment_file):
-            with open(deployment_file, 'r') as f:
-                history = json.load(f)
-                if history:
-                    return history[-1]['timestamp']
-    except:
-        pass
-    return None
 
 def get_recent_activities():
     """获取最近活动"""
@@ -981,13 +847,3 @@ def data_management():
         logger.error(f"获取数据管理页面失败: {e}")
         return APIResponse.server_error("获取数据管理页面失败")
 
-@admin_bp.route('/development-tools', methods=['GET'])
-@login_required
-@admin_required
-def development_tools():
-    """开发工具"""
-    try:
-        return render_template('admin/development_tools.html')
-    except Exception as e:
-        logger.error(f"获取开发工具页面失败: {e}")
-        return APIResponse.server_error("获取开发工具页面失败")

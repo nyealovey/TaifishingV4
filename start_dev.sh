@@ -82,7 +82,7 @@ echo ""
 echo "✅ 环境准备完成！"
 echo "🌐 启动Flask应用..."
 echo "📱 访问地址: http://localhost:5001"
-echo "🔑 默认登录: admin/admin123"
+echo "🔑 默认登录: admin/Admin123"
 echo "按 Ctrl+C 停止服务器"
 echo ""
 

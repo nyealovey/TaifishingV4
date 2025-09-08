@@ -277,12 +277,12 @@ def init_admin_user():
     if not admin:
         admin = User(
             username='admin',
-            password='admin123',
+            password='Admin123',
             role='admin'
         )
         db.session.add(admin)
         db.session.commit()
-        print("✅ 管理员用户创建成功: admin/admin123")
+        print("✅ 管理员用户创建成功: admin/Admin123")
     else:
         print("✅ 管理员用户已存在")
 

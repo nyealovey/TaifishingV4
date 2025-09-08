@@ -120,7 +120,7 @@ docker exec -it <container_id> /bin/bash
 ## 👤 默认账户
 
 - **用户名**: admin
-- **密码**: admin123
+- **密码**: Admin123
 - **邮箱**: admin@taifish.com
 
 ## 📊 核心功能

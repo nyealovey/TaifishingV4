@@ -34,7 +34,7 @@ def main():
     print("🐟 泰摸鱼吧 - 本地开发环境")
     print("=" * 50)
     print(f"🌐 访问地址: http://{host}:{port}")
-    print(f"🔑 默认登录: admin/admin123")
+    print(f"🔑 默认登录: admin/Admin123")
     print(f"📊 管理界面: http://{host}:{port}/admin")
     print(f"🔧 调试模式: {'开启' if debug else '关闭'}")
     print("=" * 50)

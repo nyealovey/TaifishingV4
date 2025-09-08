@@ -144,6 +144,7 @@
                         <th style="font-size: 0.8rem;">插件</th>
                         <th style="font-size: 0.8rem;">密码过期策略</th>
                         <th style="font-size: 0.8rem;">密码最后修改</th>
+                        <th style="font-size: 0.8rem;">锁定状态</th>
                         <th style="font-size: 0.8rem;">操作</th>
                     </tr>
                 </thead>
@@ -188,6 +189,13 @@
                                 <small class="text-muted" style="font-size: 0.75rem;">{{ account.password_last_changed | china_datetime }}</small>
                             {% else %}
                                 <small class="text-muted" style="font-size: 0.75rem;">未知</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if account.is_locked %}
+                                <span class="badge bg-danger" style="font-size: 0.7rem;">已锁定</span>
+                            {% else %}
+                                <span class="badge bg-success" style="font-size: 0.7rem;">正常</span>
                             {% endif %}
                         </td>
                         <td>

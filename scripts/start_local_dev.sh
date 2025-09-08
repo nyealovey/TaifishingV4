@@ -207,7 +207,7 @@ start_flask_app() {
     
     print_message $GREEN "✅ Flask应用启动完成"
     print_message $YELLOW "📱 访问地址: http://localhost:5000"
-    print_message $YELLOW "🔑 默认登录: admin/admin123"
+    print_message $YELLOW "🔑 默认登录: admin/Admin123"
     print_message $YELLOW "📊 管理界面: http://localhost:5000/admin"
     
     # 启动Flask应用

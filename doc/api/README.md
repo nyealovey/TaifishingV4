@@ -65,7 +65,7 @@ Content-Type: application/json
 
 {
   "username": "admin",
-  "password": "admin123"
+  "password": "Admin123"
 }
 ```
 
@@ -236,7 +236,7 @@ Content-Type: application/json
 # 1. 登录获取Token
 curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "admin123"}'
+  -d '{"username": "admin", "password": "Admin123"}'
 
 # 2. 使用Token获取实例列表
 curl -X GET http://localhost:8000/api/instances \

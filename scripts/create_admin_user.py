@@ -50,7 +50,7 @@ def create_admin_user():
             
             print("✅ 管理员用户创建成功")
             print("   用户名: admin")
-            print("   密码: admin123")
+            print("   密码: Admin123")
             print("   角色: admin")
             print("   状态: 正常")
             
@@ -71,7 +71,7 @@ def main():
     
     if success:
         print("\n🎉 管理员用户设置完成！")
-        print("现在可以使用 admin/admin123 登录系统")
+        print("现在可以使用 admin/Admin123 登录系统")
     else:
         print("\n⚠️  管理员用户创建失败")
         sys.exit(1)

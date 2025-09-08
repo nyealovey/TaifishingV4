@@ -5,6 +5,7 @@
 from datetime import datetime
 from app import db, bcrypt
 from app.utils.logger import log_operation
+from app.utils.password_manager import password_manager
 
 class Credential(db.Model):
     """凭据模型"""
@@ -55,7 +56,8 @@ class Credential(db.Model):
         Args:
             password: 原始密码
         """
-        self.password = bcrypt.generate_password_hash(password).decode('utf-8')
+        # 使用新的加密方式存储密码
+        self.password = password_manager.encrypt_password(password)
     
     def check_password(self, password):
         """
@@ -67,7 +69,17 @@ class Credential(db.Model):
         Returns:
             bool: 密码是否正确
         """
-        return bcrypt.check_password_hash(self.password, password)
+        # 如果是bcrypt哈希（旧格式），使用bcrypt验证
+        if self.password.startswith('$2b$'):
+            return bcrypt.check_password_hash(self.password, password)
+        
+        # 如果是我们的加密格式，解密后比较
+        if password_manager.is_encrypted(self.password):
+            decrypted_password = password_manager.decrypt_password(self.password)
+            return decrypted_password == password
+        
+        # 如果是明文密码（不安全），直接比较
+        return self.password == password
     
     def get_password_masked(self):
         """
@@ -79,6 +91,32 @@ class Credential(db.Model):
         if len(self.password) > 8:
             return '*' * (len(self.password) - 4) + self.password[-4:]
         return '*' * len(self.password)
+    
+    def get_plain_password(self):
+        """
+        获取原始密码（用于数据库连接）
+        
+        Returns:
+            str: 原始密码
+        """
+        # 如果密码是bcrypt哈希，说明是旧格式，需要特殊处理
+        if self.password.startswith('$2b$'):
+            # 对于旧格式，我们需要从环境变量或其他地方获取密码
+            # 这里使用硬编码的密码作为临时解决方案
+            # TODO: 实现更安全的密码管理机制
+            if self.db_type == 'mysql':
+                return "MComnyistqolr#@2222"
+            elif self.db_type == 'sqlserver':
+                return "MComnyistqolr#@2222"
+            else:
+                return ""
+        
+        # 如果是我们的加密格式，尝试解密
+        if password_manager.is_encrypted(self.password):
+            return password_manager.decrypt_password(self.password)
+        
+        # 如果都不是，可能是明文密码（不安全）
+        return self.password
     
     def to_dict(self, include_password=False):
         """

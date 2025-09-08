@@ -107,7 +107,7 @@ EOF
     print_message $GREEN "✅ 环境准备完成！"
     print_message $BLUE "🌐 启动Flask应用..."
     print_message $BLUE "📱 访问地址: http://localhost:5001"
-    print_message $BLUE "🔑 默认登录: admin/admin123"
+    print_message $BLUE "🔑 默认登录: admin/Admin123"
     print_message $BLUE "🔴 Redis状态: 运行中"
     print_message $BLUE "💾 数据库: SQLite (userdata/taifish_dev.db)"
     print_message $YELLOW "按 Ctrl+C 停止服务器"

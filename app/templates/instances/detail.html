@@ -85,21 +85,6 @@
                     </div>
                 </div>
                 
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">状态</label>
-                            <p class="form-control-plaintext">
-                                {% if instance.is_active %}
-                                <span class="badge bg-success">正常</span>
-                                {% else %}
-                                <span class="badge bg-danger">禁用</span>
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-                
                 {% if instance.description %}
                 <div class="mb-3">
                     <label class="form-label fw-bold">描述</label>
@@ -247,6 +232,7 @@
                                 <th>插件</th>
                                 <th>密码过期策略</th>
                                 <th>密码最后修改</th>
+                                <th>锁定状态</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -280,6 +266,13 @@
                                         <small class="text-muted">{{ account.password_last_changed | china_datetime }}</small>
                                     {% else %}
                                         <small class="text-muted">未知</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.is_locked %}
+                                        <span class="badge bg-danger">已锁定</span>
+                                    {% else %}
+                                        <span class="badge bg-success">正常</span>
                                     {% endif %}
                                 </td>
                                 <td>

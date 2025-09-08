@@ -103,12 +103,12 @@ class User(UserMixin, db.Model):
         if not admin:
             admin = User(
                 username='admin',
-                password='admin123',
+                password='Admin123',
                 role='admin'
             )
             db.session.add(admin)
             db.session.commit()
-            print("✅ 默认管理员用户已创建: admin/admin123")
+            print("✅ 默认管理员用户已创建: admin/Admin123")
         return admin
     
     def __repr__(self):

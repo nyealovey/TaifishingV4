@@ -3,6 +3,7 @@
 """
 
 import pymysql
+import logging
 from typing import Dict, Any, Optional, List
 from app.models import Instance, Credential
 from app.models.account import Account
@@ -89,21 +90,21 @@ class DatabaseService:
             # 记录同步后的账户数量
             after_count = Account.query.filter_by(instance_id=instance.id).count()
             
-            # 计算变化
-            added_count = after_count - before_count + synced_count
-            deleted_count = before_count - after_count + synced_count
-            updated_count = synced_count - added_count - deleted_count
+            # 计算变化（简化计算）
+            net_change = after_count - before_count
+            total_operations = synced_count
             
             return {
                 'success': True,
-                'message': f'账户同步完成，新增: {added_count}, 更新: {updated_count}, 删除: {deleted_count}',
-                'synced_count': synced_count,
+                'message': f'账户同步完成，共同步 {total_operations} 个账户，净变化: {net_change:+d}',
+                'synced_count': total_operations,
                 'details': {
-                    'added': max(0, added_count),
-                    'updated': max(0, updated_count),
-                    'deleted': max(0, deleted_count),
+                    'added': max(0, net_change) if net_change > 0 else 0,
+                    'updated': total_operations - abs(net_change),
+                    'deleted': max(0, -net_change) if net_change < 0 else 0,
                     'before_count': before_count,
-                    'after_count': after_count
+                    'after_count': after_count,
+                    'net_change': net_change
                 }
             }
         except Exception as e:
@@ -150,7 +151,8 @@ class DatabaseService:
                     plugin=plugin,
                     password_expired=bool(expired),
                     password_last_changed=password_last_changed,
-                    is_active=not locked and not expired
+                    is_locked=locked == 'Y',  # MySQL的account_locked字段，'Y'表示锁定
+                    is_active=locked != 'Y' and expired != 'Y'
                 )
                 db.session.add(account)
                 added_count += 1
@@ -159,7 +161,8 @@ class DatabaseService:
                 existing.plugin = plugin
                 existing.password_expired = bool(expired)
                 existing.password_last_changed = password_last_changed
-                existing.is_active = not locked and not expired
+                existing.is_locked = locked == 'Y'  # MySQL的account_locked字段，'Y'表示锁定
+                existing.is_active = locked != 'Y' and expired != 'Y'
                 updated_count += 1
         
         # 删除服务器端不存在的本地账户
@@ -219,6 +222,7 @@ class DatabaseService:
                     plugin='postgresql',
                     password_expired=valid_until is not None and valid_until < 'now()',
                     password_last_changed=None,  # PostgreSQL不直接提供此信息
+                    is_locked=not can_login,  # PostgreSQL的rolcanlogin字段，False表示被禁用
                     is_active=can_login and (valid_until is None or valid_until > 'now()')
                 )
                 db.session.add(account)
@@ -227,6 +231,7 @@ class DatabaseService:
                 # 更新现有账户信息
                 existing.plugin = 'postgresql'
                 existing.password_expired = valid_until is not None and valid_until < 'now()'
+                existing.is_locked = not can_login  # PostgreSQL的rolcanlogin字段，False表示被禁用
                 existing.is_active = can_login and (valid_until is None or valid_until > 'now()')
                 updated_count += 1
         
@@ -287,6 +292,7 @@ class DatabaseService:
                     plugin='sqlserver',
                     password_expired=False,  # SQL Server不直接提供此信息
                     password_last_changed=modify_date,
+                    is_locked=bool(is_disabled),  # SQL Server的is_disabled字段
                     is_active=not is_disabled
                 )
                 db.session.add(account)
@@ -295,6 +301,7 @@ class DatabaseService:
                 # 更新现有账户信息
                 existing.plugin = 'sqlserver'
                 existing.password_last_changed = modify_date
+                existing.is_locked = bool(is_disabled)  # SQL Server的is_disabled字段
                 existing.is_active = not is_disabled
                 updated_count += 1
         
@@ -355,6 +362,7 @@ class DatabaseService:
                     plugin='oracle',
                     password_expired=status in ['EXPIRED', 'EXPIRED(GRACE)'],
                     password_last_changed=created,
+                    is_locked=status in ['LOCKED', 'LOCKED(TIMED)'],  # Oracle的锁定状态
                     is_active=status == 'OPEN'
                 )
                 db.session.add(account)
@@ -364,6 +372,7 @@ class DatabaseService:
                 existing.plugin = 'oracle'
                 existing.password_expired = status in ['EXPIRED', 'EXPIRED(GRACE)']
                 existing.password_last_changed = created
+                existing.is_locked = status in ['LOCKED', 'LOCKED(TIMED)']  # Oracle的锁定状态
                 existing.is_active = status == 'OPEN'
                 updated_count += 1
         
@@ -417,12 +426,13 @@ class DatabaseService:
                 }
             
             # 尝试连接PostgreSQL
+            password = instance.credential.get_plain_password()
             conn = psycopg2.connect(
                 host=instance.host,
                 port=instance.port,
                 database=instance.database_name or 'postgres',
                 user=instance.credential.username,
-                password=instance.credential.password,
+                password=password,
                 connect_timeout=10
             )
             
@@ -497,9 +507,8 @@ class DatabaseService:
                 }
             
             # 尝试连接MySQL
-            # 注意：这里需要原始密码，不是加密后的密码
-            # 临时解决方案：直接使用明文密码（不安全，仅用于测试）
-            password = "MComnyistqolr#@2222"  # 临时硬编码，仅用于测试
+            # 获取原始密码
+            password = instance.credential.get_plain_password()
             
             conn = pymysql.connect(
                 host=instance.host,
@@ -584,12 +593,15 @@ class DatabaseService:
                 }
             
             # 尝试连接SQL Server
+            # 获取原始密码
+            password = instance.credential.get_plain_password()
+            
             conn = pymssql.connect(
                 server=instance.host,
                 port=instance.port,
                 database=instance.database_name or 'master',
                 user=instance.credential.username,
-                password=instance.credential.password,
+                password=password,
                 timeout=10
             )
             
@@ -667,9 +679,10 @@ class DatabaseService:
             
             # 尝试连接Oracle
             dsn = cx_Oracle.makedsn(instance.host, instance.port, service_name=instance.database_name or 'ORCL')
+            password = instance.credential.get_plain_password()
             conn = cx_Oracle.connect(
                 user=instance.credential.username,
-                password=instance.credential.password,
+                password=password,
                 dsn=dsn
             )
             
@@ -782,13 +795,8 @@ class DatabaseService:
     def _get_mysql_connection(self, instance: Instance) -> Optional[Any]:
         """获取MySQL连接"""
         try:
-            # 注意：这里需要原始密码，不是加密后的密码
-            # 但是Credential模型只存储加密后的密码
-            # 这是一个设计问题，需要重新考虑密码存储方式
-            
-            # 临时解决方案：直接使用明文密码（不安全，仅用于测试）
-            # 在实际应用中，应该有一个安全的密码解密机制
-            password = "MComnyistqolr#@2222"  # 临时硬编码，仅用于测试
+            # 获取原始密码
+            password = instance.credential.get_plain_password() if instance.credential else ""
             
             conn = pymysql.connect(
                 host=instance.host,
@@ -812,12 +820,13 @@ class DatabaseService:
         """获取PostgreSQL连接"""
         try:
             import psycopg2
+            password = instance.credential.get_plain_password() if instance.credential else ""
             conn = psycopg2.connect(
                 host=instance.host,
                 port=instance.port,
                 database=instance.database_name or 'postgres',
                 user=instance.credential.username if instance.credential else '',
-                password=instance.credential.password if instance.credential else '',
+                password=password,
                 connect_timeout=30
             )
             return conn
@@ -829,12 +838,13 @@ class DatabaseService:
         """获取SQL Server连接"""
         try:
             import pymssql
+            password = instance.credential.get_plain_password() if instance.credential else ""
             conn = pymssql.connect(
                 server=instance.host,
                 port=instance.port,
                 database=instance.database_name or 'master',
                 user=instance.credential.username if instance.credential else '',
-                password=instance.credential.password if instance.credential else '',
+                password=password,
                 timeout=30
             )
             return conn
@@ -848,9 +858,10 @@ class DatabaseService:
             import cx_Oracle
             dsn = cx_Oracle.makedsn(instance.host, instance.port, 
                                   service_name=instance.database_name or 'ORCL')
+            password = instance.credential.get_plain_password() if instance.credential else ""
             conn = cx_Oracle.connect(
                 user=instance.credential.username if instance.credential else '',
-                password=instance.credential.password if instance.credential else '',
+                password=password,
                 dsn=dsn
             )
             return conn
