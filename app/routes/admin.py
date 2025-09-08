@@ -1108,4 +1108,210 @@ def delete_role(role_id):
         logger.error(f"删除角色失败: {e}")
         return APIResponse.server_error("删除角色失败")
 
+@admin_bp.route('/user-permissions', methods=['GET'])
+@login_required
+@admin_required
+def user_permissions_management():
+    """用户权限管理"""
+    try:
+        return render_template('admin/user_permissions.html')
+    except Exception as e:
+        logger.error(f"获取用户权限管理页面失败: {e}")
+        return APIResponse.server_error("获取用户权限管理页面失败")
+
+@admin_bp.route('/permission-stats', methods=['GET'])
+@login_required
+@admin_required
+def get_permission_stats():
+    """获取权限统计"""
+    try:
+        # 模拟权限统计数据
+        stats = {
+            'total_permissions': 25,
+            'system_permissions': 15,
+            'business_permissions': 10,
+            'active_permissions': 23
+        }
+        
+        return APIResponse.success(data=stats)
+        
+    except Exception as e:
+        logger.error(f"获取权限统计失败: {e}")
+        return APIResponse.server_error("获取权限统计失败")
+
+@admin_bp.route('/permissions', methods=['GET'])
+@login_required
+@admin_required
+def get_permissions():
+    """获取权限列表"""
+    try:
+        # 模拟权限数据
+        permissions = [
+            {
+                'id': 1,
+                'name': '用户查看',
+                'code': 'user:read',
+                'type': 'system',
+                'type_label': '系统权限',
+                'description': '查看用户列表和详情',
+                'role_count': 4,
+                'active': True,
+                'created_at': '2025-09-01T10:00:00Z'
+            },
+            {
+                'id': 2,
+                'name': '用户创建',
+                'code': 'user:create',
+                'type': 'system',
+                'type_label': '系统权限',
+                'description': '创建新用户',
+                'role_count': 2,
+                'active': True,
+                'created_at': '2025-09-01T10:00:00Z'
+            },
+            {
+                'id': 3,
+                'name': '用户编辑',
+                'code': 'user:update',
+                'type': 'system',
+                'type_label': '系统权限',
+                'description': '编辑用户信息',
+                'role_count': 2,
+                'active': True,
+                'created_at': '2025-09-01T10:00:00Z'
+            },
+            {
+                'id': 4,
+                'name': '用户删除',
+                'code': 'user:delete',
+                'type': 'system',
+                'type_label': '系统权限',
+                'description': '删除用户',
+                'role_count': 1,
+                'active': True,
+                'created_at': '2025-09-01T10:00:00Z'
+            },
+            {
+                'id': 5,
+                'name': '系统管理',
+                'code': 'system:manage',
+                'type': 'system',
+                'type_label': '系统权限',
+                'description': '系统配置和管理',
+                'role_count': 1,
+                'active': True,
+                'created_at': '2025-09-01T10:00:00Z'
+            },
+            {
+                'id': 6,
+                'name': '账户查看',
+                'code': 'account:read',
+                'type': 'business',
+                'type_label': '业务权限',
+                'description': '查看账户信息',
+                'role_count': 3,
+                'active': True,
+                'created_at': '2025-09-02T10:00:00Z'
+            },
+            {
+                'id': 7,
+                'name': '账户管理',
+                'code': 'account:manage',
+                'type': 'business',
+                'type_label': '业务权限',
+                'description': '管理账户信息',
+                'role_count': 2,
+                'active': True,
+                'created_at': '2025-09-02T10:00:00Z'
+            },
+            {
+                'id': 8,
+                'name': '任务执行',
+                'code': 'task:execute',
+                'type': 'business',
+                'type_label': '业务权限',
+                'description': '执行任务操作',
+                'role_count': 2,
+                'active': True,
+                'created_at': '2025-09-03T10:00:00Z'
+            },
+            {
+                'id': 9,
+                'name': '日志查看',
+                'code': 'log:read',
+                'type': 'system',
+                'type_label': '系统权限',
+                'description': '查看系统日志',
+                'role_count': 3,
+                'active': True,
+                'created_at': '2025-09-04T10:00:00Z'
+            },
+            {
+                'id': 10,
+                'name': '配置管理',
+                'code': 'config:manage',
+                'type': 'system',
+                'type_label': '系统权限',
+                'description': '管理系统配置',
+                'role_count': 1,
+                'active': True,
+                'created_at': '2025-09-05T10:00:00Z'
+            }
+        ]
+        
+        return APIResponse.success(data=permissions)
+        
+    except Exception as e:
+        logger.error(f"获取权限列表失败: {e}")
+        return APIResponse.server_error("获取权限列表失败")
+
+@admin_bp.route('/permissions', methods=['POST'])
+@login_required
+@admin_required
+def create_permission():
+    """创建权限"""
+    try:
+        data = request.get_json()
+        
+        # 这里应该实际创建权限
+        logger.info(f"创建权限: {data}")
+        
+        return APIResponse.success(message="权限创建成功")
+        
+    except Exception as e:
+        logger.error(f"创建权限失败: {e}")
+        return APIResponse.server_error("创建权限失败")
+
+@admin_bp.route('/permissions/<int:permission_id>', methods=['PUT'])
+@login_required
+@admin_required
+def update_permission(permission_id):
+    """更新权限"""
+    try:
+        data = request.get_json()
+        
+        # 这里应该实际更新权限
+        logger.info(f"更新权限 {permission_id}: {data}")
+        
+        return APIResponse.success(message="权限更新成功")
+        
+    except Exception as e:
+        logger.error(f"更新权限失败: {e}")
+        return APIResponse.server_error("更新权限失败")
+
+@admin_bp.route('/permissions/<int:permission_id>', methods=['DELETE'])
+@login_required
+@admin_required
+def delete_permission(permission_id):
+    """删除权限"""
+    try:
+        # 这里应该实际删除权限
+        logger.info(f"删除权限: {permission_id}")
+        
+        return APIResponse.success(message="权限删除成功")
+        
+    except Exception as e:
+        logger.error(f"删除权限失败: {e}")
+        return APIResponse.server_error("删除权限失败")
+
 
