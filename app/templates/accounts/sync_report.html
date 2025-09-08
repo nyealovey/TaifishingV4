@@ -65,7 +65,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <h4 class="card-title" id="lastSyncTime">-</h4>
+                            <h6 class="card-title" id="lastSyncTime">-</h6>
                             <p class="card-text">最近同步时间</p>
                         </div>
                         <div class="align-self-center">
@@ -79,7 +79,7 @@
 
     <!-- 趋势图表 -->
     <div class="row mb-4">
-        <div class="col-md-8">
+        <div class="col-12">
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
@@ -88,18 +88,6 @@
                 </div>
                 <div class="card-body">
                     <canvas id="syncTrendChart" height="100"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-pie-chart me-2"></i>数据库类型分布
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="dbTypeChart" height="200"></canvas>
                 </div>
             </div>
         </div>
@@ -280,9 +268,6 @@ function updateStatistics(statistics) {
 function createCharts(trendData, dbTypeDistribution) {
     // 创建同步趋势图表
     createSyncTrendChart(trendData);
-    
-    // 创建数据库类型分布图表
-    createDbTypeChart(dbTypeDistribution);
 }
 
 function createSyncTrendChart(trendData) {
@@ -356,57 +341,6 @@ function createSyncTrendChart(trendData) {
     });
 }
 
-function createDbTypeChart(dbTypeDistribution) {
-    const ctx = document.getElementById('dbTypeChart').getContext('2d');
-    
-    const labels = Object.keys(dbTypeDistribution);
-    const data = Object.values(dbTypeDistribution);
-    
-    // 如果没有数据，显示空状态
-    if (labels.length === 0) {
-        ctx.font = '16px Arial';
-        ctx.fillStyle = '#666';
-        ctx.textAlign = 'center';
-        ctx.fillText('暂无数据', ctx.canvas.width / 2, ctx.canvas.height / 2);
-        return;
-    }
-    
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: [
-                    'rgba(54, 162, 235, 0.8)',
-                    'rgba(255, 99, 132, 0.8)',
-                    'rgba(255, 205, 86, 0.8)',
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(153, 102, 255, 0.8)',
-                    'rgba(255, 159, 64, 0.8)'
-                ],
-                borderColor: [
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(255, 205, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                }
-            }
-        }
-    });
-}
 
 function getLast7Days() {
     const days = [];
