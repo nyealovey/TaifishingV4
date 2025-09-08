@@ -190,6 +190,7 @@
 <script>
 // 页面加载完成后获取数据
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('错误管理页面加载完成');
     loadErrorMetrics();
     loadErrorDetails();
     loadErrorCharts();
@@ -201,10 +202,21 @@ function loadErrorMetrics() {
     .then(data => {
         if (data.success) {
             const metrics = data.data;
-            document.getElementById('critical-errors').textContent = metrics.critical_errors || 0;
-            document.getElementById('high-errors').textContent = metrics.high_errors || 0;
-            document.getElementById('medium-errors').textContent = metrics.medium_errors || 0;
-            document.getElementById('recovery-success').textContent = metrics.recovery_success || 0;
+            // 更新存在的元素
+            if (document.getElementById('critical-errors')) {
+                document.getElementById('critical-errors').textContent = metrics.critical_errors || 0;
+            }
+            if (document.getElementById('high-errors')) {
+                document.getElementById('high-errors').textContent = metrics.high_errors || 0;
+            }
+            if (document.getElementById('medium-errors')) {
+                document.getElementById('medium-errors').textContent = metrics.medium_errors || 0;
+            }
+            if (document.getElementById('recovery-success')) {
+                document.getElementById('recovery-success').textContent = metrics.recovery_success || 0;
+            }
+        } else {
+            console.error('API返回错误:', data.message);
         }
     })
     .catch(error => {
@@ -218,24 +230,32 @@ function loadErrorDetails() {
     .then(data => {
         if (data.success) {
             const tbody = document.querySelector('#errorDetailsTable tbody');
-            tbody.innerHTML = '';
-            
-            data.data.forEach(error => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${new Date(error.timestamp).toLocaleString()}</td>
-                    <td><span class="badge bg-secondary">${error.error_type}</span></td>
-                    <td><span class="badge bg-${getSeverityColor(error.severity)}">${error.severity}</span></td>
-                    <td>${error.category}</td>
-                    <td><span class="badge bg-${error.recovery_success ? 'success' : 'danger'}">${error.recovery_success ? '成功' : '失败'}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-info" onclick="viewErrorDetails('${error.id}')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
+            if (tbody) {
+                tbody.innerHTML = '';
+                
+                if (data.data && data.data.length > 0) {
+                    data.data.forEach(error => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${new Date(error.timestamp).toLocaleString()}</td>
+                            <td><span class="badge bg-secondary">${error.error_type}</span></td>
+                            <td><span class="badge bg-${getSeverityColor(error.severity)}">${error.severity}</span></td>
+                            <td>${error.category}</td>
+                            <td><span class="badge bg-${error.recovery_success ? 'success' : 'danger'}">${error.recovery_success ? '成功' : '失败'}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="viewErrorDetails('${error.id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">暂无错误数据</td></tr>';
+                }
+            }
+        } else {
+            console.error('API返回错误:', data.message);
         }
     })
     .catch(error => {
@@ -305,6 +325,8 @@ function testErrorHandling() {
 function viewErrorDetails(errorId) {
     // 显示错误详情模态框
     console.log('查看错误详情:', errorId);
+    // 这里可以添加模态框显示错误详情的逻辑
+    alert('错误详情功能开发中...\n错误ID: ' + errorId);
 }
 
 function saveErrorConfig() {

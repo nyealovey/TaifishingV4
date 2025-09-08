@@ -38,6 +38,45 @@
             color: var(--primary-color) !important;
         }
         
+        /* 2级菜单样式 */
+        .navbar .dropdown-menu {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            margin-top: 8px;
+            padding: 8px 0;
+        }
+        
+        .navbar .dropdown-item {
+            padding: 10px 20px;
+            border-radius: 6px;
+            margin: 2px 8px;
+            transition: all 0.3s ease;
+            color: #333;
+        }
+        
+        .navbar .dropdown-item:hover {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .navbar .dropdown-item i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        .navbar .dropdown-toggle::after {
+            margin-left: 8px;
+            transition: transform 0.3s ease;
+        }
+        
+        .navbar .dropdown-toggle[aria-expanded="true"]::after {
+            transform: rotate(180deg);
+        }
+        
         .main-content {
             min-height: calc(100vh - 76px);
             padding: 2rem 0;
@@ -114,19 +153,22 @@
                             <i class="fas fa-tachometer-alt me-1"></i>仪表盘
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('instances.index') }}">
-                            <i class="fas fa-database me-1"></i>实例管理
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="databaseDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-database me-1"></i>数据库管理
                         </a>
+                        <ul class="dropdown-menu" aria-labelledby="databaseDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('instances.index') }}">
+                                <i class="fas fa-server me-2"></i>实例管理
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('accounts.list') }}">
+                                <i class="fas fa-users me-2"></i>账户管理
+                            </a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('credentials.index') }}">
                             <i class="fas fa-key me-1"></i>凭据管理
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('accounts.list') }}">
-                            <i class="fas fa-users me-1"></i>账户管理
                         </a>
                     </li>
                     <li class="nav-item">
