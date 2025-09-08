@@ -45,35 +45,56 @@ def index():
                          instances=instances)
 
 @accounts_bp.route('/list')
+@accounts_bp.route('/list/<db_type>')
 @login_required
-def list():
-    """账户列表页面"""
+def list(db_type=None):
+    """账户列表页面 - 支持按数据库类型分页"""
     # 获取筛选参数
     search = request.args.get('search', '', type=str)
-    db_type = request.args.get('db_type', '', type=str)
-    account_type = request.args.get('account_type', '', type=str)
+    is_locked = request.args.get('is_locked', '', type=str)
+    plugin = request.args.get('plugin', '', type=str)
+    instance_id = request.args.get('instance_id', '', type=str)
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     
     # 构建查询
     query = db.session.query(Account).join(Instance, Account.instance_id == Instance.id)
     
+    # 数据库类型筛选
+    if db_type:
+        query = query.filter(Instance.db_type == db_type)
+    
     # 搜索条件
     if search:
         query = query.filter(
             db.or_(
                 Account.username.contains(search),
-                Account.database_name.contains(search)
+                Account.database_name.contains(search),
+                Instance.name.contains(search),
+                Instance.host.contains(search)
             )
         )
     
-    # 数据库类型筛选
-    if db_type:
-        query = query.filter(Instance.db_type == db_type)
     
-    # 账户类型筛选
-    if account_type:
-        query = query.filter(Account.account_type == account_type)
+    # 锁定状态筛选
+    if is_locked:
+        if is_locked == 'locked':
+            query = query.filter(Account.is_locked == True)
+        elif is_locked == 'unlocked':
+            query = query.filter(Account.is_locked == False)
+    
+    # 插件/类型筛选 - 同时搜索plugin和account_type字段
+    if plugin:
+        query = query.filter(
+            db.or_(
+                Account.plugin.contains(plugin),
+                Account.account_type.contains(plugin)
+            )
+        )
+    
+    # 实例筛选
+    if instance_id:
+        query = query.filter(Account.instance_id == int(instance_id))
     
     # 分页查询
     accounts = query.order_by(Account.created_at.desc()).paginate(
@@ -82,6 +103,12 @@ def list():
     
     # 获取统计信息
     stats = get_account_list_statistics()
+    
+    # 获取筛选选项
+    filter_options = get_filter_options()
+    
+    # 获取实例列表用于筛选
+    instances = Instance.query.filter_by(is_active=True).all()
     
     if request.is_json:
         return jsonify({
@@ -94,15 +121,20 @@ def list():
                 'has_next': accounts.has_next,
                 'has_prev': accounts.has_prev
             },
-            'stats': stats
+            'stats': stats,
+            'filter_options': filter_options
         })
     
     return render_template('accounts/list.html', 
                          accounts=accounts,
                          stats=stats,
+                         filter_options=filter_options,
+                         instances=instances,
+                         current_db_type=db_type,
                          search=search,
-                         db_type=db_type,
-                         account_type=account_type)
+                         is_locked=is_locked,
+                         plugin=plugin,
+                         instance_id=instance_id)
 
 @accounts_bp.route('/sync/<int:instance_id>', methods=['POST'])
 @login_required
@@ -448,6 +480,47 @@ def get_account_list_statistics():
             'instances_count': 0
         }
 
+def get_filter_options():
+    """获取筛选选项"""
+    try:
+        # 获取数据库类型选项
+        db_types = db.session.query(Instance.db_type).distinct().all()
+        db_type_options = [{'value': dt[0], 'label': dt[0].upper()} for dt in db_types]
+        
+        # 获取插件/类型选项 - 合并plugin和account_type字段
+        plugin_options = []
+        
+        # 获取plugin字段的选项
+        plugins = db.session.query(Account.plugin).distinct().all()
+        for p in plugins:
+            if p[0]:  # 确保不为空
+                plugin_options.append({'value': p[0], 'label': p[0]})
+        
+        # 获取account_type字段的选项（用于SQL Server等）
+        account_types = db.session.query(Account.account_type).distinct().all()
+        for at in account_types:
+            if at[0]:  # 确保不为空
+                # 避免重复添加
+                if not any(opt['value'] == at[0] for opt in plugin_options):
+                    plugin_options.append({'value': at[0], 'label': at[0]})
+        
+        # 获取实例选项
+        instances = Instance.query.filter_by(is_active=True).all()
+        instance_options = [{'value': str(i.id), 'label': i.name} for i in instances]
+        
+        return {
+            'db_types': db_type_options,
+            'plugins': plugin_options,
+            'instances': instance_options
+        }
+    except Exception as e:
+        logging.error(f"获取筛选选项失败: {e}")
+        return {
+            'db_types': [],
+            'plugins': [],
+            'instances': []
+        }
+
 # API路由
 @accounts_bp.route('/api/statistics')
 @jwt_required()
@@ -476,7 +549,11 @@ def get_account_permissions(account_id):
                 'id': account.id,
                 'username': account.username,
                 'host': account.host,
-                'plugin': account.plugin
+                'plugin': account.plugin,
+                'instance': {
+                    'db_type': instance.db_type,
+                    'name': instance.name
+                }
             },
             'permissions': permissions
         })

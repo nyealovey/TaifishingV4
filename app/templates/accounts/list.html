@@ -16,51 +16,84 @@
         </div>
     </div>
 
+    <!-- 数据库类型切换按钮 -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('accounts.list') }}" 
+                   class="btn {% if not current_db_type %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    <i class="fas fa-database me-1"></i>全部
+                </a>
+                {% for db_type in filter_options.db_types %}
+                <a href="{{ url_for('accounts.list', db_type=db_type.value) }}" 
+                   class="btn {% if current_db_type == db_type.value %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    <i class="fas fa-{{ 'mysql' if db_type.value == 'mysql' else 'database' if db_type.value == 'postgresql' else 'server' if db_type.value == 'sqlserver' else 'database' }} me-1"></i>
+                    {{ db_type.label }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
 <!-- 搜索和筛选 -->
 <div class="card mb-4">
     <div class="card-body">
         <form method="GET" class="row g-3">
-            <div class="col-md-4">
+            {% if current_db_type %}
+            <input type="hidden" name="db_type" value="{{ current_db_type }}">
+            {% endif %}
+            <div class="col-md-3">
                 <label for="search" class="form-label">搜索</label>
                 <input type="text" class="form-control" id="search" name="search" 
-                       value="{{ search }}" placeholder="搜索用户名、数据库名">
+                       placeholder="搜索用户名、实例名称、IP地址" value="{{ search }}">
+            </div>
+            <div class="col-md-2">
+                <label for="is_locked" class="form-label">锁定状态</label>
+                <select class="form-select" id="is_locked" name="is_locked">
+                    <option value="">全部状态</option>
+                    <option value="locked" {% if is_locked == 'locked' %}selected{% endif %}>已锁定</option>
+                    <option value="unlocked" {% if is_locked == 'unlocked' %}selected{% endif %}>正常</option>
+                </select>
             </div>
             <div class="col-md-3">
-                <label for="db_type" class="form-label">数据库类型</label>
-                <select class="form-select" id="db_type" name="db_type">
-                    <option value="">全部类型</option>
-                    <option value="postgresql" {% if db_type == 'postgresql' %}selected{% endif %}>PostgreSQL</option>
-                    <option value="mysql" {% if db_type == 'mysql' %}selected{% endif %}>MySQL</option>
-                    <option value="sqlserver" {% if db_type == 'sqlserver' %}selected{% endif %}>SQL Server</option>
-                    <option value="oracle" {% if db_type == 'oracle' %}selected{% endif %}>Oracle</option>
+                <label for="plugin" class="form-label">插件/类型</label>
+                <select class="form-select" id="plugin" name="plugin">
+                    <option value="">全部插件</option>
+                    {% for plugin_option in filter_options.plugins %}
+                    <option value="{{ plugin_option.value }}" 
+                            {% if plugin == plugin_option.value %}selected{% endif %}>
+                        {{ plugin_option.label }}
+                    </option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="col-md-2">
-                <label for="account_type" class="form-label">账户类型</label>
-                <select class="form-select" id="account_type" name="account_type">
-                    <option value="">全部类型</option>
-                    <option value="user" {% if account_type == 'user' %}selected{% endif %}>用户</option>
-                    <option value="role" {% if account_type == 'role' %}selected{% endif %}>角色</option>
-                    <option value="group" {% if account_type == 'group' %}selected{% endif %}>组</option>
+                <label for="instance_id" class="form-label">实例</label>
+                <select class="form-select" id="instance_id" name="instance_id">
+                    <option value="">全部实例</option>
+                    {% for instance_option in filter_options.instances %}
+                    <option value="{{ instance_option.value }}" 
+                            {% if instance_id == instance_option.value %}selected{% endif %}>
+                        {{ instance_option.label }}
+                    </option>
+                    {% endfor %}
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
                 <label class="form-label">&nbsp;</label>
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-outline-primary">
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search me-1"></i>搜索
                     </button>
                 </div>
             </div>
-            <div class="col-md-1">
-                <label class="form-label">&nbsp;</label>
-                <div class="d-grid">
-                    <a href="{{ url_for('accounts.list') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-times me-1"></i>清除
-                    </a>
-                </div>
-            </div>
         </form>
+        <div class="mt-2">
+            <a href="{{ url_for('accounts.list', db_type=current_db_type) if current_db_type else url_for('accounts.list') }}" 
+               class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-times me-1"></i>清除筛选
+            </a>
+        </div>
     </div>
 </div>
 
@@ -71,8 +104,14 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 class="card-title">{{ stats.total_accounts }}</h4>
-                        <p class="card-text">总账户数</p>
+                        <h4 class="card-title">{{ accounts.total }}</h4>
+                        <p class="card-text">
+                            {% if current_db_type %}
+                                {{ current_db_type.upper() }} 账户数
+                            {% else %}
+                                总账户数
+                            {% endif %}
+                        </p>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-users fa-2x"></i>
@@ -86,11 +125,26 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 class="card-title">{{ stats.high_privilege_accounts or 0 }}</h4>
-                        <p class="card-text">高权限账户</p>
+                        <h4 class="card-title">{{ accounts.items | selectattr('is_locked', 'equalto', False) | list | length }}</h4>
+                        <p class="card-text">正常账户</p>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-crown fa-2x"></i>
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ accounts.items | selectattr('is_locked', 'equalto', True) | list | length }}</h4>
+                        <p class="card-text">锁定账户</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-lock fa-2x"></i>
                     </div>
                 </div>
             </div>
@@ -101,26 +155,11 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 class="card-title">{{ stats.db_types_count }}</h4>
-                        <p class="card-text">数据库类型</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-layer-group fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="card-title">{{ stats.instances_count }}</h4>
+                        <h4 class="card-title">{{ filter_options.instances | length }}</h4>
                         <p class="card-text">实例数量</p>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-database fa-2x"></i>
+                        <i class="fas fa-server fa-2x"></i>
                     </div>
                 </div>
             </div>
@@ -136,21 +175,146 @@
             <table class="table table-hover table-sm mb-0">
                 <thead>
                     <tr class="small">
+                        {% if current_db_type == 'sqlserver' %}
+                        <th style="font-size: 0.8rem;">登录名</th>
+                        <th style="font-size: 0.8rem;">实例名称</th>
+                        <th style="font-size: 0.8rem;">IP地址</th>
+                        <th style="font-size: 0.8rem;">类型</th>
+                        <th style="font-size: 0.8rem;">密码最后修改</th>
+                        <th style="font-size: 0.8rem;">锁定状态</th>
+                        <th style="font-size: 0.8rem;">操作</th>
+                        {% elif current_db_type == 'mysql' %}
                         <th style="font-size: 0.8rem;">名称</th>
                         <th style="font-size: 0.8rem;">用户</th>
                         <th style="font-size: 0.8rem;">主机</th>
                         <th style="font-size: 0.8rem;">实例名称</th>
                         <th style="font-size: 0.8rem;">数据库类型</th>
                         <th style="font-size: 0.8rem;">插件/类型</th>
-                        <th style="font-size: 0.8rem;">密码过期策略</th>
                         <th style="font-size: 0.8rem;">密码最后修改</th>
                         <th style="font-size: 0.8rem;">锁定状态</th>
                         <th style="font-size: 0.8rem;">操作</th>
+                        {% else %}
+                        <th style="font-size: 0.8rem;">名称</th>
+                        <th style="font-size: 0.8rem;">实例名称</th>
+                        <th style="font-size: 0.8rem;">IP地址</th>
+                        <th style="font-size: 0.8rem;">数据库类型</th>
+                        <th style="font-size: 0.8rem;">插件/类型</th>
+                        <th style="font-size: 0.8rem;">密码最后修改</th>
+                        <th style="font-size: 0.8rem;">锁定状态</th>
+                        <th style="font-size: 0.8rem;">操作</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
                     {% for account in accounts.items %}
                     <tr class="small">
+                        {% if current_db_type == 'sqlserver' %}
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user text-primary me-1" style="font-size: 0.8rem;"></i>
+                                <strong style="font-size: 0.85rem;">{{ account.username }}</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-database text-info me-1" style="font-size: 0.8rem;"></i>
+                                <span style="font-size: 0.8rem;">{{ account.instance.name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
+                        </td>
+                        <td>
+                            {% if account.account_type %}
+                                <span class="badge bg-info" style="font-size: 0.7rem;">{{ account.account_type }}</span>
+                            {% elif account.plugin %}
+                                <span class="badge bg-secondary" style="font-size: 0.7rem;">{{ account.plugin }}</span>
+                            {% else %}
+                                <span class="text-muted" style="font-size: 0.8rem;">未知</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if account.password_last_changed %}
+                                <small class="text-muted" style="font-size: 0.75rem;">{{ account.password_last_changed | china_datetime }}</small>
+                            {% else %}
+                                <small class="text-muted" style="font-size: 0.75rem;">未知</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if account.is_locked %}
+                                <span class="badge bg-danger" style="font-size: 0.7rem;">已禁用</span>
+                            {% else %}
+                                <span class="badge bg-success" style="font-size: 0.7rem;">正常</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary btn-sm" 
+                                        onclick="viewAccountPermissions({{ account.id }})" title="查看权限" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;">
+                                    <i class="fas fa-eye me-1"></i>权限
+                                </button>
+                                <button type="button" class="btn btn-outline-info btn-sm" 
+                                        onclick="viewAccount({{ account.id }})" title="查看详情" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </div>
+                        </td>
+                        {% elif current_db_type == 'mysql' %}
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user text-primary me-1" style="font-size: 0.8rem;"></i>
+                                <strong style="font-size: 0.85rem;">{{ account.username }}@{{ account.host or '%' }}</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="fw-bold" style="font-size: 0.85rem;">{{ account.username }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-info" style="font-size: 0.7rem;">{{ account.host or '%' }}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-database text-info me-1" style="font-size: 0.8rem;"></i>
+                                <span style="font-size: 0.8rem;">{{ account.instance.name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-success" style="font-size: 0.7rem;">MYSQL</span>
+                        </td>
+                        <td>
+                            {% if account.plugin %}
+                                <span class="badge bg-secondary" style="font-size: 0.7rem;">{{ account.plugin }}</span>
+                            {% else %}
+                                <span class="text-muted" style="font-size: 0.8rem;">未知</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if account.password_last_changed %}
+                                <small class="text-muted" style="font-size: 0.75rem;">{{ account.password_last_changed | china_datetime }}</small>
+                            {% else %}
+                                <small class="text-muted" style="font-size: 0.75rem;">未知</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if account.is_locked %}
+                                <span class="badge bg-danger" style="font-size: 0.7rem;">已锁定</span>
+                            {% else %}
+                                <span class="badge bg-success" style="font-size: 0.7rem;">正常</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary btn-sm" 
+                                        onclick="viewAccountPermissions({{ account.id }})" title="查看权限" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;">
+                                    <i class="fas fa-eye me-1"></i>权限
+                                </button>
+                                <button type="button" class="btn btn-outline-info btn-sm" 
+                                        onclick="viewAccount({{ account.id }})" title="查看详情" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </div>
+                        </td>
+                        {% else %}
                         <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-user text-primary me-1" style="font-size: 0.8rem;"></i>
@@ -162,20 +326,13 @@
                             </div>
                         </td>
                         <td>
-                            <span class="fw-bold" style="font-size: 0.85rem;">{{ account.username }}</span>
-                        </td>
-                        <td>
-                            {% if account.instance.db_type == 'sqlserver' %}
-                            <span class="text-muted" style="font-size: 0.7rem;">-</span>
-                            {% else %}
-                            <span class="badge bg-info" style="font-size: 0.7rem;">{{ account.host or '%' }}</span>
-                            {% endif %}
-                        </td>
-                        <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-database text-info me-1" style="font-size: 0.8rem;"></i>
                                 <span style="font-size: 0.8rem;">{{ account.instance.name }}</span>
                             </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
                         </td>
                         <td>
                             <span class="badge bg-{{ 'primary' if account.instance.db_type == 'postgresql' else 'success' if account.instance.db_type == 'mysql' else 'warning' if account.instance.db_type == 'sqlserver' else 'info' if account.instance.db_type == 'oracle' else 'secondary' }}" style="font-size: 0.7rem;">
@@ -183,25 +340,12 @@
                             </span>
                         </td>
                         <td>
-                            {% if account.instance.db_type == 'sqlserver' %}
-                            <span class="badge bg-info" style="font-size: 0.7rem;">{{ account.account_type or '未知' }}</span>
-                            {% else %}
                             {% if account.plugin %}
                                 <span class="badge bg-secondary" style="font-size: 0.7rem;">{{ account.plugin }}</span>
+                            {% elif account.account_type %}
+                                <span class="badge bg-info" style="font-size: 0.7rem;">{{ account.account_type }}</span>
                             {% else %}
                                 <span class="text-muted" style="font-size: 0.8rem;">未知</span>
-                            {% endif %}
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if account.instance.db_type == 'sqlserver' %}
-                            <span class="text-muted" style="font-size: 0.7rem;">-</span>
-                            {% else %}
-                            {% if account.password_expired %}
-                                <span class="badge bg-danger" style="font-size: 0.7rem;">已过期</span>
-                            {% else %}
-                                <span class="badge bg-success" style="font-size: 0.7rem;">正常</span>
-                            {% endif %}
                             {% endif %}
                         </td>
                         <td>
@@ -234,6 +378,7 @@
                                 </button>
                             </div>
                         </td>
+                        {% endif %}
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -246,9 +391,15 @@
             <ul class="pagination justify-content-center">
                 {% if accounts.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('accounts.list', page=accounts.prev_num, search=search, db_type=db_type, account_type=account_type) }}">
+                    {% if current_db_type %}
+                    <a class="page-link" href="{{ url_for('accounts.list', db_type=current_db_type, page=accounts.prev_num, search=search, is_locked=is_locked, plugin=plugin, instance_id=instance_id) }}">
                         上一页
                     </a>
+                    {% else %}
+                    <a class="page-link" href="{{ url_for('accounts.list', page=accounts.prev_num, search=search, is_locked=is_locked, plugin=plugin, instance_id=instance_id) }}">
+                        上一页
+                    </a>
+                    {% endif %}
                 </li>
                 {% endif %}
                 
@@ -256,9 +407,15 @@
                     {% if page_num %}
                         {% if page_num != accounts.page %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('accounts.list', page=page_num, search=search, db_type=db_type, account_type=account_type) }}">
+                            {% if current_db_type %}
+                            <a class="page-link" href="{{ url_for('accounts.list', db_type=current_db_type, page=page_num, search=search, is_locked=is_locked, plugin=plugin, instance_id=instance_id) }}">
                                 {{ page_num }}
                             </a>
+                            {% else %}
+                            <a class="page-link" href="{{ url_for('accounts.list', page=page_num, search=search, is_locked=is_locked, plugin=plugin, instance_id=instance_id) }}">
+                                {{ page_num }}
+                            </a>
+                            {% endif %}
                         </li>
                         {% else %}
                         <li class="page-item active">
@@ -274,9 +431,15 @@
                 
                 {% if accounts.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('accounts.list', page=accounts.next_num, search=search, db_type=db_type, account_type=account_type) }}">
+                    {% if current_db_type %}
+                    <a class="page-link" href="{{ url_for('accounts.list', db_type=current_db_type, page=accounts.next_num, search=search, is_locked=is_locked, plugin=plugin, instance_id=instance_id) }}">
                         下一页
                     </a>
+                    {% else %}
+                    <a class="page-link" href="{{ url_for('accounts.list', page=accounts.next_num, search=search, is_locked=is_locked, plugin=plugin, instance_id=instance_id) }}">
+                        下一页
+                    </a>
+                    {% endif %}
                 </li>
                 {% endif %}
             </ul>

@@ -231,7 +231,6 @@
                                 <th>用户</th>
                                 <th>主机</th>
                                 <th>插件</th>
-                                <th>密码过期策略</th>
                                 <th>密码最后修改</th>
                                 <th>锁定状态</th>
                                 <th>操作</th>
@@ -246,7 +245,6 @@
                                 <th>用户</th>
                                 <th>主机</th>
                                 <th>插件</th>
-                                <th>密码过期策略</th>
                                 <th>密码最后修改</th>
                                 <th>锁定状态</th>
                                 <th>操作</th>
@@ -274,13 +272,6 @@
                                         <span class="badge bg-secondary">{{ account.plugin }}</span>
                                     {% else %}
                                         <span class="text-muted">未知</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if account.password_expired %}
-                                        <span class="badge bg-danger">已过期</span>
-                                    {% else %}
-                                        <span class="badge bg-success">正常</span>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -335,27 +326,32 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-user text-primary me-2"></i>
+                                        {% if instance.db_type == 'sqlserver' %}
+                                        <strong>{{ account.username }}</strong>
+                                        {% else %}
                                         <strong>{{ account.username }}@{{ account.host or '%' }}</strong>
+                                        {% endif %}
                                     </div>
                                 </td>
                                 <td>
+                                    {% if instance.db_type == 'sqlserver' %}
+                                    <span class="text-muted">-</span>
+                                    {% else %}
                                     <span class="fw-bold">{{ account.username }}</span>
+                                    {% endif %}
                                 </td>
                                 <td>
+                                    {% if instance.db_type == 'sqlserver' %}
+                                    <span class="text-muted">-</span>
+                                    {% else %}
                                     <span class="badge bg-info">{{ account.host or '%' }}</span>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if account.plugin %}
                                         <span class="badge bg-secondary">{{ account.plugin }}</span>
                                     {% else %}
                                         <span class="text-muted">未知</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if account.password_expired %}
-                                        <span class="badge bg-danger">已过期</span>
-                                    {% else %}
-                                        <span class="badge bg-success">正常</span>
                                     {% endif %}
                                 </td>
                                 <td>

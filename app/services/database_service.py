@@ -147,7 +147,7 @@ class DatabaseService:
                     username=username,
                     host=host,
                     database_name='mysql',
-                    account_type='user',
+                    account_type=None,  # MySQL没有账户类型概念
                     plugin=plugin,
                     password_expired=expired == 'Y',  # MySQL的password_expired字段，'Y'表示已过期
                     password_last_changed=password_last_changed,
@@ -218,7 +218,7 @@ class DatabaseService:
                     username=username,
                     host='localhost',
                     database_name=instance.database_name or 'postgres',
-                    account_type='superuser' if is_super else 'user',
+                    account_type='superuser' if is_super else 'user',  # PostgreSQL有明确的角色概念
                     plugin='postgresql',
                     password_expired=valid_until is not None and valid_until < 'now()',
                     password_last_changed=None,  # PostgreSQL不直接提供此信息
@@ -288,8 +288,8 @@ class DatabaseService:
                     username=username,
                     host=None,  # SQL Server没有主机概念
                     database_name=instance.database_name or 'master',
-                    account_type=type_desc.lower(),
-                    plugin='sqlserver',
+                    account_type=type_desc.lower(),  # SQL Server的登录类型
+                    plugin=None,  # SQL Server没有插件概念
                     password_expired=False,  # SQL Server不直接提供此信息
                     password_last_changed=modify_date,
                     is_locked=bool(is_disabled),  # SQL Server的is_disabled字段
@@ -359,7 +359,7 @@ class DatabaseService:
                     username=username,
                     host='localhost',
                     database_name=instance.database_name or 'ORCL',
-                    account_type='user',
+                    account_type=None,  # Oracle没有简单的账户类型概念
                     plugin='oracle',
                     password_expired=status in ['EXPIRED', 'EXPIRED(GRACE)'],
                     password_last_changed=created,
