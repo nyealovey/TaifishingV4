@@ -1,0 +1,526 @@
+{% extends "admin/admin_layout.html" %}
+
+{% set title = "缓存管理" %}
+{% set subtitle = "系统缓存管理和监控" %}
+{% set show_refresh = true %}
+
+{% block admin_content %}
+<div class="row">
+    <!-- 缓存统计 -->
+    <div class="col-12 mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title" id="cache-hit-rate">--</h4>
+                                <p class="card-text">命中率</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-bullseye fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title" id="cache-size">--</h4>
+                                <p class="card-text">缓存大小</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-database fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title" id="cache-keys">--</h4>
+                                <p class="card-text">缓存键数</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-key fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title" id="cache-memory">--</h4>
+                                <p class="card-text">内存使用</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-memory fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 缓存操作 -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">缓存操作</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100" onclick="clearCache()">
+                            <i class="fas fa-trash me-2"></i>清除所有缓存
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-success w-100" onclick="warmCache()">
+                            <i class="fas fa-fire me-2"></i>预热缓存
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-info w-100" onclick="refreshStats()">
+                            <i class="fas fa-sync-alt me-2"></i>刷新统计
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-warning w-100" onclick="exportCache()">
+                            <i class="fas fa-download me-2"></i>导出缓存
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 缓存配置 -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">缓存配置</h5>
+            </div>
+            <div class="card-body">
+                <form id="cache-config-form">
+                    <div class="mb-3">
+                        <label for="cache-type" class="form-label">缓存类型</label>
+                        <select class="form-select" id="cache-type" disabled>
+                            <option value="redis">Redis</option>
+                            <option value="memory">内存</option>
+                            <option value="file">文件</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cache-ttl" class="form-label">默认TTL (秒)</label>
+                        <input type="number" class="form-control" id="cache-ttl" value="3600" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cache-max-size" class="form-label">最大缓存大小 (MB)</label>
+                        <input type="number" class="form-control" id="cache-max-size" value="100" disabled>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="cache-enabled" checked disabled>
+                        <label class="form-check-label" for="cache-enabled">
+                            启用缓存
+                        </label>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="updateCacheConfig()" disabled>
+                        <i class="fas fa-save me-2"></i>保存配置
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 缓存监控 -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">缓存监控</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">实时状态</label>
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <span class="badge bg-success" id="cache-status">运行中</span>
+                        </div>
+                        <small class="text-muted" id="last-update">最后更新: --</small>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">性能指标</label>
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">平均响应时间</small>
+                            <div class="h6 mb-0" id="avg-response-time">-- ms</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">每秒请求数</small>
+                            <div class="h6 mb-0" id="requests-per-second">-- req/s</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">错误统计</label>
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">连接错误</small>
+                            <div class="h6 mb-0 text-danger" id="connection-errors">0</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">超时错误</small>
+                            <div class="h6 mb-0 text-warning" id="timeout-errors">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 缓存键列表 -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">缓存键列表</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary me-2" onclick="refreshCacheKeys()">
+                        <i class="fas fa-sync-alt me-1"></i>刷新
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="clearSelectedKeys()">
+                        <i class="fas fa-trash me-1"></i>删除选中
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="select-all-keys" onchange="toggleAllKeys()">
+                                </th>
+                                <th>缓存键</th>
+                                <th>类型</th>
+                                <th>大小</th>
+                                <th>TTL</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cache-keys-table">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>加载中...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    refreshStats();
+    refreshCacheKeys();
+    
+    // 每30秒自动刷新统计
+    setInterval(refreshStats, 30000);
+});
+
+// 刷新缓存统计
+async function refreshStats() {
+    try {
+        const response = await fetch('/admin/cache', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                             document.querySelector('input[name="csrf_token"]')?.value
+            },
+            body: JSON.stringify({ action: 'stats' })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            updateCacheStats(data.data);
+        }
+    } catch (error) {
+        console.error('刷新缓存统计失败:', error);
+        showNotification('刷新缓存统计失败', 'error');
+    }
+}
+
+// 更新缓存统计显示
+function updateCacheStats(stats) {
+    document.getElementById('cache-hit-rate').textContent = (stats.hit_rate || 0) + '%';
+    document.getElementById('cache-size').textContent = formatBytes(stats.size || 0);
+    document.getElementById('cache-keys').textContent = stats.keys || 0;
+    document.getElementById('cache-memory').textContent = formatBytes(stats.memory || 0);
+    document.getElementById('last-update').textContent = '最后更新: ' + new Date().toLocaleTimeString();
+    document.getElementById('avg-response-time').textContent = (stats.avg_response_time || 0) + ' ms';
+    document.getElementById('requests-per-second').textContent = (stats.requests_per_second || 0) + ' req/s';
+    document.getElementById('connection-errors').textContent = stats.connection_errors || 0;
+    document.getElementById('timeout-errors').textContent = stats.timeout_errors || 0;
+}
+
+// 清除所有缓存
+async function clearCache() {
+    if (!confirm('确定要清除所有缓存吗？此操作不可恢复！')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/cache', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                             document.querySelector('input[name="csrf_token"]')?.value
+            },
+            body: JSON.stringify({ action: 'clear' })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('缓存已清除', 'success');
+            refreshStats();
+            refreshCacheKeys();
+        } else {
+            showNotification('清除缓存失败: ' + data.message, 'error');
+        }
+    } catch (error) {
+        console.error('清除缓存失败:', error);
+        showNotification('清除缓存失败', 'error');
+    }
+}
+
+// 预热缓存
+async function warmCache() {
+    try {
+        const response = await fetch('/admin/cache', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                             document.querySelector('input[name="csrf_token"]')?.value
+            },
+            body: JSON.stringify({ action: 'warm' })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('缓存预热完成', 'success');
+            refreshStats();
+        } else {
+            showNotification('缓存预热失败: ' + data.message, 'error');
+        }
+    } catch (error) {
+        console.error('缓存预热失败:', error);
+        showNotification('缓存预热失败', 'error');
+    }
+}
+
+// 刷新缓存键列表
+async function refreshCacheKeys() {
+    try {
+        const response = await fetch('/admin/cache/keys');
+        const data = await response.json();
+        
+        if (data.success) {
+            updateCacheKeysTable(data.data);
+        }
+    } catch (error) {
+        console.error('刷新缓存键失败:', error);
+        showNotification('刷新缓存键失败', 'error');
+    }
+}
+
+// 更新缓存键表格
+function updateCacheKeysTable(keys) {
+    const tbody = document.getElementById('cache-keys-table');
+    
+    if (keys.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">暂无缓存键</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    keys.forEach(key => {
+        html += `
+            <tr>
+                <td>
+                    <input type="checkbox" class="key-checkbox" value="${key.name}">
+                </td>
+                <td>
+                    <code>${key.name}</code>
+                </td>
+                <td>
+                    <span class="badge bg-secondary">${key.type || 'string'}</span>
+                </td>
+                <td>${formatBytes(key.size || 0)}</td>
+                <td>${key.ttl || '--'}</td>
+                <td>${new Date(key.created_at).toLocaleString()}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="viewKey('${key.name}')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteKey('${key.name}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+// 查看缓存键详情
+function viewKey(keyName) {
+    showNotification('查看缓存键: ' + keyName, 'info');
+}
+
+// 删除单个缓存键
+async function deleteKey(keyName) {
+    if (!confirm('确定要删除缓存键 "' + keyName + '" 吗？')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/cache/keys', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                             document.querySelector('input[name="csrf_token"]')?.value
+            },
+            body: JSON.stringify({ key: keyName })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('缓存键已删除', 'success');
+            refreshCacheKeys();
+        } else {
+            showNotification('删除缓存键失败: ' + data.message, 'error');
+        }
+    } catch (error) {
+        console.error('删除缓存键失败:', error);
+        showNotification('删除缓存键失败', 'error');
+    }
+}
+
+// 全选/取消全选缓存键
+function toggleAllKeys() {
+    const selectAll = document.getElementById('select-all-keys');
+    const checkboxes = document.querySelectorAll('.key-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+}
+
+// 删除选中的缓存键
+async function clearSelectedKeys() {
+    const selectedKeys = Array.from(document.querySelectorAll('.key-checkbox:checked'))
+        .map(cb => cb.value);
+    
+    if (selectedKeys.length === 0) {
+        showNotification('请选择要删除的缓存键', 'warning');
+        return;
+    }
+    
+    if (!confirm('确定要删除选中的 ' + selectedKeys.length + ' 个缓存键吗？')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/admin/cache/keys', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                             document.querySelector('input[name="csrf_token"]')?.value
+            },
+            body: JSON.stringify({ keys: selectedKeys })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification('选中的缓存键已删除', 'success');
+            refreshCacheKeys();
+        } else {
+            showNotification('删除缓存键失败: ' + data.message, 'error');
+        }
+    } catch (error) {
+        console.error('删除缓存键失败:', error);
+        showNotification('删除缓存键失败', 'error');
+    }
+}
+
+// 更新缓存配置
+function updateCacheConfig() {
+    showNotification('配置更新功能开发中...', 'info');
+}
+
+// 导出缓存
+function exportCache() {
+    showNotification('导出缓存功能开发中...', 'info');
+}
+
+// 格式化字节数
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// 显示通知
+function showNotification(message, type = 'info') {
+    const alertClass = type === 'error' ? 'alert-danger' : 
+                     type === 'success' ? 'alert-success' : 
+                     type === 'warning' ? 'alert-warning' : 'alert-info';
+    
+    const notification = document.createElement('div');
+    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
+</script>
+{% endblock %}
