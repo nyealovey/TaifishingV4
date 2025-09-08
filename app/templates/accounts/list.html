@@ -727,10 +727,19 @@ function loadAccountStatistics(dbType = null) {
 
 // 更新统计卡片
 function updateStatisticsCards(statistics) {
-    document.getElementById('totalAccounts').textContent = statistics.total_accounts;
-    document.getElementById('activeAccounts').textContent = statistics.active_accounts;
-    document.getElementById('lockedAccounts').textContent = statistics.locked_accounts;
-    document.getElementById('totalInstances').textContent = statistics.total_instances;
+    console.log('Updating statistics cards with:', statistics);
+    
+    const totalAccountsEl = document.getElementById('totalAccounts');
+    const activeAccountsEl = document.getElementById('activeAccounts');
+    const lockedAccountsEl = document.getElementById('lockedAccounts');
+    const totalInstancesEl = document.getElementById('totalInstances');
+    
+    if (totalAccountsEl) totalAccountsEl.textContent = statistics.total_accounts || 0;
+    if (activeAccountsEl) activeAccountsEl.textContent = statistics.active_accounts || 0;
+    if (lockedAccountsEl) lockedAccountsEl.textContent = statistics.locked_accounts || 0;
+    if (totalInstancesEl) totalInstancesEl.textContent = statistics.total_instances || 0;
+    
+    console.log('Statistics cards updated');
 }
 </script>
 {% endblock %}
