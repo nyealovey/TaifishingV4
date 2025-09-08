@@ -335,8 +335,25 @@ function updatePagination(pagination) {
 // 显示日志详情
 async function showLogDetail(logId) {
     try {
-        const response = await fetch(`/admin/logs/${logId}`);
+        console.log('正在获取日志详情，ID:', logId);
+        const response = await fetch(`/admin/logs/${logId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                             document.querySelector('input[name="csrf_token"]')?.value
+            }
+        });
+        
+        console.log('响应状态:', response.status);
+        console.log('响应头:', response.headers);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('响应数据:', data);
         
         if (data.success) {
             const log = data.data;
@@ -391,11 +408,12 @@ async function showLogDetail(logId) {
             
             new bootstrap.Modal(document.getElementById('logDetailModal')).show();
         } else {
-            showNotification('加载日志详情失败: ' + data.message, 'error');
+            console.error('API返回错误:', data);
+            showNotification('加载日志详情失败: ' + (data.message || '未知错误'), 'error');
         }
     } catch (error) {
         console.error('加载日志详情失败:', error);
-        showNotification('加载日志详情失败', 'error');
+        showNotification('加载日志详情失败: ' + error.message, 'error');
     }
 }
 
