@@ -704,16 +704,7 @@ function loadAccountStatistics(dbType = null) {
     
     console.log('Loading statistics for db_type:', dbType, 'URL:', url);
     
-    // 获取CSRF token
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    
-    fetch(url, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        }
-    })
+    fetch(url)
     .then(response => {
         console.log('Response status:', response.status);
         if (!response.ok) {
