@@ -98,31 +98,42 @@ class DatabaseService:
         """同步MySQL账户"""
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT User, Host, authentication_string, plugin, account_locked, password_expired
+            SELECT User, Host, authentication_string, plugin, account_locked, password_expired, password_last_changed
             FROM mysql.user
             WHERE User != 'root' AND User != 'mysql.sys'
         """)
         
         synced_count = 0
         for row in cursor.fetchall():
-            username, host, password_hash, plugin, locked, expired = row
+            username, host, password_hash, plugin, locked, expired, password_last_changed = row
             
             # 检查账户是否已存在
             existing = Account.query.filter_by(
                 instance_id=instance.id,
                 username=username,
-                database_name='mysql'
+                host=host
             ).first()
             
             if not existing:
                 account = Account(
                     instance_id=instance.id,
                     username=username,
+                    host=host,
                     database_name='mysql',
                     account_type='user',
+                    plugin=plugin,
+                    password_expired=bool(expired),
+                    password_last_changed=password_last_changed,
                     is_active=not locked and not expired
                 )
                 db.session.add(account)
+                synced_count += 1
+            else:
+                # 更新现有账户信息
+                existing.plugin = plugin
+                existing.password_expired = bool(expired)
+                existing.password_last_changed = password_last_changed
+                existing.is_active = not locked and not expired
                 synced_count += 1
         
         db.session.commit()
@@ -754,3 +765,96 @@ class DatabaseService:
             return False
         
         return True
+    
+    def get_account_permissions(self, instance: Instance, account: Account) -> Dict[str, Any]:
+        """
+        获取账户权限详情
+        
+        Args:
+            instance: 数据库实例
+            account: 账户对象
+            
+        Returns:
+            Dict: 权限信息
+        """
+        try:
+            if instance.db_type == 'mysql':
+                return self._get_mysql_permissions(instance, account)
+            else:
+                return {
+                    'global': [],
+                    'database': [],
+                    'error': f'暂不支持 {instance.db_type} 数据库的权限查询'
+                }
+        except Exception as e:
+            return {
+                'global': [],
+                'database': [],
+                'error': f'获取权限失败: {str(e)}'
+            }
+    
+    def _get_mysql_permissions(self, instance: Instance, account: Account) -> Dict[str, Any]:
+        """获取MySQL账户权限"""
+        conn = self.get_connection(instance)
+        if not conn:
+            return {
+                'global': [],
+                'database': [],
+                'error': '无法获取数据库连接'
+            }
+        
+        cursor = conn.cursor()
+        
+        try:
+            # 获取全局权限
+            cursor.execute("""
+                SELECT PRIVILEGE_TYPE, IS_GRANTABLE
+                FROM INFORMATION_SCHEMA.USER_PRIVILEGES
+                WHERE GRANTEE = %s
+            """, (f"'{account.username}'@'{account.host}'",))
+            
+            global_permissions = []
+            for row in cursor.fetchall():
+                privilege, is_grantable = row
+                global_permissions.append({
+                    'privilege': privilege,
+                    'granted': True,
+                    'grantable': bool(is_grantable)
+                })
+            
+            # 获取数据库权限
+            cursor.execute("""
+                SELECT TABLE_SCHEMA, PRIVILEGE_TYPE
+                FROM INFORMATION_SCHEMA.SCHEMA_PRIVILEGES
+                WHERE GRANTEE = %s
+                ORDER BY TABLE_SCHEMA, PRIVILEGE_TYPE
+            """, (f"'{account.username}'@'{account.host}'",))
+            
+            db_permissions = {}
+            for row in cursor.fetchall():
+                schema, privilege = row
+                if schema not in db_permissions:
+                    db_permissions[schema] = []
+                db_permissions[schema].append(privilege)
+            
+            # 转换为前端需要的格式
+            database_permissions = []
+            for schema, privileges in db_permissions.items():
+                database_permissions.append({
+                    'database': schema,
+                    'privileges': privileges
+                })
+            
+            return {
+                'global': global_permissions,
+                'database': database_permissions
+            }
+            
+        except Exception as e:
+            return {
+                'global': [],
+                'database': [],
+                'error': f'查询权限失败: {str(e)}'
+            }
+        finally:
+            cursor.close()

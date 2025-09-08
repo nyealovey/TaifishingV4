@@ -9,6 +9,7 @@ from flask_login import login_required, current_user
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.instance import Instance
 from app.models.credential import Credential
+from app.models.account import Account
 from app import db
 from app.utils.logger import log_operation
 from app.utils.security import (
@@ -822,3 +823,35 @@ def get_default_version(db_type):
         'sqlite': '3.x'
     }
     return default_versions.get(db_type, '未知版本')
+
+@instances_bp.route('/<int:instance_id>/accounts/<int:account_id>/permissions')
+@login_required
+def get_account_permissions(instance_id, account_id):
+    """获取账户权限详情"""
+    instance = Instance.query.get_or_404(instance_id)
+    account = Account.query.filter_by(id=account_id, instance_id=instance_id).first_or_404()
+    
+    try:
+        from app.services.database_service import DatabaseService
+        db_service = DatabaseService()
+        
+        # 获取账户权限
+        permissions = db_service.get_account_permissions(instance, account)
+        
+        return jsonify({
+            'success': True,
+            'account': {
+                'id': account.id,
+                'username': account.username,
+                'host': account.host,
+                'plugin': account.plugin
+            },
+            'permissions': permissions
+        })
+        
+    except Exception as e:
+        logging.error(f"获取账户权限失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'获取权限失败: {str(e)}'
+        }), 500
