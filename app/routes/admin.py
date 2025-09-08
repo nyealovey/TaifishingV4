@@ -967,4 +967,145 @@ def users():
         logger.error(f"获取用户管理页面失败: {e}")
         return APIResponse.server_error("获取用户管理页面失败")
 
+@admin_bp.route('/user-roles', methods=['GET'])
+@login_required
+@admin_required
+def user_roles_management():
+    """用户角色管理"""
+    try:
+        return render_template('admin/user_roles.html')
+    except Exception as e:
+        logger.error(f"获取用户角色管理页面失败: {e}")
+        return APIResponse.server_error("获取用户角色管理页面失败")
+
+@admin_bp.route('/role-stats', methods=['GET'])
+@login_required
+@admin_required
+def get_role_stats():
+    """获取角色统计"""
+    try:
+        # 模拟角色统计数据
+        stats = {
+            'total_roles': 5,
+            'active_roles': 4,
+            'total_permissions': 12,
+            'users_with_roles': 8
+        }
+        
+        return APIResponse.success(data=stats)
+        
+    except Exception as e:
+        logger.error(f"获取角色统计失败: {e}")
+        return APIResponse.server_error("获取角色统计失败")
+
+@admin_bp.route('/roles', methods=['GET'])
+@login_required
+@admin_required
+def get_roles():
+    """获取角色列表"""
+    try:
+        # 模拟角色数据
+        roles = [
+            {
+                'id': 1,
+                'name': '超级管理员',
+                'description': '拥有所有权限的超级管理员角色',
+                'permission_count': 12,
+                'user_count': 1,
+                'active': True,
+                'created_at': '2025-09-01T10:00:00Z'
+            },
+            {
+                'id': 2,
+                'name': '系统管理员',
+                'description': '系统管理相关权限',
+                'permission_count': 8,
+                'user_count': 2,
+                'active': True,
+                'created_at': '2025-09-02T10:00:00Z'
+            },
+            {
+                'id': 3,
+                'name': '用户管理员',
+                'description': '用户管理相关权限',
+                'permission_count': 6,
+                'user_count': 3,
+                'active': True,
+                'created_at': '2025-09-03T10:00:00Z'
+            },
+            {
+                'id': 4,
+                'name': '普通用户',
+                'description': '基础查看权限',
+                'permission_count': 3,
+                'user_count': 2,
+                'active': True,
+                'created_at': '2025-09-04T10:00:00Z'
+            },
+            {
+                'id': 5,
+                'name': '访客',
+                'description': '只读权限',
+                'permission_count': 1,
+                'user_count': 0,
+                'active': False,
+                'created_at': '2025-09-05T10:00:00Z'
+            }
+        ]
+        
+        return APIResponse.success(data=roles)
+        
+    except Exception as e:
+        logger.error(f"获取角色列表失败: {e}")
+        return APIResponse.server_error("获取角色列表失败")
+
+@admin_bp.route('/roles', methods=['POST'])
+@login_required
+@admin_required
+def create_role():
+    """创建角色"""
+    try:
+        data = request.get_json()
+        
+        # 这里应该实际创建角色
+        logger.info(f"创建角色: {data}")
+        
+        return APIResponse.success(message="角色创建成功")
+        
+    except Exception as e:
+        logger.error(f"创建角色失败: {e}")
+        return APIResponse.server_error("创建角色失败")
+
+@admin_bp.route('/roles/<int:role_id>', methods=['PUT'])
+@login_required
+@admin_required
+def update_role(role_id):
+    """更新角色"""
+    try:
+        data = request.get_json()
+        
+        # 这里应该实际更新角色
+        logger.info(f"更新角色 {role_id}: {data}")
+        
+        return APIResponse.success(message="角色更新成功")
+        
+    except Exception as e:
+        logger.error(f"更新角色失败: {e}")
+        return APIResponse.server_error("更新角色失败")
+
+@admin_bp.route('/roles/<int:role_id>', methods=['DELETE'])
+@login_required
+@admin_required
+def delete_role(role_id):
+    """删除角色"""
+    try:
+        # 这里应该实际删除角色
+        logger.info(f"删除角色: {role_id}")
+        
+        return APIResponse.success(message="角色删除成功")
+        
+    except Exception as e:
+        logger.error(f"删除角色失败: {e}")
+        return APIResponse.server_error("删除角色失败")
+
 
