@@ -4,17 +4,81 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="fas fa-tasks me-2"></i>任务管理</h2>
+    <div>
+        <h2><i class="fas fa-clock me-2"></i>定时任务管理</h2>
+        <p class="text-muted mb-0">管理数据库同步任务的定时执行，包括账户同步、版本同步、数据库大小同步等</p>
+    </div>
     <div class="btn-group">
         <a href="{{ url_for('tasks.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>创建任务
+            <i class="fas fa-plus me-2"></i>创建定时任务
         </a>
         <button type="button" class="btn btn-success" onclick="createBuiltinTasks()">
-            <i class="fas fa-magic me-2"></i>创建内置任务
+            <i class="fas fa-magic me-2"></i>快速创建内置任务
         </button>
         <button type="button" class="btn btn-warning" onclick="executeAllTasks()">
-            <i class="fas fa-play me-2"></i>执行所有任务
+            <i class="fas fa-play me-2"></i>立即执行所有任务
         </button>
+    </div>
+</div>
+
+<!-- 快速创建内置任务 -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="card-title mb-0">
+            <i class="fas fa-magic me-2"></i>快速创建内置任务
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="card border-primary">
+                    <div class="card-body text-center">
+                        <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                        <h6 class="card-title">账户同步</h6>
+                        <p class="card-text small text-muted">同步数据库用户账户信息</p>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="createQuickTask('sync_accounts')">
+                            <i class="fas fa-plus me-1"></i>创建
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-success">
+                    <div class="card-body text-center">
+                        <i class="fas fa-code-branch fa-2x text-success mb-2"></i>
+                        <h6 class="card-title">版本同步</h6>
+                        <p class="card-text small text-muted">同步数据库版本信息</p>
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="createQuickTask('sync_version')">
+                            <i class="fas fa-plus me-1"></i>创建
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-info">
+                    <div class="card-body text-center">
+                        <i class="fas fa-database fa-2x text-info mb-2"></i>
+                        <h6 class="card-title">大小同步</h6>
+                        <p class="card-text small text-muted">同步数据库大小信息</p>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="createQuickTask('sync_size')">
+                            <i class="fas fa-plus me-1"></i>创建
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-warning">
+                    <div class="card-body text-center">
+                        <i class="fas fa-sync fa-2x text-warning mb-2"></i>
+                        <h6 class="card-title">全部同步</h6>
+                        <p class="card-text small text-muted">创建所有类型的同步任务</p>
+                        <button type="button" class="btn btn-outline-warning btn-sm" onclick="createAllBuiltinTasks()">
+                            <i class="fas fa-magic me-1"></i>全部创建
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -68,10 +132,33 @@
 <div class="card">
     <div class="card-body">
         {% if tasks.items %}
+        <!-- 批量操作 -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <input type="checkbox" id="selectAll" class="form-check-input">
+                <label for="selectAll" class="form-check-label">全选</label>
+                <span class="text-muted small">已选择 <span id="selectedCount">0</span> 个任务</span>
+            </div>
+            <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-success" onclick="batchEnableTasks()" id="batchEnableBtn" disabled>
+                    <i class="fas fa-play me-1"></i>批量启用
+                </button>
+                <button type="button" class="btn btn-outline-danger" onclick="batchDisableTasks()" id="batchDisableBtn" disabled>
+                    <i class="fas fa-pause me-1"></i>批量禁用
+                </button>
+                <button type="button" class="btn btn-outline-warning" onclick="batchRunTasks()" id="batchRunBtn" disabled>
+                    <i class="fas fa-play me-1"></i>批量运行
+                </button>
+            </div>
+        </div>
+        
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
                     <tr>
+                        <th width="40">
+                            <input type="checkbox" id="selectAllHeader" class="form-check-input">
+                        </th>
                         <th>任务名称</th>
                         <th>任务类型</th>
                         <th>数据库类型</th>
@@ -85,6 +172,9 @@
                 <tbody>
                     {% for task in tasks.items %}
                     <tr>
+                        <td>
+                            <input type="checkbox" class="form-check-input task-checkbox" value="{{ task.id }}">
+                        </td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-tasks text-primary me-2"></i>
@@ -117,39 +207,81 @@
                             {% endif %}
                         </td>
                         <td>
-                            <div class="d-flex align-items-center">
-                                {% if task.is_active %}
-                                <span class="badge bg-success me-2">启用</span>
-                                {% else %}
-                                <span class="badge bg-danger me-2">禁用</span>
-                                {% endif %}
+                            <div class="d-flex flex-column gap-1">
+                                <div class="d-flex align-items-center">
+                                    {% if task.is_active %}
+                                    <span class="badge bg-success me-2">
+                                        <i class="fas fa-play me-1"></i>启用
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-danger me-2">
+                                        <i class="fas fa-pause me-1"></i>禁用
+                                    </span>
+                                    {% endif %}
+                                    
+                                    {% if task.schedule %}
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-clock me-1"></i>定时
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-hand-paper me-1"></i>手动
+                                    </span>
+                                    {% endif %}
+                                </div>
                                 
                                 {% if task.last_status %}
-                                <span class="badge bg-{{ 'success' if task.last_status == 'success' else 'danger' }}">
-                                    {{ task.last_status }}
-                                </span>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-{{ 'success' if task.last_status == 'success' else 'danger' }}">
+                                        <i class="fas fa-{{ 'check-circle' if task.last_status == 'success' else 'exclamation-triangle' }} me-1"></i>
+                                        {{ '成功' if task.last_status == 'success' else '失败' }}
+                                    </span>
+                                    {% if task.last_message %}
+                                    <small class="text-muted ms-2" title="{{ task.last_message }}">
+                                        {{ task.last_message[:30] }}{% if task.last_message|length > 30 %}...{% endif %}
+                                    </small>
+                                    {% endif %}
+                                </div>
                                 {% endif %}
                             </div>
                         </td>
                         <td>
-                            <div class="small">
-                                <div>运行: {{ task.run_count or 0 }} 次</div>
-                                <div>成功: {{ task.success_count or 0 }} 次</div>
+                            <div class="d-flex flex-column gap-1">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="small text-muted">运行次数:</span>
+                                    <span class="badge bg-primary">{{ task.run_count or 0 }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="small text-muted">成功次数:</span>
+                                    <span class="badge bg-success">{{ task.success_count or 0 }}</span>
+                                </div>
                                 {% if task.run_count and task.run_count > 0 %}
-                                <div class="text-{{ 'success' if task.success_rate >= 80 else 'warning' if task.success_rate >= 50 else 'danger' }}">
-                                    成功率: {{ task.success_rate }}%
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="small text-muted">成功率:</span>
+                                    <span class="badge bg-{{ 'success' if task.success_rate >= 80 else 'warning' if task.success_rate >= 50 else 'danger' }}">
+                                        {{ task.success_rate }}%
+                                    </span>
                                 </div>
                                 {% endif %}
                             </div>
                         </td>
                         <td>
                             {% if task.last_run %}
-                            <div>
-                                <strong>{{ task.last_run | china_date }}</strong>
-                                <br><small class="text-muted">{{ task.last_run | china_time('%H:%M:%S') }}</small>
+                            <div class="d-flex flex-column gap-1">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-clock text-muted me-1"></i>
+                                    <span class="small">{{ task.last_run | china_date }}</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-stopwatch text-muted me-1"></i>
+                                    <span class="small text-muted">{{ task.last_run | china_time('%H:%M:%S') }}</span>
+                                </div>
                             </div>
                             {% else %}
-                            <span class="text-muted">从未运行</span>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-question-circle text-muted me-1"></i>
+                                <span class="text-muted small">从未运行</span>
+                            </div>
                             {% endif %}
                         </td>
                         <td>
@@ -427,5 +559,215 @@ function executeTaskDirect(taskId) {
         });
     }
 }
+
+function createQuickTask(taskType) {
+    const taskTypeNames = {
+        'sync_accounts': '账户同步',
+        'sync_version': '版本同步',
+        'sync_size': '大小同步'
+    };
+    
+    if (confirm(`确定要创建 ${taskTypeNames[taskType]} 任务吗？这将为所有数据库类型创建对应的定时任务。`)) {
+        fetch('/tasks/create-quick', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                task_type: taskType
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                showAlert('success', data.message);
+                setTimeout(() => location.reload(), 1000);
+            } else if (data.error) {
+                showAlert('danger', data.error);
+            }
+        })
+        .catch(error => {
+            showAlert('danger', '创建任务失败');
+        });
+    }
+}
+
+function createAllBuiltinTasks() {
+    if (confirm('确定要创建所有内置任务吗？这将创建所有数据库类型的所有同步任务。')) {
+        fetch('/tasks/create-builtin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                showAlert('success', data.message);
+                setTimeout(() => location.reload(), 1000);
+            } else if (data.error) {
+                showAlert('danger', data.error);
+            }
+        })
+        .catch(error => {
+            showAlert('danger', '创建内置任务失败');
+        });
+    }
+}
+
+// 批量操作相关函数
+let selectedTasks = new Set();
+
+function updateSelectedCount() {
+    const count = selectedTasks.size;
+    document.getElementById('selectedCount').textContent = count;
+    
+    const batchButtons = ['batchEnableBtn', 'batchDisableBtn', 'batchRunBtn'];
+    batchButtons.forEach(btnId => {
+        document.getElementById(btnId).disabled = count === 0;
+    });
+}
+
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const taskCheckboxes = document.querySelectorAll('.task-checkbox');
+    
+    taskCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+        if (selectAllCheckbox.checked) {
+            selectedTasks.add(parseInt(checkbox.value));
+        } else {
+            selectedTasks.delete(parseInt(checkbox.value));
+        }
+    });
+    
+    updateSelectedCount();
+}
+
+function toggleTaskSelection(taskId) {
+    if (selectedTasks.has(taskId)) {
+        selectedTasks.delete(taskId);
+    } else {
+        selectedTasks.add(taskId);
+    }
+    
+    // 更新全选状态
+    const taskCheckboxes = document.querySelectorAll('.task-checkbox');
+    const checkedCount = document.querySelectorAll('.task-checkbox:checked').length;
+    const selectAllCheckbox = document.getElementById('selectAll');
+    
+    selectAllCheckbox.checked = checkedCount === taskCheckboxes.length;
+    selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < taskCheckboxes.length;
+    
+    updateSelectedCount();
+}
+
+function batchEnableTasks() {
+    if (selectedTasks.size === 0) return;
+    
+    if (confirm(`确定要启用选中的 ${selectedTasks.size} 个任务吗？`)) {
+        const taskIds = Array.from(selectedTasks);
+        batchToggleTasks(taskIds, true);
+    }
+}
+
+function batchDisableTasks() {
+    if (selectedTasks.size === 0) return;
+    
+    if (confirm(`确定要禁用选中的 ${selectedTasks.size} 个任务吗？`)) {
+        const taskIds = Array.from(selectedTasks);
+        batchToggleTasks(taskIds, false);
+    }
+}
+
+function batchRunTasks() {
+    if (selectedTasks.size === 0) return;
+    
+    if (confirm(`确定要运行选中的 ${selectedTasks.size} 个任务吗？这可能需要一些时间。`)) {
+        const taskIds = Array.from(selectedTasks);
+        batchExecuteTasks(taskIds);
+    }
+}
+
+function batchToggleTasks(taskIds, enable) {
+    fetch('/tasks/batch-toggle', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            task_ids: taskIds,
+            enable: enable
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showAlert('success', data.message);
+            setTimeout(() => location.reload(), 1000);
+        } else if (data.error) {
+            showAlert('danger', data.error);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', '批量操作失败');
+    });
+}
+
+function batchExecuteTasks(taskIds) {
+    fetch('/tasks/batch-execute', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            task_ids: taskIds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showAlert('success', data.message);
+            setTimeout(() => location.reload(), 2000);
+        } else if (data.error) {
+            showAlert('danger', data.error);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', '批量执行失败');
+    });
+}
+
+// 页面加载完成后绑定事件
+document.addEventListener('DOMContentLoaded', function() {
+    // 全选复选框事件
+    document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
+    document.getElementById('selectAllHeader').addEventListener('change', toggleSelectAll);
+    
+    // 任务复选框事件
+    document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            toggleTaskSelection(parseInt(this.value));
+        });
+    });
+    
+    // 检查URL参数，如果是从账户管理页面跳转过来，自动创建账户同步任务
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    
+    if (action === 'create_sync_accounts') {
+        // 显示提示信息
+        showAlert('info', '正在为您创建账户同步定时任务...');
+        
+        // 自动创建账户同步任务
+        setTimeout(() => {
+            createQuickTask('sync_accounts');
+        }, 1000);
+        
+        // 清除URL参数
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+    }
+});
 </script>
 {% endblock %}

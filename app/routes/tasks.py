@@ -137,6 +137,158 @@ def create():
     
     return render_template('tasks/create.html', instances=instances)
 
+@tasks_bp.route('/create-quick', methods=['POST'])
+@login_required
+def create_quick():
+    """快速创建内置任务"""
+    data = request.get_json()
+    task_type = data.get('task_type')
+    
+    if not task_type:
+        return jsonify({'error': '任务类型不能为空'}), 400
+    
+    # 支持的数据库类型
+    db_types = ['postgresql', 'mysql', 'sqlserver', 'oracle']
+    created_count = 0
+    skipped_count = 0
+    
+    for db_type in db_types:
+        try:
+            # 根据任务类型和数据库类型生成任务名称
+            task_name = f'{db_type.upper()}{task_type.replace("_", " ").title()}'
+            
+            # 检查任务是否已存在
+            existing_task = Task.query.filter_by(
+                name=task_name,
+                task_type=task_type,
+                db_type=db_type
+            ).first()
+            
+            if existing_task:
+                skipped_count += 1
+                continue
+            
+            # 从内置任务模板中获取配置
+            from app.templates.tasks.builtin_tasks import BUILTIN_TASKS
+            
+            # 查找对应的内置任务配置
+            task_config = None
+            for config in BUILTIN_TASKS:
+                if config['task_type'] == task_type and config['db_type'] == db_type:
+                    task_config = config
+                    break
+            
+            if not task_config:
+                continue
+            
+            # 创建新任务
+            task = Task(
+                name=task_name,
+                task_type=task_type,
+                db_type=db_type,
+                description=task_config['description'],
+                python_code=task_config['python_code'],
+                config=task_config['config'],
+                schedule=task_config['schedule'],
+                is_builtin=True,
+                is_active=True
+            )
+            
+            db.session.add(task)
+            created_count += 1
+            
+        except Exception as e:
+            logging.error(f"创建快速任务失败 {db_type}-{task_type}: {e}")
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            'message': f'快速创建完成，新增: {created_count}, 跳过: {skipped_count}',
+            'created_count': created_count,
+            'skipped_count': skipped_count
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'创建任务失败: {str(e)}'}), 500
+
+@tasks_bp.route('/batch-toggle', methods=['POST'])
+@login_required
+def batch_toggle():
+    """批量启用/禁用任务"""
+    data = request.get_json()
+    task_ids = data.get('task_ids', [])
+    enable = data.get('enable', True)
+    
+    if not task_ids:
+        return jsonify({'error': '请选择要操作的任务'}), 400
+    
+    try:
+        tasks = Task.query.filter(Task.id.in_(task_ids)).all()
+        if not tasks:
+            return jsonify({'error': '未找到指定的任务'}), 404
+        
+        updated_count = 0
+        for task in tasks:
+            task.is_active = enable
+            updated_count += 1
+        
+        db.session.commit()
+        
+        action = '启用' if enable else '禁用'
+        return jsonify({
+            'message': f'成功{action} {updated_count} 个任务',
+            'updated_count': updated_count
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'批量操作失败: {str(e)}'}), 500
+
+@tasks_bp.route('/batch-execute', methods=['POST'])
+@login_required
+def batch_execute():
+    """批量执行任务"""
+    data = request.get_json()
+    task_ids = data.get('task_ids', [])
+    
+    if not task_ids:
+        return jsonify({'error': '请选择要执行的任务'}), 400
+    
+    try:
+        tasks = Task.query.filter(Task.id.in_(task_ids)).all()
+        if not tasks:
+            return jsonify({'error': '未找到指定的任务'}), 404
+        
+        executor = TaskExecutor()
+        executed_count = 0
+        results = []
+        
+        for task in tasks:
+            try:
+                result = executor.execute_task(task.id)
+                results.append({
+                    'task_name': task.name,
+                    'result': result
+                })
+                executed_count += 1
+            except Exception as e:
+                results.append({
+                    'task_name': task.name,
+                    'result': {
+                        'success': False,
+                        'error': str(e)
+                    }
+                })
+        
+        return jsonify({
+            'message': f'批量执行完成，处理了 {executed_count} 个任务',
+            'executed_count': executed_count,
+            'results': results
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'批量执行失败: {str(e)}'}), 500
+
 @tasks_bp.route('/<int:task_id>')
 @login_required
 def detail(task_id):

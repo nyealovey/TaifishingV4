@@ -10,9 +10,9 @@
             <a href="{{ url_for('accounts.sync_report') }}" class="btn btn-outline-info me-2">
                 <i class="fas fa-chart-line me-2"></i>同步报告
             </a>
-            <button type="button" class="btn btn-success" onclick="syncAllInstances()">
-                <i class="fas fa-sync me-2"></i>同步所有账户
-            </button>
+            <a href="{{ url_for('tasks.index') }}?action=create_sync_accounts" class="btn btn-success">
+                <i class="fas fa-clock me-2"></i>创建定时同步任务
+            </a>
         </div>
     </div>
 
