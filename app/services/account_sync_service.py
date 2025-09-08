@@ -232,12 +232,18 @@ class AccountSyncService:
         """同步MySQL账户"""
         cursor = conn.cursor()
         
-        # 查询用户信息 - 使用统一的查询方式
+        # 查询用户信息 - 包含完整的账户信息
         cursor.execute("""
             SELECT 
                 User as username,
+                Host as host,
                 'user' as account_type,
                 '' as database_name,
+                plugin as plugin,
+                password_expired as password_expired,
+                password_last_changed as password_last_changed,
+                account_locked as account_locked,
+                password_lifetime as password_lifetime,
                 Select_priv as can_select,
                 Insert_priv as can_insert,
                 Update_priv as can_update,
@@ -247,7 +253,7 @@ class AccountSyncService:
                 Super_priv as is_superuser
             FROM mysql.user
             WHERE User NOT LIKE 'mysql.%'
-            ORDER BY User
+            ORDER BY User, Host
         """)
         
         accounts = cursor.fetchall()
@@ -256,32 +262,75 @@ class AccountSyncService:
         modified_count = 0
         
         for account_data in accounts:
-            username, account_type, database_name, can_select, can_insert, can_update, can_delete, can_create, can_drop, is_superuser = account_data
+            (username, host, account_type, database_name, plugin, password_expired, 
+             password_last_changed, account_locked, password_lifetime, can_select, 
+             can_insert, can_update, can_delete, can_create, can_drop, is_superuser) = account_data
             
             # 查找或创建账户记录
             account = Account.query.filter_by(
                 instance_id=instance.id,
-                username=username
+                username=username,
+                host=host
             ).first()
             
-            is_new = False
+            # 处理插件信息
+            plugin_name = plugin if plugin else 'mysql_native_password'
+            
+            # 处理密码过期状态
+            is_password_expired = password_expired == 'Y' if password_expired else False
+            
+            # 处理锁定状态
+            is_locked = account_locked == 'Y' if account_locked else False
+            
+            # 处理密码最后修改时间
+            password_changed = None
+            if password_last_changed:
+                try:
+                    password_changed = password_last_changed
+                except:
+                    password_changed = None
+            
             if not account:
                 account = Account(
                     instance_id=instance.id,
                     username=username,
+                    host=host,
                     database_name=database_name,
                     account_type=account_type,
-                    is_active=True
+                    plugin=plugin_name,
+                    password_expired=is_password_expired,
+                    password_last_changed=password_changed,
+                    is_locked=is_locked,
+                    is_active=not is_locked
                 )
                 db.session.add(account)
-                is_new = True
                 added_count += 1
             else:
                 # 检查是否有变化
-                if (account.database_name != database_name or 
-                    account.account_type != account_type):
+                has_changes = False
+                if account.database_name != database_name:
                     account.database_name = database_name
+                    has_changes = True
+                if account.account_type != account_type:
                     account.account_type = account_type
+                    has_changes = True
+                if account.plugin != plugin_name:
+                    account.plugin = plugin_name
+                    has_changes = True
+                if account.password_expired != is_password_expired:
+                    account.password_expired = is_password_expired
+                    has_changes = True
+                if account.password_last_changed != password_changed:
+                    account.password_last_changed = password_changed
+                    has_changes = True
+                if account.is_locked != is_locked:
+                    account.is_locked = is_locked
+                    has_changes = True
+                if account.is_active != (not is_locked):
+                    account.is_active = not is_locked
+                    has_changes = True
+                
+                if has_changes:
                     account.updated_at = datetime.utcnow()
                     modified_count += 1
             
