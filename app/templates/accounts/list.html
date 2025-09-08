@@ -154,12 +154,12 @@
         <div class="col-12">
             <div class="btn-group" role="group">
                 <a href="{{ url_for('accounts.list') }}" 
-                   class="btn {% if not current_db_type %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                   class="btn {% if not current_db_type %}btn-primary{% else %}btn-outline-primary border-2 fw-bold{% endif %}">
                     <i class="fas fa-database me-1"></i>全部
                 </a>
                 {% for db_type in filter_options.db_types %}
                 <a href="{{ url_for('accounts.list', db_type=db_type.value) }}" 
-                   class="btn {% if current_db_type == db_type.value %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                   class="btn {% if current_db_type == db_type.value %}btn-primary{% else %}btn-outline-primary border-2 fw-bold{% endif %}">
                     <i class="fas fa-{{ 'mysql' if db_type.value == 'mysql' else 'database' if db_type.value == 'postgresql' else 'server' if db_type.value == 'sqlserver' else 'database' }} me-1"></i>
                     {{ db_type.label }}
                 </a>
@@ -460,6 +460,35 @@
     </div>
 </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 数据库类型筛选按钮样式优化 */
+.btn-group .btn-outline-primary {
+    color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    font-weight: 600 !important;
+}
+
+.btn-group .btn-outline-primary:hover {
+    color: #fff !important;
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
+}
+
+.btn-group .btn-primary {
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
+}
+
+.btn-group .btn {
+    transition: all 0.2s ease-in-out;
+    min-width: 100px;
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}
