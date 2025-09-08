@@ -805,17 +805,18 @@ def get_instance_statistics():
             db.func.count(Instance.id).label('count')
         ).group_by(Instance.port).order_by(db.func.count(Instance.id).desc()).limit(10).all()
         
-        # 数据库版本统计（这里简化处理，实际应该从数据库连接中获取版本信息）
+        # 数据库版本统计（使用真实的版本信息）
         version_stats = db.session.query(
             Instance.db_type,
+            Instance.database_version,
             db.func.count(Instance.id).label('count')
-        ).group_by(Instance.db_type).all()
+        ).group_by(Instance.db_type, Instance.database_version).all()
         
         # 转换为版本统计格式
         version_stats = [
             {
                 'db_type': stat.db_type,
-                'version': get_default_version(stat.db_type),
+                'version': stat.database_version or '未知版本',
                 'count': stat.count
             }
             for stat in version_stats

@@ -69,6 +69,12 @@ class DatabaseService:
                     'error': '无法获取数据库连接'
                 }
             
+            # 获取数据库版本信息
+            version_info = self.get_database_version(instance, conn)
+            if version_info and version_info != instance.database_version:
+                instance.database_version = version_info
+                db.session.commit()
+            
             # 记录同步前的账户数量
             before_count = Account.query.filter_by(instance_id=instance.id).count()
             
@@ -1016,6 +1022,32 @@ class DatabaseService:
             log_error(e, context={'instance_id': instance.id, 'instance_name': instance.name})
             return None
     
+    def get_database_version(self, instance: Instance, conn) -> Optional[str]:
+        """
+        获取数据库版本信息
+        
+        Args:
+            instance: 数据库实例
+            conn: 数据库连接
+            
+        Returns:
+            数据库版本字符串
+        """
+        try:
+            if instance.db_type == 'postgresql':
+                return self._get_postgresql_version(conn)
+            elif instance.db_type == 'mysql':
+                return self._get_mysql_version(conn)
+            elif instance.db_type == 'sqlserver':
+                return self._get_sqlserver_version(conn)
+            elif instance.db_type == 'oracle':
+                return self._get_oracle_version(conn)
+            else:
+                return None
+        except Exception as e:
+            logging.error(f"获取数据库版本失败: {e}")
+            return None
+    
     def _test_connection_validity(self, conn, db_type: str) -> bool:
         """测试连接有效性"""
         try:
@@ -1694,3 +1726,59 @@ class DatabaseService:
             }
         finally:
             cursor.close()
+    def _get_mysql_version(self, conn) -> Optional[str]:
+        """获取MySQL版本"""
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT VERSION()")
+            version = cursor.fetchone()[0]
+            cursor.close()
+            return version
+        except Exception as e:
+            logging.error(f"获取MySQL版本失败: {e}")
+            return None
+    
+    def _get_postgresql_version(self, conn) -> Optional[str]:
+        """获取PostgreSQL版本"""
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT version()")
+            version = cursor.fetchone()[0]
+            cursor.close()
+            # 提取版本号，例如 "PostgreSQL 15.3 on x86_64-pc-linux-gnu"
+            import re
+            match = re.search(r"PostgreSQL (\d+\.\d+)", version)
+            return match.group(1) if match else version
+        except Exception as e:
+            logging.error(f"获取PostgreSQL版本失败: {e}")
+            return None
+    
+    def _get_sqlserver_version(self, conn) -> Optional[str]:
+        """获取SQL Server版本"""
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT @@VERSION")
+            version = cursor.fetchone()[0]
+            cursor.close()
+            # 提取版本号，例如 "Microsoft SQL Server 2019 (RTM-CU18)"
+            import re
+            match = re.search(r"Microsoft SQL Server (\d+)", version)
+            return match.group(1) if match else version
+        except Exception as e:
+            logging.error(f"获取SQL Server版本失败: {e}")
+            return None
+    
+    def _get_oracle_version(self, conn) -> Optional[str]:
+        """获取Oracle版本"""
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM v$version WHERE rownum = 1")
+            version = cursor.fetchone()[0]
+            cursor.close()
+            # 提取版本号，例如 "Oracle Database 19c Enterprise Edition Release 19.0.0.0.0"
+            import re
+            match = re.search(r"Oracle Database (\d+c?)", version)
+            return match.group(1) if match else version
+        except Exception as e:
+            logging.error(f"获取Oracle版本失败: {e}")
+            return None
