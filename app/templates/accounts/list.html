@@ -3,17 +3,18 @@
 {% block title %}账户管理 - 泰摸鱼吧{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="fas fa-users me-2"></i>账户管理</h2>
-    <div>
-        <a href="{{ url_for('accounts.index') }}" class="btn btn-outline-info me-2">
-            <i class="fas fa-chart-bar me-2"></i>统计概览
-        </a>
-        <button type="button" class="btn btn-success" onclick="syncAllAccounts()">
-            <i class="fas fa-sync me-2"></i>同步所有账户
-        </button>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-users me-2"></i>账户管理</h2>
+        <div>
+            <a href="{{ url_for('accounts.index') }}" class="btn btn-outline-info me-2">
+                <i class="fas fa-chart-bar me-2"></i>统计概览
+            </a>
+            <button type="button" class="btn btn-success" onclick="syncAllAccounts()">
+                <i class="fas fa-sync me-2"></i>同步所有账户
+            </button>
+        </div>
     </div>
-</div>
 
 <!-- 搜索和筛选 -->
 <div class="card mb-4">
@@ -85,11 +86,11 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h4 class="card-title">{{ stats.active_accounts }}</h4>
-                        <p class="card-text">活跃账户</p>
+                        <h4 class="card-title">{{ stats.high_privilege_accounts or 0 }}</h4>
+                        <p class="card-text">高权限账户</p>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-user-check fa-2x"></i>
+                        <i class="fas fa-crown fa-2x"></i>
                     </div>
                 </div>
             </div>
@@ -129,74 +130,75 @@
 
 <!-- 账户列表 -->
 <div class="card">
-    <div class="card-body">
+    <div class="card-body p-2">
         {% if accounts.items %}
-        <div class="table-responsive">
-            <table class="table table-hover">
+        <div class="table-responsive" style="font-size: 0.9rem;">
+            <table class="table table-hover table-sm mb-0">
                 <thead>
-                    <tr>
-                        <th>用户名</th>
-                        <th>数据库类型</th>
-                        <th>实例名称</th>
-                        <th>数据库名</th>
-                        <th>账户类型</th>
-                        <th>状态</th>
-                        <th>最后登录</th>
-                        <th>操作</th>
+                    <tr class="small">
+                        <th style="font-size: 0.8rem;">名称</th>
+                        <th style="font-size: 0.8rem;">用户</th>
+                        <th style="font-size: 0.8rem;">主机</th>
+                        <th style="font-size: 0.8rem;">实例名称</th>
+                        <th style="font-size: 0.8rem;">数据库类型</th>
+                        <th style="font-size: 0.8rem;">插件</th>
+                        <th style="font-size: 0.8rem;">密码过期策略</th>
+                        <th style="font-size: 0.8rem;">密码最后修改</th>
+                        <th style="font-size: 0.8rem;">操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for account in accounts.items %}
-                    <tr>
+                    <tr class="small">
                         <td>
                             <div class="d-flex align-items-center">
-                                <i class="fas fa-user text-primary me-2"></i>
-                                <strong>{{ account.username }}</strong>
+                                <i class="fas fa-user text-primary me-1" style="font-size: 0.8rem;"></i>
+                                <strong style="font-size: 0.85rem;">{{ account.username }}@{{ account.host or '%' }}</strong>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-{{ 'primary' if account.instance.db_type == 'postgresql' else 'success' if account.instance.db_type == 'mysql' else 'warning' if account.instance.db_type == 'sqlserver' else 'info' if account.instance.db_type == 'oracle' else 'secondary' }}">
+                            <span class="fw-bold" style="font-size: 0.85rem;">{{ account.username }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-info" style="font-size: 0.7rem;">{{ account.host or '%' }}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-database text-info me-1" style="font-size: 0.8rem;"></i>
+                                <span style="font-size: 0.8rem;">{{ account.instance.name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'primary' if account.instance.db_type == 'postgresql' else 'success' if account.instance.db_type == 'mysql' else 'warning' if account.instance.db_type == 'sqlserver' else 'info' if account.instance.db_type == 'oracle' else 'secondary' }}" style="font-size: 0.7rem;">
                                 {{ account.instance.db_type.upper() }}
                             </span>
                         </td>
                         <td>
-                            <i class="fas fa-database text-info me-1"></i>
-                            {{ account.instance.name }}
-                        </td>
-                        <td>{{ account.database_name or '-' }}</td>
-                        <td>
-                            <span class="badge bg-{{ 'primary' if account.account_type == 'user' else 'success' if account.account_type == 'role' else 'info' if account.account_type == 'group' else 'secondary' }}">
-                                {{ account.account_type or '未知' }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if account.is_active %}
-                            <span class="badge bg-success">活跃</span>
+                            {% if account.plugin %}
+                                <span class="badge bg-secondary" style="font-size: 0.7rem;">{{ account.plugin }}</span>
                             {% else %}
-                            <span class="badge bg-danger">禁用</span>
+                                <span class="text-muted" style="font-size: 0.8rem;">未知</span>
                             {% endif %}
                         </td>
                         <td>
-                            {% if account.last_login %}
-                            <small class="text-muted">{{ account.last_login | china_time('%Y-%m-%d %H:%M') }}</small>
+                            <span class="badge bg-warning" style="font-size: 0.7rem;">DEFAULT</span>
+                        </td>
+                        <td>
+                            {% if account.password_last_changed %}
+                                <small class="text-muted" style="font-size: 0.75rem;">{{ account.password_last_changed | china_datetime }}</small>
                             {% else %}
-                            <small class="text-muted">从未登录</small>
+                                <small class="text-muted" style="font-size: 0.75rem;">未知</small>
                             {% endif %}
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-outline-info" 
-                                        onclick="viewAccount({{ account.id }})" title="查看详情">
-                                    <i class="fas fa-eye"></i>
+                                <button type="button" class="btn btn-outline-primary btn-sm" 
+                                        onclick="viewAccountPermissions({{ account.id }})" title="查看权限" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;">
+                                    <i class="fas fa-eye me-1"></i>权限
                                 </button>
-                                <button type="button" class="btn btn-outline-warning" 
-                                        onclick="editAccount({{ account.id }})" title="编辑">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button type="button" class="btn btn-outline-{{ 'danger' if account.is_active else 'success' }}" 
-                                        onclick="toggleAccount({{ account.id }}, {{ account.is_active|lower }})" 
-                                        title="{{ '禁用' if account.is_active else '启用' }}">
-                                    <i class="fas fa-{{ 'ban' if account.is_active else 'check' }}"></i>
+                                <button type="button" class="btn btn-outline-info btn-sm" 
+                                        onclick="viewAccount({{ account.id }})" title="查看详情" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;">
+                                    <i class="fas fa-info-circle"></i>
                                 </button>
                             </div>
                         </td>
@@ -261,6 +263,7 @@
         {% endif %}
     </div>
 </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -296,22 +299,125 @@ function syncAllAccounts() {
     });
 }
 
+function viewAccountPermissions(accountId) {
+    // 获取CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                     document.querySelector('input[name="csrf_token"]')?.value;
+    
+    // 显示加载状态
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>加载中...';
+    button.disabled = true;
+    
+    fetch(`/accounts/${accountId}/permissions`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showPermissionsModal(data.permissions, data.account);
+        } else {
+            showAlert('danger', data.error || '获取权限信息失败');
+        }
+    })
+    .catch(error => {
+        showAlert('danger', '获取权限信息失败');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+function showPermissionsModal(permissions, account) {
+    // 创建模态框
+    const modalHtml = `
+        <div class="modal fade" id="permissionsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-shield-alt me-2"></i>账户权限详情
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <h6>账户信息</h6>
+                            <p class="mb-1"><strong>用户名:</strong> ${account.username}</p>
+                            <p class="mb-1"><strong>主机:</strong> ${account.host || '%'}</p>
+                            <p class="mb-0"><strong>插件:</strong> ${account.plugin || '未知'}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6>全局权限</h6>
+                            <div class="row">
+                                ${permissions.global.map(perm => `
+                                    <div class="col-md-6 mb-2">
+                                        <span class="badge ${perm.granted ? 'bg-success' : 'bg-secondary'} me-2">
+                                            ${perm.granted ? '✓' : '✗'}
+                                        </span>
+                                        ${perm.privilege}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <h6>数据库权限</h6>
+                            ${permissions.database.length > 0 ? `
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>数据库</th>
+                                                <th>权限</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${permissions.database.map(db => `
+                                                <tr>
+                                                    <td>${db.database}</td>
+                                                    <td>
+                                                        ${db.privileges.map(priv => `
+                                                            <span class="badge bg-info me-1">${priv}</span>
+                                                        `).join('')}
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : '<p class="text-muted">无特定数据库权限</p>'}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 移除现有模态框
+    const existingModal = document.getElementById('permissionsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // 添加新模态框
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // 显示模态框
+    const modal = new bootstrap.Modal(document.getElementById('permissionsModal'));
+    modal.show();
+}
+
 function viewAccount(accountId) {
     // 查看账户详情
     showAlert('info', `查看账户 ${accountId} 的详情`);
-}
-
-function editAccount(accountId) {
-    // 编辑账户
-    showAlert('info', `编辑账户 ${accountId}`);
-}
-
-function toggleAccount(accountId, isActive) {
-    // 启用/禁用账户
-    const action = isActive ? '禁用' : '启用';
-    if (confirm(`确定要${action}此账户吗？`)) {
-        showAlert('info', `${action}账户 ${accountId}`);
-    }
 }
 
 function showAlert(type, message) {

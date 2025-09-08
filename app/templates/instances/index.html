@@ -269,10 +269,15 @@ function deleteInstance(instanceId, instanceName) {
 
 document.getElementById('confirmDelete').addEventListener('click', function() {
     if (deleteInstanceId) {
+        // 获取CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                         document.querySelector('input[name="csrf_token"]')?.value;
+        
         fetch(`/instances/${deleteInstanceId}/delete`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             }
         })
         .then(response => response.json())

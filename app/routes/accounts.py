@@ -409,8 +409,8 @@ def get_account_list_statistics():
         # 总账户数
         total_accounts = Account.query.count()
         
-        # 活跃账户数
-        active_accounts = Account.query.filter_by(is_active=True).count()
+        # 高权限账户数（暂时占位，后续定义高权限逻辑）
+        high_privilege_accounts = 0  # TODO: 实现高权限账户识别逻辑
         
         # 数据库类型数量
         db_types_count = db.session.query(Instance.db_type).distinct().count()
@@ -420,7 +420,7 @@ def get_account_list_statistics():
         
         return {
             'total_accounts': total_accounts,
-            'active_accounts': active_accounts,
+            'high_privilege_accounts': high_privilege_accounts,
             'db_types_count': db_types_count,
             'instances_count': instances_count
         }
@@ -428,7 +428,7 @@ def get_account_list_statistics():
         logging.error(f"获取账户列表统计失败: {e}")
         return {
             'total_accounts': 0,
-            'active_accounts': 0,
+            'high_privilege_accounts': 0,
             'db_types_count': 0,
             'instances_count': 0
         }
@@ -440,6 +440,38 @@ def api_statistics():
     """获取统计信息API"""
     stats = get_account_statistics()
     return jsonify(stats)
+
+@accounts_bp.route('/<int:account_id>/permissions')
+@login_required
+def get_account_permissions(account_id):
+    """获取账户权限详情"""
+    account = Account.query.get_or_404(account_id)
+    instance = Instance.query.get_or_404(account.instance_id)
+    
+    try:
+        from app.services.database_service import DatabaseService
+        db_service = DatabaseService()
+        
+        # 获取账户权限
+        permissions = db_service.get_account_permissions(instance, account)
+        
+        return jsonify({
+            'success': True,
+            'account': {
+                'id': account.id,
+                'username': account.username,
+                'host': account.host,
+                'plugin': account.plugin
+            },
+            'permissions': permissions
+        })
+        
+    except Exception as e:
+        logging.error(f"获取账户权限失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'获取权限失败: {str(e)}'
+        }), 500
 
 @accounts_bp.route('/api/sync/<int:instance_id>')
 @jwt_required()

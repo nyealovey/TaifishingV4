@@ -18,6 +18,7 @@ class Instance(db.Model):
     port = db.Column(db.Integer, nullable=False)
     database_name = db.Column(db.String(255), nullable=True)
     database_version = db.Column(db.String(100), nullable=True)
+    sync_count = db.Column(db.Integer, default=0, nullable=False)
     credential_id = db.Column(db.Integer, db.ForeignKey('credentials.id'), nullable=True)
     description = db.Column(db.Text, nullable=True)
     tags = db.Column(db.JSON, nullable=True)

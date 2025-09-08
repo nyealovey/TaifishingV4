@@ -148,8 +148,6 @@ def create():
             )
             
             # 设置其他属性
-            if data.get('database_name'):
-                instance.database_name = data.get('database_name').strip()
             instance.is_active = data.get('is_active', True) in [True, 'on', '1', 1]
             
             db.session.add(instance)
@@ -277,7 +275,6 @@ def test_instance_connection():
             credential_id=credential_id,
             description='test'
         )
-        temp_instance.database_name = data.get('database_name')
         
         # 获取凭据信息
         if temp_instance.credential_id:
@@ -410,9 +407,6 @@ def edit(instance_id):
             instance.db_type = data.get('db_type', instance.db_type)
             instance.host = data.get('host', instance.host).strip()
             instance.port = int(data.get('port', instance.port))
-            instance.database_name = data.get('database_name', instance.database_name)
-            if data.get('database_name'):
-                instance.database_name = data.get('database_name').strip()
             instance.credential_id = int(data.get('credential_id')) if data.get('credential_id') else None
             instance.description = data.get('description', instance.description)
             if data.get('description'):
@@ -437,7 +431,6 @@ def edit(instance_id):
                     'db_type': data.get('db_type'),
                     'host': data.get('host'),
                     'port': data.get('port'),
-                    'database_name': data.get('database_name'),
                     'credential_id': data.get('credential_id'),
                     'description': data.get('description'),
                     'is_active': data.get('is_active')
@@ -500,13 +493,33 @@ def delete(instance_id):
             'host': instance.host
         })
         
+        # 级联删除相关数据
+        # 1. 删除账户信息
+        accounts_count = instance.accounts.count()
+        if accounts_count > 0:
+            instance.accounts.delete()
+            logging.info(f"删除了 {accounts_count} 个账户记录")
+        
+        # 2. 删除同步数据
+        sync_data_count = instance.sync_data.count()
+        if sync_data_count > 0:
+            instance.sync_data.delete()
+            logging.info(f"删除了 {sync_data_count} 条同步数据记录")
+        
+        # 3. 删除实例本身
         db.session.delete(instance)
         db.session.commit()
         
-        if request.is_json:
-            return jsonify({'message': '实例删除成功'})
+        logging.info(f"实例 {instance.name} 及其相关数据删除成功")
         
-        flash('实例删除成功！', 'success')
+        if request.is_json:
+            return jsonify({
+                'message': '实例删除成功',
+                'deleted_accounts': accounts_count,
+                'deleted_sync_data': sync_data_count
+            })
+        
+        flash(f'实例删除成功！已删除 {accounts_count} 个账户和 {sync_data_count} 条同步数据', 'success')
         return redirect(url_for('instances.index'))
         
     except Exception as e:
@@ -573,6 +586,10 @@ def sync_accounts(instance_id):
         result = db_service.sync_accounts(instance)
         
         if result['success']:
+            # 增加同步次数计数
+            instance.sync_count = (instance.sync_count or 0) + 1
+            db.session.commit()
+            
             if request.is_json:
                 return jsonify({
                     'message': '账户同步成功',
@@ -703,7 +720,6 @@ def api_test_instance_connection():
             credential_id=credential_id,
             description='test'
         )
-        temp_instance.database_name = data.get('database_name')
         
         # 获取凭据信息
         if temp_instance.credential_id:
