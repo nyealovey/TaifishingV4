@@ -377,7 +377,7 @@ def sync_history():
                 'removed_count': data['removed_count'],
                 'modified_count': data['modified_count'],
                 'sync_type': sync_type_display,
-                'sync_types': sync_types
+                'sync_types': list(sync_types)  # 确保转换为list
             })
         
         return jsonify({
