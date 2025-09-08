@@ -258,7 +258,7 @@ function updateLogsTable(logs) {
         
         html += `
             <tr>
-                <td>${new Date(log.timestamp).toLocaleString()}</td>
+                <td>${new Date(log.created_at).toLocaleString()}</td>
                 <td><span class="badge ${levelClass}">${levelIcon} ${log.level}</span></td>
                 <td>${log.module || '--'}</td>
                 <td class="text-truncate" style="max-width: 300px;" title="${log.message}">${log.message}</td>
@@ -345,7 +345,7 @@ async function showLogDetail(logId) {
             detailContent.innerHTML = `
                 <div class="row">
                     <div class="col-md-6">
-                        <strong>时间:</strong> ${new Date(log.timestamp).toLocaleString()}
+                        <strong>时间:</strong> ${new Date(log.created_at).toLocaleString()}
                     </div>
                     <div class="col-md-6">
                         <strong>级别:</strong> <span class="badge ${getLevelClass(log.level)}">${log.level}</span>
@@ -367,12 +367,23 @@ async function showLogDetail(logId) {
                         <pre class="mt-2 p-3 bg-light">${log.message}</pre>
                     </div>
                 </div>
-                ${log.stack_trace ? `
+                ${log.details ? `
                 <hr>
                 <div class="row">
                     <div class="col-12">
-                        <strong>堆栈跟踪:</strong>
-                        <pre class="mt-2 p-3 bg-light">${log.stack_trace}</pre>
+                        <strong>详细信息:</strong>
+                        <pre class="mt-2 p-3 bg-light">${log.details}</pre>
+                    </div>
+                </div>
+                ` : ''}
+                ${log.ip_address ? `
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>IP地址:</strong> ${log.ip_address}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>用户代理:</strong> ${log.user_agent || '--'}
                     </div>
                 </div>
                 ` : ''}
