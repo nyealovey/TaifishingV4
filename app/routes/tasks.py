@@ -89,6 +89,19 @@ def create():
                 except json.JSONDecodeError:
                     config = {}
             
+            # 处理布尔值字段
+            is_active = data.get('is_active')
+            if isinstance(is_active, str):
+                is_active = is_active.lower() in ['true', 'on', '1', 'yes']
+            else:
+                is_active = bool(is_active)
+            
+            is_builtin = data.get('is_builtin')
+            if isinstance(is_builtin, str):
+                is_builtin = is_builtin.lower() in ['true', 'on', '1', 'yes']
+            else:
+                is_builtin = bool(is_builtin)
+            
             # 创建新任务
             task = Task(
                 name=data.get('name'),
@@ -98,8 +111,8 @@ def create():
                 description=data.get('description', ''),
                 python_code=data.get('python_code'),
                 config=config,
-                is_active=data.get('is_active', True),
-                is_builtin=data.get('is_builtin', False)
+                is_active=is_active,
+                is_builtin=is_builtin
             )
             
             db.session.add(task)
