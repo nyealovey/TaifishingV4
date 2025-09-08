@@ -30,6 +30,7 @@ def index():
     per_page = request.args.get('per_page', 10, type=int)
     search = request.args.get('search', '', type=str)
     db_type = request.args.get('db_type', '', type=str)
+    environment = request.args.get('environment', '', type=str)
     
     # 构建查询
     query = Instance.query
@@ -45,6 +46,9 @@ def index():
     
     if db_type:
         query = query.filter(Instance.db_type == db_type)
+    
+    if environment:
+        query = query.filter(Instance.environment == environment)
     
     # 分页查询
     instances = query.paginate(
@@ -72,7 +76,8 @@ def index():
                          instances=instances, 
                          credentials=credentials,
                          search=search,
-                         db_type=db_type)
+                         db_type=db_type,
+                         environment=environment)
 
 @instances_bp.route('/create', methods=['GET', 'POST'])
 @login_required
@@ -144,7 +149,8 @@ def create():
                 host=data.get('host').strip(),
                 port=int(data.get('port')),
                 credential_id=int(data.get('credential_id')) if data.get('credential_id') else None,
-                description=data.get('description', '').strip()
+                description=data.get('description', '').strip(),
+                environment=data.get('environment', 'production')
             )
             
             # 设置其他属性
@@ -531,6 +537,178 @@ def delete(instance_id):
         
         flash('删除实例失败，请重试', 'error')
         return redirect(url_for('instances.index'))
+
+@instances_bp.route('/batch-delete', methods=['POST'])
+@login_required
+def batch_delete():
+    """批量删除实例"""
+    try:
+        data = request.get_json()
+        instance_ids = data.get('instance_ids', [])
+        
+        if not instance_ids:
+            return jsonify({
+                'success': False,
+                'error': '请选择要删除的实例'
+            }), 400
+        
+        # 检查是否有账户关联
+        account_counts = {}
+        for instance_id in instance_ids:
+            instance = Instance.query.get(instance_id)
+            if instance:
+                count = instance.accounts.count()
+                if count > 0:
+                    account_counts[instance.name] = count
+        
+        if account_counts:
+            error_msg = '以下实例无法删除，还有账户关联：\n'
+            for name, count in account_counts.items():
+                error_msg += f'- {name}: {count} 个账户\n'
+            return jsonify({
+                'success': False,
+                'error': error_msg.strip()
+            }), 400
+        
+        # 批量删除
+        deleted_count = 0
+        deleted_accounts = 0
+        deleted_sync_data = 0
+        
+        for instance_id in instance_ids:
+            instance = Instance.query.get(instance_id)
+            if instance:
+                # 记录操作日志
+                log_operation('BATCH_DELETE_INSTANCE', current_user.id, {
+                    'instance_id': instance.id,
+                    'instance_name': instance.name,
+                    'db_type': instance.db_type,
+                    'host': instance.host
+                })
+                
+                # 删除相关数据
+                accounts_count = instance.accounts.count()
+                sync_data_count = instance.sync_data.count()
+                
+                if accounts_count > 0:
+                    instance.accounts.delete()
+                    deleted_accounts += accounts_count
+                
+                if sync_data_count > 0:
+                    instance.sync_data.delete()
+                    deleted_sync_data += sync_data_count
+                
+                # 删除实例本身
+                db.session.delete(instance)
+                deleted_count += 1
+        
+        db.session.commit()
+        
+        logging.info(f"批量删除完成：{deleted_count} 个实例，{deleted_accounts} 个账户，{deleted_sync_data} 条同步数据")
+        
+        return jsonify({
+            'success': True,
+            'message': f'成功删除 {deleted_count} 个实例',
+            'deleted_count': deleted_count,
+            'deleted_accounts': deleted_accounts,
+            'deleted_sync_data': deleted_sync_data
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"批量删除实例失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'批量删除实例失败: {str(e)}'
+        }), 500
+
+@instances_bp.route('/batch-create', methods=['POST'])
+@login_required
+def batch_create():
+    """批量创建实例"""
+    try:
+        data = request.get_json()
+        instances_data = data.get('instances', [])
+        
+        if not instances_data:
+            return jsonify({
+                'success': False,
+                'error': '请提供实例数据'
+            }), 400
+        
+        created_count = 0
+        errors = []
+        
+        for i, instance_data in enumerate(instances_data):
+            try:
+                # 验证必填字段
+                required_fields = ['name', 'db_type', 'host', 'port']
+                for field in required_fields:
+                    if not instance_data.get(field):
+                        errors.append(f"第 {i+1} 个实例缺少必填字段: {field}")
+                        continue
+                
+                if errors:
+                    continue
+                
+                # 检查实例名称是否已存在
+                existing_instance = Instance.query.filter_by(name=instance_data['name']).first()
+                if existing_instance:
+                    errors.append(f"第 {i+1} 个实例名称已存在: {instance_data['name']}")
+                    continue
+                
+                # 创建实例
+                instance = Instance(
+                    name=instance_data['name'],
+                    db_type=instance_data['db_type'],
+                    host=instance_data['host'],
+                    port=instance_data['port'],
+                    database_name=instance_data.get('database_name'),
+                    environment=instance_data.get('environment', 'production'),
+                    description=instance_data.get('description'),
+                    credential_id=instance_data.get('credential_id'),
+                    tags=instance_data.get('tags', {})
+                )
+                
+                db.session.add(instance)
+                created_count += 1
+                
+                # 记录操作日志
+                log_operation('BATCH_CREATE_INSTANCE', current_user.id, {
+                    'instance_name': instance.name,
+                    'db_type': instance.db_type,
+                    'host': instance.host,
+                    'environment': instance.environment
+                })
+                
+            except Exception as e:
+                errors.append(f"第 {i+1} 个实例创建失败: {str(e)}")
+                continue
+        
+        if created_count > 0:
+            db.session.commit()
+        
+        if errors:
+            return jsonify({
+                'success': True,
+                'message': f'成功创建 {created_count} 个实例',
+                'created_count': created_count,
+                'errors': errors
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'message': f'成功创建 {created_count} 个实例',
+                'created_count': created_count
+            })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"批量创建实例失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'批量创建实例失败: {str(e)}'
+        }), 500
 
 @instances_bp.route('/<int:instance_id>/test', methods=['POST'])
 @login_required

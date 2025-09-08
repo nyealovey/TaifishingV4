@@ -19,12 +19,12 @@
 <div class="card mb-4">
     <div class="card-body">
         <form method="GET" class="row g-3">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label for="search" class="form-label">搜索</label>
                 <input type="text" class="form-control" id="search" name="search" 
                        value="{{ search }}" placeholder="搜索实例名称、主机或描述">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label for="db_type" class="form-label">数据库类型</label>
                 <select class="form-select" id="db_type" name="db_type">
                     <option value="">全部类型</option>
@@ -32,6 +32,15 @@
                     <option value="mysql" {% if db_type == 'mysql' %}selected{% endif %}>MySQL</option>
                     <option value="sqlserver" {% if db_type == 'sqlserver' %}selected{% endif %}>SQL Server</option>
                     <option value="oracle" {% if db_type == 'oracle' %}selected{% endif %}>Oracle</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="environment" class="form-label">环境</label>
+                <select class="form-select" id="environment" name="environment">
+                    <option value="">全部环境</option>
+                    <option value="production" {% if environment == 'production' %}selected{% endif %}>生产环境</option>
+                    <option value="development" {% if environment == 'development' %}selected{% endif %}>开发环境</option>
+                    <option value="testing" {% if environment == 'testing' %}selected{% endif %}>测试环境</option>
                 </select>
             </div>
             <div class="col-md-2">
@@ -58,12 +67,31 @@
 <div class="card">
     <div class="card-body">
         {% if instances.items %}
+        <!-- 批量操作工具栏 -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center">
+                <input type="checkbox" class="form-check-input me-2" id="selectAll" onchange="toggleSelectAll()">
+                <label for="selectAll" class="form-check-label me-3">全选</label>
+                <button type="button" class="btn btn-outline-danger btn-sm me-2" onclick="batchDelete()" disabled id="batchDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>批量删除
+                </button>
+                <button type="button" class="btn btn-outline-success btn-sm" onclick="showBatchCreateModal()">
+                    <i class="fas fa-plus me-1"></i>批量添加
+                </button>
+            </div>
+            <div class="text-muted">
+                共 {{ instances.total }} 个实例
+            </div>
+        </div>
+        
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
                     <tr>
+                        <th width="50">选择</th>
                         <th>名称</th>
                         <th>类型</th>
+                        <th>环境</th>
                         <th>主机</th>
                         <th>端口</th>
                         <th>数据库版本</th>
@@ -75,6 +103,10 @@
                 <tbody>
                     {% for instance in instances.items %}
                     <tr>
+                        <td>
+                            <input type="checkbox" class="form-check-input instance-checkbox" 
+                                   value="{{ instance.id }}" onchange="updateBatchButtons()">
+                        </td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-database text-primary me-2"></i>
@@ -89,6 +121,14 @@
                         <td>
                             <span class="badge bg-{{ 'primary' if instance.db_type == 'postgresql' else 'success' if instance.db_type == 'mysql' else 'warning' if instance.db_type == 'sqlserver' else 'info' }}">
                                 {{ instance.db_type.upper() }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'danger' if instance.environment == 'production' else 'warning' if instance.environment == 'development' else 'info' }}">
+                                {% if instance.environment == 'production' %}生产环境
+                                {% elif instance.environment == 'development' %}开发环境
+                                {% elif instance.environment == 'testing' %}测试环境
+                                {% else %}{{ instance.environment }}{% endif %}
                             </span>
                         </td>
                         <td>{{ instance.host }}</td>
@@ -215,6 +255,75 @@
         </div>
     </div>
 </div>
+
+<!-- 批量创建模态框 -->
+<div class="modal fade" id="batchCreateModal" tabindex="-1" aria-labelledby="batchCreateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="batchCreateModalLabel">
+                    <i class="fas fa-plus me-2"></i>批量创建实例
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">实例数据 (JSON格式)</label>
+                    <textarea class="form-control" id="batchInstancesData" rows="10" 
+                              placeholder='[
+  {
+    "name": "mysql-prod-01",
+    "db_type": "mysql",
+    "host": "192.168.1.100",
+    "port": 3306,
+    "database_name": "production",
+    "environment": "production",
+    "description": "生产环境MySQL主库",
+    "credential_id": 1
+  },
+  {
+    "name": "mysql-dev-01",
+    "db_type": "mysql",
+    "host": "192.168.1.101",
+    "port": 3306,
+    "database_name": "development",
+    "environment": "development",
+    "description": "开发环境MySQL",
+    "credential_id": 2
+  }
+]'></textarea>
+                    <div class="form-text">
+                        请按照JSON格式输入实例数据，每行一个实例对象。必填字段：name, db_type, host, port
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>环境类型说明：</h6>
+                        <ul class="list-unstyled">
+                            <li><span class="badge bg-danger me-2">production</span>生产环境</li>
+                            <li><span class="badge bg-warning me-2">development</span>开发环境</li>
+                            <li><span class="badge bg-info me-2">testing</span>测试环境</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>数据库类型：</h6>
+                        <ul class="list-unstyled">
+                            <li><span class="badge bg-primary me-2">postgresql</span>PostgreSQL</li>
+                            <li><span class="badge bg-success me-2">mysql</span>MySQL</li>
+                            <li><span class="badge bg-warning me-2">sqlserver</span>SQL Server</li>
+                            <li><span class="badge bg-info me-2">oracle</span>Oracle</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="submitBatchCreate()">创建实例</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -309,6 +418,146 @@ function showAlert(type, message) {
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);
+}
+
+// 批量操作功能
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const instanceCheckboxes = document.querySelectorAll('.instance-checkbox');
+    
+    instanceCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    
+    updateBatchButtons();
+}
+
+function updateBatchButtons() {
+    const selectedCheckboxes = document.querySelectorAll('.instance-checkbox:checked');
+    const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+    
+    if (selectedCheckboxes.length > 0) {
+        batchDeleteBtn.disabled = false;
+        batchDeleteBtn.textContent = `批量删除 (${selectedCheckboxes.length})`;
+    } else {
+        batchDeleteBtn.disabled = true;
+        batchDeleteBtn.textContent = '批量删除';
+    }
+}
+
+function batchDelete() {
+    const selectedCheckboxes = document.querySelectorAll('.instance-checkbox:checked');
+    const instanceIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
+    
+    if (instanceIds.length === 0) {
+        showAlert('warning', '请选择要删除的实例');
+        return;
+    }
+    
+    if (!confirm(`确定要删除选中的 ${instanceIds.length} 个实例吗？此操作不可撤销！`)) {
+        return;
+    }
+    
+    const btn = document.getElementById('batchDeleteBtn');
+    const originalText = btn.textContent;
+    
+    btn.textContent = '删除中...';
+    btn.disabled = true;
+    
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                     document.querySelector('input[name="csrf_token"]')?.value;
+    
+    fetch('/instances/batch-delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({ instance_ids: instanceIds })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showAlert('danger', data.error);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', '批量删除失败');
+    })
+    .finally(() => {
+        btn.textContent = originalText;
+        btn.disabled = true;
+    });
+}
+
+function showBatchCreateModal() {
+    new bootstrap.Modal(document.getElementById('batchCreateModal')).show();
+}
+
+function submitBatchCreate() {
+    const dataText = document.getElementById('batchInstancesData').value.trim();
+    
+    if (!dataText) {
+        showAlert('warning', '请输入实例数据');
+        return;
+    }
+    
+    try {
+        const instances = JSON.parse(dataText);
+        
+        if (!Array.isArray(instances)) {
+            showAlert('warning', '实例数据必须是数组格式');
+            return;
+        }
+        
+        if (instances.length === 0) {
+            showAlert('warning', '至少需要提供一个实例');
+            return;
+        }
+        
+        const btn = document.querySelector('#batchCreateModal .btn-primary');
+        const originalText = btn.textContent;
+        
+        btn.textContent = '创建中...';
+        btn.disabled = true;
+        
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                         document.querySelector('input[name="csrf_token"]')?.value;
+        
+        fetch('/instances/batch-create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ instances: instances })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                if (data.errors && data.errors.length > 0) {
+                    showAlert('warning', `部分实例创建失败：\n${data.errors.join('\n')}`);
+                }
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showAlert('danger', data.error);
+            }
+        })
+        .catch(error => {
+            showAlert('danger', '批量创建失败');
+        })
+        .finally(() => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        });
+        
+    } catch (error) {
+        showAlert('danger', 'JSON格式错误，请检查输入数据');
+    }
 }
 </script>
 {% endblock %}

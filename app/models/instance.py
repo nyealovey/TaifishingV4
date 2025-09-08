@@ -18,6 +18,7 @@ class Instance(db.Model):
     port = db.Column(db.Integer, nullable=False)
     database_name = db.Column(db.String(255), nullable=True)
     database_version = db.Column(db.String(100), nullable=True)
+    environment = db.Column(db.String(20), default='production', nullable=False, index=True)  # 环境：production, development, testing
     sync_count = db.Column(db.Integer, default=0, nullable=False)
     credential_id = db.Column(db.Integer, db.ForeignKey('credentials.id'), nullable=True)
     description = db.Column(db.Text, nullable=True)
@@ -34,7 +35,7 @@ class Instance(db.Model):
     accounts = db.relationship('Account', backref='instance', lazy='dynamic')
     sync_data = db.relationship('SyncData', backref='instance', lazy='dynamic')
     
-    def __init__(self, name, db_type, host, port, credential_id=None, description=None, tags=None):
+    def __init__(self, name, db_type, host, port, credential_id=None, description=None, tags=None, environment='production'):
         """
         初始化实例
         
@@ -46,6 +47,7 @@ class Instance(db.Model):
             credential_id: 凭据ID
             description: 描述
             tags: 标签
+            environment: 环境类型（production, development, testing）
         """
         self.name = name
         self.db_type = db_type
@@ -54,6 +56,7 @@ class Instance(db.Model):
         self.credential_id = credential_id
         self.description = description
         self.tags = tags or []
+        self.environment = environment
     
     def test_connection(self):
         """
@@ -137,6 +140,7 @@ class Instance(db.Model):
             'db_type': self.db_type,
             'host': self.host,
             'port': self.port,
+            'environment': self.environment,
             'credential_id': self.credential_id,
             'description': self.description,
             'tags': self.tags,
@@ -190,6 +194,25 @@ class Instance(db.Model):
     def get_by_db_type(db_type):
         """根据数据库类型获取实例"""
         return Instance.query.filter_by(db_type=db_type, deleted_at=None).all()
+    
+    @staticmethod
+    def get_by_environment(environment):
+        """根据环境类型获取实例"""
+        return Instance.query.filter_by(environment=environment, deleted_at=None).all()
+    
+    @staticmethod
+    def get_by_db_type_and_environment(db_type, environment):
+        """根据数据库类型和环境类型获取实例"""
+        return Instance.query.filter_by(db_type=db_type, environment=environment, deleted_at=None).all()
+    
+    @staticmethod
+    def get_environment_choices():
+        """获取环境类型选项"""
+        return [
+            ('production', '生产环境'),
+            ('development', '开发环境'),
+            ('testing', '测试环境')
+        ]
     
     
     def __repr__(self):
