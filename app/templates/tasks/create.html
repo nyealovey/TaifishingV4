@@ -112,404 +112,103 @@
 
 {% block extra_js %}
 <script>
-// 内置任务模板
+// 内置任务模板 - 使用统一服务
 const BUILTIN_TASKS = {
     'sync_accounts': {
-        'postgresql': `def sync_postgresql_accounts(instance, config):
-    """同步PostgreSQL数据库账户信息"""
-    import psycopg2
-    from app.models.account import Account
-    from app import db
-    from datetime import datetime
+        'postgresql': `# 账户同步任务 - PostgreSQL
+# 此任务将使用统一的AccountSyncService进行账户同步
+# 无需手动编写代码，系统会自动调用相应的服务
+
+def sync_postgresql_accounts(instance, config):
+    """同步PostgreSQL数据库账户信息 - 使用统一服务"""
+    from app.services.account_sync_service import account_sync_service
     
-    try:
-        # 连接数据库
-        conn = psycopg2.connect(
-            host=instance.host,
-            port=instance.port,
-            database=instance.database_name or 'postgres',
-            user=instance.credential.username,
-            password=instance.credential.get_plain_password()
-        )
-        
-        cursor = conn.cursor()
-        
-        # 查询用户信息
-        cursor.execute("""
-            SELECT 
-                usename as username,
-                'user' as account_type,
-                datname as database_name,
-                CASE WHEN usesuper THEN 'superuser' ELSE 'user' END as role_type,
-                uselock as is_locked,
-                usecreatedb as can_create_db,
-                usesuper as is_superuser
-            FROM pg_user u
-            LEFT JOIN pg_database d ON u.usesysid = d.datdba
-            WHERE usename NOT LIKE 'pg_%'
-            ORDER BY usename
-        """)
-        
-        accounts = cursor.fetchall()
-        synced_count = 0
-        
-        for account_data in accounts:
-            username, account_type, database_name, role_type, is_locked, can_create_db, is_superuser = account_data
-            
-            # 查找或创建账户记录
-            account = Account.query.filter_by(
-                instance_id=instance.id,
-                username=username
-            ).first()
-            
-            if not account:
-                account = Account(
-                    instance_id=instance.id,
-                    username=username,
-                    database_name=database_name,
-                    account_type=account_type,
-                    is_active=not is_locked
-                )
-                db.session.add(account)
-            else:
-                account.database_name = database_name
-                account.account_type = account_type
-                account.is_active = not is_locked
-                account.updated_at = datetime.utcnow()
-            
-            synced_count += 1
-        
-        db.session.commit()
-        cursor.close()
-        conn.close()
-        
-        return {
-            'success': True,
-            'message': f'成功同步 {synced_count} 个PostgreSQL账户',
-            'synced_count': synced_count
-        }
-        
-    except Exception as e:
-        return {
-            'success': False,
-            'error': f'PostgreSQL账户同步失败: {str(e)}',
-            'synced_count': 0
-        }`,
-        'mysql': `def sync_mysql_accounts(instance, config):
-    """同步MySQL数据库账户信息"""
-    import pymysql
-    from app.models.account import Account
-    from app import db
-    from datetime import datetime
+    # 调用统一的账户同步服务
+    result = account_sync_service.sync_accounts(instance, sync_type='task')
+    return result`,
+        'mysql': `# 账户同步任务 - MySQL
+# 此任务将使用统一的AccountSyncService进行账户同步
+# 无需手动编写代码，系统会自动调用相应的服务
+
+def sync_mysql_accounts(instance, config):
+    """同步MySQL数据库账户信息 - 使用统一服务"""
+    from app.services.account_sync_service import account_sync_service
     
-    try:
-        # 连接数据库
-        conn = pymysql.connect(
-            host=instance.host,
-            port=instance.port,
-            database=instance.database_name or 'mysql',
-            user=instance.credential.username,
-            password=instance.credential.get_plain_password()
-        )
-        
-        cursor = conn.cursor()
-        
-        # 查询用户信息
-        cursor.execute("""
-            SELECT 
-                User as username,
-                'user' as account_type,
-                '' as database_name,
-                Select_priv as can_select,
-                Insert_priv as can_insert,
-                Update_priv as can_update,
-                Delete_priv as can_delete,
-                Create_priv as can_create,
-                Drop_priv as can_drop,
-                Super_priv as is_superuser
-            FROM mysql.user
-            WHERE User NOT LIKE 'mysql.%'
-            ORDER BY User
-        """)
-        
-        accounts = cursor.fetchall()
-        synced_count = 0
-        
-        for account_data in accounts:
-            username, account_type, database_name, can_select, can_insert, can_update, can_delete, can_create, can_drop, is_superuser = account_data
-            
-            # 查找或创建账户记录
-            account = Account.query.filter_by(
-                instance_id=instance.id,
-                username=username
-            ).first()
-            
-            if not account:
-                account = Account(
-                    instance_id=instance.id,
-                    username=username,
-                    database_name=database_name,
-                    account_type=account_type,
-                    is_active=True
-                )
-                db.session.add(account)
-            else:
-                account.database_name = database_name
-                account.account_type = account_type
-                account.updated_at = datetime.utcnow()
-            
-            synced_count += 1
-        
-        db.session.commit()
-        cursor.close()
-        conn.close()
-        
-        return {
-            'success': True,
-            'message': f'成功同步 {synced_count} 个MySQL账户',
-            'synced_count': synced_count
-        }
-        
-    except Exception as e:
-        return {
-            'success': False,
-            'error': f'MySQL账户同步失败: {str(e)}',
-            'synced_count': 0
-        }`
-    },
-    'sync_version': {
-        'postgresql': `def sync_postgresql_version(instance, config):
-    """同步PostgreSQL数据库版本信息"""
-    import psycopg2
-    from app.models.instance import Instance
-    from app import db
-    from datetime import datetime
+    # 调用统一的账户同步服务
+    result = account_sync_service.sync_accounts(instance, sync_type='task')
+    return result`,
+        'sqlserver': `# 账户同步任务 - SQL Server
+# 此任务将使用统一的AccountSyncService进行账户同步
+# 无需手动编写代码，系统会自动调用相应的服务
+
+def sync_sqlserver_accounts(instance, config):
+    """同步SQL Server数据库账户信息 - 使用统一服务"""
+    from app.services.account_sync_service import account_sync_service
     
-    try:
-        # 连接数据库
-        conn = psycopg2.connect(
-            host=instance.host,
-            port=instance.port,
-            database=instance.database_name or 'postgres',
-            user=instance.credential.username,
-            password=instance.credential.get_plain_password()
-        )
-        
-        cursor = conn.cursor()
-        
-        # 查询版本信息
-        cursor.execute("SELECT version()")
-        version_info = cursor.fetchone()[0]
-        
-        # 解析版本号
-        version_parts = version_info.split()
-        version = version_parts[1] if len(version_parts) > 1 else 'Unknown'
-        
-        # 更新实例信息
-        instance.tags = instance.tags or {}
-        instance.tags['version'] = version
-        instance.tags['version_info'] = version_info
-        instance.tags['last_version_sync'] = datetime.utcnow().isoformat()
-        instance.updated_at = datetime.utcnow()
-        
-        db.session.commit()
-        cursor.close()
-        conn.close()
-        
-        return {
-            'success': True,
-            'message': f'成功同步PostgreSQL版本: {version}',
-            'version': version
-        }
-        
-    except Exception as e:
-        return {
-            'success': False,
-            'error': f'PostgreSQL版本同步失败: {str(e)}'
-        }`,
-        'mysql': `def sync_mysql_version(instance, config):
-    """同步MySQL数据库版本信息"""
-    import pymysql
-    from app.models.instance import Instance
-    from app import db
-    from datetime import datetime
+    # 调用统一的账户同步服务
+    result = account_sync_service.sync_accounts(instance, sync_type='task')
+    return result`,
+        'oracle': `# 账户同步任务 - Oracle
+# 此任务将使用统一的AccountSyncService进行账户同步
+# 无需手动编写代码，系统会自动调用相应的服务
+
+def sync_oracle_accounts(instance, config):
+    """同步Oracle数据库账户信息 - 使用统一服务"""
+    from app.services.account_sync_service import account_sync_service
     
-    try:
-        # 连接数据库
-        conn = pymysql.connect(
-            host=instance.host,
-            port=instance.port,
-            database=instance.database_name or 'mysql',
-            user=instance.credential.username,
-            password=instance.credential.get_plain_password()
-        )
-        
-        cursor = conn.cursor()
-        
-        # 查询版本信息
-        cursor.execute("SELECT VERSION()")
-        version_info = cursor.fetchone()[0]
-        
-        # 解析版本号
-        version_parts = version_info.split('-')
-        version = version_parts[0] if version_parts else 'Unknown'
-        
-        # 更新实例信息
-        instance.tags = instance.tags or {}
-        instance.tags['version'] = version
-        instance.tags['version_info'] = version_info
-        instance.tags['last_version_sync'] = datetime.utcnow().isoformat()
-        instance.updated_at = datetime.utcnow()
-        
-        db.session.commit()
-        cursor.close()
-        conn.close()
-        
-        return {
-            'success': True,
-            'message': f'成功同步MySQL版本: {version}',
-            'version': version
-        }
-        
-    except Exception as e:
-        return {
-            'success': False,
-            'error': f'MySQL版本同步失败: {str(e)}'
-        }`
+    # 调用统一的账户同步服务
+    result = account_sync_service.sync_accounts(instance, sync_type='task')
+    return result`
     },
     'sync_size': {
-        'postgresql': `def sync_postgresql_size(instance, config):
-    """同步PostgreSQL数据库大小信息"""
-    import psycopg2
-    from app.models.instance import Instance
-    from app import db
-    from datetime import datetime
+        'postgresql': `# 数据库大小同步任务 - PostgreSQL
+# 此任务将使用专门的DatabaseSizeService进行大小同步
+# 无需手动编写代码，系统会自动调用相应的服务
+
+def sync_postgresql_size(instance, config):
+    """同步PostgreSQL数据库大小信息 - 使用专门服务"""
+    from app.services.database_size_service import database_size_service
     
-    try:
-        # 连接数据库
-        conn = psycopg2.connect(
-            host=instance.host,
-            port=instance.port,
-            database=instance.database_name or 'postgres',
-            user=instance.credential.username,
-            password=instance.credential.get_plain_password()
-        )
-        
-        cursor = conn.cursor()
-        
-        # 查询数据库大小
-        cursor.execute("""
-            SELECT 
-                pg_database.datname,
-                pg_size_pretty(pg_database_size(pg_database.datname)) as size_pretty,
-                pg_database_size(pg_database.datname) as size_bytes
-            FROM pg_database
-            WHERE datname = current_database()
-        """)
-        
-        size_info = cursor.fetchone()
-        if size_info:
-            db_name, size_pretty, size_bytes = size_info
-            
-            # 更新实例信息
-            instance.tags = instance.tags or {}
-            instance.tags['database_size'] = size_pretty
-            instance.tags['database_size_bytes'] = size_bytes
-            instance.tags['last_size_sync'] = datetime.utcnow().isoformat()
-            instance.updated_at = datetime.utcnow()
-            
-            db.session.commit()
-            
-            return {
-                'success': True,
-                'message': f'成功同步PostgreSQL数据库大小: {size_pretty}',
-                'size': size_pretty,
-                'size_bytes': size_bytes
-            }
-        else:
-            return {
-                'success': False,
-                'error': '无法获取数据库大小信息'
-            }
-        
-        cursor.close()
-        conn.close()
-        
-    except Exception as e:
-        return {
-            'success': False,
-            'error': f'PostgreSQL数据库大小同步失败: {str(e)}'
-        }`,
-        'mysql': `def sync_mysql_size(instance, config):
-    """同步MySQL数据库大小信息"""
-    import pymysql
-    from app.models.instance import Instance
-    from app import db
-    from datetime import datetime
+    # 调用专门的数据库大小同步服务
+    result = database_size_service.sync_database_size(instance, sync_type='task')
+    return result`,
+        'mysql': `# 数据库大小同步任务 - MySQL
+# 此任务将使用专门的DatabaseSizeService进行大小同步
+# 无需手动编写代码，系统会自动调用相应的服务
+
+def sync_mysql_size(instance, config):
+    """同步MySQL数据库大小信息 - 使用专门服务"""
+    from app.services.database_size_service import database_size_service
     
-    try:
-        # 连接数据库
-        conn = pymysql.connect(
-            host=instance.host,
-            port=instance.port,
-            database=instance.database_name or 'mysql',
-            user=instance.credential.username,
-            password=instance.credential.get_plain_password()
-        )
-        
-        cursor = conn.cursor()
-        
-        # 查询数据库大小
-        cursor.execute("""
-            SELECT 
-                table_schema as database_name,
-                ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) as size_mb,
-                ROUND(SUM(data_length + index_length) / 1024 / 1024 / 1024, 2) as size_gb
-            FROM information_schema.tables
-            WHERE table_schema = DATABASE()
-            GROUP BY table_schema
-        """)
-        
-        size_info = cursor.fetchone()
-        if size_info:
-            db_name, size_mb, size_gb = size_info
-            size_pretty = f"{size_gb} GB" if size_gb >= 1 else f"{size_mb} MB"
-            
-            # 更新实例信息
-            instance.tags = instance.tags or {}
-            instance.tags['database_size'] = size_pretty
-            instance.tags['database_size_mb'] = size_mb
-            instance.tags['database_size_gb'] = size_gb
-            instance.tags['last_size_sync'] = datetime.utcnow().isoformat()
-            instance.updated_at = datetime.utcnow()
-            
-            db.session.commit()
-            
-            return {
-                'success': True,
-                'message': f'成功同步MySQL数据库大小: {size_pretty}',
-                'size': size_pretty,
-                'size_mb': size_mb,
-                'size_gb': size_gb
-            }
-        else:
-            return {
-                'success': False,
-                'error': '无法获取数据库大小信息'
-            }
-        
-        cursor.close()
-        conn.close()
-        
-    except Exception as e:
-        return {
-            'success': False,
-            'error': f'MySQL数据库大小同步失败: {str(e)}'
-        }`
+    # 调用专门的数据库大小同步服务
+    result = database_size_service.sync_database_size(instance, sync_type='task')
+    return result`,
+        'sqlserver': `# 数据库大小同步任务 - SQL Server
+# 此任务将使用专门的DatabaseSizeService进行大小同步
+# 无需手动编写代码，系统会自动调用相应的服务
+
+def sync_sqlserver_size(instance, config):
+    """同步SQL Server数据库大小信息 - 使用专门服务"""
+    from app.services.database_size_service import database_size_service
+    
+    # 调用专门的数据库大小同步服务
+    result = database_size_service.sync_database_size(instance, sync_type='task')
+    return result`,
+        'oracle': `# 数据库大小同步任务 - Oracle
+# 此任务将使用专门的DatabaseSizeService进行大小同步
+# 无需手动编写代码，系统会自动调用相应的服务
+
+def sync_oracle_size(instance, config):
+    """同步Oracle数据库大小信息 - 使用专门服务"""
+    from app.services.database_size_service import database_size_service
+    
+    # 调用专门的数据库大小同步服务
+    result = database_size_service.sync_database_size(instance, sync_type='task')
+    return result`
     }
 };
 
-// 自动生成代码
+// 生成代码函数
 function generateCode() {
     const taskType = document.getElementById('task_type').value;
     const dbType = document.getElementById('db_type').value;
@@ -518,32 +217,55 @@ function generateCode() {
     if (taskType && dbType && BUILTIN_TASKS[taskType] && BUILTIN_TASKS[taskType][dbType]) {
         pythonCodeTextarea.value = BUILTIN_TASKS[taskType][dbType];
     } else {
-        pythonCodeTextarea.value = '# 请选择任务类型和数据库类型';
+        pythonCodeTextarea.value = '# 请选择任务类型和数据库类型以生成代码';
     }
 }
 
-// 监听任务类型和数据库类型变化
-document.getElementById('task_type').addEventListener('change', generateCode);
-document.getElementById('db_type').addEventListener('change', generateCode);
-
-// 页面加载时生成代码
+// 页面加载完成后绑定事件
 document.addEventListener('DOMContentLoaded', function() {
+    // 绑定任务类型和数据库类型变化事件
+    document.getElementById('task_type').addEventListener('change', generateCode);
+    document.getElementById('db_type').addEventListener('change', generateCode);
+    
+    // 初始化代码生成
     generateCode();
-});
-
-// 表单提交处理
-document.getElementById('taskForm').addEventListener('submit', function(e) {
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
     
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>创建中...';
-    submitBtn.disabled = true;
-    
-    // 如果创建失败，恢复按钮状态
-    setTimeout(() => {
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-    }, 5000);
+    // 表单提交处理
+    document.getElementById('taskForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        
+        // 处理复选框值
+        data.is_active = document.getElementById('is_active').checked;
+        data.is_builtin = document.getElementById('is_builtin').checked;
+        
+        // 发送请求
+        fetch('{{ url_for("tasks.create") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert(data.message);
+                if (data.message.includes('成功')) {
+                    window.location.href = '{{ url_for("tasks.index") }}';
+                }
+            } else if (data.error) {
+                alert('错误: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('创建任务失败，请重试');
+        });
+    });
 });
 </script>
 {% endblock %}
