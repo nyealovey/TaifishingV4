@@ -388,7 +388,7 @@ def sync_details(sync_id):
         end_time = sync_datetime + timedelta(minutes=5)
         
         sync_records = SyncData.query.filter(
-            SyncData.sync_type == 'batch',
+            SyncData.sync_type.in_(['batch', 'task']),
             SyncData.sync_time >= start_time,
             SyncData.sync_time <= end_time
         ).all()
