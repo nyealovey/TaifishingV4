@@ -3,84 +3,14 @@
 {% block title %}任务管理 - 泰摸鱼吧{% endblock %}
 
 {% block content %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2><i class="fas fa-clock me-2"></i>定时任务管理</h2>
         <p class="text-muted mb-0">管理数据库同步任务的定时执行，包括账户同步、版本同步、数据库大小同步等</p>
     </div>
-    <div class="btn-group">
-        <a href="{{ url_for('tasks.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-2"></i>创建定时任务
-        </a>
-        <button type="button" class="btn btn-success" onclick="createBuiltinTasks()">
-            <i class="fas fa-magic me-2"></i>快速创建内置任务
-        </button>
-        <button type="button" class="btn btn-warning" onclick="executeAllTasks()">
-            <i class="fas fa-play me-2"></i>立即执行所有任务
-        </button>
-    </div>
 </div>
 
-<!-- 快速创建内置任务 -->
-<div class="card mb-4">
-    <div class="card-header">
-        <h6 class="card-title mb-0">
-            <i class="fas fa-magic me-2"></i>快速创建内置任务
-        </h6>
-    </div>
-    <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-3">
-                <div class="card border-primary">
-                    <div class="card-body text-center">
-                        <i class="fas fa-users fa-2x text-primary mb-2"></i>
-                        <h6 class="card-title">账户同步</h6>
-                        <p class="card-text small text-muted">同步数据库用户账户信息</p>
-                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="createQuickTask('sync_accounts')">
-                            <i class="fas fa-plus me-1"></i>创建
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-success">
-                    <div class="card-body text-center">
-                        <i class="fas fa-code-branch fa-2x text-success mb-2"></i>
-                        <h6 class="card-title">版本同步</h6>
-                        <p class="card-text small text-muted">同步数据库版本信息</p>
-                        <button type="button" class="btn btn-outline-success btn-sm" onclick="createQuickTask('sync_version')">
-                            <i class="fas fa-plus me-1"></i>创建
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-info">
-                    <div class="card-body text-center">
-                        <i class="fas fa-database fa-2x text-info mb-2"></i>
-                        <h6 class="card-title">大小同步</h6>
-                        <p class="card-text small text-muted">同步数据库大小信息</p>
-                        <button type="button" class="btn btn-outline-info btn-sm" onclick="createQuickTask('sync_size')">
-                            <i class="fas fa-plus me-1"></i>创建
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-warning">
-                    <div class="card-body text-center">
-                        <i class="fas fa-sync fa-2x text-warning mb-2"></i>
-                        <h6 class="card-title">全部同步</h6>
-                        <p class="card-text small text-muted">创建所有类型的同步任务</p>
-                        <button type="button" class="btn btn-outline-warning btn-sm" onclick="createAllBuiltinTasks()">
-                            <i class="fas fa-magic me-1"></i>全部创建
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- 搜索和筛选 -->
 <div class="card mb-4">
@@ -491,52 +421,6 @@ function showAlert(type, message) {
     }, 5000);
 }
 
-function createBuiltinTasks() {
-    if (confirm('确定要创建内置任务吗？这将创建所有数据库类型的同步任务。')) {
-        fetch('/tasks/create-builtin', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                showAlert('success', data.message);
-                setTimeout(() => location.reload(), 1000);
-            } else if (data.error) {
-                showAlert('danger', data.error);
-            }
-        })
-        .catch(error => {
-            showAlert('danger', '创建内置任务失败');
-        });
-    }
-}
-
-function executeAllTasks() {
-    if (confirm('确定要执行所有活跃任务吗？这可能需要一些时间。')) {
-        fetch('/tasks/execute-all', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                showAlert('success', data.message);
-                setTimeout(() => location.reload(), 2000);
-            } else if (data.error) {
-                showAlert('danger', data.error);
-            }
-        })
-        .catch(error => {
-            showAlert('danger', '批量执行任务失败');
-        });
-    }
-}
-
 function executeTaskDirect(taskId) {
     if (confirm('确定要立即执行这个任务吗？')) {
         fetch(`/tasks/${taskId}/execute`, {
@@ -556,61 +440,6 @@ function executeTaskDirect(taskId) {
         })
         .catch(error => {
             showAlert('danger', '执行任务失败');
-        });
-    }
-}
-
-function createQuickTask(taskType) {
-    const taskTypeNames = {
-        'sync_accounts': '账户同步',
-        'sync_version': '版本同步',
-        'sync_size': '大小同步'
-    };
-    
-    if (confirm(`确定要创建 ${taskTypeNames[taskType]} 任务吗？这将为所有数据库类型创建对应的定时任务。`)) {
-        fetch('/tasks/create-quick', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                task_type: taskType
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                showAlert('success', data.message);
-                setTimeout(() => location.reload(), 1000);
-            } else if (data.error) {
-                showAlert('danger', data.error);
-            }
-        })
-        .catch(error => {
-            showAlert('danger', '创建任务失败');
-        });
-    }
-}
-
-function createAllBuiltinTasks() {
-    if (confirm('确定要创建所有内置任务吗？这将创建所有数据库类型的所有同步任务。')) {
-        fetch('/tasks/create-builtin', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                showAlert('success', data.message);
-                setTimeout(() => location.reload(), 1000);
-            } else if (data.error) {
-                showAlert('danger', data.error);
-            }
-        })
-        .catch(error => {
-            showAlert('danger', '创建内置任务失败');
         });
     }
 }
@@ -751,23 +580,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // 检查URL参数，如果是从账户管理页面跳转过来，自动创建账户同步任务
-    const urlParams = new URLSearchParams(window.location.search);
-    const action = urlParams.get('action');
-    
-    if (action === 'create_sync_accounts') {
-        // 显示提示信息
-        showAlert('info', '正在为您创建账户同步定时任务...');
-        
-        // 自动创建账户同步任务
-        setTimeout(() => {
-            createQuickTask('sync_accounts');
-        }, 1000);
-        
-        // 清除URL参数
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, document.title, newUrl);
-    }
 });
 </script>
 {% endblock %}
