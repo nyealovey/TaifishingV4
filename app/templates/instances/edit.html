@@ -62,7 +62,7 @@
                                     <option value="">请选择凭据</option>
                                     {% for cred in credentials %}
                                     <option value="{{ cred.id }}" {% if instance.credential_id == cred.id %}selected{% endif %}>
-                                        {{ cred.name }} ({{ cred.credential_type }})
+                                        #{{ cred.id }} - {{ cred.name }} ({{ cred.credential_type }})
                                     </option>
                                     {% endfor %}
                                 </select>
