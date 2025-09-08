@@ -149,7 +149,7 @@ class DatabaseService:
                     database_name='mysql',
                     account_type='user',
                     plugin=plugin,
-                    password_expired=bool(expired),
+                    password_expired=expired == 'Y',  # MySQL的password_expired字段，'Y'表示已过期
                     password_last_changed=password_last_changed,
                     is_locked=locked == 'Y',  # MySQL的account_locked字段，'Y'表示锁定
                     is_active=locked != 'Y' and expired != 'Y'
@@ -159,7 +159,7 @@ class DatabaseService:
             else:
                 # 更新现有账户信息
                 existing.plugin = plugin
-                existing.password_expired = bool(expired)
+                existing.password_expired = expired == 'Y'  # MySQL的password_expired字段，'Y'表示已过期
                 existing.password_last_changed = password_last_changed
                 existing.is_locked = locked == 'Y'  # MySQL的account_locked字段，'Y'表示锁定
                 existing.is_active = locked != 'Y' and expired != 'Y'
@@ -260,7 +260,7 @@ class DatabaseService:
         cursor.execute("""
             SELECT name, type_desc, is_disabled, create_date, modify_date
             FROM sys.server_principals
-            WHERE type IN ('S', 'U', 'G') AND name NOT LIKE '##%' AND name NOT IN ('sa', 'public')
+            WHERE type IN ('S', 'U', 'G') AND name NOT LIKE '##%'
         """)
         
         # 获取服务器端的所有账户
@@ -272,21 +272,21 @@ class DatabaseService:
         for row in cursor.fetchall():
             username, type_desc, is_disabled, create_date, modify_date = row
             
-            # 记录服务器端的账户
-            server_accounts.add((username, 'localhost'))
+            # 记录服务器端的账户（SQL Server没有主机概念，使用用户名作为唯一标识）
+            server_accounts.add((username, None))
             
-            # 检查账户是否已存在
+            # 检查账户是否已存在（SQL Server没有主机概念）
             existing = Account.query.filter_by(
                 instance_id=instance.id,
                 username=username,
-                host='localhost'  # SQL Server默认主机
+                host=None  # SQL Server没有主机概念
             ).first()
             
             if not existing:
                 account = Account(
                     instance_id=instance.id,
                     username=username,
-                    host='localhost',
+                    host=None,  # SQL Server没有主机概念
                     database_name=instance.database_name or 'master',
                     account_type=type_desc.lower(),
                     plugin='sqlserver',
@@ -305,11 +305,12 @@ class DatabaseService:
                 existing.is_active = not is_disabled
                 updated_count += 1
         
-        # 删除服务器端不存在的本地账户
+        # 删除服务器端不存在的本地账户（SQL Server没有主机概念）
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
         deleted_count = 0
         
         for local_account in local_accounts:
+            # SQL Server没有主机概念，只比较用户名
             if (local_account.username, local_account.host) not in server_accounts:
                 db.session.delete(local_account)
                 deleted_count += 1
@@ -615,7 +616,15 @@ class DatabaseService:
                 # 获取数据库版本
                 cursor.execute('SELECT @@VERSION')
                 version_result = cursor.fetchone()
-                database_version = version_result[0] if version_result else None
+                full_version = version_result[0] if version_result else None
+                
+                # 使用正则表达式提取版本号（如2017, 2019, 2022等）
+                import re
+                if full_version:
+                    version_match = re.search(r'Microsoft SQL Server (\d{4})', full_version)
+                    database_version = version_match.group(1) if version_match else full_version
+                else:
+                    database_version = None
             
             conn.close()
             
@@ -1267,6 +1276,8 @@ class DatabaseService:
             return {
                 'global': [],
                 'database': [],
+                'server_roles': [],
+                'database_roles': [],
                 'error': '无法获取数据库连接'
             }
         
@@ -1290,7 +1301,24 @@ class DatabaseService:
                     'grantable': False  # SQL Server权限查询较复杂，暂时设为False
                 })
             
-            # 获取数据库权限
+            # 获取服务器级别角色
+            cursor.execute("""
+                SELECT r.name, r.type_desc
+                FROM sys.server_role_members rm
+                JOIN sys.server_principals r ON rm.role_principal_id = r.principal_id
+                JOIN sys.server_principals m ON rm.member_principal_id = m.principal_id
+                WHERE m.name = %s
+            """, (account.username,))
+            
+            server_roles = []
+            for row in cursor.fetchall():
+                role_name, role_type = row
+                server_roles.append({
+                    'role': role_name,
+                    'type': role_type
+                })
+            
+            # 获取数据库权限和角色
             cursor.execute("""
                 SELECT db.name, dp.permission_name, dp.state_desc
                 FROM sys.databases db
@@ -1313,6 +1341,32 @@ class DatabaseService:
                     if state == 'GRANT':
                         db_permissions[db_name].append(permission)
             
+            # 获取数据库级别角色
+            cursor.execute("""
+                SELECT db.name, r.name, r.type_desc
+                FROM sys.databases db
+                CROSS JOIN sys.database_role_members rm
+                JOIN sys.database_principals r ON rm.role_principal_id = r.principal_id
+                JOIN sys.database_principals m ON rm.member_principal_id = m.principal_id
+                WHERE m.name = %s OR m.name IN (
+                    SELECT name FROM sys.database_principals WHERE sid = (
+                        SELECT sid FROM sys.server_principals WHERE name = %s
+                    )
+                )
+                ORDER BY db.name, r.name
+            """, (account.username, account.username))
+            
+            database_roles = {}
+            for row in cursor.fetchall():
+                db_name, role_name, role_type = row
+                if db_name:
+                    if db_name not in database_roles:
+                        database_roles[db_name] = []
+                    database_roles[db_name].append({
+                        'role': role_name,
+                        'type': role_type
+                    })
+            
             database_permissions = []
             for db_name, privileges in db_permissions.items():
                 if privileges:
@@ -1323,13 +1377,17 @@ class DatabaseService:
             
             return {
                 'global': global_permissions,
-                'database': database_permissions
+                'database': database_permissions,
+                'server_roles': server_roles,
+                'database_roles': database_roles
             }
             
         except Exception as e:
             return {
                 'global': [],
                 'database': [],
+                'server_roles': [],
+                'database_roles': [],
                 'error': f'查询权限失败: {str(e)}'
             }
         finally:

@@ -141,7 +141,7 @@
                         <th style="font-size: 0.8rem;">主机</th>
                         <th style="font-size: 0.8rem;">实例名称</th>
                         <th style="font-size: 0.8rem;">数据库类型</th>
-                        <th style="font-size: 0.8rem;">插件</th>
+                        <th style="font-size: 0.8rem;">插件/类型</th>
                         <th style="font-size: 0.8rem;">密码过期策略</th>
                         <th style="font-size: 0.8rem;">密码最后修改</th>
                         <th style="font-size: 0.8rem;">锁定状态</th>
@@ -154,14 +154,22 @@
                         <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-user text-primary me-1" style="font-size: 0.8rem;"></i>
+                                {% if account.instance.db_type == 'sqlserver' %}
+                                <strong style="font-size: 0.85rem;">{{ account.username }}</strong>
+                                {% else %}
                                 <strong style="font-size: 0.85rem;">{{ account.username }}@{{ account.host or '%' }}</strong>
+                                {% endif %}
                             </div>
                         </td>
                         <td>
                             <span class="fw-bold" style="font-size: 0.85rem;">{{ account.username }}</span>
                         </td>
                         <td>
+                            {% if account.instance.db_type == 'sqlserver' %}
+                            <span class="text-muted" style="font-size: 0.7rem;">-</span>
+                            {% else %}
                             <span class="badge bg-info" style="font-size: 0.7rem;">{{ account.host or '%' }}</span>
+                            {% endif %}
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
@@ -175,14 +183,26 @@
                             </span>
                         </td>
                         <td>
+                            {% if account.instance.db_type == 'sqlserver' %}
+                            <span class="badge bg-info" style="font-size: 0.7rem;">{{ account.account_type or '未知' }}</span>
+                            {% else %}
                             {% if account.plugin %}
                                 <span class="badge bg-secondary" style="font-size: 0.7rem;">{{ account.plugin }}</span>
                             {% else %}
                                 <span class="text-muted" style="font-size: 0.8rem;">未知</span>
                             {% endif %}
+                            {% endif %}
                         </td>
                         <td>
-                            <span class="badge bg-warning" style="font-size: 0.7rem;">DEFAULT</span>
+                            {% if account.instance.db_type == 'sqlserver' %}
+                            <span class="text-muted" style="font-size: 0.7rem;">-</span>
+                            {% else %}
+                            {% if account.password_expired %}
+                                <span class="badge bg-danger" style="font-size: 0.7rem;">已过期</span>
+                            {% else %}
+                                <span class="badge bg-success" style="font-size: 0.7rem;">正常</span>
+                            {% endif %}
+                            {% endif %}
                         </td>
                         <td>
                             {% if account.password_last_changed %}
@@ -193,7 +213,11 @@
                         </td>
                         <td>
                             {% if account.is_locked %}
+                                {% if account.instance.db_type == 'sqlserver' %}
+                                <span class="badge bg-danger" style="font-size: 0.7rem;">已禁用</span>
+                                {% else %}
                                 <span class="badge bg-danger" style="font-size: 0.7rem;">已锁定</span>
+                                {% endif %}
                             {% else %}
                                 <span class="badge bg-success" style="font-size: 0.7rem;">正常</span>
                             {% endif %}
@@ -357,11 +381,55 @@ function showPermissionsModal(permissions, account) {
                         <div class="mb-3">
                             <h6>账户信息</h6>
                             <p class="mb-1"><strong>用户名:</strong> ${account.username}</p>
-                            <p class="mb-1"><strong>主机:</strong> ${account.host || '%'}</p>
+                            ${account.instance.db_type !== 'sqlserver' ? `<p class="mb-1"><strong>主机:</strong> ${account.host || '%'}</p>` : ''}
                             <p class="mb-0"><strong>插件:</strong> ${account.plugin || '未知'}</p>
                         </div>
+                        ${account.instance.db_type === 'sqlserver' ? `
                         <div class="mb-3">
-                            <h6>全局权限</h6>
+                            <h6>服务器级别角色</h6>
+                            ${permissions.server_roles && permissions.server_roles.length > 0 ? `
+                                <div class="row">
+                                    ${permissions.server_roles.map(role => `
+                                        <div class="col-md-6 mb-2">
+                                            <span class="badge bg-primary me-2">
+                                                <i class="fas fa-crown me-1"></i>${role.role}
+                                            </span>
+                                            <small class="text-muted">${role.type}</small>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : '<p class="text-muted">无服务器级别角色</p>'}
+                        </div>
+                        <div class="mb-3">
+                            <h6>数据库级别角色</h6>
+                            ${permissions.database_roles && Object.keys(permissions.database_roles).length > 0 ? `
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>数据库</th>
+                                                <th>角色</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${Object.entries(permissions.database_roles).map(([dbName, roles]) => `
+                                                <tr>
+                                                    <td>${dbName}</td>
+                                                    <td>
+                                                        ${roles.map(role => `
+                                                            <span class="badge bg-info me-1">${role.role}</span>
+                                                        `).join('')}
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : '<p class="text-muted">无数据库级别角色</p>'}
+                        </div>
+                        ` : ''}
+                        <div class="mb-3">
+                            <h6>${account.instance.db_type === 'sqlserver' ? '服务器权限' : '全局权限'}</h6>
                             <div class="row">
                                 ${permissions.global.map(perm => `
                                     <div class="col-md-6 mb-2">
