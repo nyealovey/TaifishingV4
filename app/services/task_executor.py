@@ -149,6 +149,13 @@ class TaskExecutor:
         app = create_app()
         with app.app_context():
             try:
+                # 对于账户同步任务，使用统一的账户同步服务
+                if task.task_type == 'sync_accounts':
+                    from app.services.account_sync_service import account_sync_service
+                    result = account_sync_service.sync_accounts(instance, sync_type='task')
+                    return result
+                
+                # 对于其他任务类型，使用原有的动态执行方式
                 # 创建执行环境
                 exec_globals = {
                     'instance': instance,
@@ -161,9 +168,7 @@ class TaskExecutor:
                 exec(task.python_code, exec_globals)
                 
                 # 获取执行函数
-                if task.task_type == 'sync_accounts':
-                    func_name = f'sync_{task.db_type}_accounts'
-                elif task.task_type == 'sync_version':
+                if task.task_type == 'sync_version':
                     func_name = f'sync_{task.db_type}_version'
                 elif task.task_type == 'sync_size':
                     func_name = f'sync_{task.db_type}_size'

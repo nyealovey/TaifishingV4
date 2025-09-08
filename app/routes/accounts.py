@@ -225,8 +225,9 @@ def sync_all_accounts():
     
     for instance in instances:
         try:
-            db_service = DatabaseService()
-            result = db_service.sync_accounts(instance)
+            # 使用统一的账户同步服务
+            from app.services.account_sync_service import account_sync_service
+            result = account_sync_service.sync_accounts(instance, sync_type='batch')
             
             if result['success']:
                 success_count += 1
@@ -236,7 +237,10 @@ def sync_all_accounts():
                     sync_type='batch',
                     status='success',
                     message=result.get('message', '同步成功'),
-                    synced_count=result.get('synced_count', 0)
+                    synced_count=result.get('synced_count', 0),
+                    added_count=result.get('added_count', 0),
+                    removed_count=result.get('removed_count', 0),
+                    modified_count=result.get('modified_count', 0)
                 )
                 db.session.add(sync_record)
             else:
