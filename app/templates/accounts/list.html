@@ -689,6 +689,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const currentDbType = urlParams.get('db_type');
     
+    console.log('Page loaded, current db_type from URL:', currentDbType);
+    
     // 加载对应类型的统计信息
     loadAccountStatistics(currentDbType);
 });
