@@ -16,6 +16,70 @@
         </div>
     </div>
 
+    <!-- 统计信息卡片 -->
+    <div class="row mb-4" id="statisticsCards">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalAccounts">0</h4>
+                            <p class="card-text">总账户数</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="activeAccounts">0</h4>
+                            <p class="card-text">正常账户</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="lockedAccounts">0</h4>
+                            <p class="card-text">锁定账户</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-lock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalInstances">0</h4>
+                            <p class="card-text">实例数量</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-database fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 数据库类型切换按钮 -->
     <div class="row mb-3">
         <div class="col-12">
@@ -617,6 +681,35 @@ function showAlert(type, message) {
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);
+}
+
+// 页面加载完成后加载统计信息
+document.addEventListener('DOMContentLoaded', function() {
+    loadAccountStatistics();
+});
+
+// 加载账户统计信息
+function loadAccountStatistics() {
+    fetch('/accounts/account-statistics')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateStatisticsCards(data.statistics);
+        } else {
+            console.error('加载账户统计失败:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// 更新统计卡片
+function updateStatisticsCards(statistics) {
+    document.getElementById('totalAccounts').textContent = statistics.total_accounts;
+    document.getElementById('activeAccounts').textContent = statistics.active_accounts;
+    document.getElementById('lockedAccounts').textContent = statistics.locked_accounts;
+    document.getElementById('totalInstances').textContent = statistics.total_instances;
 }
 </script>
 {% endblock %}

@@ -529,6 +529,65 @@ def sync_statistics():
             'error': f'获取统计信息失败: {str(e)}'
         }), 500
 
+@accounts_bp.route('/account-statistics')
+@login_required
+def account_statistics():
+    """获取账户统计信息API"""
+    try:
+        from sqlalchemy import func
+        from app.models import Instance
+        
+        # 总账户数
+        total_accounts = Account.query.count()
+        
+        # 正常账户数（未锁定且未过期）
+        active_accounts = Account.query.filter(
+            Account.is_locked == False,
+            Account.password_expired == False
+        ).count()
+        
+        # 锁定账户数
+        locked_accounts = Account.query.filter(
+            Account.is_locked == True
+        ).count()
+        
+        # 密码过期账户数
+        expired_accounts = Account.query.filter(
+            Account.password_expired == True
+        ).count()
+        
+        # 总实例数
+        total_instances = Instance.query.filter_by(is_active=True).count()
+        
+        # 按数据库类型统计账户数
+        db_type_stats = db.session.query(
+            Instance.db_type,
+            func.count(Account.id).label('count')
+        ).join(Account, Instance.id == Account.instance_id).group_by(Instance.db_type).all()
+        
+        db_type_distribution = {
+            stat.db_type: stat.count for stat in db_type_stats
+        }
+        
+        return jsonify({
+            'success': True,
+            'statistics': {
+                'total_accounts': total_accounts,
+                'active_accounts': active_accounts,
+                'locked_accounts': locked_accounts,
+                'expired_accounts': expired_accounts,
+                'total_instances': total_instances
+            },
+            'db_type_distribution': db_type_distribution
+        })
+        
+    except Exception as e:
+        logging.error(f"获取账户统计失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'获取统计信息失败: {str(e)}'
+        }), 500
+
 @accounts_bp.route('/history')
 @login_required
 def history():
