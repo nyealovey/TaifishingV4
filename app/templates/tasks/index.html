@@ -332,10 +332,14 @@ function runTask(taskId) {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     btn.disabled = true;
     
+    // 获取CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
     fetch(`/tasks/${taskId}/run`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
         }
     })
     .then(response => response.json())
@@ -356,10 +360,14 @@ function runTask(taskId) {
 }
 
 function toggleTask(taskId) {
+    // 获取CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
     fetch(`/tasks/${taskId}/toggle`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
         }
     })
     .then(response => response.json())
@@ -384,10 +392,14 @@ function deleteTask(taskId, taskName) {
 
 document.getElementById('confirmDelete').addEventListener('click', function() {
     if (deleteTaskId) {
+        // 获取CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
         fetch(`/tasks/${deleteTaskId}/delete`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             }
         })
         .then(response => response.json())
@@ -519,10 +531,14 @@ function batchRunTasks() {
 }
 
 function batchToggleTasks(taskIds, enable) {
+    // 获取CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
     fetch('/tasks/batch-toggle', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
         },
         body: JSON.stringify({
             task_ids: taskIds,
@@ -544,10 +560,14 @@ function batchToggleTasks(taskIds, enable) {
 }
 
 function batchExecuteTasks(taskIds) {
+    // 获取CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
     fetch('/tasks/batch-execute', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
         },
         body: JSON.stringify({
             task_ids: taskIds
