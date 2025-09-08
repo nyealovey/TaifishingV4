@@ -3,10 +3,11 @@
 基于Flask的DBA数据库管理Web应用
 """
 
+from app.constants import SystemConstants, DefaultConfig
 import os
 import logging
 from logging.handlers import RotatingFileHandler
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_caching import Cache
@@ -64,6 +65,31 @@ def create_app(config_name=None):
     # 注册全局错误处理器
     from app.utils.error_handler import register_error_handlers
     register_error_handlers(app)
+    
+    # 注册高级错误处理器
+    from app.utils.advanced_error_handler import advanced_error_handler, handle_advanced_errors
+    app.advanced_error_handler = advanced_error_handler
+    
+    # 注册高级错误处理器到Flask应用
+    @app.errorhandler(Exception)
+    def handle_advanced_exception(error):
+        """全局高级错误处理"""
+        from app.utils.advanced_error_handler import ErrorContext
+        context = ErrorContext(error)
+        error_response = advanced_error_handler.handle_error(error, context)
+        
+        # 根据错误类型返回适当的响应
+        if hasattr(error, 'code'):
+            status_code = error.code
+        else:
+            status_code = 500
+            
+        return jsonify(error_response), status_code
+    
+    # 启动性能监控
+    from app.utils.performance_monitor import performance_monitor
+    performance_monitor.start_monitoring()
+    app.performance_monitor = performance_monitor
     
     # 配置模板过滤器
     configure_template_filters(app)
@@ -174,7 +200,7 @@ def configure_session_security(app):
         app: Flask应用实例
     """
     # 会话配置
-    app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 会话1小时过期
+    app.config['PERMANENT_SESSION_LIFETIME'] = SystemConstants.SESSION_LIFETIME  # 会话1小时过期
     app.config['SESSION_COOKIE_SECURE'] = not app.debug  # 生产环境使用HTTPS
     app.config['SESSION_COOKIE_HTTPONLY'] = True  # 防止XSS攻击
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF保护
@@ -183,7 +209,7 @@ def configure_session_security(app):
     app.config['SESSION_COOKIE_NAME'] = 'taifish_session'
     
     # 会话超时配置
-    app.config['SESSION_TIMEOUT'] = 3600  # 1小时
+    app.config['SESSION_TIMEOUT'] = SystemConstants.SESSION_LIFETIME  # 1小时
 
 def initialize_extensions(app):
     """
@@ -220,7 +246,7 @@ def initialize_extensions(app):
     
     # 会话安全配置
     login_manager.session_protection = "strong"  # 强会话保护
-    login_manager.remember_cookie_duration = 3600  # 记住我功能1小时过期
+    login_manager.remember_cookie_duration = SystemConstants.SESSION_LIFETIME  # 记住我功能1小时过期
     login_manager.remember_cookie_secure = not app.debug  # 生产环境使用HTTPS
     login_manager.remember_cookie_httponly = True  # 防止XSS攻击
     
@@ -309,6 +335,8 @@ def register_blueprints(app):
     from app.routes.params import params_bp
     from app.routes.logs import logs_bp
     from app.routes.dashboard import dashboard_bp
+    from app.routes.health import health_bp
+    from app.routes.admin import admin_bp
     
     # 注册蓝图
     app.register_blueprint(main_bp)
@@ -320,6 +348,8 @@ def register_blueprints(app):
     app.register_blueprint(params_bp, url_prefix='/params')
     app.register_blueprint(logs_bp, url_prefix='/logs')
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
+    app.register_blueprint(health_bp, url_prefix='/health')
+    app.register_blueprint(admin_bp, url_prefix='/admin')
 
 def configure_logging(app):
     """

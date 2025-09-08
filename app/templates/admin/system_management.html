@@ -1,0 +1,459 @@
+{% extends "admin/admin_layout.html" %}
+
+{% set title = "系统管理" %}
+{% set subtitle = "系统控制台和监控中心" %}
+{% set show_refresh = true %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-cogs me-2"></i>系统控制台
+                </h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-warning btn-sm" onclick="toggleMaintenanceMode()">
+                        <i class="fas fa-tools me-1"></i>维护模式
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                    <!-- 系统状态概览 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-success"><i class="fas fa-server"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">系统状态</span>
+                                    <span class="info-box-number" id="system-status">运行中</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-info"><i class="fas fa-memory"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">内存使用</span>
+                                    <span class="info-box-number" id="memory-usage">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-warning"><i class="fas fa-microchip"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">CPU使用</span>
+                                    <span class="info-box-number" id="cpu-usage">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-primary"><i class="fas fa-clock"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">运行时间</span>
+                                    <span class="info-box-number" id="uptime">0天</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 管理功能导航 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                                    <h5>性能监控</h5>
+                                    <p class="text-muted">实时监控系统性能指标</p>
+                                    <button class="btn btn-primary" onclick="openPerformanceMonitor()">
+                                        <i class="fas fa-eye me-1"></i>查看详情
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                                    <h5>错误管理</h5>
+                                    <p class="text-muted">高级错误处理和恢复</p>
+                                    <button class="btn btn-warning" onclick="openErrorManagement()">
+                                        <i class="fas fa-cog me-1"></i>管理错误
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-database fa-3x text-info mb-3"></i>
+                                    <h5>缓存管理</h5>
+                                    <p class="text-muted">Redis缓存和数据库管理</p>
+                                    <button class="btn btn-info" onclick="openCacheManagement()">
+                                        <i class="fas fa-database me-1"></i>管理缓存
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-cogs fa-3x text-success mb-3"></i>
+                                    <h5>常量管理</h5>
+                                    <p class="text-muted">系统常量和配置管理</p>
+                                    <button class="btn btn-success" onclick="openConstantsManagement()">
+                                        <i class="fas fa-list me-1"></i>管理常量
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 系统操作面板 -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-tools me-2"></i>系统操作</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary" onclick="restartApplication()">
+                                            <i class="fas fa-redo me-1"></i>重启应用
+                                        </button>
+                                        <button class="btn btn-outline-warning" onclick="clearCache()">
+                                            <i class="fas fa-trash me-1"></i>清除缓存
+                                        </button>
+                                        <button class="btn btn-outline-info" onclick="backupDatabase()">
+                                            <i class="fas fa-save me-1"></i>备份数据库
+                                        </button>
+                                        <button class="btn btn-outline-success" onclick="runHealthCheck()">
+                                            <i class="fas fa-heartbeat me-1"></i>健康检查
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-bar me-2"></i>实时指标</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <h6>API请求</h6>
+                                            <div class="progress mb-2">
+                                                <div class="progress-bar" id="api-requests-bar" style="width: 0%"></div>
+                                            </div>
+                                            <small id="api-requests-text">0 请求/分钟</small>
+                                        </div>
+                                        <div class="col-6">
+                                            <h6>错误率</h6>
+                                            <div class="progress mb-2">
+                                                <div class="progress-bar bg-danger" id="error-rate-bar" style="width: 0%"></div>
+                                            </div>
+                                            <small id="error-rate-text">0% 错误率</small>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-3">
+                                        <div class="col-6">
+                                            <h6>响应时间</h6>
+                                            <div class="progress mb-2">
+                                                <div class="progress-bar bg-info" id="response-time-bar" style="width: 0%"></div>
+                                            </div>
+                                            <small id="response-time-text">0ms 平均响应</small>
+                                        </div>
+                                        <div class="col-6">
+                                            <h6>活跃用户</h6>
+                                            <div class="progress mb-2">
+                                                <div class="progress-bar bg-success" id="active-users-bar" style="width: 0%"></div>
+                                            </div>
+                                            <small id="active-users-text">0 活跃用户</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 系统日志 -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-file-alt me-2"></i>系统日志</h5>
+                                    <div class="card-tools">
+                                        <button class="btn btn-sm btn-primary" onclick="refreshLogs()">
+                                            <i class="fas fa-sync-alt me-1"></i>刷新
+                                        </button>
+                                        <button class="btn btn-sm btn-warning" onclick="clearLogs()">
+                                            <i class="fas fa-trash me-1"></i>清除
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm" id="systemLogsTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>时间</th>
+                                                    <th>级别</th>
+                                                    <th>模块</th>
+                                                    <th>消息</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- 动态加载日志 -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<script>
+// 页面加载完成后获取数据
+document.addEventListener('DOMContentLoaded', function() {
+    loadSystemStatus();
+    loadRealTimeMetrics();
+    loadSystemLogs();
+    
+    // 每30秒刷新一次数据
+    setInterval(function() {
+        loadSystemStatus();
+        loadRealTimeMetrics();
+    }, 30000);
+});
+
+function loadSystemStatus() {
+    fetch('/admin/system-info')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const info = data.data;
+            document.getElementById('system-status').textContent = info.status || '运行中';
+            document.getElementById('memory-usage').textContent = (info.memory_usage || 0) + '%';
+            document.getElementById('cpu-usage').textContent = (info.cpu_usage || 0) + '%';
+            document.getElementById('uptime').textContent = info.uptime || '0天';
+        }
+    })
+    .catch(error => {
+        console.error('加载系统状态失败:', error);
+    });
+}
+
+function loadRealTimeMetrics() {
+    fetch('/admin/performance')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const metrics = data.data;
+            
+            // 更新API请求指标
+            const apiRequests = metrics.api_requests || 0;
+            document.getElementById('api-requests-bar').style.width = Math.min(apiRequests * 2, 100) + '%';
+            document.getElementById('api-requests-text').textContent = apiRequests + ' 请求/分钟';
+            
+            // 更新错误率
+            const errorRate = metrics.error_rate || 0;
+            document.getElementById('error-rate-bar').style.width = Math.min(errorRate * 10, 100) + '%';
+            document.getElementById('error-rate-text').textContent = errorRate + '% 错误率';
+            
+            // 更新响应时间
+            const responseTime = metrics.avg_response_time || 0;
+            document.getElementById('response-time-bar').style.width = Math.min(responseTime / 10, 100) + '%';
+            document.getElementById('response-time-text').textContent = responseTime + 'ms 平均响应';
+            
+            // 更新活跃用户
+            const activeUsers = metrics.active_users || 0;
+            document.getElementById('active-users-bar').style.width = Math.min(activeUsers * 5, 100) + '%';
+            document.getElementById('active-users-text').textContent = activeUsers + ' 活跃用户';
+        }
+    })
+    .catch(error => {
+        console.error('加载实时指标失败:', error);
+    });
+}
+
+function loadSystemLogs() {
+    fetch('/admin/system-logs?limit=20')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const tbody = document.querySelector('#systemLogsTable tbody');
+            tbody.innerHTML = '';
+            
+            data.data.forEach(log => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${new Date(log.timestamp).toLocaleString()}</td>
+                    <td><span class="badge bg-${getLogLevelColor(log.level)}">${log.level}</span></td>
+                    <td>${log.module}</td>
+                    <td>${log.message}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    })
+    .catch(error => {
+        console.error('加载系统日志失败:', error);
+    });
+}
+
+function getLogLevelColor(level) {
+    const colors = {
+        'ERROR': 'danger',
+        'WARNING': 'warning',
+        'INFO': 'info',
+        'DEBUG': 'secondary'
+    };
+    return colors[level] || 'secondary';
+}
+
+function refreshSystemData() {
+    loadSystemStatus();
+    loadRealTimeMetrics();
+    loadSystemLogs();
+}
+
+function toggleMaintenanceMode() {
+    if (confirm('确定要切换维护模式吗？')) {
+        fetch('/admin/maintenance-mode', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('维护模式已切换');
+                refreshSystemData();
+            } else {
+                alert('操作失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('切换维护模式失败:', error);
+            alert('操作失败');
+        });
+    }
+}
+
+function openPerformanceMonitor() {
+    window.open('/admin/performance', '_blank');
+}
+
+function openErrorManagement() {
+    window.open('/admin/error-management', '_blank');
+}
+
+function openCacheManagement() {
+    window.open('/admin/cache-management', '_blank');
+}
+
+function openConstantsManagement() {
+    window.open('/admin/constants', '_blank');
+}
+
+function restartApplication() {
+    if (confirm('确定要重启应用吗？这将导致服务短暂中断。')) {
+        fetch('/admin/restart', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('应用重启中...');
+            } else {
+                alert('重启失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('重启应用失败:', error);
+            alert('重启失败');
+        });
+    }
+}
+
+function clearCache() {
+    if (confirm('确定要清除所有缓存吗？')) {
+        fetch('/admin/clear-cache', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('缓存已清除');
+                refreshSystemData();
+            } else {
+                alert('清除失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('清除缓存失败:', error);
+            alert('清除失败');
+        });
+    }
+}
+
+function backupDatabase() {
+    if (confirm('确定要备份数据库吗？')) {
+        fetch('/admin/backup-database', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('数据库备份已开始');
+            } else {
+                alert('备份失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('备份数据库失败:', error);
+            alert('备份失败');
+        });
+    }
+}
+
+function runHealthCheck() {
+    fetch('/admin/health-check', { method: 'POST' })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('健康检查完成: ' + data.message);
+            refreshSystemData();
+        } else {
+            alert('健康检查失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('健康检查失败:', error);
+        alert('健康检查失败');
+    });
+}
+
+function refreshLogs() {
+    loadSystemLogs();
+}
+
+function clearLogs() {
+    if (confirm('确定要清除系统日志吗？')) {
+        fetch('/admin/clear-logs', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('系统日志已清除');
+                refreshLogs();
+            } else {
+                alert('清除失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('清除日志失败:', error);
+            alert('清除失败');
+        });
+    }
+}
+</script>
+{% endblock %}

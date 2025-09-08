@@ -188,25 +188,45 @@ def rate_limit(limit: int, window: int = 60, per: str = 'ip',
         return decorated_function
     return rate_limit_decorator
 
-def login_rate_limit(func=None, *, limit: int = 5, window: int = 300):
+def login_rate_limit(func=None, *, limit: int = None, window: int = None):
     """登录速率限制"""
+    from app.constants import SystemConstants
+    if limit is None:
+        limit = SystemConstants.LOGIN_RATE_LIMIT
+    if window is None:
+        window = SystemConstants.LOGIN_RATE_WINDOW
     if func is None:
         return lambda f: rate_limit(limit, window, per='ip')(f)
     return rate_limit(limit, window, per='ip')(func)
 
-def api_rate_limit(func=None, *, limit: int = 100, window: int = 60):
+def api_rate_limit(func=None, *, limit: int = None, window: int = None):
     """API速率限制"""
+    from app.constants import SystemConstants
+    if limit is None:
+        limit = SystemConstants.RATE_LIMIT_REQUESTS
+    if window is None:
+        window = SystemConstants.RATE_LIMIT_WINDOW
     if func is None:
         return lambda f: rate_limit(limit, window, per='user')(f)
     return rate_limit(limit, window, per='user')(func)
 
-def password_reset_rate_limit(func=None, *, limit: int = 3, window: int = 3600):
+def password_reset_rate_limit(func=None, *, limit: int = None, window: int = None):
+    from app.constants import SystemConstants
+    if limit is None:
+        limit = 3  # 密码重置限制
+    if window is None:
+        window = SystemConstants.SESSION_LIFETIME  # 1小时
     """密码重置速率限制"""
     if func is None:
         return lambda f: rate_limit(limit, window, per='ip')(f)
     return rate_limit(limit, window, per='ip')(func)
 
-def registration_rate_limit(func=None, *, limit: int = 3, window: int = 3600):
+def registration_rate_limit(func=None, *, limit: int = None, window: int = None):
+    from app.constants import SystemConstants
+    if limit is None:
+        limit = 3  # 注册限制
+    if window is None:
+        window = SystemConstants.SESSION_LIFETIME  # 1小时
     """注册速率限制"""
     if func is None:
         return lambda f: rate_limit(limit, window, per='ip')(f)

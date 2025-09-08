@@ -1,0 +1,218 @@
+<!-- 管理菜单组件 -->
+<div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-cogs me-2"></i>管理中心
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <nav class="nav nav-pills flex-column">
+                <!-- 系统概览 -->
+                <a class="nav-link" href="/admin/dashboard">
+                    <i class="fas fa-tachometer-alt me-2"></i>系统概览
+                </a>
+                
+                    <!-- 系统管理 -->
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="fas fa-server me-2"></i>系统管理
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/admin/system-management">
+                                <i class="fas fa-cogs me-2"></i>系统控制台
+                            </a></li>
+                            <li><a class="dropdown-item" href="/admin/performance">
+                                <i class="fas fa-chart-line me-2"></i>性能监控
+                            </a></li>
+                            <li><a class="dropdown-item" href="/admin/logs">
+                                <i class="fas fa-file-alt me-2"></i>系统日志
+                            </a></li>
+                        </ul>
+                    </div>
+                
+                <!-- 错误管理 -->
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="fas fa-exclamation-triangle me-2"></i>错误管理
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/admin/error-management">
+                            <i class="fas fa-bug me-2"></i>错误控制台
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/error-metrics">
+                            <i class="fas fa-chart-pie me-2"></i>错误统计
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/error-details">
+                            <i class="fas fa-list me-2"></i>错误详情
+                        </a></li>
+                    </ul>
+                </div>
+                
+                <!-- 配置管理 -->
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="fas fa-sliders-h me-2"></i>配置管理
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/admin/constants">
+                            <i class="fas fa-list me-2"></i>常量管理
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/cache-management">
+                            <i class="fas fa-database me-2"></i>缓存管理
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/system-config">
+                            <i class="fas fa-cog me-2"></i>系统配置
+                        </a></li>
+                    </ul>
+                </div>
+                
+                <!-- 用户管理 -->
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="fas fa-users me-2"></i>用户管理
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/admin/users">
+                            <i class="fas fa-user me-2"></i>用户列表
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/user-roles">
+                            <i class="fas fa-user-tag me-2"></i>角色管理
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/user-permissions">
+                            <i class="fas fa-key me-2"></i>权限管理
+                        </a></li>
+                    </ul>
+                </div>
+                
+                <!-- 数据管理 -->
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="fas fa-database me-2"></i>数据管理
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/admin/data-management">
+                            <i class="fas fa-cogs me-2"></i>数据控制台
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/backup">
+                            <i class="fas fa-save me-2"></i>数据备份
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/restore">
+                            <i class="fas fa-undo me-2"></i>数据恢复
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/data-export">
+                            <i class="fas fa-download me-2"></i>数据导出
+                        </a></li>
+                    </ul>
+                </div>
+                
+                <!-- 开发工具 -->
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="fas fa-code me-2"></i>开发工具
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/admin/development-tools">
+                            <i class="fas fa-tools me-2"></i>开发工具
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/code-quality">
+                            <i class="fas fa-search me-2"></i>代码质量
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/tests">
+                            <i class="fas fa-vial me-2"></i>测试工具
+                        </a></li>
+                        <li><a class="dropdown-item" href="/admin/deployment">
+                            <i class="fas fa-rocket me-2"></i>部署管理
+                        </a></li>
+                    </ul>
+                </div>
+                
+                <!-- 分隔线 -->
+                <hr class="my-2">
+                
+                <!-- 快速操作 -->
+                <div class="px-3 py-2">
+                    <h6 class="text-muted mb-2">快速操作</h6>
+                    <div class="d-grid gap-1">
+                        <button class="btn btn-sm btn-outline-primary" onclick="refreshSystemData()">
+                            <i class="fas fa-sync-alt me-1"></i>刷新数据
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="clearCache()">
+                            <i class="fas fa-trash me-1"></i>清除缓存
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" onclick="runHealthCheck()">
+                            <i class="fas fa-heartbeat me-1"></i>健康检查
+                        </button>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+
+<script>
+// 菜单功能脚本
+function refreshSystemData() {
+    if (confirm('确定要刷新系统数据吗？')) {
+        fetch('/admin/refresh-data', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('系统数据已刷新');
+                location.reload();
+            } else {
+                alert('刷新失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('刷新数据失败:', error);
+            alert('刷新失败');
+        });
+    }
+}
+
+function clearCache() {
+    if (confirm('确定要清除所有缓存吗？')) {
+        fetch('/admin/clear-cache', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('缓存已清除');
+            } else {
+                alert('清除失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('清除缓存失败:', error);
+            alert('清除失败');
+        });
+    }
+}
+
+function runHealthCheck() {
+    fetch('/admin/health-check', { method: 'POST' })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('健康检查完成: ' + data.message);
+        } else {
+            alert('健康检查失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('健康检查失败:', error);
+        alert('健康检查失败');
+    });
+}
+
+// 高亮当前页面菜单项
+document.addEventListener('DOMContentLoaded', function() {
+    const currentPath = window.location.pathname;
+    const menuLinks = document.querySelectorAll('.admin-menu .nav-link');
+    
+    menuLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPath) {
+            link.classList.add('active');
+        }
+    });
+});
+</script>

@@ -39,7 +39,7 @@ def create_admin_user():
             # 创建管理员用户
             admin_user = User(
                 username='admin',
-                password='admin123',
+                password='Admin123',
                 role='admin'
             )
             admin_user.email = 'admin@taifish.local'

@@ -49,8 +49,20 @@ def register_error_handlers(app):
     @app.errorhandler(SQLAlchemyError)
     def handle_sqlalchemy_error(error):
         """SQLAlchemy错误处理"""
-        logging.error(f"数据库错误: {error}")
-        return _handle_error(error, 500, "数据库操作失败")
+        # 记录详细的数据库错误信息
+        current_app.logger.error(f"数据库错误: {str(error)}")
+        current_app.logger.error(f"错误类型: {type(error).__name__}")
+        current_app.logger.error(f"堆栈跟踪: {traceback.format_exc()}")
+        
+        # 根据错误类型返回不同的错误信息
+        if "connection" in str(error).lower():
+            return _handle_error(error, 503, "数据库连接失败，请稍后重试")
+        elif "constraint" in str(error).lower():
+            return _handle_error(error, 400, "数据约束错误，请检查输入数据")
+        elif "timeout" in str(error).lower():
+            return _handle_error(error, 504, "数据库操作超时，请稍后重试")
+        else:
+            return _handle_error(error, 500, "数据库操作错误")
     
     @app.errorhandler(Exception)
     def handle_generic_error(error):

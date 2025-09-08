@@ -16,13 +16,16 @@ logger = logging.getLogger(__name__)
 class ConnectionPool:
     """数据库连接池"""
     
-    def __init__(self, max_connections=10, timeout=30):
+    def __init__(self, max_connections=20, timeout=30, min_connections=2):
         self.max_connections = max_connections
+        self.min_connections = min_connections
         self.timeout = timeout
         self.pools = {}  # {instance_id: Queue}
         self.locks = {}  # {instance_id: Lock}
         self.connection_counts = {}  # {instance_id: int}
         self._lock = threading.Lock()
+        self._cleanup_thread = None
+        self._stop_cleanup = False
     
     def get_connection(self, instance_id: int, connection_factory):
         """获取数据库连接"""

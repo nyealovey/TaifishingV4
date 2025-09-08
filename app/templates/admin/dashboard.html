@@ -1,0 +1,286 @@
+{% extends "admin/admin_layout.html" %}
+
+{% set title = "管理仪表板" %}
+{% set subtitle = "系统概览和快速操作" %}
+{% set show_refresh = true %}
+
+{% block admin_content %}
+<!-- 系统状态概览 -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="info-box">
+            <span class="info-box-icon bg-success"><i class="fas fa-server"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">系统状态</span>
+                <span class="info-box-number" id="system-status">运行中</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="info-box">
+            <span class="info-box-icon bg-info"><i class="fas fa-users"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">用户总数</span>
+                <span class="info-box-number" id="total-users">0</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="info-box">
+            <span class="info-box-icon bg-warning"><i class="fas fa-database"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">实例数量</span>
+                <span class="info-box-number" id="total-instances">0</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="info-box">
+            <span class="info-box-icon bg-primary"><i class="fas fa-tasks"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">任务数量</span>
+                <span class="info-box-number" id="total-tasks">0</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 快速操作 -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-bolt me-2"></i>快速操作
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100 mb-2" onclick="openSystemManagement()">
+                            <i class="fas fa-cogs me-1"></i><br>系统管理
+                        </button>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-warning w-100 mb-2" onclick="openErrorManagement()">
+                            <i class="fas fa-exclamation-triangle me-1"></i><br>错误管理
+                        </button>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-info w-100 mb-2" onclick="openConstantsManagement()">
+                            <i class="fas fa-list me-1"></i><br>常量管理
+                        </button>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-success w-100 mb-2" onclick="openPerformanceMonitor()">
+                            <i class="fas fa-chart-line me-1"></i><br>性能监控
+                        </button>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-secondary w-100 mb-2" onclick="openCacheManagement()">
+                            <i class="fas fa-database me-1"></i><br>缓存管理
+                        </button>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-dark w-100 mb-2" onclick="openSystemLogs()">
+                            <i class="fas fa-file-alt me-1"></i><br>系统日志
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 系统信息和性能指标 -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle me-2"></i>系统信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <strong>运行时间:</strong>
+                        <span id="uptime">未知</span>
+                    </div>
+                    <div class="col-6">
+                        <strong>最后更新:</strong>
+                        <span id="last-update">未知</span>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-6">
+                        <strong>数据库状态:</strong>
+                        <span id="db-status" class="badge bg-success">正常</span>
+                    </div>
+                    <div class="col-6">
+                        <strong>Redis状态:</strong>
+                        <span id="redis-status" class="badge bg-success">正常</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-chart-bar me-2"></i>性能指标
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <strong>内存使用:</strong>
+                        <div class="progress mb-1">
+                            <div class="progress-bar" id="memory-bar" style="width: 0%"></div>
+                        </div>
+                        <small id="memory-text">0%</small>
+                    </div>
+                    <div class="col-6">
+                        <strong>CPU使用:</strong>
+                        <div class="progress mb-1">
+                            <div class="progress-bar bg-info" id="cpu-bar" style="width: 0%"></div>
+                        </div>
+                        <small id="cpu-text">0%</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 最近活动 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">
+                    <i class="fas fa-history me-2"></i>最近活动
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="recentActivitiesTable">
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>用户</th>
+                                <th>操作</th>
+                                <th>详情</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 动态加载活动 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 页面加载完成后获取数据
+document.addEventListener('DOMContentLoaded', function() {
+    loadSystemOverview();
+    checkSystemStatus();
+    loadRecentActivities();
+    
+    // 每30秒刷新一次数据
+    setInterval(function() {
+        loadSystemOverview();
+        checkSystemStatus();
+    }, 30000);
+});
+
+function loadSystemOverview() {
+    fetch('/dashboard/api/overview')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('total-users').textContent = data.data.users?.total || 0;
+            document.getElementById('total-instances').textContent = data.data.instances?.total || 0;
+            document.getElementById('total-tasks').textContent = data.data.tasks?.total || 0;
+        }
+    })
+    .catch(error => {
+        console.error('加载系统概览失败:', error);
+    });
+}
+
+function checkSystemStatus() {
+    fetch('/api/health')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('db-status').textContent = data.database === 'connected' ? '正常' : '异常';
+        document.getElementById('db-status').className = data.database === 'connected' ? 'badge bg-success' : 'badge bg-danger';
+        
+        document.getElementById('redis-status').textContent = data.redis === 'connected' ? '正常' : '异常';
+        document.getElementById('redis-status').className = data.redis === 'connected' ? 'badge bg-success' : 'badge bg-danger';
+        
+        document.getElementById('uptime').textContent = data.uptime || '未知';
+        document.getElementById('last-update').textContent = new Date().toLocaleString();
+    })
+    .catch(error => {
+        console.error('检查系统状态失败:', error);
+    });
+}
+
+function loadRecentActivities() {
+    fetch('/dashboard/api/activities?limit=10')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const tbody = document.querySelector('#recentActivitiesTable tbody');
+            tbody.innerHTML = '';
+            
+            data.data.forEach(activity => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${new Date(activity.timestamp).toLocaleString()}</td>
+                    <td>${activity.user || '系统'}</td>
+                    <td>${activity.action}</td>
+                    <td>${activity.details || '-'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    })
+    .catch(error => {
+        console.error('加载最近活动失败:', error);
+    });
+}
+
+// 快速操作函数
+function openSystemManagement() {
+    window.location.href = '/admin/system-management';
+}
+
+function openErrorManagement() {
+    window.location.href = '/admin/error-management';
+}
+
+function openConstantsManagement() {
+    window.location.href = '/admin/constants';
+}
+
+function openPerformanceMonitor() {
+    window.open('/admin/performance', '_blank');
+}
+
+function openCacheManagement() {
+    window.open('/admin/cache-management', '_blank');
+}
+
+function openSystemLogs() {
+    window.open('/admin/system-logs', '_blank');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,405 @@
+{% extends "admin/admin_layout.html" %}
+
+{% set title = "常量管理" %}
+{% set subtitle = "系统常量和配置管理" %}
+{% set show_refresh = true %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-cogs me-2"></i>常量配置
+                </h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-success btn-sm" onclick="exportConstants()">
+                        <i class="fas fa-download me-1"></i>导出
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                    <!-- 常量分类标签 -->
+                    <ul class="nav nav-tabs" id="constantsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button" role="tab">
+                                <i class="fas fa-server me-1"></i>系统常量
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button" role="tab">
+                                <i class="fas fa-tachometer-alt me-1"></i>性能常量
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab">
+                                <i class="fas fa-shield-alt me-1"></i>安全常量
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="database-tab" data-bs-toggle="tab" data-bs-target="#database" type="button" role="tab">
+                                <i class="fas fa-database me-1"></i>数据库常量
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" type="button" role="tab">
+                                <i class="fas fa-comments me-1"></i>消息常量
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <!-- 常量内容 -->
+                    <div class="tab-content" id="constantsTabContent">
+                        <!-- 系统常量 -->
+                        <div class="tab-pane fade show active" id="system" role="tabpanel">
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <h5><i class="fas fa-list me-2"></i>分页常量</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>常量名</th>
+                                                    <th>当前值</th>
+                                                    <th>描述</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><code>DEFAULT_PAGE_SIZE</code></td>
+                                                    <td><span class="badge bg-primary">20</span></td>
+                                                    <td>默认分页大小</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>MAX_PAGE_SIZE</code></td>
+                                                    <td><span class="badge bg-warning">100</span></td>
+                                                    <td>最大分页大小</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>MIN_PAGE_SIZE</code></td>
+                                                    <td><span class="badge bg-info">1</span></td>
+                                                    <td>最小分页大小</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5><i class="fas fa-file me-2"></i>文件上传常量</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>常量名</th>
+                                                    <th>当前值</th>
+                                                    <th>描述</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><code>MAX_FILE_SIZE</code></td>
+                                                    <td><span class="badge bg-primary">16MB</span></td>
+                                                    <td>最大文件大小</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>ALLOWED_EXTENSIONS</code></td>
+                                                    <td><span class="badge bg-success">.txt, .csv, .json, .sql, .py</span></td>
+                                                    <td>允许的文件扩展名</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 性能常量 -->
+                        <div class="tab-pane fade" id="performance" role="tabpanel">
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <h5><i class="fas fa-clock me-2"></i>时间阈值</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>常量名</th>
+                                                    <th>当前值</th>
+                                                    <th>描述</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><code>SLOW_QUERY_THRESHOLD</code></td>
+                                                    <td><span class="badge bg-warning">1.0秒</span></td>
+                                                    <td>慢查询阈值</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>SLOW_API_THRESHOLD</code></td>
+                                                    <td><span class="badge bg-warning">2.0秒</span></td>
+                                                    <td>慢API阈值</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>CONNECTION_TIMEOUT</code></td>
+                                                    <td><span class="badge bg-info">30秒</span></td>
+                                                    <td>连接超时</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5><i class="fas fa-memory me-2"></i>资源阈值</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>常量名</th>
+                                                    <th>当前值</th>
+                                                    <th>描述</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><code>MEMORY_WARNING_THRESHOLD</code></td>
+                                                    <td><span class="badge bg-danger">80%</span></td>
+                                                    <td>内存警告阈值</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>CPU_WARNING_THRESHOLD</code></td>
+                                                    <td><span class="badge bg-danger">80%</span></td>
+                                                    <td>CPU警告阈值</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>MAX_CONNECTIONS</code></td>
+                                                    <td><span class="badge bg-primary">20</span></td>
+                                                    <td>最大连接数</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 安全常量 -->
+                        <div class="tab-pane fade" id="security" role="tabpanel">
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <h5><i class="fas fa-key me-2"></i>密码安全</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>常量名</th>
+                                                    <th>当前值</th>
+                                                    <th>描述</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><code>MIN_PASSWORD_LENGTH</code></td>
+                                                    <td><span class="badge bg-primary">8</span></td>
+                                                    <td>最小密码长度</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>MAX_PASSWORD_LENGTH</code></td>
+                                                    <td><span class="badge bg-info">128</span></td>
+                                                    <td>最大密码长度</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>PASSWORD_HASH_ROUNDS</code></td>
+                                                    <td><span class="badge bg-success">12</span></td>
+                                                    <td>密码哈希轮数</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5><i class="fas fa-shield-alt me-2"></i>会话安全</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>常量名</th>
+                                                    <th>当前值</th>
+                                                    <th>描述</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><code>SESSION_LIFETIME</code></td>
+                                                    <td><span class="badge bg-primary">3600秒</span></td>
+                                                    <td>会话生命周期</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>JWT_ACCESS_TOKEN_EXPIRES</code></td>
+                                                    <td><span class="badge bg-primary">3600秒</span></td>
+                                                    <td>JWT访问令牌过期时间</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>CSRF_TOKEN_LIFETIME</code></td>
+                                                    <td><span class="badge bg-primary">3600秒</span></td>
+                                                    <td>CSRF令牌生命周期</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 数据库常量 -->
+                        <div class="tab-pane fade" id="database" role="tabpanel">
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <h5><i class="fas fa-database me-2"></i>连接配置</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>常量名</th>
+                                                    <th>当前值</th>
+                                                    <th>描述</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><code>CONNECTION_TIMEOUT</code></td>
+                                                    <td><span class="badge bg-info">30秒</span></td>
+                                                    <td>连接超时时间</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>QUERY_TIMEOUT</code></td>
+                                                    <td><span class="badge bg-info">60秒</span></td>
+                                                    <td>查询超时时间</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>CONNECTION_RETRY_ATTEMPTS</code></td>
+                                                    <td><span class="badge bg-warning">3</span></td>
+                                                    <td>连接重试次数</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5><i class="fas fa-server me-2"></i>端口配置</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>常量名</th>
+                                                    <th>当前值</th>
+                                                    <th>描述</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><code>SQL_SERVER_PORT</code></td>
+                                                    <td><span class="badge bg-primary">1433</span></td>
+                                                    <td>SQL Server端口</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>MYSQL_PORT</code></td>
+                                                    <td><span class="badge bg-primary">3306</span></td>
+                                                    <td>MySQL端口</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>POSTGRES_PORT</code></td>
+                                                    <td><span class="badge bg-primary">5432</span></td>
+                                                    <td>PostgreSQL端口</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 消息常量 -->
+                        <div class="tab-pane fade" id="messages" role="tabpanel">
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <h5><i class="fas fa-exclamation-triangle me-2"></i>错误消息</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>常量名</th>
+                                                    <th>消息内容</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><code>INTERNAL_ERROR</code></td>
+                                                    <td><span class="text-danger">服务器内部错误</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>VALIDATION_ERROR</code></td>
+                                                    <td><span class="text-warning">数据验证失败</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>PERMISSION_DENIED</code></td>
+                                                    <td><span class="text-danger">权限不足</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>RESOURCE_NOT_FOUND</code></td>
+                                                    <td><span class="text-info">资源不存在</span></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5><i class="fas fa-check-circle me-2"></i>成功消息</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>常量名</th>
+                                                    <th>消息内容</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><code>OPERATION_SUCCESS</code></td>
+                                                    <td><span class="text-success">操作成功</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>LOGIN_SUCCESS</code></td>
+                                                    <td><span class="text-success">登录成功</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>DATA_SAVED</code></td>
+                                                    <td><span class="text-success">数据保存成功</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>DATA_DELETED</code></td>
+                                                    <td><span class="text-success">数据删除成功</span></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<script>
+function refreshConstants() {
+    location.reload();
+}
+
+function exportConstants() {
+    // 导出常量配置
+    window.open('/admin/constants/export', '_blank');
+}
+</script>
+{% endblock %}

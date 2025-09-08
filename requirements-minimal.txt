@@ -1,0 +1,46 @@
+# 泰摸鱼吧 - 最小化依赖包 (用于快速启动)
+
+# 核心框架
+Flask==3.0.3
+Jinja2==3.1.4
+Werkzeug==3.0.3
+
+# 数据库
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.7
+SQLAlchemy==2.0.30
+
+# 数据库驱动 (仅SQLite和MySQL)
+PyMySQL==1.1.1
+# pymssql==2.2.11  # 暂时注释，需要系统依赖
+# pyodbc==5.1.0    # 暂时注释，需要系统依赖
+
+# 缓存和Redis
+Flask-Caching==2.1.0
+redis==5.0.7
+
+# 认证和安全
+Flask-JWT-Extended==4.6.0
+Flask-Bcrypt==1.0.1
+Flask-Login==0.6.3
+
+# 表单处理
+Flask-WTF==1.2.1
+WTForms==3.1.2
+
+# 权限管理
+Flask-Principal==0.4.0
+
+# 管理界面
+Flask-Admin==1.6.1
+
+# API相关
+Flask-RESTful==0.3.10
+Flask-CORS==4.0.0
+
+# 配置管理
+python-dotenv==1.0.1
+
+# 其他工具
+requests==2.32.3
+python-dateutil==2.9.0

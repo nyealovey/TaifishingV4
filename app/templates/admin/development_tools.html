@@ -1,0 +1,611 @@
+{% extends "admin/admin_layout.html" %}
+
+{% set title = "开发工具" %}
+{% set subtitle = "代码质量分析和开发辅助工具" %}
+{% set show_refresh = true %}
+
+{% block admin_content %}
+<div class="row">
+    <!-- 工具概览 -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tools me-2"></i>开发工具概览
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h3 class="card-title" id="code-quality-score">--</h3>
+                                <p class="card-text">代码质量评分</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h3 class="card-title" id="test-coverage">--</h3>
+                                <p class="card-text">测试覆盖率</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h3 class="card-title" id="code-duplication">--</h3>
+                                <p class="card-text">代码重复率</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h3 class="card-title" id="complexity-score">--</h3>
+                                <p class="card-text">复杂度评分</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 代码质量分析 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-search me-2"></i>代码质量分析
+                </h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="runCodeAnalysis()">
+                    <i class="fas fa-play me-1"></i>开始分析
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="code-analysis-results">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-chart-line fa-3x mb-3"></i>
+                        <p>点击"开始分析"按钮进行代码质量分析</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 测试工具 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-vial me-2"></i>测试工具
+                </h5>
+                <button class="btn btn-sm btn-outline-success" onclick="runTests()">
+                    <i class="fas fa-play me-1"></i>运行测试
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="test-results">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-flask fa-3x mb-3"></i>
+                        <p>点击"运行测试"按钮执行测试套件</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 部署管理 -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-rocket me-2"></i>部署管理
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-upload fa-2x text-primary mb-2"></i>
+                                <h6>部署到生产环境</h6>
+                                <p class="text-muted small">将当前版本部署到生产服务器</p>
+                                <button class="btn btn-primary btn-sm" onclick="deployToProduction()">
+                                    开始部署
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-code-branch fa-2x text-success mb-2"></i>
+                                <h6>创建发布版本</h6>
+                                <p class="text-muted small">创建新的版本标签和发布</p>
+                                <button class="btn btn-success btn-sm" onclick="createRelease()">
+                                    创建版本
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-undo fa-2x text-warning mb-2"></i>
+                                <h6>回滚部署</h6>
+                                <p class="text-muted small">回滚到上一个稳定版本</p>
+                                <button class="btn btn-warning btn-sm" onclick="rollbackDeployment()">
+                                    回滚
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 性能分析 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>性能分析
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">分析类型</label>
+                    <select class="form-select" id="performance-analysis-type">
+                        <option value="memory">内存使用</option>
+                        <option value="cpu">CPU使用</option>
+                        <option value="database">数据库查询</option>
+                        <option value="api">API响应时间</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">分析时长</label>
+                    <select class="form-select" id="performance-duration">
+                        <option value="5m">5分钟</option>
+                        <option value="15m">15分钟</option>
+                        <option value="1h">1小时</option>
+                        <option value="24h">24小时</option>
+                    </select>
+                </div>
+                <button class="btn btn-info w-100" onclick="startPerformanceAnalysis()">
+                    <i class="fas fa-play me-1"></i>开始性能分析
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 代码生成器 -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-magic me-2"></i>代码生成器
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">生成类型</label>
+                    <select class="form-select" id="code-generator-type">
+                        <option value="model">数据模型</option>
+                        <option value="api">API接口</option>
+                        <option value="template">页面模板</option>
+                        <option value="test">测试用例</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">名称</label>
+                    <input type="text" class="form-control" id="generator-name" placeholder="输入名称">
+                </div>
+                <button class="btn btn-success w-100" onclick="generateCode()">
+                    <i class="fas fa-magic me-1"></i>生成代码
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日志分析 -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-alt me-2"></i>日志分析
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>错误日志分析</h6>
+                        <div class="mb-3">
+                            <label class="form-label">时间范围</label>
+                            <select class="form-select" id="error-log-range">
+                                <option value="1h">最近1小时</option>
+                                <option value="24h">最近24小时</option>
+                                <option value="7d">最近7天</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-danger" onclick="analyzeErrorLogs()">
+                            <i class="fas fa-exclamation-triangle me-1"></i>分析错误日志
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>访问日志分析</h6>
+                        <div class="mb-3">
+                            <label class="form-label">分析类型</label>
+                            <select class="form-select" id="access-log-type">
+                                <option value="popular">热门页面</option>
+                                <option value="slow">慢请求</option>
+                                <option value="errors">错误请求</option>
+                                <option value="users">用户行为</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-info" onclick="analyzeAccessLogs()">
+                            <i class="fas fa-chart-bar me-1"></i>分析访问日志
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统诊断 -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-stethoscope me-2"></i>系统诊断
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary w-100 mb-2" onclick="diagnoseDatabase()">
+                            <i class="fas fa-database me-1"></i>数据库诊断
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-success w-100 mb-2" onclick="diagnoseCache()">
+                            <i class="fas fa-memory me-1"></i>缓存诊断
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-warning w-100 mb-2" onclick="diagnoseNetwork()">
+                            <i class="fas fa-network-wired me-1"></i>网络诊断
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-info w-100 mb-2" onclick="diagnoseSecurity()">
+                            <i class="fas fa-shield-alt me-1"></i>安全诊断
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 进度模态框 -->
+<div class="modal fade" id="progressModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">操作进度</h5>
+            </div>
+            <div class="modal-body">
+                <div class="progress mb-3">
+                    <div class="progress-bar" role="progressbar" style="width: 0%" id="progress-bar"></div>
+                </div>
+                <div id="progress-text">正在处理...</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadToolOverview();
+});
+
+// 加载工具概览
+async function loadToolOverview() {
+    try {
+        const response = await fetch('/admin/development/overview');
+        const data = await response.json();
+        
+        if (data.success) {
+            updateToolOverview(data.data);
+        }
+    } catch (error) {
+        console.error('加载工具概览失败:', error);
+    }
+}
+
+// 更新工具概览
+function updateToolOverview(data) {
+    document.getElementById('code-quality-score').textContent = (data.code_quality_score || 0) + '/100';
+    document.getElementById('test-coverage').textContent = (data.test_coverage || 0) + '%';
+    document.getElementById('code-duplication').textContent = (data.code_duplication || 0) + '%';
+    document.getElementById('complexity-score').textContent = (data.complexity_score || 0) + '/10';
+}
+
+// 运行代码分析
+async function runCodeAnalysis() {
+    showProgress('正在分析代码质量...');
+    
+    try {
+        const response = await fetch('/admin/code-quality', {
+            method: 'POST'
+        });
+        const data = await response.json();
+        
+        hideProgress();
+        
+        if (data.success) {
+            updateCodeAnalysisResults(data.data);
+            showNotification('代码分析完成', 'success');
+        } else {
+            showNotification('代码分析失败: ' + data.message, 'error');
+        }
+    } catch (error) {
+        hideProgress();
+        console.error('代码分析失败:', error);
+        showNotification('代码分析失败', 'error');
+    }
+}
+
+// 更新代码分析结果
+function updateCodeAnalysisResults(data) {
+    const container = document.getElementById('code-analysis-results');
+    
+    let html = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>代码质量指标</h6>
+                <ul class="list-unstyled">
+                    <li><strong>复杂度:</strong> ${data.complexity || 'N/A'}</li>
+                    <li><strong>重复率:</strong> ${data.duplication || 'N/A'}%</li>
+                    <li><strong>可维护性:</strong> ${data.maintainability || 'N/A'}</li>
+                    <li><strong>可靠性:</strong> ${data.reliability || 'N/A'}</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6>问题统计</h6>
+                <ul class="list-unstyled">
+                    <li><span class="badge bg-danger">${data.errors || 0} 错误</span></li>
+                    <li><span class="badge bg-warning">${data.warnings || 0} 警告</span></li>
+                    <li><span class="badge bg-info">${data.info || 0} 信息</span></li>
+                </ul>
+            </div>
+        </div>
+    `;
+    
+    if (data.issues && data.issues.length > 0) {
+        html += `
+            <div class="mt-3">
+                <h6>主要问题</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>文件</th>
+                                <th>行号</th>
+                                <th>问题</th>
+                                <th>严重程度</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        
+        data.issues.slice(0, 10).forEach(issue => {
+            const severityClass = issue.severity === 'error' ? 'text-danger' : 
+                                 issue.severity === 'warning' ? 'text-warning' : 'text-info';
+            html += `
+                <tr>
+                    <td>${issue.file}</td>
+                    <td>${issue.line}</td>
+                    <td>${issue.message}</td>
+                    <td><span class="${severityClass}">${issue.severity}</span></td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+}
+
+// 运行测试
+async function runTests() {
+    showProgress('正在运行测试...');
+    
+    try {
+        const response = await fetch('/admin/tests', {
+            method: 'POST'
+        });
+        const data = await response.json();
+        
+        hideProgress();
+        
+        if (data.success) {
+            updateTestResults(data.data);
+            showNotification('测试完成', 'success');
+        } else {
+            showNotification('测试失败: ' + data.message, 'error');
+        }
+    } catch (error) {
+        hideProgress();
+        console.error('测试失败:', error);
+        showNotification('测试失败', 'error');
+    }
+}
+
+// 更新测试结果
+function updateTestResults(data) {
+    const container = document.getElementById('test-results');
+    
+    const totalTests = data.total || 0;
+    const passedTests = data.passed || 0;
+    const failedTests = data.failed || 0;
+    const skippedTests = data.skipped || 0;
+    
+    const passRate = totalTests > 0 ? ((passedTests / totalTests) * 100).toFixed(1) : 0;
+    
+    let html = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>测试统计</h6>
+                <div class="progress mb-2">
+                    <div class="progress-bar bg-success" style="width: ${passRate}%"></div>
+                </div>
+                <p class="mb-1">通过率: ${passRate}%</p>
+                <ul class="list-unstyled">
+                    <li><span class="badge bg-success">${passedTests} 通过</span></li>
+                    <li><span class="badge bg-danger">${failedTests} 失败</span></li>
+                    <li><span class="badge bg-secondary">${skippedTests} 跳过</span></li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6>测试详情</h6>
+                <p><strong>总测试数:</strong> ${totalTests}</p>
+                <p><strong>执行时间:</strong> ${data.duration || 'N/A'}秒</p>
+                <p><strong>覆盖率:</strong> ${data.coverage || 'N/A'}%</p>
+            </div>
+        </div>
+    `;
+    
+    if (data.failures && data.failures.length > 0) {
+        html += `
+            <div class="mt-3">
+                <h6>失败测试</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>测试名称</th>
+                                <th>错误信息</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        
+        data.failures.forEach(failure => {
+            html += `
+                <tr>
+                    <td>${failure.name}</td>
+                    <td class="text-danger">${failure.error}</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+}
+
+// 部署到生产环境
+function deployToProduction() {
+    if (confirm('确定要部署到生产环境吗？')) {
+        showNotification('部署功能开发中...', 'info');
+    }
+}
+
+// 创建发布版本
+function createRelease() {
+    showNotification('创建发布版本功能开发中...', 'info');
+}
+
+// 回滚部署
+function rollbackDeployment() {
+    if (confirm('确定要回滚到上一个版本吗？')) {
+        showNotification('回滚功能开发中...', 'info');
+    }
+}
+
+// 开始性能分析
+function startPerformanceAnalysis() {
+    const type = document.getElementById('performance-analysis-type').value;
+    const duration = document.getElementById('performance-duration').value;
+    
+    showNotification(`开始${type}性能分析，持续${duration}...`, 'info');
+}
+
+// 生成代码
+function generateCode() {
+    const type = document.getElementById('code-generator-type').value;
+    const name = document.getElementById('generator-name').value;
+    
+    if (!name) {
+        showNotification('请输入名称', 'warning');
+        return;
+    }
+    
+    showNotification(`正在生成${type}代码: ${name}...`, 'info');
+}
+
+// 分析错误日志
+function analyzeErrorLogs() {
+    const range = document.getElementById('error-log-range').value;
+    showNotification(`分析最近${range}的错误日志...`, 'info');
+}
+
+// 分析访问日志
+function analyzeAccessLogs() {
+    const type = document.getElementById('access-log-type').value;
+    showNotification(`分析访问日志: ${type}...`, 'info');
+}
+
+// 数据库诊断
+function diagnoseDatabase() {
+    showNotification('数据库诊断功能开发中...', 'info');
+}
+
+// 缓存诊断
+function diagnoseCache() {
+    showNotification('缓存诊断功能开发中...', 'info');
+}
+
+// 网络诊断
+function diagnoseNetwork() {
+    showNotification('网络诊断功能开发中...', 'info');
+}
+
+// 安全诊断
+function diagnoseSecurity() {
+    showNotification('安全诊断功能开发中...', 'info');
+}
+
+// 显示进度
+function showProgress(text) {
+    document.getElementById('progress-text').textContent = text;
+    document.getElementById('progress-bar').style.width = '0%';
+    new bootstrap.Modal(document.getElementById('progressModal')).show();
+}
+
+// 隐藏进度
+function hideProgress() {
+    bootstrap.Modal.getInstance(document.getElementById('progressModal')).hide();
+}
+</script>
+{% endblock %}

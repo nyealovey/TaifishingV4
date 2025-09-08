@@ -4,6 +4,7 @@
 泰摸鱼吧 - 数据库查询优化工具
 """
 
+from app.constants import SystemConstants, DefaultConfig
 import logging
 import time
 from typing import Any, Dict, List, Optional, Callable
@@ -19,7 +20,7 @@ class QueryOptimizer:
     
     def __init__(self):
         self.query_cache = {}
-        self.slow_query_threshold = 1.0  # 慢查询阈值（秒）
+        self.slow_query_threshold = SystemConstants.SLOW_QUERY_THRESHOLD  # 慢查询阈值（秒）
         self.query_stats = {}
     
     def optimize_query(self, query_func: Callable) -> Callable:

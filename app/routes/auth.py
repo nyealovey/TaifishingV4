@@ -17,7 +17,6 @@ from app.utils.rate_limiter import login_rate_limit, password_reset_rate_limit, 
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
-@login_rate_limit
 def login():
     """用户登录页面"""
     if request.method == 'POST':

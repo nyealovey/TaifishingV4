@@ -42,7 +42,17 @@ class User(UserMixin, db.Model):
         Args:
             password: 原始密码
         """
-        self.password = bcrypt.generate_password_hash(password).decode('utf-8')
+        # 增加密码强度验证
+        if len(password) < 8:
+            raise ValueError("密码长度至少8位")
+        if not any(c.isupper() for c in password):
+            raise ValueError("密码必须包含大写字母")
+        if not any(c.islower() for c in password):
+            raise ValueError("密码必须包含小写字母")
+        if not any(c.isdigit() for c in password):
+            raise ValueError("密码必须包含数字")
+        
+        self.password = bcrypt.generate_password_hash(password, rounds=12).decode('utf-8')
     
     def check_password(self, password):
         """

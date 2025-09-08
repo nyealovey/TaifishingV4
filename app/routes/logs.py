@@ -56,21 +56,26 @@ def index():
             pass
     
     if search:
-        query = query.filter(
-            db.or_(
-                Log.message.contains(search),
-                Log.details.contains(search),
-                Log.module.contains(search)
+        # 安全的搜索查询，防止SQL注入
+        search_term = search.strip()
+        if search_term:
+            query = query.filter(
+                db.or_(
+                    Log.message.contains(search_term),
+                    Log.details.contains(search_term),
+                    Log.module.contains(search_term)
+                )
             )
-        )
     
-    # 分页查询
-    logs = query.order_by(Log.created_at.desc()).paginate(
+    # 分页查询 - 使用join避免N+1查询
+    logs = query.options(
+        db.joinedload(Log.user)
+    ).order_by(Log.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False
     )
     
-    # 获取用户列表用于筛选
-    users = User.query.all()
+    # 获取用户列表用于筛选 - 只获取必要字段
+    users = User.query.with_entities(User.id, User.username).all()
     
     # 获取日志级别和类型
     log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
