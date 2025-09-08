@@ -541,14 +541,14 @@ function showPermissionsModal(permissions, account) {
     
     // 创建模态框
     const modalHtml = `
-        <div class="modal fade" id="permissionsModal" tabindex="-1">
+        <div class="modal fade" id="permissionsModal" tabindex="-1" aria-labelledby="permissionsModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">
+                        <h5 class="modal-title" id="permissionsModalLabel">
                             <i class="fas fa-shield-alt me-2"></i>账户权限详情
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">

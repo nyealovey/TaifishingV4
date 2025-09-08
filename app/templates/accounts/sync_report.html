@@ -417,14 +417,14 @@ function viewSyncDetails(syncId) {
 function showSyncDetailsModal(details) {
     // 创建详情模态框
     const modalHtml = `
-        <div class="modal fade" id="syncDetailsModal" tabindex="-1">
+        <div class="modal fade" id="syncDetailsModal" tabindex="-1" aria-labelledby="syncDetailsModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">
+                        <h5 class="modal-title" id="syncDetailsModalLabel">
                             <i class="fas fa-info-circle me-2"></i>同步详情
                         </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
                     </div>
                     <div class="modal-body">
                         <!-- 统计信息 -->
@@ -564,8 +564,35 @@ function showSyncDetailsModal(details) {
     // 添加新模态框
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     
+    // 获取模态框元素
+    const modalElement = document.getElementById('syncDetailsModal');
+    
     // 显示模态框
-    const modal = new bootstrap.Modal(document.getElementById('syncDetailsModal'));
+    const modal = new bootstrap.Modal(modalElement, {
+        backdrop: true,
+        keyboard: true,
+        focus: true
+    });
+    
+    // 监听模态框事件，正确管理aria-hidden属性
+    modalElement.addEventListener('shown.bs.modal', function () {
+        // 模态框显示时，移除aria-hidden属性
+        this.setAttribute('aria-hidden', 'false');
+        // 确保焦点在模态框内
+        const firstFocusable = this.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (firstFocusable) {
+            firstFocusable.focus();
+        }
+    });
+    
+    modalElement.addEventListener('hidden.bs.modal', function () {
+        // 模态框隐藏时，设置aria-hidden属性
+        this.setAttribute('aria-hidden', 'true');
+        // 移除模态框元素
+        this.remove();
+    });
+    
+    // 显示模态框
     modal.show();
 }
 
