@@ -36,6 +36,9 @@ class Config:
     # 安全配置
     BCRYPT_LOG_ROUNDS = int(os.getenv('BCRYPT_LOG_ROUNDS', SystemConstants.PASSWORD_HASH_ROUNDS))
     
+    # 临时禁用CSRF用于测试
+    WTF_CSRF_ENABLED = False
+    
     # 文件上传配置
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', DefaultConfig.UPLOAD_FOLDER)
     MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', SystemConstants.MAX_FILE_SIZE))

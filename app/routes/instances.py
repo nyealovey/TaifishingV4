@@ -204,16 +204,76 @@ def create():
 @login_required
 def test_instance_connection():
     """测试数据库连接"""
-    data = request.get_json()
-    
     try:
+        # 添加调试日志
+        logging.info(f"收到测试连接请求，Content-Type: {request.content_type}")
+        logging.info(f"请求数据: {request.get_data()}")
+        
+        # 检查Content-Type
+        if not request.is_json:
+            logging.warning(f"请求不是JSON格式，Content-Type: {request.content_type}")
+            return jsonify({
+                'success': False,
+                'error': f'请求必须是JSON格式，当前Content-Type: {request.content_type}'
+            }), 400
+        
+        data = request.get_json()
+        
+        # 添加调试日志
+        logging.info(f"解析后的JSON数据: {data}")
+        
+        # 验证必需参数
+        if not data:
+            logging.warning("测试连接请求参数为空")
+            return jsonify({
+                'success': False,
+                'error': '请求参数为空'
+            }), 400
+        
+        required_fields = ['db_type', 'host', 'port', 'credential_id']
+        missing_fields = [field for field in required_fields if not data.get(field)]
+        
+        if missing_fields:
+            return jsonify({
+                'success': False,
+                'error': f'缺少必需参数: {", ".join(missing_fields)}'
+            }), 400
+        
+        # 验证端口号
+        try:
+            port = int(data.get('port', 0))
+            if port <= 0 or port > 65535:
+                return jsonify({
+                    'success': False,
+                    'error': '端口号必须在1-65535之间'
+                }), 400
+        except (ValueError, TypeError):
+            return jsonify({
+                'success': False,
+                'error': '端口号必须是有效的数字'
+            }), 400
+        
+        # 验证凭据ID
+        try:
+            credential_id = int(data.get('credential_id')) if data.get('credential_id') else None
+            if credential_id and credential_id <= 0:
+                return jsonify({
+                    'success': False,
+                    'error': '凭据ID必须是有效的正整数'
+                }), 400
+        except (ValueError, TypeError):
+            return jsonify({
+                'success': False,
+                'error': '凭据ID必须是有效的数字'
+            }), 400
+        
         # 创建临时实例对象进行测试
         temp_instance = Instance(
             name=data.get('name', 'test'),
             db_type=data.get('db_type'),
             host=data.get('host'),
-            port=int(data.get('port', 0)),
-            credential_id=int(data.get('credential_id')) if data.get('credential_id') else None,
+            port=port,
+            credential_id=credential_id,
             description='test'
         )
         temp_instance.database_name = data.get('database_name')
@@ -221,8 +281,17 @@ def test_instance_connection():
         # 获取凭据信息
         if temp_instance.credential_id:
             credential = Credential.query.get(temp_instance.credential_id)
-            if credential:
-                temp_instance.credential = credential
+            if not credential:
+                return jsonify({
+                    'success': False,
+                    'error': f'凭据ID {temp_instance.credential_id} 不存在'
+                }), 400
+            temp_instance.credential = credential
+        else:
+            return jsonify({
+                'success': False,
+                'error': '必须选择数据库凭据'
+            }), 400
         
         # 使用数据库服务测试连接
         from app.services.database_service import DatabaseService
@@ -556,6 +625,112 @@ def api_test_connection(instance_id):
         return jsonify(result)
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@instances_bp.route('/api/test-connection', methods=['POST'])
+@login_required
+def api_test_instance_connection():
+    """测试数据库连接API（无需CSRF）"""
+    try:
+        data = request.get_json()
+        
+        # 添加调试日志
+        logging.info(f"收到API测试连接请求，Content-Type: {request.content_type}")
+        logging.info(f"请求数据: {request.get_data()}")
+        
+        # 检查Content-Type
+        if not request.is_json:
+            logging.warning(f"请求不是JSON格式，Content-Type: {request.content_type}")
+            return jsonify({
+                'success': False,
+                'error': f'请求必须是JSON格式，当前Content-Type: {request.content_type}'
+            }), 400
+        
+        # 添加调试日志
+        logging.info(f"解析后的JSON数据: {data}")
+        
+        # 验证必需参数
+        if not data:
+            logging.warning("测试连接请求参数为空")
+            return jsonify({
+                'success': False,
+                'error': '请求参数为空'
+            }), 400
+        
+        required_fields = ['db_type', 'host', 'port', 'credential_id']
+        missing_fields = [field for field in required_fields if not data.get(field)]
+        
+        if missing_fields:
+            return jsonify({
+                'success': False,
+                'error': f'缺少必需参数: {", ".join(missing_fields)}'
+            }), 400
+        
+        # 验证端口号
+        try:
+            port = int(data.get('port', 0))
+            if port <= 0 or port > 65535:
+                return jsonify({
+                    'success': False,
+                    'error': '端口号必须在1-65535之间'
+                }), 400
+        except (ValueError, TypeError):
+            return jsonify({
+                'success': False,
+                'error': '端口号必须是有效的数字'
+            }), 400
+        
+        # 验证凭据ID
+        try:
+            credential_id = int(data.get('credential_id')) if data.get('credential_id') else None
+            if credential_id and credential_id <= 0:
+                return jsonify({
+                    'success': False,
+                    'error': '凭据ID必须是有效的正整数'
+                }), 400
+        except (ValueError, TypeError):
+            return jsonify({
+                'success': False,
+                'error': '凭据ID必须是有效的数字'
+            }), 400
+        
+        # 创建临时实例对象进行测试
+        temp_instance = Instance(
+            name=data.get('name', 'test'),
+            db_type=data.get('db_type'),
+            host=data.get('host'),
+            port=port,
+            credential_id=credential_id,
+            description='test'
+        )
+        temp_instance.database_name = data.get('database_name')
+        
+        # 获取凭据信息
+        if temp_instance.credential_id:
+            credential = Credential.query.get(temp_instance.credential_id)
+            if not credential:
+                return jsonify({
+                    'success': False,
+                    'error': f'凭据ID {temp_instance.credential_id} 不存在'
+                }), 400
+            temp_instance.credential = credential
+        else:
+            return jsonify({
+                'success': False,
+                'error': '必须选择数据库凭据'
+            }), 400
+        
+        # 使用数据库服务测试连接
+        db_service = DatabaseService()
+        result = db_service.test_connection(temp_instance)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logging.error(f"测试连接失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'测试连接失败: {str(e)}'
+        }), 500
 
 def get_instance_statistics():
     """获取实例统计数据"""

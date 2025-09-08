@@ -190,10 +190,14 @@ function testConnection() {
         credential_id: formData.get('credential_id')
     };
     
+    // 获取CSRF token
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    
     fetch('/instances/test-connection', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
         },
         body: JSON.stringify(testData)
     })

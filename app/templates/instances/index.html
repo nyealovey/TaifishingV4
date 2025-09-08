@@ -66,7 +66,7 @@
                         <th>类型</th>
                         <th>主机</th>
                         <th>端口</th>
-                        <th>数据库</th>
+                        <th>数据库版本</th>
                         <th>状态</th>
                         <th>最后连接</th>
                         <th>操作</th>
@@ -93,7 +93,13 @@
                         </td>
                         <td>{{ instance.host }}</td>
                         <td>{{ instance.port }}</td>
-                        <td>{{ instance.database_name or '-' }}</td>
+                        <td>
+                            {% if instance.database_version %}
+                                <span class="badge bg-info">{{ instance.database_version }}</span>
+                            {% else %}
+                                <span class="text-muted">未检测</span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if instance.is_active %}
                             <span class="badge bg-success">正常</span>
@@ -222,11 +228,21 @@ function testConnection(instanceId) {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     btn.disabled = true;
     
+    // 获取CSRF token（从页面中查找）
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                     document.querySelector('input[name="csrf_token"]')?.value;
+    
+    const headers = {
+        'Content-Type': 'application/json',
+    };
+    
+    if (csrfToken) {
+        headers['X-CSRFToken'] = csrfToken;
+    }
+    
     fetch(`/instances/${instanceId}/test`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
+        headers: headers
     })
     .then(response => response.json())
     .then(data => {

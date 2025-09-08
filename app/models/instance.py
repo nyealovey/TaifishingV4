@@ -17,6 +17,7 @@ class Instance(db.Model):
     host = db.Column(db.String(255), nullable=False)
     port = db.Column(db.Integer, nullable=False)
     database_name = db.Column(db.String(255), nullable=True)
+    database_version = db.Column(db.String(100), nullable=True)
     credential_id = db.Column(db.Integer, db.ForeignKey('credentials.id'), nullable=True)
     description = db.Column(db.Text, nullable=True)
     tags = db.Column(db.JSON, nullable=True)
