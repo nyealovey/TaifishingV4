@@ -321,7 +321,9 @@ def sync_history():
             'removed_count': 0,
             'modified_count': 0,
             'created_at': None,
-            'sync_records': []
+            'sync_records': [],
+            'sync_types': set(),  # 记录包含的同步类型
+            'sync_type_display': ''  # 显示用的同步类型文本
         })
         
         for record in sync_records:
@@ -337,6 +339,7 @@ def sync_history():
             grouped[time_key]['removed_count'] += record.removed_count or 0
             grouped[time_key]['modified_count'] += record.modified_count or 0
             grouped[time_key]['sync_records'].append(record)
+            grouped[time_key]['sync_types'].add(record.sync_type)  # 记录同步类型
             if not grouped[time_key]['created_at'] or record.sync_time > grouped[time_key]['created_at']:
                 grouped[time_key]['created_at'] = record.sync_time
         
@@ -347,6 +350,18 @@ def sync_history():
             latest_time = max(record.sync_time for record in data['sync_records'])
             # 生成正确的ID格式：YYYYMMDDHHMM
             sync_id = latest_time.strftime('%Y%m%d%H%M')
+            
+            # 确定同步类型显示文本
+            sync_types = list(data['sync_types'])
+            if 'task' in sync_types and 'batch' in sync_types:
+                sync_type_display = '定时任务 + 手动执行'
+            elif 'task' in sync_types:
+                sync_type_display = '定时任务'
+            elif 'batch' in sync_types:
+                sync_type_display = '手动执行'
+            else:
+                sync_type_display = '未知'
+            
             history.append({
                 'id': sync_id,
                 'created_at': latest_time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -356,7 +371,9 @@ def sync_history():
                 'total_accounts': data['total_accounts'],
                 'added_count': data['added_count'],
                 'removed_count': data['removed_count'],
-                'modified_count': data['modified_count']
+                'modified_count': data['modified_count'],
+                'sync_type': sync_type_display,
+                'sync_types': sync_types
             })
         
         return jsonify({

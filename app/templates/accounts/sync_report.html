@@ -106,6 +106,7 @@
                     <thead>
                         <tr>
                             <th>执行时间</th>
+                            <th>同步类型</th>
                             <th>总实例数</th>
                             <th>成功</th>
                             <th>失败</th>
@@ -357,14 +358,28 @@ function displaySyncHistory(history) {
     tbody.innerHTML = '';
     
     if (history.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">暂无同步记录</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">暂无同步记录</td></tr>';
         return;
     }
     
     history.forEach(record => {
         const row = document.createElement('tr');
+        
+        // 根据同步类型设置样式
+        let syncTypeBadge = '';
+        if (record.sync_type === '定时任务') {
+            syncTypeBadge = '<span class="badge bg-primary"><i class="fas fa-clock me-1"></i>定时任务</span>';
+        } else if (record.sync_type === '手动执行') {
+            syncTypeBadge = '<span class="badge bg-info"><i class="fas fa-hand-pointer me-1"></i>手动执行</span>';
+        } else if (record.sync_type === '定时任务 + 手动执行') {
+            syncTypeBadge = '<span class="badge bg-warning"><i class="fas fa-clock me-1"></i>定时任务 + 手动执行</span>';
+        } else {
+            syncTypeBadge = '<span class="badge bg-secondary">未知</span>';
+        }
+        
         row.innerHTML = `
             <td>${record.created_at}</td>
+            <td>${syncTypeBadge}</td>
             <td>${record.total_instances}</td>
             <td><span class="badge bg-success">${record.success_count}</span></td>
             <td><span class="badge bg-danger">${record.failed_count}</span></td>
