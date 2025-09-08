@@ -67,6 +67,9 @@ class DatabaseService:
                     'error': '无法获取数据库连接'
                 }
             
+            # 记录同步前的账户数量
+            before_count = Account.query.filter_by(instance_id=instance.id).count()
+            
             synced_count = 0
             
             if instance.db_type == 'mysql':
@@ -83,10 +86,25 @@ class DatabaseService:
                     'error': f'不支持的数据库类型: {instance.db_type}'
                 }
             
+            # 记录同步后的账户数量
+            after_count = Account.query.filter_by(instance_id=instance.id).count()
+            
+            # 计算变化
+            added_count = after_count - before_count + synced_count
+            deleted_count = before_count - after_count + synced_count
+            updated_count = synced_count - added_count - deleted_count
+            
             return {
                 'success': True,
-                'message': f'账户同步完成，共同步 {synced_count} 个账户',
-                'synced_count': synced_count
+                'message': f'账户同步完成，新增: {added_count}, 更新: {updated_count}, 删除: {deleted_count}',
+                'synced_count': synced_count,
+                'details': {
+                    'added': max(0, added_count),
+                    'updated': max(0, updated_count),
+                    'deleted': max(0, deleted_count),
+                    'before_count': before_count,
+                    'after_count': after_count
+                }
             }
         except Exception as e:
             return {
@@ -103,9 +121,17 @@ class DatabaseService:
             WHERE User != 'root' AND User != 'mysql.sys'
         """)
         
+        # 获取服务器端的所有账户
+        server_accounts = set()
         synced_count = 0
+        added_count = 0
+        updated_count = 0
+        
         for row in cursor.fetchall():
             username, host, password_hash, plugin, locked, expired, password_last_changed = row
+            
+            # 记录服务器端的账户
+            server_accounts.add((username, host))
             
             # 检查账户是否已存在
             existing = Account.query.filter_by(
@@ -127,17 +153,32 @@ class DatabaseService:
                     is_active=not locked and not expired
                 )
                 db.session.add(account)
-                synced_count += 1
+                added_count += 1
             else:
                 # 更新现有账户信息
                 existing.plugin = plugin
                 existing.password_expired = bool(expired)
                 existing.password_last_changed = password_last_changed
                 existing.is_active = not locked and not expired
-                synced_count += 1
+                updated_count += 1
+        
+        # 删除服务器端不存在的本地账户
+        local_accounts = Account.query.filter_by(instance_id=instance.id).all()
+        deleted_count = 0
+        
+        for local_account in local_accounts:
+            if (local_account.username, local_account.host) not in server_accounts:
+                db.session.delete(local_account)
+                deleted_count += 1
+        
+        synced_count = added_count + updated_count + deleted_count
         
         db.session.commit()
         cursor.close()
+        
+        # 记录同步结果
+        logging.info(f"MySQL账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {deleted_count}, 总计: {synced_count}")
+        
         return synced_count
     
     def _sync_postgresql_accounts(self, instance: Instance, conn) -> int:
@@ -146,33 +187,66 @@ class DatabaseService:
         cursor.execute("""
             SELECT rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, rolconnlimit, rolvaliduntil
             FROM pg_roles
-            WHERE rolname NOT LIKE 'pg_%'
+            WHERE rolname NOT LIKE 'pg_%' AND rolname NOT IN ('postgres', 'rdsadmin')
         """)
         
+        # 获取服务器端的所有账户
+        server_accounts = set()
         synced_count = 0
+        added_count = 0
+        updated_count = 0
+        
         for row in cursor.fetchall():
             username, is_super, inherits, can_create_role, can_create_db, can_login, conn_limit, valid_until = row
+            
+            # 记录服务器端的账户
+            server_accounts.add((username, 'localhost'))
             
             # 检查账户是否已存在
             existing = Account.query.filter_by(
                 instance_id=instance.id,
                 username=username,
-                database_name='postgres'
+                host='localhost'  # PostgreSQL默认主机
             ).first()
             
             if not existing:
                 account = Account(
                     instance_id=instance.id,
                     username=username,
-                    database_name='postgres',
+                    host='localhost',
+                    database_name=instance.database_name or 'postgres',
                     account_type='superuser' if is_super else 'user',
-                    is_active=can_login
+                    plugin='postgresql',
+                    password_expired=valid_until is not None and valid_until < 'now()',
+                    password_last_changed=None,  # PostgreSQL不直接提供此信息
+                    is_active=can_login and (valid_until is None or valid_until > 'now()')
                 )
                 db.session.add(account)
-                synced_count += 1
+                added_count += 1
+            else:
+                # 更新现有账户信息
+                existing.plugin = 'postgresql'
+                existing.password_expired = valid_until is not None and valid_until < 'now()'
+                existing.is_active = can_login and (valid_until is None or valid_until > 'now()')
+                updated_count += 1
+        
+        # 删除服务器端不存在的本地账户
+        local_accounts = Account.query.filter_by(instance_id=instance.id).all()
+        deleted_count = 0
+        
+        for local_account in local_accounts:
+            if (local_account.username, local_account.host) not in server_accounts:
+                db.session.delete(local_account)
+                deleted_count += 1
+        
+        synced_count = added_count + updated_count + deleted_count
         
         db.session.commit()
         cursor.close()
+        
+        # 记录同步结果
+        logging.info(f"PostgreSQL账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {deleted_count}, 总计: {synced_count}")
+        
         return synced_count
     
     def _sync_sqlserver_accounts(self, instance: Instance, conn) -> int:
@@ -181,33 +255,66 @@ class DatabaseService:
         cursor.execute("""
             SELECT name, type_desc, is_disabled, create_date, modify_date
             FROM sys.server_principals
-            WHERE type IN ('S', 'U', 'G') AND name NOT LIKE '##%'
+            WHERE type IN ('S', 'U', 'G') AND name NOT LIKE '##%' AND name NOT IN ('sa', 'public')
         """)
         
+        # 获取服务器端的所有账户
+        server_accounts = set()
         synced_count = 0
+        added_count = 0
+        updated_count = 0
+        
         for row in cursor.fetchall():
             username, type_desc, is_disabled, create_date, modify_date = row
+            
+            # 记录服务器端的账户
+            server_accounts.add((username, 'localhost'))
             
             # 检查账户是否已存在
             existing = Account.query.filter_by(
                 instance_id=instance.id,
                 username=username,
-                database_name='master'
+                host='localhost'  # SQL Server默认主机
             ).first()
             
             if not existing:
                 account = Account(
                     instance_id=instance.id,
                     username=username,
-                    database_name='master',
+                    host='localhost',
+                    database_name=instance.database_name or 'master',
                     account_type=type_desc.lower(),
+                    plugin='sqlserver',
+                    password_expired=False,  # SQL Server不直接提供此信息
+                    password_last_changed=modify_date,
                     is_active=not is_disabled
                 )
                 db.session.add(account)
-                synced_count += 1
+                added_count += 1
+            else:
+                # 更新现有账户信息
+                existing.plugin = 'sqlserver'
+                existing.password_last_changed = modify_date
+                existing.is_active = not is_disabled
+                updated_count += 1
+        
+        # 删除服务器端不存在的本地账户
+        local_accounts = Account.query.filter_by(instance_id=instance.id).all()
+        deleted_count = 0
+        
+        for local_account in local_accounts:
+            if (local_account.username, local_account.host) not in server_accounts:
+                db.session.delete(local_account)
+                deleted_count += 1
+        
+        synced_count = added_count + updated_count + deleted_count
         
         db.session.commit()
         cursor.close()
+        
+        # 记录同步结果
+        logging.info(f"SQL Server账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {deleted_count}, 总计: {synced_count}")
+        
         return synced_count
     
     def _sync_oracle_accounts(self, instance: Instance, conn) -> int:
@@ -216,55 +323,144 @@ class DatabaseService:
         cursor.execute("""
             SELECT username, account_status, created, expiry_date, profile
             FROM dba_users
-            WHERE username NOT IN ('SYS', 'SYSTEM', 'SYSAUX', 'TEMP', 'USERS')
+            WHERE username NOT IN ('SYS', 'SYSTEM', 'SYSAUX', 'TEMP', 'USERS', 'OUTLN', 'DIP', 'TSMSYS')
         """)
         
+        # 获取服务器端的所有账户
+        server_accounts = set()
         synced_count = 0
+        added_count = 0
+        updated_count = 0
+        
         for row in cursor.fetchall():
             username, status, created, expiry, profile = row
+            
+            # 记录服务器端的账户
+            server_accounts.add((username, 'localhost'))
             
             # 检查账户是否已存在
             existing = Account.query.filter_by(
                 instance_id=instance.id,
                 username=username,
-                database_name=instance.database_name or 'ORCL'
+                host='localhost'  # Oracle默认主机
             ).first()
             
             if not existing:
                 account = Account(
                     instance_id=instance.id,
                     username=username,
+                    host='localhost',
                     database_name=instance.database_name or 'ORCL',
                     account_type='user',
+                    plugin='oracle',
+                    password_expired=status in ['EXPIRED', 'EXPIRED(GRACE)'],
+                    password_last_changed=created,
                     is_active=status == 'OPEN'
                 )
                 db.session.add(account)
-                synced_count += 1
+                added_count += 1
+            else:
+                # 更新现有账户信息
+                existing.plugin = 'oracle'
+                existing.password_expired = status in ['EXPIRED', 'EXPIRED(GRACE)']
+                existing.password_last_changed = created
+                existing.is_active = status == 'OPEN'
+                updated_count += 1
+        
+        # 删除服务器端不存在的本地账户
+        local_accounts = Account.query.filter_by(instance_id=instance.id).all()
+        deleted_count = 0
+        
+        for local_account in local_accounts:
+            if (local_account.username, local_account.host) not in server_accounts:
+                db.session.delete(local_account)
+                deleted_count += 1
+        
+        synced_count = added_count + updated_count + deleted_count
         
         db.session.commit()
         cursor.close()
+        
+        # 记录同步结果
+        logging.info(f"Oracle账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {deleted_count}, 总计: {synced_count}")
+        
         return synced_count
     
     def _test_postgresql_connection(self, instance: Instance) -> Dict[str, Any]:
         """测试PostgreSQL连接"""
         try:
             import psycopg2
+            
+            # 验证必需参数
+            if not instance.host:
+                return {
+                    'success': False,
+                    'error': '主机地址不能为空'
+                }
+            
+            if not instance.port or instance.port <= 0:
+                return {
+                    'success': False,
+                    'error': '端口号必须大于0'
+                }
+            
+            if not instance.credential:
+                return {
+                    'success': False,
+                    'error': '数据库凭据不能为空'
+                }
+            
+            if not instance.credential.username:
+                return {
+                    'success': False,
+                    'error': '数据库用户名不能为空'
+                }
+            
+            # 尝试连接PostgreSQL
             conn = psycopg2.connect(
                 host=instance.host,
                 port=instance.port,
                 database=instance.database_name or 'postgres',
-                user=instance.credential.username if instance.credential else '',
-                password=instance.credential.password if instance.credential else ''
+                user=instance.credential.username,
+                password=instance.credential.password,
+                connect_timeout=10
             )
+            
+            # 测试连接有效性
+            with conn.cursor() as cursor:
+                cursor.execute('SELECT 1')
+                result = cursor.fetchone()
+                if result[0] != 1:
+                    raise Exception('连接测试查询失败')
+                
+                # 获取数据库版本
+                cursor.execute('SELECT version()')
+                version_result = cursor.fetchone()
+                database_version = version_result[0] if version_result else None
+            
             conn.close()
+            
+            # 更新实例的数据库版本
+            if database_version:
+                instance.database_version = database_version
+                from app import db
+                db.session.commit()
+            
             return {
                 'success': True,
-                'message': 'PostgreSQL连接成功'
+                'message': f'PostgreSQL连接成功 (主机: {instance.host}:{instance.port}, 数据库: {instance.database_name or "postgres"}, 版本: {database_version or "未知"})',
+                'database_version': database_version
             }
+            
         except ImportError:
             return {
                 'success': False,
                 'error': 'PostgreSQL驱动未安装，请安装psycopg2-binary'
+            }
+        except psycopg2.Error as e:
+            return {
+                'success': False,
+                'error': f'PostgreSQL连接失败: {str(e)}'
             }
         except Exception as e:
             return {
@@ -361,22 +557,77 @@ class DatabaseService:
         """测试SQL Server连接"""
         try:
             import pymssql
+            
+            # 验证必需参数
+            if not instance.host:
+                return {
+                    'success': False,
+                    'error': '主机地址不能为空'
+                }
+            
+            if not instance.port or instance.port <= 0:
+                return {
+                    'success': False,
+                    'error': '端口号必须大于0'
+                }
+            
+            if not instance.credential:
+                return {
+                    'success': False,
+                    'error': '数据库凭据不能为空'
+                }
+            
+            if not instance.credential.username:
+                return {
+                    'success': False,
+                    'error': '数据库用户名不能为空'
+                }
+            
+            # 尝试连接SQL Server
             conn = pymssql.connect(
                 server=instance.host,
                 port=instance.port,
                 database=instance.database_name or 'master',
-                user=instance.credential.username if instance.credential else '',
-                password=instance.credential.password if instance.credential else ''
+                user=instance.credential.username,
+                password=instance.credential.password,
+                timeout=10
             )
+            
+            # 测试连接有效性
+            with conn.cursor() as cursor:
+                cursor.execute('SELECT 1')
+                result = cursor.fetchone()
+                if result[0] != 1:
+                    raise Exception('连接测试查询失败')
+                
+                # 获取数据库版本
+                cursor.execute('SELECT @@VERSION')
+                version_result = cursor.fetchone()
+                database_version = version_result[0] if version_result else None
+            
             conn.close()
+            
+            # 更新实例的数据库版本
+            if database_version:
+                instance.database_version = database_version
+                from app import db
+                db.session.commit()
+            
             return {
                 'success': True,
-                'message': 'SQL Server连接成功'
+                'message': f'SQL Server连接成功 (主机: {instance.host}:{instance.port}, 数据库: {instance.database_name or "master"}, 版本: {database_version or "未知"})',
+                'database_version': database_version
             }
+            
         except ImportError:
             return {
                 'success': False,
                 'error': 'SQL Server驱动未安装，请安装pymssql或pyodbc'
+            }
+        except pymssql.Error as e:
+            return {
+                'success': False,
+                'error': f'SQL Server连接失败: {str(e)}'
             }
         except Exception as e:
             return {
@@ -388,21 +639,75 @@ class DatabaseService:
         """测试Oracle连接"""
         try:
             import cx_Oracle
+            
+            # 验证必需参数
+            if not instance.host:
+                return {
+                    'success': False,
+                    'error': '主机地址不能为空'
+                }
+            
+            if not instance.port or instance.port <= 0:
+                return {
+                    'success': False,
+                    'error': '端口号必须大于0'
+                }
+            
+            if not instance.credential:
+                return {
+                    'success': False,
+                    'error': '数据库凭据不能为空'
+                }
+            
+            if not instance.credential.username:
+                return {
+                    'success': False,
+                    'error': '数据库用户名不能为空'
+                }
+            
+            # 尝试连接Oracle
             dsn = cx_Oracle.makedsn(instance.host, instance.port, service_name=instance.database_name or 'ORCL')
             conn = cx_Oracle.connect(
-                user=instance.credential.username if instance.credential else '',
-                password=instance.credential.password if instance.credential else '',
+                user=instance.credential.username,
+                password=instance.credential.password,
                 dsn=dsn
             )
+            
+            # 测试连接有效性
+            with conn.cursor() as cursor:
+                cursor.execute('SELECT 1 FROM DUAL')
+                result = cursor.fetchone()
+                if result[0] != 1:
+                    raise Exception('连接测试查询失败')
+                
+                # 获取数据库版本
+                cursor.execute('SELECT * FROM v$version WHERE rownum = 1')
+                version_result = cursor.fetchone()
+                database_version = version_result[0] if version_result else None
+            
             conn.close()
+            
+            # 更新实例的数据库版本
+            if database_version:
+                instance.database_version = database_version
+                from app import db
+                db.session.commit()
+            
             return {
                 'success': True,
-                'message': 'Oracle连接成功'
+                'message': f'Oracle连接成功 (主机: {instance.host}:{instance.port}, 服务: {instance.database_name or "ORCL"}, 版本: {database_version or "未知"})',
+                'database_version': database_version
             }
+            
         except ImportError:
             return {
                 'success': False,
                 'error': 'Oracle驱动未安装，请安装cx_Oracle和Oracle Instant Client'
+            }
+        except cx_Oracle.Error as e:
+            return {
+                'success': False,
+                'error': f'Oracle连接失败: {str(e)}'
             }
         except Exception as e:
             return {
@@ -780,6 +1085,12 @@ class DatabaseService:
         try:
             if instance.db_type == 'mysql':
                 return self._get_mysql_permissions(instance, account)
+            elif instance.db_type == 'postgresql':
+                return self._get_postgresql_permissions(instance, account)
+            elif instance.db_type == 'sqlserver':
+                return self._get_sqlserver_permissions(instance, account)
+            elif instance.db_type == 'oracle':
+                return self._get_oracle_permissions(instance, account)
             else:
                 return {
                     'global': [],
@@ -843,6 +1154,232 @@ class DatabaseService:
                 database_permissions.append({
                     'database': schema,
                     'privileges': privileges
+                })
+            
+            return {
+                'global': global_permissions,
+                'database': database_permissions
+            }
+            
+        except Exception as e:
+            return {
+                'global': [],
+                'database': [],
+                'error': f'查询权限失败: {str(e)}'
+            }
+        finally:
+            cursor.close()
+    
+    def _get_postgresql_permissions(self, instance: Instance, account: Account) -> Dict[str, Any]:
+        """获取PostgreSQL账户权限"""
+        conn = self.get_connection(instance)
+        if not conn:
+            return {
+                'global': [],
+                'database': [],
+                'error': '无法获取数据库连接'
+            }
+        
+        cursor = conn.cursor()
+        
+        try:
+            # 获取角色权限
+            cursor.execute("""
+                SELECT rolname, rolsuper, rolcreaterole, rolcreatedb, rolcanlogin, rolconnlimit
+                FROM pg_roles
+                WHERE rolname = %s
+            """, (account.username,))
+            
+            role_info = cursor.fetchone()
+            if not role_info:
+                return {
+                    'global': [],
+                    'database': [],
+                    'error': '用户不存在'
+                }
+            
+            username, is_super, can_create_role, can_create_db, can_login, conn_limit = role_info
+            
+            # 构建全局权限
+            global_permissions = []
+            if is_super:
+                global_permissions.append({'privilege': 'SUPERUSER', 'granted': True, 'grantable': False})
+            if can_create_role:
+                global_permissions.append({'privilege': 'CREATEROLE', 'granted': True, 'grantable': False})
+            if can_create_db:
+                global_permissions.append({'privilege': 'CREATEDB', 'granted': True, 'grantable': False})
+            if can_login:
+                global_permissions.append({'privilege': 'LOGIN', 'granted': True, 'grantable': False})
+            
+            # 获取数据库权限
+            cursor.execute("""
+                SELECT datname, has_database_privilege(%s, datname, 'CONNECT') as can_connect,
+                       has_database_privilege(%s, datname, 'CREATE') as can_create
+                FROM pg_database
+                WHERE has_database_privilege(%s, datname, 'CONNECT') = true
+                ORDER BY datname
+            """, (account.username, account.username, account.username))
+            
+            database_permissions = []
+            for row in cursor.fetchall():
+                db_name, can_connect, can_create = row
+                privileges = []
+                if can_connect:
+                    privileges.append('CONNECT')
+                if can_create:
+                    privileges.append('CREATE')
+                
+                if privileges:
+                    database_permissions.append({
+                        'database': db_name,
+                        'privileges': privileges
+                    })
+            
+            return {
+                'global': global_permissions,
+                'database': database_permissions
+            }
+            
+        except Exception as e:
+            return {
+                'global': [],
+                'database': [],
+                'error': f'查询权限失败: {str(e)}'
+            }
+        finally:
+            cursor.close()
+    
+    def _get_sqlserver_permissions(self, instance: Instance, account: Account) -> Dict[str, Any]:
+        """获取SQL Server账户权限"""
+        conn = self.get_connection(instance)
+        if not conn:
+            return {
+                'global': [],
+                'database': [],
+                'error': '无法获取数据库连接'
+            }
+        
+        cursor = conn.cursor()
+        
+        try:
+            # 获取服务器级权限
+            cursor.execute("""
+                SELECT permission_name, state_desc
+                FROM sys.server_permissions sp
+                JOIN sys.server_principals p ON sp.grantee_principal_id = p.principal_id
+                WHERE p.name = %s
+            """, (account.username,))
+            
+            global_permissions = []
+            for row in cursor.fetchall():
+                permission, state = row
+                global_permissions.append({
+                    'privilege': permission,
+                    'granted': state == 'GRANT',
+                    'grantable': False  # SQL Server权限查询较复杂，暂时设为False
+                })
+            
+            # 获取数据库权限
+            cursor.execute("""
+                SELECT db.name, dp.permission_name, dp.state_desc
+                FROM sys.databases db
+                LEFT JOIN sys.database_permissions dp ON db.database_id = dp.major_id
+                LEFT JOIN sys.database_principals p ON dp.grantee_principal_id = p.principal_id
+                WHERE p.name = %s OR p.name IN (
+                    SELECT name FROM sys.database_principals WHERE sid = (
+                        SELECT sid FROM sys.server_principals WHERE name = %s
+                    )
+                )
+                ORDER BY db.name, dp.permission_name
+            """, (account.username, account.username))
+            
+            db_permissions = {}
+            for row in cursor.fetchall():
+                db_name, permission, state = row
+                if db_name and permission:
+                    if db_name not in db_permissions:
+                        db_permissions[db_name] = []
+                    if state == 'GRANT':
+                        db_permissions[db_name].append(permission)
+            
+            database_permissions = []
+            for db_name, privileges in db_permissions.items():
+                if privileges:
+                    database_permissions.append({
+                        'database': db_name,
+                        'privileges': privileges
+                    })
+            
+            return {
+                'global': global_permissions,
+                'database': database_permissions
+            }
+            
+        except Exception as e:
+            return {
+                'global': [],
+                'database': [],
+                'error': f'查询权限失败: {str(e)}'
+            }
+        finally:
+            cursor.close()
+    
+    def _get_oracle_permissions(self, instance: Instance, account: Account) -> Dict[str, Any]:
+        """获取Oracle账户权限"""
+        conn = self.get_connection(instance)
+        if not conn:
+            return {
+                'global': [],
+                'database': [],
+                'error': '无法获取数据库连接'
+            }
+        
+        cursor = conn.cursor()
+        
+        try:
+            # 获取系统权限
+            cursor.execute("""
+                SELECT privilege, admin_option
+                FROM dba_sys_privs
+                WHERE grantee = %s
+                ORDER BY privilege
+            """, (account.username.upper(),))
+            
+            global_permissions = []
+            for row in cursor.fetchall():
+                privilege, admin_option = row
+                global_permissions.append({
+                    'privilege': privilege,
+                    'granted': True,
+                    'grantable': admin_option == 'YES'
+                })
+            
+            # 获取对象权限
+            cursor.execute("""
+                SELECT owner, table_name, privilege, grantable
+                FROM dba_tab_privs
+                WHERE grantee = %s
+                ORDER BY owner, table_name, privilege
+            """, (account.username.upper(),))
+            
+            obj_permissions = {}
+            for row in cursor.fetchall():
+                owner, table_name, privilege, grantable = row
+                key = f"{owner}.{table_name}"
+                if key not in obj_permissions:
+                    obj_permissions[key] = []
+                obj_permissions[key].append({
+                    'privilege': privilege,
+                    'grantable': grantable == 'YES'
+                })
+            
+            # 转换为数据库权限格式
+            database_permissions = []
+            for obj_name, privileges in obj_permissions.items():
+                privilege_names = [p['privilege'] for p in privileges]
+                database_permissions.append({
+                    'database': obj_name,
+                    'privileges': privilege_names
                 })
             
             return {

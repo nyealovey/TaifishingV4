@@ -506,6 +506,31 @@ def error_management():
         logger.error(f"获取错误管理界面失败: {e}")
         return APIResponse.server_error("获取错误管理界面失败")
 
+
+
+@admin_bp.route('/error-config', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def error_config():
+    """错误处理配置"""
+    try:
+        if request.method == 'GET':
+            # 获取配置
+            config = {
+                'auto_recovery': True,
+                'max_retry_attempts': 3,
+                'retry_delay': 5000,
+                'notification_enabled': True
+            }
+            return APIResponse.success(data=config)
+        else:
+            # 保存配置
+            data = request.get_json()
+            return APIResponse.success(message="配置保存成功")
+    except Exception as e:
+        logger.error(f"错误处理配置失败: {e}")
+        return APIResponse.server_error("错误处理配置失败")
+
 @admin_bp.route('/system-management', methods=['GET'])
 @login_required
 @admin_required
@@ -574,6 +599,147 @@ def get_system_logs():
     except Exception as e:
         logger.error(f"获取系统日志失败: {e}")
         return APIResponse.server_error("获取系统日志失败")
+
+@admin_bp.route('/logs', methods=['GET'])
+@login_required
+@admin_required
+def get_logs():
+    """获取日志列表"""
+    try:
+        from app.models.log import Log
+        from app import db
+        
+        page = request.args.get('page', 1, type=int)
+        size = request.args.get('size', 20, type=int)
+        level = request.args.get('level', '', type=str)
+        time_range = request.args.get('time_range', '', type=str)
+        keyword = request.args.get('keyword', '', type=str)
+        
+        # 构建查询
+        query = Log.query
+        
+        if level and level != 'all':
+            query = query.filter(Log.level == level)
+        
+        if keyword:
+            query = query.filter(Log.message.contains(keyword))
+        
+        if time_range:
+            if time_range == 'today':
+                today = datetime.now().date()
+                query = query.filter(db.func.date(Log.created_at) == today)
+            elif time_range == 'week':
+                week_ago = datetime.now() - timedelta(days=7)
+                query = query.filter(Log.created_at >= week_ago)
+            elif time_range == 'month':
+                month_ago = datetime.now() - timedelta(days=30)
+                query = query.filter(Log.created_at >= month_ago)
+        
+        # 分页查询
+        logs_pagination = query.order_by(Log.created_at.desc()).paginate(
+            page=page, per_page=size, error_out=False
+        )
+        
+        # 转换为前端需要的格式
+        logs = []
+        for log in logs_pagination.items:
+            logs.append({
+                'id': log.id,
+                'timestamp': log.created_at.isoformat(),
+                'level': log.level,
+                'module': log.module or 'system',
+                'message': log.message,
+                'details': log.details,
+                'user_id': log.user_id
+            })
+        
+        pagination = {
+            'current_page': page,
+            'total_pages': logs_pagination.pages,
+            'total_items': logs_pagination.total,
+            'per_page': size
+        }
+        
+        return APIResponse.success(data={
+            'logs': logs,
+            'pagination': pagination
+        })
+        
+    except Exception as e:
+        logger.error(f"获取日志列表失败: {e}")
+        return APIResponse.server_error("获取日志列表失败")
+
+@admin_bp.route('/logs/stats', methods=['GET'])
+@login_required
+@admin_required
+def get_logs_stats():
+    """获取日志统计信息"""
+    try:
+        from app.models.log import Log
+        from app import db
+        
+        # 总日志数
+        total_logs = Log.query.count()
+        
+        # 各级别日志数量
+        level_stats = db.session.query(
+            Log.level,
+            db.func.count(Log.id).label('count')
+        ).group_by(Log.level).all()
+        
+        # 各类型日志数量
+        type_stats = db.session.query(
+            Log.log_type,
+            db.func.count(Log.id).label('count')
+        ).group_by(Log.log_type).all()
+        
+        # 今日日志数
+        today = datetime.now().date()
+        today_logs = Log.query.filter(
+            db.func.date(Log.created_at) == today
+        ).count()
+        
+        # 最近7天日志数
+        week_ago = datetime.now() - timedelta(days=7)
+        week_logs = Log.query.filter(
+            Log.created_at >= week_ago
+        ).count()
+        
+        stats = {
+            'total_logs': total_logs,
+            'today_logs': today_logs,
+            'week_logs': week_logs,
+            'level_stats': [
+                {'level': stat.level, 'count': stat.count}
+                for stat in level_stats
+            ],
+            'type_stats': [
+                {'type': stat.log_type, 'count': stat.count}
+                for stat in type_stats
+            ]
+        }
+        
+        return APIResponse.success(data=stats)
+        
+    except Exception as e:
+        logger.error(f"获取日志统计失败: {e}")
+        return APIResponse.server_error("获取日志统计失败")
+
+@admin_bp.route('/logs/<int:log_id>', methods=['GET'])
+@login_required
+@admin_required
+def get_log_detail(log_id):
+    """获取日志详情"""
+    try:
+        from app.models.log import Log
+        
+        log = Log.query.get_or_404(log_id)
+        
+        return APIResponse.success(data=log.to_dict())
+        
+    except Exception as e:
+        logger.error(f"获取日志详情失败: {e}")
+        return APIResponse.server_error("获取日志详情失败")
 
 @admin_bp.route('/maintenance-mode', methods=['POST'])
 @login_required

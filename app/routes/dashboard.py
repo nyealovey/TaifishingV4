@@ -11,7 +11,6 @@ from app.models.instance import Instance
 from app.models.credential import Credential
 from app.models.task import Task
 from app.models.log import Log
-from app.models.param import Param
 from app.models.sync_data import SyncData
 from app import db
 import logging

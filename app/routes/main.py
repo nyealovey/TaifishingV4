@@ -18,11 +18,6 @@ def index():
     """首页 - 重定向到登录页面"""
     return redirect(url_for('auth.login'))
 
-@main_bp.route('/api-status')
-@login_required
-def api_status_page():
-    """API状态页面"""
-    return render_template('api_status.html')
 
 @main_bp.route('/admin')
 @login_required
@@ -30,25 +25,6 @@ def admin():
     """系统管理页面"""
     return render_template('admin/index.html')
 
-@main_bp.route('/api/status')
-def api_status():
-    """API状态检查"""
-    import time
-    start_time = time.time()
-    
-    result = {
-        'status': 'success',
-        'message': '泰摸鱼吧API运行正常',
-        'version': '1.0.0',
-        'user': current_user.username if current_user.is_authenticated else None
-    }
-    
-    # 记录API调用
-    duration = (time.time() - start_time) * 1000
-    user_id = current_user.id if current_user.is_authenticated else None
-    log_api_request('GET', '/api/status', 200, duration, user_id, request.remote_addr)
-    
-    return jsonify(result)
 
 @main_bp.route('/api/health')
 def api_health():

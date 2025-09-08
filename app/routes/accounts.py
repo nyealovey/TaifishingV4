@@ -176,6 +176,13 @@ def sync_all_accounts():
         flash('没有可用的实例', 'error')
         return redirect(url_for('accounts.index'))
     
+    # 记录批量同步开始日志
+    from app.utils.logger import log_operation
+    log_operation('BATCH_SYNC_ACCOUNTS_START', current_user.id, {
+        'total_instances': len(instances),
+        'instance_names': [instance.name for instance in instances]
+    })
+    
     success_count = 0
     failed_count = 0
     results = []
@@ -224,6 +231,14 @@ def sync_all_accounts():
             })
     
     db.session.commit()
+    
+    # 记录批量同步完成日志
+    log_operation('BATCH_SYNC_ACCOUNTS_COMPLETE', current_user.id, {
+        'total_instances': len(instances),
+        'success_count': success_count,
+        'failed_count': failed_count,
+        'results': results
+    })
     
     if request.is_json:
         return jsonify({

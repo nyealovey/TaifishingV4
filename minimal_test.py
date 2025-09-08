@@ -34,7 +34,6 @@ def test_models():
         from app.models.task import Task
         from app.models.account import Account
         from app.models.log import Log
-        from app.models.param import Param
         from app.models.sync_data import SyncData
         
         logger.info("✅ 模型导入成功")

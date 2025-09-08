@@ -332,7 +332,6 @@ def register_blueprints(app):
     from app.routes.credentials import credentials_bp
     from app.routes.accounts import accounts_bp
     from app.routes.tasks import tasks_bp
-    from app.routes.params import params_bp
     from app.routes.logs import logs_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.health import health_bp
@@ -345,7 +344,6 @@ def register_blueprints(app):
     app.register_blueprint(credentials_bp, url_prefix='/credentials')
     app.register_blueprint(accounts_bp, url_prefix='/accounts')
     app.register_blueprint(tasks_bp, url_prefix='/tasks')
-    app.register_blueprint(params_bp, url_prefix='/params')
     app.register_blueprint(logs_bp, url_prefix='/logs')
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(health_bp, url_prefix='/health')

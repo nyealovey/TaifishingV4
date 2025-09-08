@@ -581,6 +581,14 @@ def sync_accounts(instance_id):
     instance = Instance.query.get_or_404(instance_id)
     
     try:
+        # 记录操作开始日志
+        log_operation('SYNC_ACCOUNTS_START', current_user.id, {
+            'instance_id': instance.id,
+            'instance_name': instance.name,
+            'db_type': instance.db_type,
+            'host': instance.host
+        })
+        
         # 使用数据库服务同步账户
         db_service = DatabaseService()
         result = db_service.sync_accounts(instance)
@@ -590,6 +598,16 @@ def sync_accounts(instance_id):
             instance.sync_count = (instance.sync_count or 0) + 1
             db.session.commit()
             
+            # 记录操作成功日志
+            log_operation('SYNC_ACCOUNTS_SUCCESS', current_user.id, {
+                'instance_id': instance.id,
+                'instance_name': instance.name,
+                'db_type': instance.db_type,
+                'host': instance.host,
+                'synced_count': result.get('synced_count', 0),
+                'sync_count': instance.sync_count
+            })
+            
             if request.is_json:
                 return jsonify({
                     'message': '账户同步成功',
@@ -598,6 +616,15 @@ def sync_accounts(instance_id):
             
             flash('账户同步成功！', 'success')
         else:
+            # 记录操作失败日志
+            log_operation('SYNC_ACCOUNTS_FAILED', current_user.id, {
+                'instance_id': instance.id,
+                'instance_name': instance.name,
+                'db_type': instance.db_type,
+                'host': instance.host,
+                'error': result.get('error', '未知错误')
+            })
+            
             if request.is_json:
                 return jsonify({
                     'error': '账户同步失败',
@@ -608,6 +635,15 @@ def sync_accounts(instance_id):
             
     except Exception as e:
         logging.error(f"同步账户失败: {e}")
+        
+        # 记录操作异常日志
+        log_operation('SYNC_ACCOUNTS_ERROR', current_user.id, {
+            'instance_id': instance.id,
+            'instance_name': instance.name,
+            'db_type': instance.db_type,
+            'host': instance.host,
+            'error': str(e)
+        })
         
         if request.is_json:
             return jsonify({'error': '账户同步失败，请重试'}), 500
