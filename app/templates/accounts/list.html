@@ -250,13 +250,11 @@
                         </td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限" style="text-decoration: none; color: #007bff; font-size: 0.8rem;">
-                                    权限
+                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限" 
+                                   class="btn btn-outline-primary btn-sm" 
+                                   style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s ease;">
+                                    <i class="fas fa-eye me-1"></i>权限
                                 </a>
-                                <button type="button" class="btn btn-outline-info btn-sm" 
-                                        onclick="viewAccount({{ account.id }})" title="查看详情" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;">
-                                    <i class="fas fa-info-circle"></i>
-                                </button>
                             </div>
                         </td>
                         {% elif current_db_type == 'mysql' %}
@@ -304,13 +302,11 @@
                         </td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限" style="text-decoration: none; color: #007bff; font-size: 0.8rem;">
-                                    权限
+                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限" 
+                                   class="btn btn-outline-primary btn-sm" 
+                                   style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s ease;">
+                                    <i class="fas fa-eye me-1"></i>权限
                                 </a>
-                                <button type="button" class="btn btn-outline-info btn-sm" 
-                                        onclick="viewAccount({{ account.id }})" title="查看详情" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;">
-                                    <i class="fas fa-info-circle"></i>
-                                </button>
                             </div>
                         </td>
                         {% else %}
@@ -367,13 +363,11 @@
                         </td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限" style="text-decoration: none; color: #007bff; font-size: 0.8rem;">
-                                    权限
+                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限" 
+                                   class="btn btn-outline-primary btn-sm" 
+                                   style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s ease;">
+                                    <i class="fas fa-eye me-1"></i>权限
                                 </a>
-                                <button type="button" class="btn btn-outline-info btn-sm" 
-                                        onclick="viewAccount({{ account.id }})" title="查看详情" style="font-size: 0.7rem; padding: 0.2rem 0.4rem;">
-                                    <i class="fas fa-info-circle"></i>
-                                </button>
                             </div>
                         </td>
                         {% endif %}
@@ -789,4 +783,33 @@ function updateStatisticsCards(statistics) {
     console.log('Statistics cards updated');
 }
 </script>
+
+<style>
+/* 权限按钮样式优化 */
+.btn-outline-primary.btn-sm {
+    border: 1px solid #007bff;
+    color: #007bff;
+    background-color: transparent;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 3px rgba(0, 123, 255, 0.1);
+}
+
+.btn-outline-primary.btn-sm:hover {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+}
+
+.btn-outline-primary.btn-sm:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 123, 255, 0.1);
+}
+
+.btn-outline-primary.btn-sm i {
+    font-size: 0.7rem;
+}
+</style>
 {% endblock %}
