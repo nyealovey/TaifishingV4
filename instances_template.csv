@@ -1,0 +1,6 @@
+name,db_type,host,port,database_name,environment,description,credential_id
+mysql-prod-01,mysql,192.168.1.100,3306,production,production,生产环境MySQL主库,1
+mysql-dev-01,mysql,192.168.1.101,3306,development,development,开发环境MySQL,2
+postgres-test-01,postgresql,192.168.1.102,5432,testing,testing,测试环境PostgreSQL,3
+sqlserver-prod-01,sqlserver,192.168.1.103,1433,production,production,生产环境SQL Server,1
+oracle-dev-01,oracle,192.168.1.104,1521,development,development,开发环境Oracle,4

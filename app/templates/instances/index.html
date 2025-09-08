@@ -267,10 +267,56 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">实例数据 (JSON格式)</label>
-                    <textarea class="form-control" id="batchInstancesData" rows="10" 
-                              placeholder='[
+                <!-- 上传方式选择 -->
+                <div class="mb-4">
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="uploadMethod" id="fileUpload" value="file" checked>
+                        <label class="btn btn-outline-primary" for="fileUpload">
+                            <i class="fas fa-upload me-2"></i>CSV文件上传
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="uploadMethod" id="jsonInput" value="json">
+                        <label class="btn btn-outline-secondary" for="jsonInput">
+                            <i class="fas fa-code me-2"></i>JSON输入
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- CSV文件上传区域 -->
+                <div id="fileUploadArea" class="upload-method">
+                    <div class="mb-3">
+                        <label for="csvFile" class="form-label">选择CSV文件</label>
+                        <input type="file" class="form-control" id="csvFile" accept=".csv" onchange="handleFileSelect(event)">
+                        <div class="form-text">
+                            请上传CSV格式文件，或
+                            <a href="{{ url_for('instances.download_template') }}" class="text-decoration-none">
+                                <i class="fas fa-download me-1"></i>下载模板文件
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>CSV文件格式说明：</h6>
+                        <p class="mb-2">CSV文件应包含以下列（必填字段用*标记）：</p>
+                        <ul class="mb-0">
+                            <li><code>name*</code> - 实例名称</li>
+                            <li><code>db_type*</code> - 数据库类型 (mysql, postgresql, sqlserver, oracle)</li>
+                            <li><code>host*</code> - 主机地址</li>
+                            <li><code>port*</code> - 端口号</li>
+                            <li><code>database_name</code> - 数据库名称（可选）</li>
+                            <li><code>environment</code> - 环境类型 (production, development, testing)</li>
+                            <li><code>description</code> - 描述（可选）</li>
+                            <li><code>credential_id</code> - 凭据ID（可选）</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- JSON输入区域 -->
+                <div id="jsonInputArea" class="upload-method" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label">实例数据 (JSON格式)</label>
+                        <textarea class="form-control" id="batchInstancesData" rows="10" 
+                                  placeholder='[
   {
     "name": "mysql-prod-01",
     "db_type": "mysql",
@@ -280,23 +326,15 @@
     "environment": "production",
     "description": "生产环境MySQL主库",
     "credential_id": 1
-  },
-  {
-    "name": "mysql-dev-01",
-    "db_type": "mysql",
-    "host": "192.168.1.101",
-    "port": 3306,
-    "database_name": "development",
-    "environment": "development",
-    "description": "开发环境MySQL",
-    "credential_id": 2
   }
 ]'></textarea>
-                    <div class="form-text">
-                        请按照JSON格式输入实例数据，每行一个实例对象。必填字段：name, db_type, host, port
+                        <div class="form-text">
+                            请按照JSON格式输入实例数据，每行一个实例对象。必填字段：name, db_type, host, port
+                        </div>
                     </div>
                 </div>
                 
+                <!-- 字段说明 -->
                 <div class="row">
                     <div class="col-md-6">
                         <h6>环境类型说明：</h6>
@@ -494,10 +532,126 @@ function batchDelete() {
 }
 
 function showBatchCreateModal() {
+    // 重置表单
+    document.getElementById('csvFile').value = '';
+    document.getElementById('batchInstancesData').value = '';
+    document.getElementById('fileUpload').checked = true;
+    document.getElementById('fileUploadArea').style.display = 'block';
+    document.getElementById('jsonInputArea').style.display = 'none';
+    
     new bootstrap.Modal(document.getElementById('batchCreateModal')).show();
 }
 
+// 处理上传方式切换
+document.addEventListener('DOMContentLoaded', function() {
+    const fileUploadRadio = document.getElementById('fileUpload');
+    const jsonInputRadio = document.getElementById('jsonInput');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const jsonInputArea = document.getElementById('jsonInputArea');
+    
+    fileUploadRadio.addEventListener('change', function() {
+        if (this.checked) {
+            fileUploadArea.style.display = 'block';
+            jsonInputArea.style.display = 'none';
+        }
+    });
+    
+    jsonInputRadio.addEventListener('change', function() {
+        if (this.checked) {
+            fileUploadArea.style.display = 'none';
+            jsonInputArea.style.display = 'block';
+        }
+    });
+});
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        // 验证文件类型
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            showAlert('warning', '请选择CSV格式文件');
+            event.target.value = '';
+            return;
+        }
+        
+        // 显示文件信息
+        const fileInfo = document.createElement('div');
+        fileInfo.className = 'mt-2 text-muted';
+        fileInfo.innerHTML = `<i class="fas fa-file-csv me-1"></i>已选择文件: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        
+        // 移除之前的文件信息
+        const existingInfo = event.target.parentNode.querySelector('.file-info');
+        if (existingInfo) {
+            existingInfo.remove();
+        }
+        
+        fileInfo.className += ' file-info';
+        event.target.parentNode.appendChild(fileInfo);
+    }
+}
+
 function submitBatchCreate() {
+    const uploadMethod = document.querySelector('input[name="uploadMethod"]:checked').value;
+    
+    if (uploadMethod === 'file') {
+        submitFileUpload();
+    } else {
+        submitJsonInput();
+    }
+}
+
+function submitFileUpload() {
+    const fileInput = document.getElementById('csvFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        showAlert('warning', '请选择CSV文件');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const btn = document.querySelector('#batchCreateModal .btn-primary');
+    const originalText = btn.textContent;
+    
+    btn.textContent = '创建中...';
+    btn.disabled = true;
+    
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                     document.querySelector('input[name="csrf_token"]')?.value;
+    
+    fetch('/instances/batch-create', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            if (data.errors && data.errors.length > 0) {
+                showAlert('warning', `部分实例创建失败：\n${data.errors.join('\n')}`);
+            }
+            // 关闭模态框
+            bootstrap.Modal.getInstance(document.getElementById('batchCreateModal')).hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showAlert('danger', data.error);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', '批量创建失败');
+    })
+    .finally(() => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    });
+}
+
+function submitJsonInput() {
     const dataText = document.getElementById('batchInstancesData').value.trim();
     
     if (!dataText) {
@@ -542,6 +696,8 @@ function submitBatchCreate() {
                 if (data.errors && data.errors.length > 0) {
                     showAlert('warning', `部分实例创建失败：\n${data.errors.join('\n')}`);
                 }
+                // 关闭模态框
+                bootstrap.Modal.getInstance(document.getElementById('batchCreateModal')).hide();
                 setTimeout(() => location.reload(), 1000);
             } else {
                 showAlert('danger', data.error);

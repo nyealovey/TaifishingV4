@@ -627,6 +627,18 @@ def batch_delete():
 def batch_create():
     """批量创建实例"""
     try:
+        # 检查是否有文件上传
+        if 'file' in request.files:
+            file = request.files['file']
+            if file and file.filename.endswith('.csv'):
+                return _process_csv_file(file)
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': '请上传CSV格式文件'
+                }), 400
+        
+        # 处理JSON格式（保持向后兼容）
         data = request.get_json()
         instances_data = data.get('instances', [])
         
@@ -636,71 +648,7 @@ def batch_create():
                 'error': '请提供实例数据'
             }), 400
         
-        created_count = 0
-        errors = []
-        
-        for i, instance_data in enumerate(instances_data):
-            try:
-                # 验证必填字段
-                required_fields = ['name', 'db_type', 'host', 'port']
-                for field in required_fields:
-                    if not instance_data.get(field):
-                        errors.append(f"第 {i+1} 个实例缺少必填字段: {field}")
-                        continue
-                
-                if errors:
-                    continue
-                
-                # 检查实例名称是否已存在
-                existing_instance = Instance.query.filter_by(name=instance_data['name']).first()
-                if existing_instance:
-                    errors.append(f"第 {i+1} 个实例名称已存在: {instance_data['name']}")
-                    continue
-                
-                # 创建实例
-                instance = Instance(
-                    name=instance_data['name'],
-                    db_type=instance_data['db_type'],
-                    host=instance_data['host'],
-                    port=instance_data['port'],
-                    database_name=instance_data.get('database_name'),
-                    environment=instance_data.get('environment', 'production'),
-                    description=instance_data.get('description'),
-                    credential_id=instance_data.get('credential_id'),
-                    tags=instance_data.get('tags', {})
-                )
-                
-                db.session.add(instance)
-                created_count += 1
-                
-                # 记录操作日志
-                log_operation('BATCH_CREATE_INSTANCE', current_user.id, {
-                    'instance_name': instance.name,
-                    'db_type': instance.db_type,
-                    'host': instance.host,
-                    'environment': instance.environment
-                })
-                
-            except Exception as e:
-                errors.append(f"第 {i+1} 个实例创建失败: {str(e)}")
-                continue
-        
-        if created_count > 0:
-            db.session.commit()
-        
-        if errors:
-            return jsonify({
-                'success': True,
-                'message': f'成功创建 {created_count} 个实例',
-                'created_count': created_count,
-                'errors': errors
-            })
-        else:
-            return jsonify({
-                'success': True,
-                'message': f'成功创建 {created_count} 个实例',
-                'created_count': created_count
-            })
+        return _process_instances_data(instances_data)
         
     except Exception as e:
         db.session.rollback()
@@ -709,6 +657,164 @@ def batch_create():
             'success': False,
             'error': f'批量创建实例失败: {str(e)}'
         }), 500
+
+def _process_csv_file(file):
+    """处理CSV文件"""
+    import csv
+    import io
+    
+    try:
+        # 读取CSV文件
+        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+        csv_input = csv.DictReader(stream)
+        
+        instances_data = []
+        for row in csv_input:
+            # 清理数据
+            instance_data = {}
+            for key, value in row.items():
+                if value and value.strip():
+                    instance_data[key.strip()] = value.strip()
+                else:
+                    instance_data[key.strip()] = None
+            
+            instances_data.append(instance_data)
+        
+        return _process_instances_data(instances_data)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'CSV文件处理失败: {str(e)}'
+        }), 400
+
+def _process_instances_data(instances_data):
+    """处理实例数据"""
+    created_count = 0
+    errors = []
+    
+    for i, instance_data in enumerate(instances_data):
+        try:
+            # 验证必填字段
+            required_fields = ['name', 'db_type', 'host', 'port']
+            for field in required_fields:
+                if not instance_data.get(field):
+                    errors.append(f"第 {i+1} 个实例缺少必填字段: {field}")
+                    continue
+            
+            if errors:
+                continue
+            
+            # 检查实例名称是否已存在
+            existing_instance = Instance.query.filter_by(name=instance_data['name']).first()
+            if existing_instance:
+                errors.append(f"第 {i+1} 个实例名称已存在: {instance_data['name']}")
+                continue
+            
+            # 处理端口号
+            try:
+                port = int(instance_data['port'])
+            except (ValueError, TypeError):
+                errors.append(f"第 {i+1} 个实例端口号无效: {instance_data['port']}")
+                continue
+            
+            # 处理凭据ID
+            credential_id = None
+            if instance_data.get('credential_id'):
+                try:
+                    credential_id = int(instance_data['credential_id'])
+                except (ValueError, TypeError):
+                    errors.append(f"第 {i+1} 个实例凭据ID无效: {instance_data['credential_id']}")
+                    continue
+            
+            # 创建实例
+            instance = Instance(
+                name=instance_data['name'],
+                db_type=instance_data['db_type'],
+                host=instance_data['host'],
+                port=port,
+                database_name=instance_data.get('database_name'),
+                environment=instance_data.get('environment', 'production'),
+                description=instance_data.get('description'),
+                credential_id=credential_id,
+                tags={}
+            )
+            
+            db.session.add(instance)
+            created_count += 1
+            
+            # 记录操作日志
+            log_operation('BATCH_CREATE_INSTANCE', current_user.id, {
+                'instance_name': instance.name,
+                'db_type': instance.db_type,
+                'host': instance.host,
+                'environment': instance.environment
+            })
+            
+        except Exception as e:
+            errors.append(f"第 {i+1} 个实例创建失败: {str(e)}")
+            continue
+    
+    if created_count > 0:
+        db.session.commit()
+    
+    if errors:
+        return jsonify({
+            'success': True,
+            'message': f'成功创建 {created_count} 个实例',
+            'created_count': created_count,
+            'errors': errors
+        })
+    else:
+        return jsonify({
+            'success': True,
+            'message': f'成功创建 {created_count} 个实例',
+            'created_count': created_count
+        })
+
+@instances_bp.route('/template/download')
+@login_required
+def download_template():
+    """下载CSV模板"""
+    import csv
+    import io
+    from flask import Response
+    
+    # 创建CSV内容
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # 写入表头
+    writer.writerow([
+        'name', 'db_type', 'host', 'port', 'database_name', 
+        'environment', 'description', 'credential_id'
+    ])
+    
+    # 写入示例数据
+    writer.writerow([
+        'mysql-prod-01', 'mysql', '192.168.1.100', '3306', 'production',
+        'production', '生产环境MySQL主库', '1'
+    ])
+    writer.writerow([
+        'mysql-dev-01', 'mysql', '192.168.1.101', '3306', 'development',
+        'development', '开发环境MySQL', '2'
+    ])
+    writer.writerow([
+        'postgres-test-01', 'postgresql', '192.168.1.102', '5432', 'testing',
+        'testing', '测试环境PostgreSQL', '3'
+    ])
+    
+    # 创建响应
+    output.seek(0)
+    response = Response(
+        output.getvalue(),
+        mimetype='text/csv; charset=utf-8',
+        headers={
+            'Content-Disposition': 'attachment; filename=instances_template.csv'
+        }
+    )
+    
+    return response
 
 @instances_bp.route('/<int:instance_id>/test', methods=['POST'])
 @login_required
