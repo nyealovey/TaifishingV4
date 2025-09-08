@@ -779,7 +779,7 @@ def get_recent_activities():
     return [activity.to_dict() for activity in activities]
 
 # 新增管理页面路由
-@admin_bp.route('/users', methods=['GET'])
+@admin_bp.route('/users/page', methods=['GET'])
 @login_required
 @admin_required
 def users():
@@ -819,7 +819,7 @@ def get_user_stats():
         logger.error(f"获取用户统计失败: {e}")
         return APIResponse.server_error("获取用户统计失败")
 
-@admin_bp.route('/users/list', methods=['GET'])
+@admin_bp.route('/users', methods=['GET'])
 @login_required
 @admin_required
 def get_users():
@@ -857,7 +857,7 @@ def get_users():
             users.append({
                 'id': user.id,
                 'username': user.username,
-                'email': user.email,
+                'email': None,  # User模型中没有email字段
                 'role': user.role,
                 'is_active': user.is_active,
                 'last_login': user.last_login.isoformat() if user.last_login else None,
