@@ -249,11 +249,16 @@ document.addEventListener('DOMContentLoaded', function() {
 // 加载用户统计
 async function loadUserStats() {
     try {
+        console.log('开始加载用户统计...');
         const response = await fetch('/admin/users/stats');
         const data = await response.json();
         
+        console.log('用户统计响应:', data);
+        
         if (data.success) {
             updateUserStats(data.data);
+        } else {
+            console.error('用户统计API返回错误:', data.message);
         }
     } catch (error) {
         console.error('加载用户统计失败:', error);
@@ -283,14 +288,18 @@ async function loadUsers(page = 1) {
             status: status
         });
         
-        const response = await fetch(`/admin/users?${params}`);
+        console.log('开始加载用户列表...', params.toString());
+        const response = await fetch(`/admin/users/list?${params}`);
         const data = await response.json();
+        
+        console.log('用户列表响应:', data);
         
         if (data.success) {
             updateUsersTable(data.data.users);
             updatePagination(data.data.pagination);
             currentPage = page;
         } else {
+            console.error('用户列表API返回错误:', data.message);
             showNotification('加载用户失败: ' + data.message, 'error');
         }
     } catch (error) {
@@ -311,8 +320,8 @@ function updateUsersTable(users) {
     let html = '';
     users.forEach(user => {
         const roleClass = user.role === 'admin' ? 'bg-danger' : 'bg-primary';
-        const statusClass = getStatusClass(user.status);
-        const statusText = getStatusText(user.status);
+        const statusClass = getStatusClass(user.is_active);
+        const statusText = getStatusText(user.is_active);
         
         html += `
             <tr>
@@ -345,23 +354,13 @@ function updateUsersTable(users) {
 }
 
 // 获取状态样式类
-function getStatusClass(status) {
-    switch(status) {
-        case 'active': return 'bg-success';
-        case 'inactive': return 'bg-warning';
-        case 'banned': return 'bg-danger';
-        default: return 'bg-secondary';
-    }
+function getStatusClass(isActive) {
+    return isActive ? 'bg-success' : 'bg-warning';
 }
 
 // 获取状态文本
-function getStatusText(status) {
-    switch(status) {
-        case 'active': return '活跃';
-        case 'inactive': return '非活跃';
-        case 'banned': return '已禁用';
-        default: return '未知';
-    }
+function getStatusText(isActive) {
+    return isActive ? '活跃' : '非活跃';
 }
 
 // 更新分页

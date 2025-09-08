@@ -823,6 +823,98 @@ def users():
         logger.error(f"获取用户管理页面失败: {e}")
         return APIResponse.server_error("获取用户管理页面失败")
 
+@admin_bp.route('/users/stats', methods=['GET'])
+@login_required
+@admin_required
+def get_user_stats():
+    """获取用户统计"""
+    try:
+        from app.models.user import User
+        
+        # 获取用户统计
+        total_users = User.query.count()
+        active_users = User.query.filter_by(is_active=True).count()
+        admin_users = User.query.filter_by(role='admin').count()
+        
+        # 今日新增用户（模拟数据）
+        new_users_today = 0
+        
+        stats = {
+            'total': total_users,
+            'active': active_users,
+            'admin': admin_users,
+            'new_today': new_users_today
+        }
+        
+        return APIResponse.success(data=stats)
+        
+    except Exception as e:
+        logger.error(f"获取用户统计失败: {e}")
+        return APIResponse.server_error("获取用户统计失败")
+
+@admin_bp.route('/users/list', methods=['GET'])
+@login_required
+@admin_required
+def get_users():
+    """获取用户列表"""
+    try:
+        from app.models.user import User
+        from flask import request
+        
+        page = request.args.get('page', 1, type=int)
+        size = request.args.get('size', 20, type=int)
+        username = request.args.get('username', '')
+        role = request.args.get('role', '')
+        status = request.args.get('status', '')
+        
+        # 构建查询
+        query = User.query
+        
+        if username:
+            query = query.filter(User.username.contains(username))
+        if role:
+            query = query.filter(User.role == role)
+        if status:
+            if status == 'active':
+                query = query.filter(User.is_active == True)
+            elif status == 'inactive':
+                query = query.filter(User.is_active == False)
+        
+        # 分页查询
+        pagination = query.paginate(
+            page=page, per_page=size, error_out=False
+        )
+        
+        users = []
+        for user in pagination.items:
+            users.append({
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'role': user.role,
+                'is_active': user.is_active,
+                'last_login': user.last_login.isoformat() if user.last_login else None,
+                'created_at': user.created_at.isoformat() if user.created_at else None
+            })
+        
+        pagination_data = {
+            'page': pagination.page,
+            'pages': pagination.pages,
+            'per_page': pagination.per_page,
+            'total': pagination.total,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }
+        
+        return APIResponse.success(data={
+            'users': users,
+            'pagination': pagination_data
+        })
+        
+    except Exception as e:
+        logger.error(f"获取用户列表失败: {e}")
+        return APIResponse.server_error("获取用户列表失败")
+
 @admin_bp.route('/user-roles', methods=['GET'])
 @login_required
 @admin_required
