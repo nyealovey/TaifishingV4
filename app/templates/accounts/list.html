@@ -686,14 +686,22 @@ function showAlert(type, message) {
 // 页面加载完成后加载统计信息
 document.addEventListener('DOMContentLoaded', function() {
     // 从URL获取当前筛选的数据库类型
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentDbType = urlParams.get('db_type');
+    const currentDbType = getUrlParameter('db_type');
     
     console.log('Page loaded, current db_type from URL:', currentDbType);
+    console.log('Full URL:', window.location.href);
+    console.log('Search params:', window.location.search);
     
     // 加载对应类型的统计信息
     loadAccountStatistics(currentDbType);
 });
+
+// 获取URL参数的辅助函数
+function getUrlParameter(name) {
+    const url = window.location.href;
+    const urlObj = new URL(url);
+    return urlObj.searchParams.get(name);
+}
 
 // 加载账户统计信息
 function loadAccountStatistics(dbType = null) {
