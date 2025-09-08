@@ -435,6 +435,100 @@ def sync_report():
     """同步报告页面"""
     return render_template('accounts/sync_report.html')
 
+@accounts_bp.route('/sync-statistics')
+@login_required
+def sync_statistics():
+    """获取同步统计信息API"""
+    try:
+        from sqlalchemy import desc, func
+        from datetime import datetime, timedelta
+        
+        # 获取最近7天的数据
+        week_ago = datetime.utcnow() - timedelta(days=7)
+        
+        # 总同步次数
+        total_syncs = SyncData.query.filter(
+            SyncData.sync_time >= week_ago
+        ).count()
+        
+        # 成功和失败次数
+        success_syncs = SyncData.query.filter(
+            SyncData.sync_time >= week_ago,
+            SyncData.status == 'success'
+        ).count()
+        
+        failed_syncs = SyncData.query.filter(
+            SyncData.sync_time >= week_ago,
+            SyncData.status == 'failed'
+        ).count()
+        
+        # 总同步账户数
+        total_accounts = db.session.query(func.sum(SyncData.synced_count)).filter(
+            SyncData.sync_time >= week_ago
+        ).scalar() or 0
+        
+        # 成功率
+        success_rate = round((success_syncs / total_syncs * 100) if total_syncs > 0 else 0, 1)
+        
+        # 最近同步时间
+        last_sync = SyncData.query.filter(
+            SyncData.sync_time >= week_ago
+        ).order_by(desc(SyncData.sync_time)).first()
+        
+        last_sync_time = last_sync.sync_time.strftime('%Y-%m-%d %H:%M:%S') if last_sync else None
+        
+        # 按日期统计趋势数据
+        trend_data = []
+        for i in range(7):
+            date = (datetime.utcnow() - timedelta(days=i)).date()
+            day_syncs = SyncData.query.filter(
+                func.date(SyncData.sync_time) == date
+            ).all()
+            
+            day_success = sum(1 for sync in day_syncs if sync.status == 'success')
+            day_failed = sum(1 for sync in day_syncs if sync.status == 'failed')
+            day_accounts = sum(sync.synced_count or 0 for sync in day_syncs)
+            
+            trend_data.append({
+                'date': date.strftime('%Y-%m-%d'),
+                'success': day_success,
+                'failed': day_failed,
+                'accounts': day_accounts
+            })
+        
+        # 数据库类型分布
+        db_type_stats = db.session.query(
+            Instance.db_type,
+            func.count(SyncData.id).label('count')
+        ).join(SyncData, Instance.id == SyncData.instance_id).filter(
+            SyncData.sync_time >= week_ago
+        ).group_by(Instance.db_type).all()
+        
+        db_type_distribution = {
+            stat.db_type: stat.count for stat in db_type_stats
+        }
+        
+        return jsonify({
+            'success': True,
+            'statistics': {
+                'total_syncs': total_syncs,
+                'success_syncs': success_syncs,
+                'failed_syncs': failed_syncs,
+                'total_accounts': total_accounts,
+                'success_rate': success_rate,
+                'last_sync_time': last_sync_time
+            },
+            'trend_data': trend_data,
+            'db_type_distribution': db_type_distribution
+        })
+        
+    except Exception as e:
+        logging.error(f"获取同步统计失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'获取统计信息失败: {str(e)}'
+        }), 500
+
 @accounts_bp.route('/history')
 @login_required
 def history():

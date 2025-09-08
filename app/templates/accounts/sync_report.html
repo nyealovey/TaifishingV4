@@ -13,6 +13,98 @@
         </div>
     </div>
 
+    <!-- 统计信息卡片 -->
+    <div class="row mb-4" id="statisticsCards">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalSyncs">0</h4>
+                            <p class="card-text">总同步次数</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-sync fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="successRate">0%</h4>
+                            <p class="card-text">同步成功率</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalAccounts">0</h4>
+                            <p class="card-text">总同步账户数</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="lastSyncTime">-</h4>
+                            <p class="card-text">最近同步时间</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 趋势图表 -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-area me-2"></i>同步趋势（最近7天）
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="syncTrendChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-pie-chart me-2"></i>数据库类型分布
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="dbTypeChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 同步历史清单 -->
     <div class="card mb-4">
         <div class="card-header">
@@ -138,6 +230,8 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 
 function loadSyncHistory() {
@@ -154,6 +248,174 @@ function loadSyncHistory() {
     .catch(error => {
         console.error('Error:', error);
     });
+    
+    // 加载统计信息
+    loadStatistics();
+}
+
+function loadStatistics() {
+    fetch('/accounts/sync-statistics')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateStatistics(data.statistics);
+            createCharts(data.trend_data, data.db_type_distribution);
+        } else {
+            console.error('加载统计信息失败:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function updateStatistics(statistics) {
+    // 更新统计卡片
+    document.getElementById('totalSyncs').textContent = statistics.total_syncs;
+    document.getElementById('successRate').textContent = statistics.success_rate + '%';
+    document.getElementById('totalAccounts').textContent = statistics.total_accounts;
+    document.getElementById('lastSyncTime').textContent = statistics.last_sync_time || '-';
+}
+
+function createCharts(trendData, dbTypeDistribution) {
+    // 创建同步趋势图表
+    createSyncTrendChart(trendData);
+    
+    // 创建数据库类型分布图表
+    createDbTypeChart(dbTypeDistribution);
+}
+
+function createSyncTrendChart(trendData) {
+    const ctx = document.getElementById('syncTrendChart').getContext('2d');
+    
+    // 按日期排序（从早到晚）
+    const sortedData = trendData.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedData.map(d => d.date),
+            datasets: [
+                {
+                    label: '成功同步',
+                    data: sortedData.map(d => d.success),
+                    borderColor: 'rgb(40, 167, 69)',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    tension: 0.1
+                },
+                {
+                    label: '同步失败',
+                    data: sortedData.map(d => d.failed),
+                    borderColor: 'rgb(220, 53, 69)',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    tension: 0.1
+                },
+                {
+                    label: '同步账户数',
+                    data: sortedData.map(d => d.accounts),
+                    borderColor: 'rgb(23, 162, 184)',
+                    backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                    tension: 0.1,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '同步次数'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: '账户数量'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function createDbTypeChart(dbTypeDistribution) {
+    const ctx = document.getElementById('dbTypeChart').getContext('2d');
+    
+    const labels = Object.keys(dbTypeDistribution);
+    const data = Object.values(dbTypeDistribution);
+    
+    // 如果没有数据，显示空状态
+    if (labels.length === 0) {
+        ctx.font = '16px Arial';
+        ctx.fillStyle = '#666';
+        ctx.textAlign = 'center';
+        ctx.fillText('暂无数据', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        return;
+    }
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(255, 205, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)',
+                    'rgba(255, 159, 64, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(255, 205, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                }
+            }
+        }
+    });
+}
+
+function getLast7Days() {
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        days.push(date.toISOString().split('T')[0]);
+    }
+    return days;
 }
 
 function displaySyncHistory(history) {
