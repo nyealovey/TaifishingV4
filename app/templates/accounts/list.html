@@ -10,9 +10,9 @@
             <a href="{{ url_for('accounts.sync_report') }}" class="btn btn-outline-info me-2">
                 <i class="fas fa-chart-line me-2"></i>同步报告
             </a>
-            <a href="{{ url_for('tasks.index') }}?action=create_sync_accounts" class="btn btn-success">
-                <i class="fas fa-clock me-2"></i>创建定时同步任务
-            </a>
+            <button type="button" class="btn btn-success" onclick="syncAllAccounts()">
+                <i class="fas fa-sync me-2"></i>同步所有账户
+            </button>
         </div>
     </div>
 
@@ -484,7 +484,7 @@
 
 {% block extra_js %}
 <script>
-function syncAllInstances() {
+function syncAllAccounts() {
     const btn = event.target;
     const originalText = btn.innerHTML;
     
@@ -503,9 +503,9 @@ function syncAllInstances() {
     .then(data => {
         if (data.success) {
             showAlert('success', data.message);
-            // 同步完成后跳转到同步报告页面
+            // 同步完成后刷新页面显示最新数据
             setTimeout(() => {
-                window.location.href = '/accounts/sync-report';
+                location.reload();
             }, 2000);
         } else if (data.error) {
             showAlert('danger', data.error);
@@ -519,6 +519,11 @@ function syncAllInstances() {
         btn.innerHTML = originalText;
         btn.disabled = false;
     });
+}
+
+function syncAllInstances() {
+    // 保持向后兼容，调用新的函数
+    syncAllAccounts();
 }
 
 function viewAccountPermissions(accountId) {
