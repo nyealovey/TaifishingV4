@@ -53,40 +53,60 @@ graph TB
     subgraph "前端层"
         A[Web浏览器] --> B[Bootstrap UI]
         B --> C[JavaScript/AJAX]
+        C --> D[任务管理界面]
+        C --> E[批量操作界面]
+        C --> F[快速创建界面]
     end
     
     subgraph "应用层"
-        C --> D[Flask应用]
-        D --> E[路由控制器]
-        E --> F[业务逻辑层]
-        F --> G[服务层]
+        D --> G[Flask应用]
+        E --> G
+        F --> G
+        G --> H[路由控制器]
+        H --> I[业务逻辑层]
+        I --> J[服务层]
+        J --> K[任务调度服务]
     end
     
     subgraph "数据层"
-        G --> H[SQLAlchemy ORM]
-        H --> I[SQLite/PostgreSQL]
-        G --> J[Redis缓存]
-        G --> K[文件存储]
+        J --> L[SQLAlchemy ORM]
+        L --> M[SQLite/PostgreSQL]
+        J --> N[Redis缓存]
+        J --> O[文件存储]
     end
     
-    subgraph "任务层"
-        L[Celery Worker] --> M[任务执行器]
-        M --> N[数据库连接池]
-        N --> O[外部数据库]
+    subgraph "任务执行层"
+        K --> P[任务执行器]
+        P --> Q[批量任务处理器]
+        P --> R[快速任务创建器]
+        P --> S[数据库连接池]
+        S --> T[外部数据库]
     end
     
     subgraph "外部系统"
-        P[PostgreSQL实例]
-        Q[MySQL实例]
-        R[SQL Server实例]
-        S[Oracle实例]
+        U[PostgreSQL实例]
+        V[MySQL实例]
+        W[SQL Server实例]
+        X[Oracle实例]
     end
     
-    D --> L
-    N --> P
-    N --> Q
-    N --> R
-    N --> S
+    G --> K
+    T --> U
+    T --> V
+    T --> W
+    T --> X
+    
+    subgraph "任务类型"
+        Y[账户同步任务]
+        Z[版本同步任务]
+        AA[大小同步任务]
+        BB[自定义任务]
+    end
+    
+    P --> Y
+    P --> Z
+    P --> AA
+    P --> BB
 ```
 
 ## 数据模型设计
@@ -306,17 +326,20 @@ erDiagram
 
 ### 任务管理接口
 
-| 方法 | 路径 | 功能 | 认证 |
-|------|------|------|------|
-| GET | `/tasks/` | 获取任务列表 | 需要 |
-| POST | `/tasks/create` | 创建任务 | 需要 |
-| GET | `/tasks/<id>` | 获取任务详情 | 需要 |
-| PUT | `/tasks/<id>/edit` | 更新任务 | 需要 |
-| DELETE | `/tasks/<id>/delete` | 删除任务 | 需要 |
-| POST | `/tasks/<id>/toggle` | 启用/禁用任务 | 需要 |
-| POST | `/tasks/<id>/execute` | 执行任务 | 需要 |
-| POST | `/tasks/create-builtin` | 创建内置任务 | 需要 |
-| POST | `/tasks/execute-all` | 批量执行任务 | 需要 |
+| 方法 | 路径 | 功能 | 认证 | 说明 |
+|------|------|------|------|------|
+| GET | `/tasks/` | 获取任务列表 | 需要 | 支持分页和筛选 |
+| POST | `/tasks/create` | 创建任务 | 需要 | 创建自定义任务 |
+| GET | `/tasks/<id>` | 获取任务详情 | 需要 | 获取单个任务信息 |
+| PUT | `/tasks/<id>/edit` | 更新任务 | 需要 | 更新任务配置 |
+| DELETE | `/tasks/<id>/delete` | 删除任务 | 需要 | 删除指定任务 |
+| POST | `/tasks/<id>/toggle` | 启用/禁用任务 | 需要 | 切换任务状态 |
+| POST | `/tasks/<id>/execute` | 执行任务 | 需要 | 立即执行单个任务 |
+| POST | `/tasks/create-builtin` | 创建内置任务 | 需要 | 创建所有内置任务 |
+| POST | `/tasks/create-quick` | 快速创建任务 | 需要 | 按类型快速创建任务 |
+| POST | `/tasks/batch-toggle` | 批量启用/禁用 | 需要 | 批量切换任务状态 |
+| POST | `/tasks/batch-execute` | 批量执行任务 | 需要 | 批量执行选中任务 |
+| POST | `/tasks/execute-all` | 执行所有任务 | 需要 | 执行所有活跃任务 |
 
 ### 系统管理接口
 
@@ -334,42 +357,100 @@ erDiagram
 |------|------|------|------|
 | GET | `/api/health` | 系统健康检查 | 无 |
 
-## 任务调度系统
+## 定时任务管理系统
+
+### 系统概述
+
+泰摸鱼吧的定时任务管理系统是一个高度可定制化的任务调度平台，支持多种数据库类型的自动化同步任务。系统提供了直观的Web界面和强大的API接口，让用户能够轻松创建、管理和监控各种定时任务。
+
+### 核心功能
+
+- 🚀 **快速创建内置任务** - 一键创建常用同步任务
+- ⏰ **定时任务调度** - 支持Cron表达式的定时执行
+- 📊 **批量任务管理** - 支持批量启用/禁用/执行任务
+- 📈 **执行统计监控** - 详细的运行统计和成功率分析
+- 🔄 **实时任务执行** - 支持立即执行和定时执行
+- 🎯 **智能任务匹配** - 根据数据库类型自动匹配实例
 
 ### 任务类型
 
-| 类型 | 功能 | 数据库支持 | 说明 |
-|------|------|------------|------|
-| **sync_accounts** | 账户同步 | PostgreSQL, MySQL | 同步数据库用户账户信息 |
-| **sync_version** | 版本同步 | PostgreSQL, MySQL | 同步数据库版本信息 |
-| **sync_size** | 大小同步 | PostgreSQL, MySQL | 同步数据库大小信息 |
-| **custom** | 自定义任务 | 全部 | 用户自定义Python代码 |
+| 类型 | 功能 | 数据库支持 | 调度频率 | 说明 |
+|------|------|------------|----------|------|
+| **sync_accounts** | 账户同步 | PostgreSQL, MySQL, SQL Server, Oracle | 每6小时 | 同步数据库用户账户信息 |
+| **sync_version** | 版本同步 | PostgreSQL, MySQL, SQL Server, Oracle | 每天 | 同步数据库版本信息 |
+| **sync_size** | 大小同步 | PostgreSQL, MySQL, SQL Server, Oracle | 每天凌晨2点 | 同步数据库大小信息 |
+| **custom** | 自定义任务 | 全部 | 用户定义 | 用户自定义Python代码 |
 
 ### 任务执行流程
 
 ```mermaid
 sequenceDiagram
     participant U as 用户
+    participant W as Web界面
     participant T as 任务调度器
     participant E as 任务执行器
     participant D as 数据库
     participant I as 外部实例
     
-    U->>T: 创建/触发任务
-    T->>E: 执行任务
-    E->>D: 查询匹配实例
-    D-->>E: 返回实例列表
+    U->>W: 访问任务管理页面
+    W->>U: 显示快速创建选项
     
-    loop 遍历每个实例
-        E->>I: 连接数据库
-        E->>E: 执行Python代码
-        E->>D: 保存同步数据
-        E->>D: 更新任务统计
+    alt 快速创建任务
+        U->>W: 点击快速创建按钮
+        W->>T: 调用快速创建API
+        T->>D: 创建任务记录
+        T-->>W: 返回创建结果
+        W-->>U: 显示创建成功
     end
     
-    E-->>T: 返回执行结果
-    T-->>U: 显示执行状态
+    alt 批量操作
+        U->>W: 选择多个任务
+        U->>W: 点击批量操作按钮
+        W->>T: 调用批量操作API
+        T->>D: 批量更新任务状态
+        T-->>W: 返回操作结果
+        W-->>U: 显示操作成功
+    end
+    
+    alt 任务执行
+        U->>W: 触发任务执行
+        W->>T: 调用任务执行API
+        T->>E: 执行任务
+        E->>D: 查询匹配实例
+        D-->>E: 返回实例列表
+        
+        loop 遍历每个实例
+            E->>I: 连接数据库
+            E->>E: 执行Python代码
+            E->>D: 保存同步数据
+            E->>D: 更新任务统计
+        end
+        
+        E-->>T: 返回执行结果
+        T-->>W: 更新任务状态
+        W-->>U: 显示执行状态
+    end
 ```
+
+### 用户界面功能
+
+#### 任务管理主页面
+- **快速创建区域**: 提供4个快速创建卡片，支持一键创建常用任务类型
+- **任务列表**: 显示所有任务的详细信息，包括状态、统计、最后运行时间等
+- **批量操作**: 支持全选、批量启用/禁用、批量执行任务
+- **筛选功能**: 按状态、数据库类型、任务类型筛选任务
+
+#### 任务状态显示
+- **启用/禁用状态**: 绿色表示启用，红色表示禁用
+- **定时/手动状态**: 蓝色表示定时任务，灰色表示手动任务
+- **执行结果**: 成功显示绿色，失败显示红色
+- **运行统计**: 显示运行次数、成功次数、成功率
+
+#### 快速创建功能
+- **账户同步**: 为所有数据库类型创建账户同步任务
+- **版本同步**: 为所有数据库类型创建版本同步任务
+- **大小同步**: 为所有数据库类型创建大小同步任务
+- **全部同步**: 一次性创建所有类型的同步任务
 
 ### 内置任务模板
 
@@ -400,6 +481,15 @@ def sync_postgresql_version(instance, config):
     # 查询版本信息
     # 更新实例标签
     # 返回版本信息
+```
+
+#### 数据库大小同步
+```python
+def sync_postgresql_size(instance, config):
+    """同步PostgreSQL数据库大小信息"""
+    # 查询数据库大小
+    # 更新实例标签
+    # 返回大小信息
 ```
 
 ## 安全设计
