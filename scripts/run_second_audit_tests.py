@@ -18,7 +18,7 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import create_app, db
-from app.utils.performance_monitor import performance_monitor
+# 性能监控已移除
 from app.utils.advanced_error_handler import advanced_error_handler
 from app.utils.code_quality_analyzer import code_quality_analyzer
 from app.utils.advanced_test_framework import test_framework
@@ -46,7 +46,7 @@ class SecondAuditTester:
                 # 运行各种测试
                 self._test_constants_module()
                 self._test_advanced_error_handler()
-                self._test_performance_monitor()
+                # 性能监控测试已移除
                 self._test_code_quality_analyzer()
                 self._test_advanced_test_framework()
                 self._test_admin_routes()
@@ -127,49 +127,7 @@ class SecondAuditTester:
         except Exception as e:
             self._record_test_result("advanced_error_handler", False, f"高级错误处理器测试失败: {e}")
     
-    def _test_performance_monitor(self):
-        """测试性能监控器"""
-        logger.info("测试性能监控器...")
-        
-        try:
-            # 测试性能监控器初始化
-            assert performance_monitor is not None
-            
-            # 测试指标收集
-            performance_monitor._collect_system_metrics()
-            
-            # 测试请求记录
-            performance_monitor.record_request(
-                endpoint="test_endpoint",
-                method="GET",
-                duration=0.1,
-                status_code=200
-            )
-            
-            # 测试查询记录
-            performance_monitor.record_query(
-                query_type="test_query",
-                duration=0.05,
-                success=True
-            )
-            
-            # 测试缓存记录
-            performance_monitor.record_cache_operation("test_operation", True)
-            
-            # 测试性能摘要
-            summary = performance_monitor.get_performance_summary()
-            assert 'uptime' in summary
-            assert 'counters' in summary
-            assert 'current_metrics' in summary
-            
-            # 测试优化建议
-            suggestions = performance_monitor.get_optimization_suggestions()
-            assert isinstance(suggestions, list)
-            
-            self._record_test_result("performance_monitor", True, "性能监控器测试通过")
-            
-        except Exception as e:
-            self._record_test_result("performance_monitor", False, f"性能监控器测试失败: {e}")
+    # 性能监控测试已移除
     
     def _test_code_quality_analyzer(self):
         """测试代码质量分析器"""

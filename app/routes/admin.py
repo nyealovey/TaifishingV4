@@ -14,7 +14,6 @@ from flask_login import login_required, current_user
 from functools import wraps
 from app.constants import UserRole, ErrorMessages, SuccessMessages
 from app.utils.api_response import APIResponse
-from app.utils.performance_monitor import performance_monitor
 from app.utils.advanced_error_handler import advanced_error_handler
 
 logger = logging.getLogger(__name__)
@@ -42,23 +41,6 @@ def admin_dashboard():
     """管理仪表板"""
     return render_template('admin/dashboard.html')
 
-@admin_bp.route('/performance', methods=['GET'])
-@login_required
-@admin_required
-def performance_metrics():
-    """性能指标"""
-    try:
-        metrics = performance_monitor.get_performance_summary()
-        suggestions = performance_monitor.get_optimization_suggestions()
-        
-        return APIResponse.success(data={
-            'metrics': metrics,
-            'suggestions': suggestions
-        })
-        
-    except Exception as e:
-        logger.error(f"获取性能指标失败: {e}")
-        return APIResponse.server_error("获取性能指标失败")
 
 @admin_bp.route('/errors', methods=['GET'])
 @login_required

@@ -86,10 +86,7 @@ def create_app(config_name=None):
             
         return jsonify(error_response), status_code
     
-    # 启动性能监控
-    from app.utils.performance_monitor import performance_monitor
-    performance_monitor.start_monitoring()
-    app.performance_monitor = performance_monitor
+    # 性能监控已移除
     
     # 配置模板过滤器
     configure_template_filters(app)

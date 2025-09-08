@@ -71,7 +71,6 @@ def test_hardcoded_replacement():
     files_to_check = [
         'app/config.py',
         'app/utils/rate_limiter.py',
-        'app/utils/performance_monitor.py'
     ]
     
     hardcoded_found = False
@@ -102,10 +101,7 @@ def test_constant_usage():
     try:
         # 测试常量在代码中的使用
         from app.utils.rate_limiter import login_rate_limit, api_rate_limit
-        from app.utils.performance_monitor import PerformanceMonitor
-        
         print("✓ 速率限制器使用常量")
-        print("✓ 性能监控器使用常量")
         
         # 测试常量值的一致性
         assert SystemConstants.DEFAULT_PAGE_SIZE == 20

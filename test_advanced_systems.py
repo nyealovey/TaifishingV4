@@ -99,34 +99,7 @@ def test_error_handling_integration():
         print(f"✗ 错误处理集成测试失败: {e}")
         return False
 
-def test_performance_monitor_integration():
-    """测试性能监控集成"""
-    print("\n=== 测试性能监控集成 ===")
-    
-    try:
-        from app.utils.performance_monitor import performance_monitor
-        
-        # 检查性能监控是否运行
-        if hasattr(performance_monitor, 'is_monitoring') and performance_monitor.is_monitoring:
-            print("✓ 性能监控正在运行")
-        else:
-            print("⚠ 性能监控状态未知")
-        
-        # 获取性能摘要
-        summary = performance_monitor.get_performance_summary()
-        print(f"✓ 性能摘要: {len(summary)} 个指标")
-        
-        # 检查是否有性能数据
-        if 'memory_percent' in summary or 'cpu_percent' in summary:
-            print("✓ 性能数据正常收集")
-            return True
-        else:
-            print("⚠ 性能数据收集异常")
-            return False
-            
-    except Exception as e:
-        print(f"✗ 性能监控集成测试失败: {e}")
-        return False
+# 性能监控功能已移除
 
 def test_management_interfaces():
     """测试管理界面"""
@@ -186,7 +159,6 @@ def main():
         test_advanced_error_handler,
         test_admin_api_endpoints,
         test_error_handling_integration,
-        test_performance_monitor_integration,
         test_management_interfaces,
         test_constant_management
     ]
