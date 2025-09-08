@@ -326,7 +326,7 @@ def sync_history():
             'modified_count': 0,
             'created_at': None,
             'sync_records': [],
-            'sync_types': set(),  # 记录包含的同步类型
+            'sync_types': [],  # 记录包含的同步类型，使用list而不是set
             'sync_type_display': ''  # 显示用的同步类型文本
         })
         
@@ -343,7 +343,8 @@ def sync_history():
             grouped[time_key]['removed_count'] += record.removed_count or 0
             grouped[time_key]['modified_count'] += record.modified_count or 0
             grouped[time_key]['sync_records'].append(record)
-            grouped[time_key]['sync_types'].add(record.sync_type)  # 记录同步类型
+            if record.sync_type not in grouped[time_key]['sync_types']:
+                grouped[time_key]['sync_types'].append(record.sync_type)  # 记录同步类型
             if not grouped[time_key]['created_at'] or record.sync_time > grouped[time_key]['created_at']:
                 grouped[time_key]['created_at'] = record.sync_time
         
@@ -356,7 +357,7 @@ def sync_history():
             sync_id = latest_time.strftime('%Y%m%d%H%M')
             
             # 确定同步类型显示文本
-            sync_types = list(data['sync_types'])
+            sync_types = data['sync_types']
             if 'task' in sync_types and 'batch' in sync_types:
                 sync_type_display = '定时任务 + 手动执行'
             elif 'task' in sync_types:
@@ -377,7 +378,7 @@ def sync_history():
                 'removed_count': data['removed_count'],
                 'modified_count': data['modified_count'],
                 'sync_type': sync_type_display,
-                'sync_types': list(sync_types)  # 确保转换为list
+                'sync_types': sync_types  # 已经是list，不需要转换
             })
         
         return jsonify({

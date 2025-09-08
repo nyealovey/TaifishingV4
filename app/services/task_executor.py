@@ -155,6 +155,12 @@ class TaskExecutor:
                     result = account_sync_service.sync_accounts(instance, sync_type='task')
                     return result
                 
+                # 对于数据库大小同步任务，使用数据库大小同步服务
+                elif task.task_type == 'sync_size':
+                    from app.services.database_size_service import database_size_service
+                    result = database_size_service.sync_database_size(instance, sync_type='task')
+                    return result
+                
                 # 对于其他任务类型，使用原有的动态执行方式
                 # 创建执行环境
                 exec_globals = {

@@ -39,8 +39,7 @@
                 <select class="form-select" id="task_type" name="task_type">
                     <option value="">全部类型</option>
                     <option value="sync_accounts" {% if task_type == 'sync_accounts' %}selected{% endif %}>账户同步</option>
-                    <option value="sync_version" {% if task_type == 'sync_version' %}selected{% endif %}>版本同步</option>
-                    <option value="sync_size" {% if task_type == 'sync_size' %}selected{% endif %}>大小同步</option>
+                    <option value="sync_size" {% if task_type == 'sync_size' %}selected{% endif %}>数据库大小同步</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -118,7 +117,10 @@
                         </td>
                         <td>
                             <span class="badge bg-{{ 'primary' if task.task_type == 'sync_accounts' else 'success' if task.task_type == 'sync_version' else 'info' if task.task_type == 'sync_size' else 'secondary' }}">
-                                {{ task.task_type.replace('_', ' ').title() }}
+                                {% if task.task_type == 'sync_accounts' %}账户同步
+                                {% elif task.task_type == 'sync_version' %}版本同步
+                                {% elif task.task_type == 'sync_size' %}数据库大小同步
+                                {% else %}{{ task.task_type.replace('_', ' ').title() }}{% endif %}
                             </span>
                             {% if task.is_builtin %}
                             <br><small class="text-success"><i class="fas fa-magic me-1"></i>内置</small>
