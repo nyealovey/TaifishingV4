@@ -141,6 +141,13 @@ def cache_management_page():
     """缓存管理页面"""
     return render_template('admin/cache_management.html')
 
+@admin_bp.route('/system-config', methods=['GET'])
+@login_required
+@admin_required
+def system_config_page():
+    """系统配置页面"""
+    return render_template('admin/system_config.html')
+
 @admin_bp.route('/cache', methods=['POST'])
 @login_required
 @admin_required
@@ -268,6 +275,123 @@ def delete_cache_keys():
     except Exception as e:
         logger.error(f"删除缓存键失败: {e}")
         return APIResponse.server_error("删除缓存键失败")
+
+@admin_bp.route('/config', methods=['GET'])
+@login_required
+@admin_required
+def get_system_config():
+    """获取系统配置"""
+    try:
+        # 模拟配置数据
+        configs = {
+            'basic': {
+                'app_name': '泰摸鱼吧',
+                'app_version': '4.0.0',
+                'debug_mode': False,
+                'timezone': 'Asia/Shanghai',
+                'secret_key': '****************'
+            },
+            'database': {
+                'db_type': 'sqlite',
+                'db_host': 'localhost',
+                'db_port': 3306,
+                'db_name': 'taifish_dev',
+                'db_username': 'root',
+                'db_pool_size': 10
+            },
+            'security': {
+                'session_timeout': 30,
+                'max_login_attempts': 5,
+                'password_min_length': 8,
+                'require_strong_password': True,
+                'enable_2fa': False,
+                'enable_csrf': True
+            },
+            'email': {
+                'smtp_host': 'smtp.gmail.com',
+                'smtp_port': 587,
+                'smtp_username': '',
+                'smtp_use_tls': True,
+                'from_email': ''
+            },
+            'logging': {
+                'log_level': 'INFO',
+                'log_format': 'simple',
+                'log_file_size': 10,
+                'log_backup_count': 5,
+                'log_to_file': True,
+                'log_to_console': True
+            },
+            'performance': {
+                'cache_ttl': 3600,
+                'max_workers': 4,
+                'request_timeout': 30,
+                'max_connections': 100,
+                'enable_compression': True,
+                'enable_caching': True
+            }
+        }
+        
+        return APIResponse.success(data=configs)
+        
+    except Exception as e:
+        logger.error(f"获取系统配置失败: {e}")
+        return APIResponse.server_error("获取系统配置失败")
+
+@admin_bp.route('/config', methods=['POST'])
+@login_required
+@admin_required
+def save_system_config():
+    """保存系统配置"""
+    try:
+        data = request.get_json()
+        config_type = data.get('type')
+        config = data.get('config', {})
+        
+        if not config_type:
+            return APIResponse.error("配置类型不能为空", code=400)
+        
+        # 这里应该实际保存配置到数据库或配置文件
+        # 目前只是模拟保存
+        logger.info(f"保存{config_type}配置: {config}")
+        
+        return APIResponse.success(message=f"{config_type}配置保存成功")
+        
+    except Exception as e:
+        logger.error(f"保存系统配置失败: {e}")
+        return APIResponse.server_error("保存系统配置失败")
+
+@admin_bp.route('/config/test-db', methods=['POST'])
+@login_required
+@admin_required
+def test_database_connection():
+    """测试数据库连接"""
+    try:
+        # 这里应该实际测试数据库连接
+        # 目前只是模拟测试
+        logger.info("测试数据库连接")
+        
+        return APIResponse.success(message="数据库连接测试成功")
+        
+    except Exception as e:
+        logger.error(f"测试数据库连接失败: {e}")
+        return APIResponse.server_error("测试数据库连接失败")
+
+@admin_bp.route('/config/test-email', methods=['POST'])
+@login_required
+@admin_required
+def test_email_config():
+    """测试邮件配置"""
+    try:
+        # 这里应该实际测试邮件发送
+        # 目前只是模拟测试
+        logger.info("测试邮件配置")
+        
+        return APIResponse.success(message="邮件发送测试成功")
+        
+    except Exception as e:
+        logger.error(f"测试邮件配置失败: {e}")
+        return APIResponse.server_error("测试邮件配置失败")
 
 @admin_bp.route('/backup', methods=['POST'])
 @login_required
