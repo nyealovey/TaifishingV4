@@ -54,15 +54,18 @@ def list(db_type=None):
     is_locked = request.args.get('is_locked', '', type=str)
     plugin = request.args.get('plugin', '', type=str)
     instance_id = request.args.get('instance_id', '', type=str)
+    filter_db_type = request.args.get('db_type', '', type=str)  # 新增数据库类型筛选参数
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     
     # 构建查询
     query = db.session.query(Account).join(Instance, Account.instance_id == Instance.id)
     
-    # 数据库类型筛选
+    # 数据库类型筛选 - 优先使用URL参数，其次使用筛选参数
     if db_type:
         query = query.filter(Instance.db_type == db_type)
+    elif filter_db_type:
+        query = query.filter(Instance.db_type == filter_db_type)
     
     # 搜索条件
     if search:
@@ -134,7 +137,8 @@ def list(db_type=None):
                          search=search,
                          is_locked=is_locked,
                          plugin=plugin,
-                         instance_id=instance_id)
+                         instance_id=instance_id,
+                         db_type=filter_db_type)  # 传递数据库类型筛选参数
 
 @accounts_bp.route('/sync/<int:instance_id>', methods=['POST'])
 @login_required
@@ -250,7 +254,8 @@ def sync_all_accounts():
             results.append({
                 'instance_name': instance.name,
                 'success': result['success'],
-                'message': result.get('message', result.get('error', '未知错误'))
+                'message': result.get('message', result.get('error', '未知错误')),
+                'synced_count': result.get('synced_count', 0)
             })
             
         except Exception as e:
@@ -259,7 +264,8 @@ def sync_all_accounts():
             results.append({
                 'instance_name': instance.name,
                 'success': False,
-                'message': f'同步失败: {str(e)}'
+                'message': f'同步失败: {str(e)}',
+                'synced_count': 0
             })
     
     db.session.commit()
@@ -272,16 +278,162 @@ def sync_all_accounts():
         'results': results
     })
     
+    # 计算总同步账户数
+    total_accounts = sum(result.get('synced_count', 0) for result in results)
+    
     if request.is_json:
         return jsonify({
+            'success': True,
             'message': f'批量同步完成，成功: {success_count}, 失败: {failed_count}',
-            'success_count': success_count,
-            'failed_count': failed_count,
-            'results': results
+            'report': {
+                'total_instances': len(instances),
+                'success_count': success_count,
+                'failed_count': failed_count,
+                'total_accounts': total_accounts,
+                'results': results
+            }
         })
     
     flash(f'批量同步完成，成功: {success_count}, 失败: {failed_count}', 'info')
     return redirect(url_for('accounts.index'))
+
+@accounts_bp.route('/sync-history')
+@login_required
+def sync_history():
+    """获取同步历史记录API"""
+    try:
+        from sqlalchemy import desc
+        from app.models.sync_data import SyncData
+        from collections import defaultdict
+        
+        # 查询所有批量同步记录
+        sync_records = SyncData.query.filter(
+            SyncData.sync_type == 'batch'
+        ).order_by(desc(SyncData.sync_time)).all()
+        
+        # 按同步批次分组（相同时间的同步记录为一组）
+        grouped = defaultdict(lambda: {
+            'total_instances': 0, 
+            'success_count': 0, 
+            'failed_count': 0, 
+            'total_accounts': 0, 
+            'added_count': 0,
+            'removed_count': 0,
+            'modified_count': 0,
+            'created_at': None,
+            'sync_records': []
+        })
+        
+        for record in sync_records:
+            # 使用分钟级精度作为分组键，相同分钟的同步记录为一组
+            time_key = record.sync_time.strftime('%Y-%m-%d %H:%M')
+            grouped[time_key]['total_instances'] += 1
+            if record.status == 'success':
+                grouped[time_key]['success_count'] += 1
+            else:
+                grouped[time_key]['failed_count'] += 1
+            grouped[time_key]['total_accounts'] += record.synced_count or 0
+            grouped[time_key]['added_count'] += record.added_count or 0
+            grouped[time_key]['removed_count'] += record.removed_count or 0
+            grouped[time_key]['modified_count'] += record.modified_count or 0
+            grouped[time_key]['sync_records'].append(record)
+            if not grouped[time_key]['created_at'] or record.sync_time > grouped[time_key]['created_at']:
+                grouped[time_key]['created_at'] = record.sync_time
+        
+        # 转换为列表并排序
+        history = []
+        for time_key, data in sorted(grouped.items(), key=lambda x: x[1]['created_at'], reverse=True)[:20]:
+            # 使用最新记录的时间作为显示时间
+            latest_time = max(record.sync_time for record in data['sync_records'])
+            # 生成正确的ID格式：YYYYMMDDHHMM
+            sync_id = latest_time.strftime('%Y%m%d%H%M')
+            history.append({
+                'id': sync_id,
+                'created_at': latest_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'total_instances': data['total_instances'],
+                'success_count': data['success_count'],
+                'failed_count': data['failed_count'],
+                'total_accounts': data['total_accounts'],
+                'added_count': data['added_count'],
+                'removed_count': data['removed_count'],
+                'modified_count': data['modified_count']
+            })
+        
+        return jsonify({
+            'success': True,
+            'history': history
+        })
+        
+    except Exception as e:
+        logging.error(f"获取同步历史失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'获取同步历史失败: {str(e)}'
+        }), 500
+
+@accounts_bp.route('/sync-details/<sync_id>')
+@login_required
+def sync_details(sync_id):
+    """获取同步详情API"""
+    try:
+        from app.models.sync_data import SyncData
+        from datetime import datetime
+        from sqlalchemy import func
+        
+        # 解析同步ID（日期时间格式：YYYYMMDDHHMM）
+        sync_datetime = datetime.strptime(sync_id, '%Y%m%d%H%M')
+        
+        # 查询该时间点前后5分钟内的所有同步记录（考虑到批量同步可能跨越几分钟）
+        start_time = sync_datetime - timedelta(minutes=5)
+        end_time = sync_datetime + timedelta(minutes=5)
+        
+        sync_records = SyncData.query.filter(
+            SyncData.sync_type == 'batch',
+            SyncData.sync_time >= start_time,
+            SyncData.sync_time <= end_time
+        ).all()
+        
+        details = []
+        for record in sync_records:
+            instance = Instance.query.get(record.instance_id)
+            
+            # 获取账户变化详情
+            account_changes = []
+            if hasattr(record, 'account_changes'):
+                for change in record.account_changes:
+                    account_changes.append({
+                        'change_type': change.change_type,
+                        'account_data': change.account_data
+                    })
+            
+            details.append({
+                'instance_name': instance.name if instance else '未知实例',
+                'success': record.status == 'success',
+                'message': record.message,
+                'synced_count': record.synced_count or 0,
+                'added_count': record.added_count or 0,
+                'removed_count': record.removed_count or 0,
+                'modified_count': record.modified_count or 0,
+                'account_changes': account_changes
+            })
+        
+        return jsonify({
+            'success': True,
+            'details': details
+        })
+        
+    except Exception as e:
+        logging.error(f"获取同步详情失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'获取同步详情失败: {str(e)}'
+        }), 500
+
+@accounts_bp.route('/sync-report')
+@login_required
+def sync_report():
+    """同步报告页面"""
+    return render_template('accounts/sync_report.html')
 
 @accounts_bp.route('/history')
 @login_required

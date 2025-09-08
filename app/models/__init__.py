@@ -13,6 +13,7 @@ from .task import Task
 from .log import Log
 from .global_param import GlobalParam
 from .sync_data import SyncData
+from .account_change import AccountChange
 
 # 导出所有模型
 __all__ = [
@@ -23,5 +24,6 @@ __all__ = [
     'Task',
     'Log',
     'GlobalParam',
-    'SyncData'
+    'SyncData',
+    'AccountChange'
 ]

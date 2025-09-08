@@ -7,11 +7,11 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="fas fa-users me-2"></i>账户管理</h2>
         <div>
-            <a href="{{ url_for('accounts.index') }}" class="btn btn-outline-info me-2">
-                <i class="fas fa-chart-bar me-2"></i>统计概览
+            <a href="{{ url_for('accounts.sync_report') }}" class="btn btn-outline-info me-2">
+                <i class="fas fa-chart-line me-2"></i>同步报告
             </a>
-            <button type="button" class="btn btn-success" onclick="syncAllAccounts()">
-                <i class="fas fa-sync me-2"></i>同步所有账户
+            <button type="button" class="btn btn-success" onclick="syncAllInstances()">
+                <i class="fas fa-sync me-2"></i>同步所有实例
             </button>
         </div>
     </div>
@@ -38,134 +38,72 @@
 <!-- 搜索和筛选 -->
 <div class="card mb-4">
     <div class="card-body">
-        <form method="GET" class="row g-3">
+        <form method="GET">
             {% if current_db_type %}
             <input type="hidden" name="db_type" value="{{ current_db_type }}">
+            {% elif db_type %}
+            <input type="hidden" name="db_type" value="{{ db_type }}">
             {% endif %}
-            <div class="col-md-3">
-                <label for="search" class="form-label">搜索</label>
-                <input type="text" class="form-control" id="search" name="search" 
-                       placeholder="搜索用户名、实例名称、IP地址" value="{{ search }}">
+            
+            <!-- 第一行：搜索框和按钮 -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-8">
+                    <label for="search" class="form-label fw-semibold">搜索</label>
+                    <input type="text" class="form-control form-control-lg" id="search" name="search" 
+                           placeholder="搜索用户名、实例名称、IP地址" value="{{ search }}">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="d-flex gap-2 w-100">
+                        <button type="submit" class="btn btn-primary btn-lg flex-fill">
+                            <i class="fas fa-search me-2"></i>搜索
+                        </button>
+                        <a href="{{ url_for('accounts.list', db_type=current_db_type) if current_db_type else url_for('accounts.list') }}" 
+                           class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i>清除
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-2">
-                <label for="is_locked" class="form-label">锁定状态</label>
-                <select class="form-select" id="is_locked" name="is_locked">
-                    <option value="">全部状态</option>
-                    <option value="locked" {% if is_locked == 'locked' %}selected{% endif %}>已锁定</option>
-                    <option value="unlocked" {% if is_locked == 'unlocked' %}selected{% endif %}>正常</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="plugin" class="form-label">插件/类型</label>
-                <select class="form-select" id="plugin" name="plugin">
-                    <option value="">全部插件</option>
-                    {% for plugin_option in filter_options.plugins %}
-                    <option value="{{ plugin_option.value }}" 
-                            {% if plugin == plugin_option.value %}selected{% endif %}>
-                        {{ plugin_option.label }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="instance_id" class="form-label">实例</label>
-                <select class="form-select" id="instance_id" name="instance_id">
-                    <option value="">全部实例</option>
-                    {% for instance_option in filter_options.instances %}
-                    <option value="{{ instance_option.value }}" 
-                            {% if instance_id == instance_option.value %}selected{% endif %}>
-                        {{ instance_option.label }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-1">
-                <label class="form-label">&nbsp;</label>
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-search me-1"></i>搜索
-                    </button>
+            
+            <!-- 第二行：筛选条件 -->
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="is_locked" class="form-label fw-semibold">锁定状态</label>
+                    <select class="form-select" id="is_locked" name="is_locked">
+                        <option value="">全部状态</option>
+                        <option value="locked" {% if is_locked == 'locked' %}selected{% endif %}>已锁定</option>
+                        <option value="unlocked" {% if is_locked == 'unlocked' %}selected{% endif %}>正常</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="plugin" class="form-label fw-semibold">插件/类型</label>
+                    <select class="form-select" id="plugin" name="plugin">
+                        <option value="">全部插件</option>
+                        {% for plugin_option in filter_options.plugins %}
+                        <option value="{{ plugin_option.value }}" 
+                                {% if plugin == plugin_option.value %}selected{% endif %}>
+                            {{ plugin_option.label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label for="db_type" class="form-label fw-semibold">数据库类型</label>
+                    <select class="form-select" id="db_type" name="db_type">
+                        <option value="">全部类型</option>
+                        {% for db_type_option in filter_options.db_types %}
+                        <option value="{{ db_type_option.value }}" 
+                                {% if db_type == db_type_option.value %}selected{% endif %}>
+                            {{ db_type_option.label }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
         </form>
-        <div class="mt-2">
-            <a href="{{ url_for('accounts.list', db_type=current_db_type) if current_db_type else url_for('accounts.list') }}" 
-               class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-times me-1"></i>清除筛选
-            </a>
-        </div>
     </div>
 </div>
 
-<!-- 统计信息 -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="card-title">{{ accounts.total }}</h4>
-                        <p class="card-text">
-                            {% if current_db_type %}
-                                {{ current_db_type.upper() }} 账户数
-                            {% else %}
-                                总账户数
-                            {% endif %}
-                        </p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-users fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="card-title">{{ accounts.items | selectattr('is_locked', 'equalto', False) | list | length }}</h4>
-                        <p class="card-text">正常账户</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-check-circle fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-danger text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="card-title">{{ accounts.items | selectattr('is_locked', 'equalto', True) | list | length }}</h4>
-                        <p class="card-text">锁定账户</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-lock fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="card-title">{{ filter_options.instances | length }}</h4>
-                        <p class="card-text">实例数量</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-server fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- 账户列表 -->
 <div class="card">
@@ -463,7 +401,7 @@
 
 {% block extra_js %}
 <script>
-function syncAllAccounts() {
+function syncAllInstances() {
     const btn = event.target;
     const originalText = btn.innerHTML;
     
@@ -474,18 +412,24 @@ function syncAllAccounts() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                         document.querySelector('input[name="csrf_token"]')?.value
         }
     })
     .then(response => response.json())
     .then(data => {
-        if (data.message) {
-            showAlert('info', data.message);
-            setTimeout(() => location.reload(), 2000);
+        if (data.success) {
+            showAlert('success', data.message);
+            // 同步完成后跳转到同步报告页面
+            setTimeout(() => {
+                window.location.href = '/accounts/sync-report';
+            }, 2000);
         } else if (data.error) {
             showAlert('danger', data.error);
         }
     })
     .catch(error => {
+        console.error('Error:', error);
         showAlert('danger', '同步失败');
     })
     .finally(() => {

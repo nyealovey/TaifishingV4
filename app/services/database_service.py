@@ -58,6 +58,7 @@ class DatabaseService:
         """
         try:
             from app.models.account import Account
+            from app.models.account_change import AccountChange
             from app import db
             
             # 获取数据库连接
@@ -71,16 +72,54 @@ class DatabaseService:
             # 记录同步前的账户数量
             before_count = Account.query.filter_by(instance_id=instance.id).count()
             
+            # 获取同步前的账户快照
+            before_accounts = {}
+            existing_accounts = Account.query.filter_by(instance_id=instance.id).all()
+            for account in existing_accounts:
+                key = f"{account.username}@{account.host}"
+                before_accounts[key] = {
+                    'id': account.id,
+                    'username': account.username,
+                    'host': account.host,
+                    'database_name': account.database_name,
+                    'account_type': account.account_type,
+                    'plugin': account.plugin,
+                    'password_expired': account.password_expired,
+                    'password_last_changed': account.password_last_changed.isoformat() if account.password_last_changed else None,
+                    'is_locked': account.is_locked,
+                    'is_active': account.is_active,
+                    'last_login': account.last_login.isoformat() if account.last_login else None
+                }
+            
             synced_count = 0
+            added_count = 0
+            removed_count = 0
+            modified_count = 0
             
             if instance.db_type == 'mysql':
-                synced_count = self._sync_mysql_accounts(instance, conn)
+                result = self._sync_mysql_accounts(instance, conn)
+                synced_count = result['synced_count']
+                added_count = result['added_count']
+                removed_count = result['removed_count']
+                modified_count = result['modified_count']
             elif instance.db_type == 'postgresql':
-                synced_count = self._sync_postgresql_accounts(instance, conn)
+                result = self._sync_postgresql_accounts(instance, conn)
+                synced_count = result['synced_count']
+                added_count = result['added_count']
+                removed_count = result['removed_count']
+                modified_count = result['modified_count']
             elif instance.db_type == 'sqlserver':
-                synced_count = self._sync_sqlserver_accounts(instance, conn)
+                result = self._sync_sqlserver_accounts(instance, conn)
+                synced_count = result['synced_count']
+                added_count = result['added_count']
+                removed_count = result['removed_count']
+                modified_count = result['modified_count']
             elif instance.db_type == 'oracle':
-                synced_count = self._sync_oracle_accounts(instance, conn)
+                result = self._sync_oracle_accounts(instance, conn)
+                synced_count = result['synced_count']
+                added_count = result['added_count']
+                removed_count = result['removed_count']
+                modified_count = result['modified_count']
             else:
                 return {
                     'success': False,
@@ -98,6 +137,9 @@ class DatabaseService:
                 'success': True,
                 'message': f'账户同步完成，共同步 {total_operations} 个账户，净变化: {net_change:+d}',
                 'synced_count': total_operations,
+                'added_count': added_count,
+                'removed_count': removed_count,
+                'modified_count': modified_count,
                 'details': {
                     'added': max(0, net_change) if net_change > 0 else 0,
                     'updated': total_operations - abs(net_change),
@@ -113,7 +155,7 @@ class DatabaseService:
                 'error': f'账户同步失败: {str(e)}'
             }
     
-    def _sync_mysql_accounts(self, instance: Instance, conn) -> int:
+    def _sync_mysql_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
         """同步MySQL账户"""
         cursor = conn.cursor()
         cursor.execute("""
@@ -127,6 +169,11 @@ class DatabaseService:
         synced_count = 0
         added_count = 0
         updated_count = 0
+        removed_count = 0
+        
+        # 记录新增和修改的账户
+        added_accounts = []
+        modified_accounts = []
         
         for row in cursor.fetchall():
             username, host, password_hash, plugin, locked, expired, password_last_changed = row
@@ -140,6 +187,18 @@ class DatabaseService:
                 username=username,
                 host=host
             ).first()
+            
+            account_data = {
+                'username': username,
+                'host': host,
+                'database_name': 'mysql',
+                'account_type': None,
+                'plugin': plugin,
+                'password_expired': expired == 'Y',
+                'password_last_changed': password_last_changed.isoformat() if password_last_changed else None,
+                'is_locked': locked == 'Y',
+                'is_active': locked != 'Y' and expired != 'Y'
+            }
             
             if not existing:
                 account = Account(
@@ -156,33 +215,64 @@ class DatabaseService:
                 )
                 db.session.add(account)
                 added_count += 1
+                added_accounts.append(account_data)
             else:
-                # 更新现有账户信息
-                existing.plugin = plugin
-                existing.password_expired = expired == 'Y'  # MySQL的password_expired字段，'Y'表示已过期
-                existing.password_last_changed = password_last_changed
-                existing.is_locked = locked == 'Y'  # MySQL的account_locked字段，'Y'表示锁定
-                existing.is_active = locked != 'Y' and expired != 'Y'
-                updated_count += 1
+                # 检查是否有变化
+                has_changes = (
+                    existing.plugin != plugin or
+                    existing.password_expired != (expired == 'Y') or
+                    existing.password_last_changed != password_last_changed or
+                    existing.is_locked != (locked == 'Y') or
+                    existing.is_active != (locked != 'Y' and expired != 'Y')
+                )
+                
+                if has_changes:
+                    # 更新现有账户信息
+                    existing.plugin = plugin
+                    existing.password_expired = expired == 'Y'
+                    existing.password_last_changed = password_last_changed
+                    existing.is_locked = locked == 'Y'
+                    existing.is_active = locked != 'Y' and expired != 'Y'
+                    updated_count += 1
+                    modified_accounts.append(account_data)
         
         # 删除服务器端不存在的本地账户
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
-        deleted_count = 0
+        removed_accounts = []
         
         for local_account in local_accounts:
             if (local_account.username, local_account.host) not in server_accounts:
+                removed_accounts.append({
+                    'username': local_account.username,
+                    'host': local_account.host,
+                    'database_name': local_account.database_name,
+                    'account_type': local_account.account_type,
+                    'plugin': local_account.plugin,
+                    'password_expired': local_account.password_expired,
+                    'password_last_changed': local_account.password_last_changed.isoformat() if local_account.password_last_changed else None,
+                    'is_locked': local_account.is_locked,
+                    'is_active': local_account.is_active
+                })
                 db.session.delete(local_account)
-                deleted_count += 1
+                removed_count += 1
         
-        synced_count = added_count + updated_count + deleted_count
+        synced_count = added_count + updated_count + removed_count
         
         db.session.commit()
         cursor.close()
         
         # 记录同步结果
-        logging.info(f"MySQL账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {deleted_count}, 总计: {synced_count}")
+        logging.info(f"MySQL账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {removed_count}, 总计: {synced_count}")
         
-        return synced_count
+        return {
+            'synced_count': synced_count,
+            'added_count': added_count,
+            'removed_count': removed_count,
+            'modified_count': updated_count,
+            'added_accounts': added_accounts,
+            'removed_accounts': removed_accounts,
+            'modified_accounts': modified_accounts
+        }
     
     def _sync_postgresql_accounts(self, instance: Instance, conn) -> int:
         """同步PostgreSQL账户"""

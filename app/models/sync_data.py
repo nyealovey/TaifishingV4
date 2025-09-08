@@ -18,10 +18,13 @@ class SyncData(db.Model):
     status = db.Column(db.String(20), default='success', index=True)
     message = db.Column(db.Text, nullable=True)
     synced_count = db.Column(db.Integer, default=0)
+    added_count = db.Column(db.Integer, default=0)  # 新增账户数量
+    removed_count = db.Column(db.Integer, default=0)  # 删除账户数量
+    modified_count = db.Column(db.Integer, default=0)  # 修改账户数量
     error_message = db.Column(db.Text, nullable=True)
     records_count = db.Column(db.Integer, default=0)
     
-    def __init__(self, sync_type, instance_id, data=None, status='success', message=None, synced_count=0, error_message=None, records_count=0):
+    def __init__(self, sync_type, instance_id, data=None, status='success', message=None, synced_count=0, added_count=0, removed_count=0, modified_count=0, error_message=None, records_count=0):
         """
         初始化同步数据
         
@@ -32,6 +35,9 @@ class SyncData(db.Model):
             status: 同步状态
             message: 同步消息
             synced_count: 同步数量
+            added_count: 新增账户数量
+            removed_count: 删除账户数量
+            modified_count: 修改账户数量
             error_message: 错误信息
             records_count: 记录数量
         """
@@ -41,6 +47,9 @@ class SyncData(db.Model):
         self.status = status
         self.message = message
         self.synced_count = synced_count
+        self.added_count = added_count
+        self.removed_count = removed_count
+        self.modified_count = modified_count
         self.error_message = error_message
         self.records_count = records_count
     
@@ -60,6 +69,9 @@ class SyncData(db.Model):
             'status': self.status,
             'message': self.message,
             'synced_count': self.synced_count,
+            'added_count': self.added_count,
+            'removed_count': self.removed_count,
+            'modified_count': self.modified_count,
             'error_message': self.error_message,
             'records_count': self.records_count,
             'instance_name': self.instance.name if self.instance else '未知实例'
