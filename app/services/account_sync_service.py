@@ -128,15 +128,28 @@ class AccountSyncService:
                     password=instance.credential.get_plain_password()
                 )
             elif instance.db_type == 'sqlserver':
-                if pyodbc is None:
-                    raise ImportError("pyodbc模块未安装，无法连接SQL Server")
-                return pyodbc.connect(
-                    f"DRIVER={{ODBC Driver 17 for SQL Server}};"
-                    f"SERVER={instance.host},{instance.port};"
-                    f"DATABASE={instance.database_name or 'master'};"
-                    f"UID={instance.credential.username};"
-                    f"PWD={instance.credential.get_plain_password()}"
-                )
+                # 优先使用pymssql连接SQL Server
+                try:
+                    import pymssql
+                    return pymssql.connect(
+                        server=instance.host,
+                        port=instance.port,
+                        database=instance.database_name or 'master',
+                        user=instance.credential.username,
+                        password=instance.credential.get_plain_password()
+                    )
+                except ImportError:
+                    # 如果pymssql不可用，尝试pyodbc
+                    if pyodbc is None:
+                        raise ImportError("SQL Server驱动未安装，请安装pymssql或pyodbc")
+                    
+                    # 尝试pyodbc连接
+                    conn_str = self._get_sqlserver_pyodbc_connection(instance)
+                    if conn_str:
+                        return pyodbc.connect(conn_str)
+                    else:
+                        raise ImportError("SQL Server驱动配置错误")
+                
             elif instance.db_type == 'oracle':
                 if cx_Oracle is None:
                     raise ImportError("cx_Oracle模块未安装，无法连接Oracle")
@@ -149,6 +162,49 @@ class AccountSyncService:
                 return None
         except Exception as e:
             self.logger.error(f"数据库连接失败: {str(e)}")
+            return None
+    
+    def _get_sqlserver_pyodbc_connection(self, instance: Instance):
+        """获取SQL Server pyodbc连接字符串"""
+        if pyodbc is None:
+            return None
+        
+        # 尝试不同的ODBC驱动
+        drivers = [
+            "ODBC Driver 17 for SQL Server",
+            "ODBC Driver 13 for SQL Server", 
+            "SQL Server",
+            "SQL Server Native Client 11.0"
+        ]
+        
+        for driver in drivers:
+            try:
+                # 检查驱动是否可用
+                if driver in pyodbc.drivers():
+                    return (
+                        f"DRIVER={{{driver}}};"
+                        f"SERVER={instance.host},{instance.port};"
+                        f"DATABASE={instance.database_name or 'master'};"
+                        f"UID={instance.credential.username};"
+                        f"PWD={instance.credential.get_plain_password()}"
+                    )
+            except:
+                continue
+        
+        return None
+    
+    def _get_sqlserver_pymssql_connection(self, instance: Instance):
+        """获取SQL Server pymssql连接参数"""
+        try:
+            import pymssql
+            return {
+                'server': instance.host,
+                'port': instance.port,
+                'database': instance.database_name or 'master',
+                'user': instance.credential.username,
+                'password': instance.credential.get_plain_password()
+            }
+        except ImportError:
             return None
     
     def _get_account_snapshot(self, instance: Instance) -> Dict[str, Dict]:
