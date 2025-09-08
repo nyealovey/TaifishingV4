@@ -510,40 +510,7 @@ def error_config():
         logger.error(f"错误处理配置失败: {e}")
         return APIResponse.server_error("错误处理配置失败")
 
-@admin_bp.route('/system-management', methods=['GET'])
-@login_required
-@admin_required
-def system_management():
-    """系统管理界面"""
-    try:
-        return render_template('admin/system_management.html')
-    except Exception as e:
-        logger.error(f"获取系统管理界面失败: {e}")
-        return APIResponse.server_error("获取系统管理界面失败")
 
-@admin_bp.route('/system-info', methods=['GET'])
-@login_required
-@admin_required
-def get_system_info():
-    """获取系统信息"""
-    try:
-        import psutil
-        import time
-        
-        # 获取系统信息
-        system_info = {
-            'status': 'running',
-            'uptime': f"{int(time.time() - psutil.boot_time()) // 86400}天",
-            'memory_usage': psutil.virtual_memory().percent,
-            'cpu_usage': psutil.cpu_percent(interval=1),
-            'disk_usage': psutil.disk_usage('/').percent,
-            'process_count': len(psutil.pids())
-        }
-        
-        return APIResponse.success(data=system_info)
-    except Exception as e:
-        logger.error(f"获取系统信息失败: {e}")
-        return APIResponse.server_error("获取系统信息失败")
 
 
 @admin_bp.route('/logs', methods=['GET'])
