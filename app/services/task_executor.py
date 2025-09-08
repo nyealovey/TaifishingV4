@@ -30,102 +30,107 @@ class TaskExecutor:
         Returns:
             dict: 执行结果
         """
-        import signal
-        import threading
+        from app import create_app
         
-        task = Task.query.get(task_id)
-        if not task:
-            return {
-                'success': False,
-                'error': f'任务 {task_id} 不存在'
-            }
-        
-        if not task.is_active:
-            return {
-                'success': False,
-                'error': f'任务 {task.name} 已禁用'
-            }
-        
-        # 获取匹配的实例
-        instances = task.get_matching_instances()
-        if not instances:
-            return {
-                'success': False,
-                'error': f'没有找到匹配的 {task.db_type} 类型实例'
-            }
-        
-        self.logger.info(f"开始执行任务: {task.name}, 匹配到 {len(instances)} 个实例, 超时: {timeout}秒")
-        
-        # 使用超时机制执行任务
-        result = {'success': False, 'error': '任务执行超时'}
-        
-        def run_task():
-            nonlocal result
-            try:
-                total_success = 0
-                total_failed = 0
-                results = []
-                
-                # 逐一执行实例
-                for instance in instances:
-                    try:
-                        instance_result = self._execute_task_for_instance(task, instance)
-                        if instance_result['success']:
-                            total_success += 1
-                        else:
-                            total_failed += 1
-                        
-                        results.append({
-                            'instance_name': instance.name,
-                            'result': instance_result
-                        })
-                        
-                        # 记录同步数据
-                        self._record_sync_data(task, instance, instance_result)
-                        
-                    except Exception as e:
-                        self.logger.error(f"执行任务 {task.name} 在实例 {instance.name} 时出错: {e}")
-                        total_failed += 1
-                        results.append({
-                            'instance_name': instance.name,
-                            'result': {
-                                'success': False,
-                                'error': str(e)
-                            }
-                        })
-                
-                # 更新任务状态
-                self._update_task_status(task, total_success, total_failed, results)
-                
-                result = {
-                    'success': total_failed == 0,
-                    'message': f'任务执行完成，成功: {total_success}, 失败: {total_failed}',
-                    'total_success': total_success,
-                    'total_failed': total_failed,
-                    'results': results
-                }
-            except Exception as e:
-                self.logger.error(f"任务执行失败: {e}")
-                result = {
+        # 创建应用上下文
+        app = create_app()
+        with app.app_context():
+            import signal
+            import threading
+            
+            task = Task.query.get(task_id)
+            if not task:
+                return {
                     'success': False,
-                    'error': str(e)
+                    'error': f'任务 {task_id} 不存在'
                 }
-        
-        # 使用线程执行任务，支持超时
-        import threading
-        thread = threading.Thread(target=run_task)
-        thread.daemon = True
-        thread.start()
-        thread.join(timeout=timeout)
-        
-        if thread.is_alive():
-            self.logger.warning(f"任务 {task.name} 执行超时 ({timeout}秒)")
-            return {
-                'success': False,
-                'error': f'任务执行超时 ({timeout}秒)'
-            }
-        
-        return result
+            
+            if not task.is_active:
+                return {
+                    'success': False,
+                    'error': f'任务 {task.name} 已禁用'
+                }
+            
+            # 获取匹配的实例
+            instances = task.get_matching_instances()
+            if not instances:
+                return {
+                    'success': False,
+                    'error': f'没有找到匹配的 {task.db_type} 类型实例'
+                }
+            
+            self.logger.info(f"开始执行任务: {task.name}, 匹配到 {len(instances)} 个实例, 超时: {timeout}秒")
+            
+            # 使用超时机制执行任务
+            result = {'success': False, 'error': '任务执行超时'}
+            
+            def run_task():
+                nonlocal result
+                try:
+                    total_success = 0
+                    total_failed = 0
+                    results = []
+                    
+                    # 逐一执行实例
+                    for instance in instances:
+                        try:
+                            instance_result = self._execute_task_for_instance(task, instance)
+                            if instance_result['success']:
+                                total_success += 1
+                            else:
+                                total_failed += 1
+                            
+                            results.append({
+                                'instance_name': instance.name,
+                                'result': instance_result
+                            })
+                            
+                            # 记录同步数据
+                            self._record_sync_data(task, instance, instance_result)
+                            
+                        except Exception as e:
+                            self.logger.error(f"执行任务 {task.name} 在实例 {instance.name} 时出错: {e}")
+                            total_failed += 1
+                            results.append({
+                                'instance_name': instance.name,
+                                'result': {
+                                    'success': False,
+                                    'error': str(e)
+                                }
+                            })
+                    
+                    # 更新任务状态
+                    self._update_task_status(task, total_success, total_failed, results)
+                    
+                    result = {
+                        'success': total_failed == 0,
+                        'message': f'任务执行完成，成功: {total_success}, 失败: {total_failed}',
+                        'total_success': total_success,
+                        'total_failed': total_failed,
+                        'results': results
+                    }
+                except Exception as e:
+                    self.logger.error(f"任务执行失败: {e}")
+                    result = {
+                        'success': False,
+                        'error': str(e)
+                    }
+            
+            # 使用线程执行任务，支持超时
+            import threading
+            thread = threading.Thread(target=run_task)
+            thread.daemon = True
+            thread.start()
+            thread.join(timeout=timeout)
+            
+            if thread.is_alive():
+                self.logger.warning(f"任务 {task.name} 执行超时 ({timeout}秒)")
+                return {
+                    'success': False,
+                    'error': f'任务执行超时 ({timeout}秒)'
+                }
+            
+            return result
     
     def _execute_task_for_instance(self, task, instance):
         """
@@ -138,46 +143,51 @@ class TaskExecutor:
         Returns:
             dict: 执行结果
         """
-        try:
-            # 创建执行环境
-            exec_globals = {
-                'instance': instance,
-                'config': task.config or {},
-                'datetime': datetime,
-                'logging': logging
-            }
-            
-            # 执行Python代码
-            exec(task.python_code, exec_globals)
-            
-            # 获取执行函数
-            if task.task_type == 'sync_accounts':
-                func_name = f'sync_{task.db_type}_accounts'
-            elif task.task_type == 'sync_version':
-                func_name = f'sync_{task.db_type}_version'
-            elif task.task_type == 'sync_size':
-                func_name = f'sync_{task.db_type}_size'
-            else:
-                func_name = f'sync_{task.db_type}_{task.task_type}'
-            
-            if func_name not in exec_globals:
+        from app import create_app
+        
+        # 创建应用上下文
+        app = create_app()
+        with app.app_context():
+            try:
+                # 创建执行环境
+                exec_globals = {
+                    'instance': instance,
+                    'config': task.config or {},
+                    'datetime': datetime,
+                    'logging': logging
+                }
+                
+                # 执行Python代码
+                exec(task.python_code, exec_globals)
+                
+                # 获取执行函数
+                if task.task_type == 'sync_accounts':
+                    func_name = f'sync_{task.db_type}_accounts'
+                elif task.task_type == 'sync_version':
+                    func_name = f'sync_{task.db_type}_version'
+                elif task.task_type == 'sync_size':
+                    func_name = f'sync_{task.db_type}_size'
+                else:
+                    func_name = f'sync_{task.db_type}_{task.task_type}'
+                
+                if func_name not in exec_globals:
+                    return {
+                        'success': False,
+                        'error': f'未找到执行函数: {func_name}'
+                    }
+                
+                # 调用执行函数
+                sync_func = exec_globals[func_name]
+                result = sync_func(instance, task.config or {})
+                
+                return result
+                
+            except Exception as e:
+                self.logger.error(f"执行任务代码时出错: {e}")
                 return {
                     'success': False,
-                    'error': f'未找到执行函数: {func_name}'
+                    'error': f'执行任务代码失败: {str(e)}'
                 }
-            
-            # 调用执行函数
-            sync_func = exec_globals[func_name]
-            result = sync_func(instance, task.config or {})
-            
-            return result
-            
-        except Exception as e:
-            self.logger.error(f"执行任务代码时出错: {e}")
-            return {
-                'success': False,
-                'error': f'执行任务代码失败: {str(e)}'
-            }
     
     def _record_sync_data(self, task, instance, result):
         """
@@ -188,19 +198,23 @@ class TaskExecutor:
             instance: 实例对象
             result: 执行结果
         """
-        try:
-            sync_record = SyncData(
-                instance_id=instance.id,
-                sync_type='task',
-                status='success' if result['success'] else 'failed',
-                message=result.get('message', result.get('error', '')),
-                synced_count=result.get('synced_count', 0),
-                task_id=task.id
-            )
-            db.session.add(sync_record)
-            db.session.commit()
-        except Exception as e:
-            self.logger.error(f"记录同步数据失败: {e}")
+        from app import create_app
+        
+        # 创建应用上下文
+        app = create_app()
+        with app.app_context():
+            try:
+                sync_record = SyncData(
+                    instance_id=instance.id,
+                    sync_type='task',
+                    status='success' if result['success'] else 'failed',
+                    message=result.get('message', result.get('error', '')),
+                    synced_count=result.get('synced_count', 0)
+                )
+                db.session.add(sync_record)
+                db.session.commit()
+            except Exception as e:
+                self.logger.error(f"记录同步数据失败: {e}")
     
     def _update_task_status(self, task, success_count, failed_count, results):
         """
@@ -212,22 +226,27 @@ class TaskExecutor:
             failed_count: 失败次数
             results: 执行结果列表
         """
-        try:
-            task.run_count += 1
-            if failed_count == 0:
-                task.success_count += 1
-                task.last_status = 'success'
-                task.last_message = f'成功执行，处理了 {success_count} 个实例'
-            else:
-                task.last_status = 'failed'
-                task.last_message = f'执行失败，成功: {success_count}, 失败: {failed_count}'
-            
-            task.last_run = datetime.utcnow()
-            task.last_run_at = datetime.utcnow()  # 兼容字段
-            
-            db.session.commit()
-        except Exception as e:
-            self.logger.error(f"更新任务状态失败: {e}")
+        from app import create_app
+        
+        # 创建应用上下文
+        app = create_app()
+        with app.app_context():
+            try:
+                task.run_count += 1
+                if failed_count == 0:
+                    task.success_count += 1
+                    task.last_status = 'success'
+                    task.last_message = f'成功执行，处理了 {success_count} 个实例'
+                else:
+                    task.last_status = 'failed'
+                    task.last_message = f'执行失败，成功: {success_count}, 失败: {failed_count}'
+                
+                task.last_run = datetime.utcnow()
+                task.last_run_at = datetime.utcnow()  # 兼容字段
+                
+                db.session.commit()
+            except Exception as e:
+                self.logger.error(f"更新任务状态失败: {e}")
     
     def execute_all_active_tasks(self):
         """

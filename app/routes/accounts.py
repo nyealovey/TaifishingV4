@@ -306,9 +306,9 @@ def sync_history():
         from app.models.sync_data import SyncData
         from collections import defaultdict
         
-        # 查询所有批量同步记录
+        # 查询所有同步记录（包括批量同步和任务同步）
         sync_records = SyncData.query.filter(
-            SyncData.sync_type == 'batch'
+            SyncData.sync_type.in_(['batch', 'task'])
         ).order_by(desc(SyncData.sync_time)).all()
         
         # 按同步批次分组（相同时间的同步记录为一组）
