@@ -130,7 +130,7 @@ const BUILTIN_TASKS = {
             port=instance.port,
             database=instance.database_name or 'postgres',
             user=instance.credential.username,
-            password=instance.credential.password
+            password=instance.credential.get_plain_password()
         )
         
         cursor = conn.cursor()
@@ -210,7 +210,7 @@ const BUILTIN_TASKS = {
             port=instance.port,
             database=instance.database_name or 'mysql',
             user=instance.credential.username,
-            password=instance.credential.password
+            password=instance.credential.get_plain_password()
         )
         
         cursor = conn.cursor()
@@ -220,7 +220,7 @@ const BUILTIN_TASKS = {
             SELECT 
                 User as username,
                 'user' as account_type,
-                Db as database_name,
+                '' as database_name,
                 Select_priv as can_select,
                 Insert_priv as can_insert,
                 Update_priv as can_update,
@@ -293,7 +293,7 @@ const BUILTIN_TASKS = {
             port=instance.port,
             database=instance.database_name or 'postgres',
             user=instance.credential.username,
-            password=instance.credential.password
+            password=instance.credential.get_plain_password()
         )
         
         cursor = conn.cursor()
@@ -342,7 +342,7 @@ const BUILTIN_TASKS = {
             port=instance.port,
             database=instance.database_name or 'mysql',
             user=instance.credential.username,
-            password=instance.credential.password
+            password=instance.credential.get_plain_password()
         )
         
         cursor = conn.cursor()
@@ -393,7 +393,7 @@ const BUILTIN_TASKS = {
             port=instance.port,
             database=instance.database_name or 'postgres',
             user=instance.credential.username,
-            password=instance.credential.password
+            password=instance.credential.get_plain_password()
         )
         
         cursor = conn.cursor()
@@ -455,7 +455,7 @@ const BUILTIN_TASKS = {
             port=instance.port,
             database=instance.database_name or 'mysql',
             user=instance.credential.username,
-            password=instance.credential.password
+            password=instance.credential.get_plain_password()
         )
         
         cursor = conn.cursor()
