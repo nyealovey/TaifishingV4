@@ -21,7 +21,7 @@ logs_bp = Blueprint('logs', __name__)
 @login_required
 def index():
     """系统日志页面"""
-    return render_template('admin/system_logs.html')
+    return render_template('logs/system_logs.html')
 
 @logs_bp.route('/api', methods=['GET'])
 @login_required
