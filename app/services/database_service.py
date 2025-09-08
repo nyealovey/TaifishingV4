@@ -274,7 +274,7 @@ class DatabaseService:
             'modified_accounts': modified_accounts
         }
     
-    def _sync_postgresql_accounts(self, instance: Instance, conn) -> int:
+    def _sync_postgresql_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
         """同步PostgreSQL账户"""
         cursor = conn.cursor()
         cursor.execute("""
@@ -288,12 +288,29 @@ class DatabaseService:
         synced_count = 0
         added_count = 0
         updated_count = 0
+        removed_count = 0
+        
+        # 记录新增和修改的账户
+        added_accounts = []
+        modified_accounts = []
         
         for row in cursor.fetchall():
             username, is_super, inherits, can_create_role, can_create_db, can_login, conn_limit, valid_until = row
             
             # 记录服务器端的账户
             server_accounts.add((username, 'localhost'))
+            
+            account_data = {
+                'username': username,
+                'host': 'localhost',
+                'database_name': instance.database_name or 'postgres',
+                'account_type': 'superuser' if is_super else 'user',
+                'plugin': 'postgresql',
+                'password_expired': valid_until is not None and valid_until < 'now()',
+                'password_last_changed': None,
+                'is_locked': not can_login,
+                'is_active': can_login and (valid_until is None or valid_until > 'now()')
+            }
             
             # 检查账户是否已存在
             existing = Account.query.filter_by(
@@ -317,34 +334,64 @@ class DatabaseService:
                 )
                 db.session.add(account)
                 added_count += 1
+                added_accounts.append(account_data)
             else:
-                # 更新现有账户信息
-                existing.plugin = 'postgresql'
-                existing.password_expired = valid_until is not None and valid_until < 'now()'
-                existing.is_locked = not can_login  # PostgreSQL的rolcanlogin字段，False表示被禁用
-                existing.is_active = can_login and (valid_until is None or valid_until > 'now()')
-                updated_count += 1
+                # 检查是否有变化
+                has_changes = (
+                    existing.account_type != ('superuser' if is_super else 'user') or
+                    existing.password_expired != (valid_until is not None and valid_until < 'now()') or
+                    existing.is_locked != (not can_login) or
+                    existing.is_active != (can_login and (valid_until is None or valid_until > 'now()'))
+                )
+                
+                if has_changes:
+                    # 更新现有账户信息
+                    existing.account_type = 'superuser' if is_super else 'user'
+                    existing.password_expired = valid_until is not None and valid_until < 'now()'
+                    existing.is_locked = not can_login  # PostgreSQL的rolcanlogin字段，False表示被禁用
+                    existing.is_active = can_login and (valid_until is None or valid_until > 'now()')
+                    updated_count += 1
+                    modified_accounts.append(account_data)
         
         # 删除服务器端不存在的本地账户
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
-        deleted_count = 0
+        removed_accounts = []
         
         for local_account in local_accounts:
             if (local_account.username, local_account.host) not in server_accounts:
+                removed_accounts.append({
+                    'username': local_account.username,
+                    'host': local_account.host,
+                    'database_name': local_account.database_name,
+                    'account_type': local_account.account_type,
+                    'plugin': local_account.plugin,
+                    'password_expired': local_account.password_expired,
+                    'password_last_changed': local_account.password_last_changed.isoformat() if local_account.password_last_changed else None,
+                    'is_locked': local_account.is_locked,
+                    'is_active': local_account.is_active
+                })
                 db.session.delete(local_account)
-                deleted_count += 1
+                removed_count += 1
         
-        synced_count = added_count + updated_count + deleted_count
+        synced_count = added_count + updated_count + removed_count
         
         db.session.commit()
         cursor.close()
         
         # 记录同步结果
-        logging.info(f"PostgreSQL账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {deleted_count}, 总计: {synced_count}")
+        logging.info(f"PostgreSQL账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {removed_count}, 总计: {synced_count}")
         
-        return synced_count
+        return {
+            'synced_count': synced_count,
+            'added_count': added_count,
+            'removed_count': removed_count,
+            'modified_count': updated_count,
+            'added_accounts': added_accounts,
+            'removed_accounts': removed_accounts,
+            'modified_accounts': modified_accounts
+        }
     
-    def _sync_sqlserver_accounts(self, instance: Instance, conn) -> int:
+    def _sync_sqlserver_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
         """同步SQL Server账户"""
         cursor = conn.cursor()
         cursor.execute("""
@@ -358,12 +405,29 @@ class DatabaseService:
         synced_count = 0
         added_count = 0
         updated_count = 0
+        removed_count = 0
+        
+        # 记录新增和修改的账户
+        added_accounts = []
+        modified_accounts = []
         
         for row in cursor.fetchall():
             username, type_desc, is_disabled, create_date, modify_date = row
             
             # 记录服务器端的账户（SQL Server没有主机概念，使用用户名作为唯一标识）
             server_accounts.add((username, None))
+            
+            account_data = {
+                'username': username,
+                'host': None,
+                'database_name': instance.database_name or 'master',
+                'account_type': type_desc.lower(),
+                'plugin': None,
+                'password_expired': False,
+                'password_last_changed': modify_date.isoformat() if modify_date else None,
+                'is_locked': bool(is_disabled),
+                'is_active': not is_disabled
+            }
             
             # 检查账户是否已存在（SQL Server没有主机概念）
             existing = Account.query.filter_by(
@@ -387,35 +451,65 @@ class DatabaseService:
                 )
                 db.session.add(account)
                 added_count += 1
+                added_accounts.append(account_data)
             else:
-                # 更新现有账户信息
-                existing.plugin = 'sqlserver'
-                existing.password_last_changed = modify_date
-                existing.is_locked = bool(is_disabled)  # SQL Server的is_disabled字段
-                existing.is_active = not is_disabled
-                updated_count += 1
+                # 检查是否有变化
+                has_changes = (
+                    existing.account_type != type_desc.lower() or
+                    existing.password_last_changed != modify_date or
+                    existing.is_locked != bool(is_disabled) or
+                    existing.is_active != (not is_disabled)
+                )
+                
+                if has_changes:
+                    # 更新现有账户信息
+                    existing.account_type = type_desc.lower()
+                    existing.password_last_changed = modify_date
+                    existing.is_locked = bool(is_disabled)  # SQL Server的is_disabled字段
+                    existing.is_active = not is_disabled
+                    updated_count += 1
+                    modified_accounts.append(account_data)
         
         # 删除服务器端不存在的本地账户（SQL Server没有主机概念）
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
-        deleted_count = 0
+        removed_accounts = []
         
         for local_account in local_accounts:
             # SQL Server没有主机概念，只比较用户名
             if (local_account.username, local_account.host) not in server_accounts:
+                removed_accounts.append({
+                    'username': local_account.username,
+                    'host': local_account.host,
+                    'database_name': local_account.database_name,
+                    'account_type': local_account.account_type,
+                    'plugin': local_account.plugin,
+                    'password_expired': local_account.password_expired,
+                    'password_last_changed': local_account.password_last_changed.isoformat() if local_account.password_last_changed else None,
+                    'is_locked': local_account.is_locked,
+                    'is_active': local_account.is_active
+                })
                 db.session.delete(local_account)
-                deleted_count += 1
+                removed_count += 1
         
-        synced_count = added_count + updated_count + deleted_count
+        synced_count = added_count + updated_count + removed_count
         
         db.session.commit()
         cursor.close()
         
         # 记录同步结果
-        logging.info(f"SQL Server账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {deleted_count}, 总计: {synced_count}")
+        logging.info(f"SQL Server账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {removed_count}, 总计: {synced_count}")
         
-        return synced_count
+        return {
+            'synced_count': synced_count,
+            'added_count': added_count,
+            'removed_count': removed_count,
+            'modified_count': updated_count,
+            'added_accounts': added_accounts,
+            'removed_accounts': removed_accounts,
+            'modified_accounts': modified_accounts
+        }
     
-    def _sync_oracle_accounts(self, instance: Instance, conn) -> int:
+    def _sync_oracle_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
         """同步Oracle账户"""
         cursor = conn.cursor()
         cursor.execute("""
@@ -429,12 +523,29 @@ class DatabaseService:
         synced_count = 0
         added_count = 0
         updated_count = 0
+        removed_count = 0
+        
+        # 记录新增和修改的账户
+        added_accounts = []
+        modified_accounts = []
         
         for row in cursor.fetchall():
             username, status, created, expiry, profile = row
             
             # 记录服务器端的账户
             server_accounts.add((username, 'localhost'))
+            
+            account_data = {
+                'username': username,
+                'host': 'localhost',
+                'database_name': instance.database_name or 'ORCL',
+                'account_type': None,
+                'plugin': 'oracle',
+                'password_expired': status in ['EXPIRED', 'EXPIRED(GRACE)'],
+                'password_last_changed': created.isoformat() if created else None,
+                'is_locked': status in ['LOCKED', 'LOCKED(TIMED)'],
+                'is_active': status == 'OPEN'
+            }
             
             # 检查账户是否已存在
             existing = Account.query.filter_by(
@@ -458,33 +569,62 @@ class DatabaseService:
                 )
                 db.session.add(account)
                 added_count += 1
+                added_accounts.append(account_data)
             else:
-                # 更新现有账户信息
-                existing.plugin = 'oracle'
-                existing.password_expired = status in ['EXPIRED', 'EXPIRED(GRACE)']
-                existing.password_last_changed = created
-                existing.is_locked = status in ['LOCKED', 'LOCKED(TIMED)']  # Oracle的锁定状态
-                existing.is_active = status == 'OPEN'
-                updated_count += 1
+                # 检查是否有变化
+                has_changes = (
+                    existing.password_expired != (status in ['EXPIRED', 'EXPIRED(GRACE)']) or
+                    existing.password_last_changed != created or
+                    existing.is_locked != (status in ['LOCKED', 'LOCKED(TIMED)']) or
+                    existing.is_active != (status == 'OPEN')
+                )
+                
+                if has_changes:
+                    # 更新现有账户信息
+                    existing.password_expired = status in ['EXPIRED', 'EXPIRED(GRACE)']
+                    existing.password_last_changed = created
+                    existing.is_locked = status in ['LOCKED', 'LOCKED(TIMED)']  # Oracle的锁定状态
+                    existing.is_active = status == 'OPEN'
+                    updated_count += 1
+                    modified_accounts.append(account_data)
         
         # 删除服务器端不存在的本地账户
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
-        deleted_count = 0
+        removed_accounts = []
         
         for local_account in local_accounts:
             if (local_account.username, local_account.host) not in server_accounts:
+                removed_accounts.append({
+                    'username': local_account.username,
+                    'host': local_account.host,
+                    'database_name': local_account.database_name,
+                    'account_type': local_account.account_type,
+                    'plugin': local_account.plugin,
+                    'password_expired': local_account.password_expired,
+                    'password_last_changed': local_account.password_last_changed.isoformat() if local_account.password_last_changed else None,
+                    'is_locked': local_account.is_locked,
+                    'is_active': local_account.is_active
+                })
                 db.session.delete(local_account)
-                deleted_count += 1
+                removed_count += 1
         
-        synced_count = added_count + updated_count + deleted_count
+        synced_count = added_count + updated_count + removed_count
         
         db.session.commit()
         cursor.close()
         
         # 记录同步结果
-        logging.info(f"Oracle账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {deleted_count}, 总计: {synced_count}")
+        logging.info(f"Oracle账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {removed_count}, 总计: {synced_count}")
         
-        return synced_count
+        return {
+            'synced_count': synced_count,
+            'added_count': added_count,
+            'removed_count': removed_count,
+            'modified_count': updated_count,
+            'added_accounts': added_accounts,
+            'removed_accounts': removed_accounts,
+            'modified_accounts': modified_accounts
+        }
     
     def _test_postgresql_connection(self, instance: Instance) -> Dict[str, Any]:
         """测试PostgreSQL连接"""
