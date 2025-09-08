@@ -537,27 +537,39 @@ def account_statistics():
         from sqlalchemy import func
         from app.models import Instance
         
+        # 获取查询参数
+        db_type = request.args.get('db_type')
+        
+        # 构建基础查询
+        base_query = Account.query
+        instance_query = Instance.query.filter_by(is_active=True)
+        
+        # 如果指定了数据库类型，添加筛选条件
+        if db_type:
+            base_query = base_query.join(Instance).filter(Instance.db_type == db_type)
+            instance_query = instance_query.filter(Instance.db_type == db_type)
+        
         # 总账户数
-        total_accounts = Account.query.count()
+        total_accounts = base_query.count()
         
         # 正常账户数（未锁定且未过期）
-        active_accounts = Account.query.filter(
+        active_accounts = base_query.filter(
             Account.is_locked == False,
             Account.password_expired == False
         ).count()
         
         # 锁定账户数
-        locked_accounts = Account.query.filter(
+        locked_accounts = base_query.filter(
             Account.is_locked == True
         ).count()
         
         # 密码过期账户数
-        expired_accounts = Account.query.filter(
+        expired_accounts = base_query.filter(
             Account.password_expired == True
         ).count()
         
         # 总实例数
-        total_instances = Instance.query.filter_by(is_active=True).count()
+        total_instances = instance_query.count()
         
         # 按数据库类型统计账户数
         db_type_stats = db.session.query(
@@ -578,7 +590,10 @@ def account_statistics():
                 'expired_accounts': expired_accounts,
                 'total_instances': total_instances
             },
-            'db_type_distribution': db_type_distribution
+            'db_type_distribution': db_type_distribution,
+            'filter': {
+                'db_type': db_type
+            }
         })
         
     except Exception as e:
