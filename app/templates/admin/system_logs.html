@@ -205,10 +205,10 @@ async function loadLogStats() {
 
 // 更新日志统计
 function updateLogStats(stats) {
-    document.getElementById('total-logs').textContent = stats.total || 0;
-    document.getElementById('error-logs').textContent = stats.error || 0;
-    document.getElementById('warning-logs').textContent = stats.warning || 0;
-    document.getElementById('info-logs').textContent = stats.info || 0;
+    document.getElementById('total-logs').textContent = stats.total_logs || 0;
+    document.getElementById('error-logs').textContent = stats.level_distribution?.ERROR || 0;
+    document.getElementById('warning-logs').textContent = stats.level_distribution?.WARNING || 0;
+    document.getElementById('info-logs').textContent = stats.level_distribution?.INFO || 0;
 }
 
 // 加载日志列表
@@ -258,7 +258,7 @@ function updateLogsTable(logs) {
         
         html += `
             <tr>
-                <td>${new Date(log.created_at).toLocaleString()}</td>
+                <td>${new Date(log.timestamp).toLocaleString()}</td>
                 <td><span class="badge ${levelClass}">${levelIcon} ${log.level}</span></td>
                 <td>${log.module || '--'}</td>
                 <td class="text-truncate" style="max-width: 300px;" title="${log.message}">${log.message}</td>
@@ -366,7 +366,7 @@ async function showLogDetail(logId) {
         detailContent.innerHTML = `
                 <div class="row">
                     <div class="col-md-6">
-                        <strong>时间:</strong> ${new Date(log.created_at).toLocaleString()}
+                        <strong>时间:</strong> ${new Date(log.created_at || log.timestamp).toLocaleString()}
                     </div>
                     <div class="col-md-6">
                         <strong>级别:</strong> <span class="badge ${getLevelClass(log.level)}">${log.level}</span>
