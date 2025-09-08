@@ -685,46 +685,13 @@ function showAlert(type, message) {
 
 // 页面加载完成后加载统计信息
 document.addEventListener('DOMContentLoaded', function() {
-    loadAccountStatistics();
+    // 从URL获取当前筛选的数据库类型
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentDbType = urlParams.get('db_type');
     
-    // 为数据库类型按钮添加点击事件
-    addDatabaseTypeClickHandlers();
+    // 加载对应类型的统计信息
+    loadAccountStatistics(currentDbType);
 });
-
-// 添加数据库类型按钮点击事件
-function addDatabaseTypeClickHandlers() {
-    const dbTypeButtons = document.querySelectorAll('.btn-group .btn');
-    dbTypeButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // 更新按钮状态
-            updateButtonStates(this);
-            
-            // 获取数据库类型
-            const url = new URL(this.href);
-            const dbType = url.searchParams.get('db_type');
-            
-            // 加载对应类型的统计信息
-            loadAccountStatistics(dbType);
-            
-            // 跳转到新页面
-            window.location.href = this.href;
-        });
-    });
-}
-
-// 更新按钮状态
-function updateButtonStates(activeButton) {
-    const allButtons = document.querySelectorAll('.btn-group .btn');
-    allButtons.forEach(btn => {
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-outline-primary');
-    });
-    
-    activeButton.classList.remove('btn-outline-primary');
-    activeButton.classList.add('btn-primary');
-}
 
 // 加载账户统计信息
 function loadAccountStatistics(dbType = null) {
@@ -733,9 +700,15 @@ function loadAccountStatistics(dbType = null) {
         url += `?db_type=${encodeURIComponent(dbType)}`;
     }
     
+    console.log('Loading statistics for db_type:', dbType, 'URL:', url);
+    
     fetch(url)
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
     .then(data => {
+        console.log('Statistics data:', data);
         if (data.success) {
             updateStatisticsCards(data.statistics);
         } else {
