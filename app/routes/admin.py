@@ -393,31 +393,6 @@ def test_email_config():
         logger.error(f"测试邮件配置失败: {e}")
         return APIResponse.server_error("测试邮件配置失败")
 
-@admin_bp.route('/backup', methods=['POST'])
-@login_required
-@admin_required
-def create_backup():
-    """创建备份"""
-    try:
-        backup_type = request.json.get('type', 'full')  # 'full', 'database', 'files'
-        
-        # 这里可以添加备份逻辑
-        # 示例：调用备份脚本
-        import subprocess
-        result = subprocess.run(
-            ['python', 'scripts/backup_manager.py', '--type', backup_type],
-            capture_output=True,
-            text=True
-        )
-        
-        if result.returncode == 0:
-            return APIResponse.success(message=f"{backup_type}备份创建成功")
-        else:
-            return APIResponse.error(f"备份创建失败: {result.stderr}")
-        
-    except Exception as e:
-        logger.error(f"创建备份失败: {e}")
-        return APIResponse.server_error("创建备份失败")
 
 @admin_bp.route('/constants', methods=['GET'])
 @login_required
@@ -885,18 +860,6 @@ def clear_cache():
         logger.error(f"清除缓存失败: {e}")
         return APIResponse.server_error("清除缓存失败")
 
-@admin_bp.route('/backup-database', methods=['POST'])
-@login_required
-@admin_required
-def backup_database():
-    """备份数据库"""
-    try:
-        # 这里应该实现数据库备份逻辑
-        logger.info("数据库备份请求")
-        return APIResponse.success(message="数据库备份已开始")
-    except Exception as e:
-        logger.error(f"备份数据库失败: {e}")
-        return APIResponse.server_error("备份数据库失败")
 
 @admin_bp.route('/health-check', methods=['POST'])
 @login_required
@@ -1004,14 +967,4 @@ def users():
         logger.error(f"获取用户管理页面失败: {e}")
         return APIResponse.server_error("获取用户管理页面失败")
 
-@admin_bp.route('/data-management', methods=['GET'])
-@login_required
-@admin_required
-def data_management():
-    """数据管理"""
-    try:
-        return render_template('admin/data_management.html')
-    except Exception as e:
-        logger.error(f"获取数据管理页面失败: {e}")
-        return APIResponse.server_error("获取数据管理页面失败")
 
