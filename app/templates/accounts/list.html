@@ -685,22 +685,36 @@ function showAlert(type, message) {
 
 // 页面加载完成后加载统计信息
 document.addEventListener('DOMContentLoaded', function() {
-    // 从URL获取当前筛选的数据库类型
-    const currentDbType = getUrlParameter('db_type');
+    // 从URL路径获取当前筛选的数据库类型
+    const currentDbType = getDbTypeFromPath();
     
-    console.log('Page loaded, current db_type from URL:', currentDbType);
+    console.log('Page loaded, current db_type from path:', currentDbType);
     console.log('Full URL:', window.location.href);
-    console.log('Search params:', window.location.search);
+    console.log('Pathname:', window.location.pathname);
     
     // 加载对应类型的统计信息
     loadAccountStatistics(currentDbType);
 });
 
-// 获取URL参数的辅助函数
-function getUrlParameter(name) {
-    const url = window.location.href;
-    const urlObj = new URL(url);
-    return urlObj.searchParams.get(name);
+// 从URL路径获取数据库类型的辅助函数
+function getDbTypeFromPath() {
+    const pathname = window.location.pathname;
+    console.log('Pathname:', pathname);
+    
+    // URL格式: /accounts/list/<db_type>
+    const pathParts = pathname.split('/');
+    console.log('Path parts:', pathParts);
+    
+    // 查找 'list' 后面的部分
+    const listIndex = pathParts.indexOf('list');
+    if (listIndex !== -1 && listIndex + 1 < pathParts.length) {
+        const dbType = pathParts[listIndex + 1];
+        console.log('Extracted db_type:', dbType);
+        return dbType;
+    }
+    
+    console.log('No db_type found in path');
+    return null;
 }
 
 // 加载账户统计信息
