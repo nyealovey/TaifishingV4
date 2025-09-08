@@ -10,6 +10,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models.log import Log
 from app.models.user import User
 from app import db
+from app.utils.api_response import APIResponse
 import logging
 from datetime import datetime, timedelta
 
@@ -19,7 +20,125 @@ logs_bp = Blueprint('logs', __name__)
 @logs_bp.route('/')
 @login_required
 def index():
-    """日志管理首页"""
+    """系统日志页面"""
+    return render_template('admin/system_logs.html')
+
+@logs_bp.route('/api', methods=['GET'])
+@login_required
+def get_system_logs():
+    """获取系统日志API"""
+    try:
+        from app.models.log import Log
+        
+        page = request.args.get('page', 1, type=int)
+        size = request.args.get('size', 20, type=int)
+        level = request.args.get('level', '', type=str)
+        time_range = request.args.get('time_range', '', type=str)
+        keyword = request.args.get('keyword', '', type=str)
+        
+        # 构建查询
+        query = Log.query
+        
+        if level and level != 'all':
+            query = query.filter(Log.level == level)
+        
+        if keyword:
+            query = query.filter(Log.message.contains(keyword))
+        
+        if time_range:
+            if time_range == 'today':
+                today = datetime.now().date()
+                query = query.filter(db.func.date(Log.created_at) == today)
+            elif time_range == 'week':
+                week_ago = datetime.now() - timedelta(days=7)
+                query = query.filter(Log.created_at >= week_ago)
+            elif time_range == 'month':
+                month_ago = datetime.now() - timedelta(days=30)
+                query = query.filter(Log.created_at >= month_ago)
+        
+        # 分页查询
+        logs_pagination = query.order_by(Log.created_at.desc()).paginate(
+            page=page, per_page=size, error_out=False
+        )
+        
+        # 转换为前端需要的格式
+        logs = []
+        for log in logs_pagination.items:
+            logs.append({
+                'id': log.id,
+                'timestamp': log.created_at.isoformat(),
+                'level': log.level,
+                'module': log.module or 'system',
+                'message': log.message,
+                'details': log.details,
+                'user_id': log.user_id
+            })
+        
+        pagination = {
+            'page': page,
+            'pages': logs_pagination.pages,
+            'per_page': size,
+            'total': logs_pagination.total,
+            'has_next': logs_pagination.has_next,
+            'has_prev': logs_pagination.has_prev
+        }
+        
+        return APIResponse.success(data={
+            'logs': logs,
+            'pagination': pagination
+        })
+        
+    except Exception as e:
+        logging.error(f"获取系统日志失败: {e}")
+        return APIResponse.server_error("获取系统日志失败")
+
+@logs_bp.route('/stats', methods=['GET'])
+@login_required
+def get_logs_stats():
+    """获取日志统计"""
+    try:
+        from app.models.log import Log
+        from sqlalchemy import func
+        
+        # 总日志数
+        total_logs = Log.query.count()
+        
+        # 按级别统计
+        level_stats = db.session.query(
+            Log.level, 
+            func.count(Log.id).label('count')
+        ).group_by(Log.level).all()
+        
+        level_distribution = {stat.level: stat.count for stat in level_stats}
+        
+        # 按模块统计
+        module_stats = db.session.query(
+            Log.module, 
+            func.count(Log.id).label('count')
+        ).group_by(Log.module).all()
+        
+        module_distribution = {stat.module or 'unknown': stat.count for stat in module_stats}
+        
+        # 最近24小时的日志
+        recent_logs = Log.query.filter(
+            Log.created_at >= datetime.now() - timedelta(hours=24)
+        ).count()
+        
+        return APIResponse.success(data={
+            'total_logs': total_logs,
+            'level_distribution': level_distribution,
+            'module_distribution': module_distribution,
+            'recent_logs': recent_logs
+        })
+        
+    except Exception as e:
+        logging.error(f"获取日志统计失败: {e}")
+        return APIResponse.server_error("获取日志统计失败")
+
+@logs_bp.route('/old')
+@login_required
+def old_index():
+    """旧版日志管理首页"""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     log_level = request.args.get('log_level', '', type=str)

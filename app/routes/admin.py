@@ -476,46 +476,6 @@ def get_system_info():
         logger.error(f"获取系统信息失败: {e}")
         return APIResponse.server_error("获取系统信息失败")
 
-@admin_bp.route('/system-logs', methods=['GET'])
-@login_required
-@admin_required
-def system_logs_page():
-    """系统日志页面"""
-    return render_template('admin/system_logs.html')
-
-@admin_bp.route('/system-logs/api', methods=['GET'])
-@login_required
-@admin_required
-def get_system_logs():
-    """获取系统日志"""
-    try:
-        limit = request.args.get('limit', 20, type=int)
-        # 这里应该从日志文件中读取
-        # 暂时返回模拟数据
-        logs = [
-            {
-                'timestamp': datetime.now().isoformat(),
-                'level': 'INFO',
-                'module': 'app',
-                'message': '应用启动成功'
-            },
-            {
-                'timestamp': datetime.now().isoformat(),
-                'level': 'WARNING',
-                'module': 'performance_monitor',
-                'message': '内存使用率超过80%'
-            },
-            {
-                'timestamp': datetime.now().isoformat(),
-                'level': 'ERROR',
-                'module': 'database',
-                'message': '数据库连接超时'
-            }
-        ]
-        return APIResponse.success(data=logs[:limit])
-    except Exception as e:
-        logger.error(f"获取系统日志失败: {e}")
-        return APIResponse.server_error("获取系统日志失败")
 
 @admin_bp.route('/logs', methods=['GET'])
 @login_required
