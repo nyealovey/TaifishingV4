@@ -1051,7 +1051,37 @@ class DatabaseService:
                 # 获取数据库版本
                 cursor.execute('SELECT * FROM v$version WHERE rownum = 1')
                 version_result = cursor.fetchone()
-                database_version = version_result[0] if version_result else None
+                full_version = version_result[0] if version_result else None
+                
+                # 提取简洁的版本号（如11g, 12c, 19c等）
+                import re
+                if full_version:
+                    # 匹配11g, 12c, 18c, 19c, 21c等格式
+                    match = re.search(r"Oracle Database (\d+[gc])", full_version)
+                    if match:
+                        database_version = match.group(1)
+                    else:
+                        # 如果没有找到g或c后缀，尝试匹配版本号
+                        match = re.search(r"Oracle Database (\d+)", full_version)
+                        if match:
+                            version_num = match.group(1)
+                            # 根据版本号添加后缀
+                            if version_num.startswith('11'):
+                                database_version = '11g'
+                            elif version_num.startswith('12'):
+                                database_version = '12c'
+                            elif version_num.startswith('18'):
+                                database_version = '18c'
+                            elif version_num.startswith('19'):
+                                database_version = '19c'
+                            elif version_num.startswith('21'):
+                                database_version = '21c'
+                            else:
+                                database_version = version_num
+                        else:
+                            database_version = full_version
+                else:
+                    database_version = None
             
             conn.close()
             
@@ -2007,10 +2037,30 @@ class DatabaseService:
             cursor.execute("SELECT * FROM v$version WHERE rownum = 1")
             version = cursor.fetchone()[0]
             cursor.close()
-            # 提取版本号，例如 "Oracle Database 19c Enterprise Edition Release 19.0.0.0.0"
+            # 提取版本号，例如 "Oracle Database 11g Release 11.2.0.1.0" -> "11g"
             import re
-            match = re.search(r"Oracle Database (\d+c?)", version)
-            return match.group(1) if match else version
+            # 匹配11g, 12c, 18c, 19c, 21c等格式
+            match = re.search(r"Oracle Database (\d+[gc])", version)
+            if match:
+                return match.group(1)
+            # 如果没有找到g或c后缀，尝试匹配版本号
+            match = re.search(r"Oracle Database (\d+)", version)
+            if match:
+                version_num = match.group(1)
+                # 根据版本号添加后缀
+                if version_num.startswith('11'):
+                    return '11g'
+                elif version_num.startswith('12'):
+                    return '12c'
+                elif version_num.startswith('18'):
+                    return '18c'
+                elif version_num.startswith('19'):
+                    return '19c'
+                elif version_num.startswith('21'):
+                    return '21c'
+                else:
+                    return version_num
+            return version
         except Exception as e:
             logging.error(f"获取Oracle版本失败: {e}")
             return None
