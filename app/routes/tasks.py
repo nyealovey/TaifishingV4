@@ -314,6 +314,72 @@ def detail(task_id):
     
     return render_template('tasks/detail.html', task=task)
 
+@tasks_bp.route('/<int:task_id>/executions')
+@login_required
+def task_executions(task_id):
+    """获取任务执行记录"""
+    try:
+        from app.models.sync_data import SyncData
+        from sqlalchemy import desc
+        from app.utils.timezone import format_china_time
+        
+        # 获取任务
+        task = Task.query.get_or_404(task_id)
+        
+        # 获取分页参数
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        
+        # 根据任务类型查询执行记录
+        if task.task_type == 'sync_accounts':
+            # 查询账户同步记录
+            query = SyncData.query.filter(
+                SyncData.sync_type == 'task'
+            ).order_by(desc(SyncData.sync_time))
+        else:
+            # 其他任务类型暂时返回空
+            query = SyncData.query.filter_by(id=0)
+        
+        # 分页查询
+        executions = query.paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+        
+        # 转换为前端需要的格式
+        execution_list = []
+        for execution in executions.items:
+            execution_list.append({
+                'id': execution.id,
+                'sync_time': format_china_time(execution.sync_time, '%Y-%m-%d %H:%M:%S'),
+                'status': execution.status,
+                'message': execution.message,
+                'synced_count': execution.synced_count,
+                'added_count': execution.added_count,
+                'removed_count': execution.removed_count,
+                'modified_count': execution.modified_count,
+                'instance_name': execution.instance.name if execution.instance else '未知实例'
+            })
+        
+        return jsonify({
+            'success': True,
+            'executions': execution_list,
+            'pagination': {
+                'page': executions.page,
+                'pages': executions.pages,
+                'per_page': executions.per_page,
+                'total': executions.total,
+                'has_next': executions.has_next,
+                'has_prev': executions.has_prev
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"获取任务执行记录失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'获取任务执行记录失败: {str(e)}'
+        }), 500
+
 @tasks_bp.route('/<int:task_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit(task_id):

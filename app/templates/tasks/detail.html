@@ -156,4 +156,186 @@
         </div>
     </div>
 </div>
+
+<!-- 任务执行记录 -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>任务执行记录
+                </h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="loadTaskExecutions()">
+                    <i class="fas fa-sync-alt me-1"></i>刷新
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>执行时间</th>
+                                <th>状态</th>
+                                <th>实例</th>
+                                <th>同步账户数</th>
+                                <th>新增</th>
+                                <th>删除</th>
+                                <th>修改</th>
+                                <th>消息</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="task-executions-body">
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>加载中...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <nav aria-label="执行记录分页">
+                    <ul class="pagination pagination-sm mb-0 justify-content-center" id="executions-pagination">
+                        <!-- 分页内容将通过JavaScript动态生成 -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentExecutionPage = 1;
+let totalExecutionPages = 1;
+
+// 页面加载完成后加载执行记录
+document.addEventListener('DOMContentLoaded', function() {
+    loadTaskExecutions();
+});
+
+// 加载任务执行记录
+async function loadTaskExecutions(page = 1) {
+    try {
+        const response = await fetch(`/tasks/{{ task.id }}/executions?page=${page}&per_page=20`);
+        const data = await response.json();
+        
+        if (data.success) {
+            updateExecutionsTable(data.executions);
+            updateExecutionsPagination(data.pagination);
+            currentExecutionPage = page;
+        } else {
+            showAlert('error', '加载执行记录失败: ' + data.error);
+        }
+    } catch (error) {
+        console.error('加载执行记录失败:', error);
+        showAlert('error', '加载执行记录失败');
+    }
+}
+
+// 更新执行记录表格
+function updateExecutionsTable(executions) {
+    const tbody = document.getElementById('task-executions-body');
+    
+    if (executions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">暂无执行记录</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    executions.forEach(execution => {
+        const statusClass = execution.status === 'success' ? 'bg-success' : 'bg-danger';
+        const statusIcon = execution.status === 'success' ? 'fas fa-check-circle' : 'fas fa-times-circle';
+        
+        html += `
+            <tr>
+                <td>${execution.sync_time}</td>
+                <td><span class="badge ${statusClass}"><i class="${statusIcon}"></i> ${execution.status}</span></td>
+                <td>${execution.instance_name}</td>
+                <td>${execution.synced_count || 0}</td>
+                <td><span class="badge bg-success">${execution.added_count || 0}</span></td>
+                <td><span class="badge bg-warning">${execution.removed_count || 0}</span></td>
+                <td><span class="badge bg-info">${execution.modified_count || 0}</span></td>
+                <td class="text-truncate" style="max-width: 200px;" title="${execution.message || ''}">${execution.message || '-'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewExecutionDetail(${execution.id})" title="查看详情">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+// 更新执行记录分页
+function updateExecutionsPagination(pagination) {
+    const paginationContainer = document.getElementById('executions-pagination');
+    totalExecutionPages = pagination.pages || 1;
+    
+    let html = '';
+    
+    // 上一页
+    html += `
+        <li class="page-item ${currentExecutionPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="loadTaskExecutions(${currentExecutionPage - 1})">上一页</a>
+        </li>
+    `;
+    
+    // 页码
+    const startPage = Math.max(1, currentExecutionPage - 2);
+    const endPage = Math.min(totalExecutionPages, currentExecutionPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        html += `
+            <li class="page-item ${i === currentExecutionPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="loadTaskExecutions(${i})">${i}</a>
+            </li>
+        `;
+    }
+    
+    // 下一页
+    html += `
+        <li class="page-item ${currentExecutionPage === totalExecutionPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="loadTaskExecutions(${currentExecutionPage + 1})">下一页</a>
+        </li>
+    `;
+    
+    paginationContainer.innerHTML = html;
+}
+
+// 查看执行详情
+function viewExecutionDetail(executionId) {
+    // 这里可以添加查看执行详情的功能
+    showAlert('info', '查看执行详情功能开发中...');
+}
+
+// 显示通知
+function showAlert(type, message) {
+    const alertClass = type === 'error' ? 'alert-danger' : 
+                     type === 'success' ? 'alert-success' : 
+                     type === 'warning' ? 'alert-warning' : 'alert-info';
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 3000);
+}
+</script>
 {% endblock %}
