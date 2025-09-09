@@ -245,13 +245,24 @@ class TaskExecutor:
                 total_removed = sum(r.get('removed_count', 0) for r in results if r.get('success', False))
                 total_modified = sum(r.get('modified_count', 0) for r in results if r.get('success', False))
                 
-                # 构建汇总消息
+                # 构建汇总消息和实例状态详情
                 if failed_count == 0:
                     status = 'success'
                     message = f'任务执行完成，成功:{success_count}，失败:{failed_count}'
                 else:
                     status = 'failed'
                     message = f'任务执行完成，成功:{success_count}，失败:{failed_count}'
+                
+                # 构建实例执行状态详情
+                instance_details = []
+                for result in results:
+                    if 'instance_name' in result:
+                        instance_details.append({
+                            'name': result['instance_name'],
+                            'status': 'success' if result.get('success', False) else 'failed',
+                            'message': result.get('message', result.get('error', '')),
+                            'synced_count': result.get('synced_count', 0)
+                        })
                 
                 # 创建汇总记录（不关联具体实例）
                 sync_record = SyncData(
@@ -263,7 +274,8 @@ class TaskExecutor:
                     synced_count=total_synced,
                     added_count=total_added,
                     removed_count=total_removed,
-                    modified_count=total_modified
+                    modified_count=total_modified,
+                    data={'instance_details': instance_details}  # 保存实例详情到data字段
                 )
                 db.session.add(sync_record)
                 db.session.commit()
