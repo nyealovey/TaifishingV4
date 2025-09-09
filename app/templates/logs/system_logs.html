@@ -272,7 +272,7 @@ function updateLogsTable(logs) {
         
         html += `
             <tr>
-                <td>${new Date(log.timestamp).toLocaleString()}</td>
+                <td>${log.timestamp}</td>
                 <td><span class="badge ${levelClass}"><i class="${levelIcon}"></i> ${log.level}</span></td>
                 <td>${log.module || '--'}</td>
                 <td class="text-truncate" style="max-width: 300px;" title="${log.message}">${log.message}</td>
@@ -355,10 +355,15 @@ async function showLogDetail(logId) {
         const log = data;
         const detailContent = document.getElementById('log-detail-content');
         
+        // 格式化时间显示
+        const timeDisplay = log.created_at ? 
+            new Date(log.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}) : 
+            log.timestamp;
+        
         detailContent.innerHTML = `
                 <div class="row">
                     <div class="col-md-6">
-                        <strong>时间:</strong> ${new Date(log.created_at || log.timestamp).toLocaleString()}
+                        <strong>时间:</strong> ${timeDisplay}
                     </div>
                     <div class="col-md-6">
                         <strong>级别:</strong> <span class="badge ${getLevelClass(log.level)}"><i class="${getLevelIcon(log.level)}"></i> ${log.level}</span>

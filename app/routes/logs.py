@@ -63,11 +63,12 @@ def get_system_logs():
         )
         
         # 转换为前端需要的格式
+        from app.utils.timezone import format_china_time
         logs = []
         for log in logs_pagination.items:
             logs.append({
                 'id': log.id,
-                'timestamp': log.created_at.isoformat(),
+                'timestamp': format_china_time(log.created_at, '%Y-%m-%d %H:%M:%S'),
                 'level': log.level,
                 'module': log.module or 'system',
                 'message': log.message,
@@ -237,7 +238,11 @@ def detail(log_id):
     log = Log.query.get_or_404(log_id)
     
     if request.is_json:
-        return jsonify(log.to_dict())
+        # 格式化时间显示
+        from app.utils.timezone import format_china_time
+        log_dict = log.to_dict()
+        log_dict['created_at'] = format_china_time(log.created_at, '%Y-%m-%d %H:%M:%S')
+        return jsonify(log_dict)
     
     return render_template('logs/detail.html', log=log)
 
@@ -288,9 +293,10 @@ def export():
         writer.writerow(['时间', '级别', '类型', '模块', '用户', '消息', '详情'])
         
         # 写入数据
+        from app.utils.timezone import format_china_time
         for log in logs:
             writer.writerow([
-                log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else '',
+                format_china_time(log.created_at, '%Y-%m-%d %H:%M:%S') if log.created_at else '',
                 log.level,
                 log.log_type,
                 log.module,
