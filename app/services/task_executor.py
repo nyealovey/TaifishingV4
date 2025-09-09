@@ -99,9 +99,6 @@ class TaskExecutor:
                                 }
                             })
                     
-                    # 更新任务状态
-                    self._update_task_status(task, total_success, total_failed, results)
-                    
                     result = {
                         'success': total_failed == 0,
                         'message': f'任务执行完成，成功: {total_success}, 失败: {total_failed}',
@@ -129,6 +126,13 @@ class TaskExecutor:
                     'success': False,
                     'error': f'任务执行超时 ({timeout}秒)'
                 }
+            
+            # 更新任务状态 - 重新查询任务对象确保是最新的
+            task = Task.query.get(task_id)
+            if result['success']:
+                self._update_task_status(task, result['total_success'], result['total_failed'], result['results'])
+            else:
+                self._update_task_status(task, 0, 1, [{'instance_name': 'unknown', 'result': result}])
             
             return result
     
@@ -237,27 +241,26 @@ class TaskExecutor:
             failed_count: 失败次数
             results: 执行结果列表
         """
-        from app import create_app
-        
-        # 创建应用上下文
-        app = create_app()
-        with app.app_context():
-            try:
-                task.run_count += 1
-                if failed_count == 0:
-                    task.success_count += 1
-                    task.last_status = 'success'
-                    task.last_message = f'成功执行，处理了 {success_count} 个实例'
-                else:
-                    task.last_status = 'failed'
-                    task.last_message = f'执行失败，成功: {success_count}, 失败: {failed_count}'
-                
-                task.last_run = datetime.utcnow()
-                task.last_run_at = datetime.utcnow()  # 兼容字段
-                
-                db.session.commit()
-            except Exception as e:
-                self.logger.error(f"更新任务状态失败: {e}")
+        try:
+            self.logger.info(f"更新任务状态: {task.name}, 成功: {success_count}, 失败: {failed_count}")
+            
+            task.run_count += 1
+            if failed_count == 0:
+                task.success_count += 1
+                task.last_status = 'success'
+                task.last_message = f'成功执行，处理了 {success_count} 个实例'
+            else:
+                task.last_status = 'failed'
+                task.last_message = f'执行失败，成功: {success_count}, 失败: {failed_count}'
+            
+            task.last_run = datetime.utcnow()
+            task.last_run_at = datetime.utcnow()  # 兼容字段
+            
+            db.session.commit()
+            self.logger.info(f"任务状态更新完成: 运行次数={task.run_count}, 成功次数={task.success_count}")
+        except Exception as e:
+            self.logger.error(f"更新任务状态失败: {e}")
+            db.session.rollback()
     
     def execute_all_active_tasks(self):
         """
