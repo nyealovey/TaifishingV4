@@ -22,6 +22,14 @@ from dotenv import load_dotenv
 # 加载环境变量
 load_dotenv()
 
+# 设置Oracle Instant Client环境变量
+oracle_instant_client_path = os.getenv('DYLD_LIBRARY_PATH')
+if oracle_instant_client_path and os.path.exists(oracle_instant_client_path):
+    current_dyld_path = os.environ.get('DYLD_LIBRARY_PATH', '')
+    if oracle_instant_client_path not in current_dyld_path:
+        os.environ['DYLD_LIBRARY_PATH'] = f"{oracle_instant_client_path}:{current_dyld_path}"
+        print(f"🔧 已设置Oracle Instant Client环境变量: {oracle_instant_client_path}")
+
 # 初始化扩展
 db = SQLAlchemy()
 migrate = Migrate()
