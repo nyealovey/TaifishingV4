@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # Redis服务
+  redis:
+    image: redis:7-alpine
+    container_name: taifish_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # 泰摸鱼吧应用
+  taifish_app:
+    build: .
+    container_name: taifish_app
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./userdata:/app/userdata
+      - ./logs:/app/logs
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=sqlite:///app/userdata/taifish_prod.db
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo '🚀 启动泰摸鱼吧应用...' &&
+        python start_production.py
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Beat调度器
+  celery_beat:
+    build: .
+    container_name: taifish_celery_beat
+    volumes:
+      - ./userdata:/app/userdata
+      - ./logs:/app/logs
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=sqlite:///app/userdata/taifish_prod.db
+    depends_on:
+      redis:
+        condition: service_healthy
+      taifish_app:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo '⏰ 启动Celery Beat调度器...' &&
+        python -m celery -A app.celery beat --loglevel=info
+      "
+
+  # Celery Worker工作进程
+  celery_worker:
+    build: .
+    container_name: taifish_celery_worker
+    volumes:
+      - ./userdata:/app/userdata
+      - ./logs:/app/logs
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=sqlite:///app/userdata/taifish_prod.db
+    depends_on:
+      redis:
+        condition: service_healthy
+      taifish_app:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo '👷 启动Celery Worker工作进程...' &&
+        python -m celery -A app.celery worker --loglevel=info --concurrency=4
+      "
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: taifish_network
