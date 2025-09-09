@@ -104,6 +104,13 @@ class Task(db.Model):
         """获取所有内置任务"""
         return Task.query.filter_by(is_builtin=True).all()
     
+    @property
+    def success_rate(self):
+        """计算成功率"""
+        if self.run_count == 0:
+            return 0.0
+        return round((self.success_count / self.run_count * 100), 2)
+    
     def get_matching_instances(self):
         """获取匹配的实例列表"""
         from app.models.instance import Instance
