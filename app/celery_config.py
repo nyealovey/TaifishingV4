@@ -20,13 +20,17 @@ celery.conf.update(
     task_serializer='json',
     accept_content=['json'],
     result_serializer='json',
-    timezone='UTC',
-    enable_utc=True,
+    timezone='Asia/Shanghai',  # 使用中国时区
+    enable_utc=False,  # 不使用UTC时间
     task_track_started=True,
     task_time_limit=30 * 60,  # 30分钟
     task_soft_time_limit=25 * 60,  # 25分钟
     worker_prefetch_multiplier=1,
     worker_max_tasks_per_child=1000,
+    beat_schedule_filename='celerybeat-schedule',  # Beat调度文件
+    beat_max_loop_interval=5,  # Beat最大循环间隔
+    beat_sync_every=1,  # 同步频率
+    beat_schedule_expires=60,  # 调度过期时间
 )
 
 # 定时任务配置
