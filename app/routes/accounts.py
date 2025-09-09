@@ -368,9 +368,13 @@ def sync_history():
             else:
                 sync_type_display = '未知'
             
+            # 使用东八区时间格式化
+            from app.utils.timezone import format_china_time
+            china_time_str = format_china_time(latest_time, '%Y-%m-%d %H:%M:%S')
+            
             history.append({
                 'id': sync_id,
-                'created_at': latest_time.strftime('%Y-%m-%d %H:%M:%S'),
+                'created_at': china_time_str,
                 'total_instances': data['total_instances'],
                 'success_count': data['success_count'],
                 'failed_count': data['failed_count'],
@@ -498,7 +502,9 @@ def sync_statistics():
             SyncData.sync_time >= week_ago
         ).order_by(desc(SyncData.sync_time)).first()
         
-        last_sync_time = last_sync.sync_time.strftime('%Y-%m-%d %H:%M:%S') if last_sync else None
+        # 使用东八区时间格式化
+        from app.utils.timezone import format_china_time
+        last_sync_time = format_china_time(last_sync.sync_time, '%Y-%m-%d %H:%M:%S') if last_sync else None
         
         # 按日期统计趋势数据
         trend_data = []
