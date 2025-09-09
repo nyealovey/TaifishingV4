@@ -157,7 +157,21 @@ class TaskExecutor:
                 # 对于账户同步任务，使用统一的账户同步服务
                 if task.task_type == 'sync_accounts':
                     from app.services.account_sync_service import account_sync_service
+                    
+                    # 执行账户同步
                     result = account_sync_service.sync_accounts(instance, sync_type='task')
+                    
+                    # 如果同步成功，自动清理多余账户
+                    if result.get('success', False):
+                        cleanup_result = account_sync_service.cleanup_orphaned_accounts(instance)
+                        if cleanup_result.get('success', False):
+                            # 将清理结果合并到同步结果中
+                            result['cleanup_removed_count'] = cleanup_result.get('removed_count', 0)
+                            result['cleanup_message'] = cleanup_result.get('message', '')
+                        else:
+                            # 清理失败不影响同步结果，但记录日志
+                            self.logger.warning(f"清理多余账户失败: {cleanup_result.get('error', '未知错误')}")
+                    
                     return result
                 
                 # 对于数据库大小同步任务，使用数据库大小同步服务

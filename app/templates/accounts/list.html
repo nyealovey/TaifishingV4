@@ -712,10 +712,6 @@ function showAlert(type, message) {
 
 // 清理多余账户
 function cleanupOrphanedAccounts() {
-    if (!confirm('确定要清理多余的账户吗？\n\n此操作将删除服务器上不存在的本地账户记录。\n\n注意：此操作不可恢复！')) {
-        return;
-    }
-    
     // 显示加载状态
     const button = event.target;
     const originalText = button.innerHTML;

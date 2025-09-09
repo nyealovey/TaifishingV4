@@ -260,6 +260,7 @@ class AccountSyncService:
         accounts = cursor.fetchall()
         synced_count = 0
         added_count = 0
+        removed_count = 0
         modified_count = 0
         
         for account_data in accounts:
@@ -591,6 +592,178 @@ class AccountSyncService:
             'added_count': added_count,
             'removed_count': 0,
             'modified_count': modified_count
+        }
+    
+    def cleanup_orphaned_accounts(self, instance: Instance) -> Dict[str, Any]:
+        """
+        清理多余账户（服务器上不存在的本地账户）
+        
+        Args:
+            instance: 数据库实例
+            
+        Returns:
+            Dict: 清理结果
+        """
+        try:
+            # 获取数据库连接
+            conn = self._get_connection(instance)
+            if not conn:
+                return {
+                    'success': False,
+                    'error': '无法获取数据库连接'
+                }
+            
+            removed_count = 0
+            removed_accounts = []
+            
+            # 根据数据库类型执行清理
+            if instance.db_type == 'mysql':
+                result = self._cleanup_mysql_orphaned_accounts(instance, conn)
+            elif instance.db_type == 'postgresql':
+                result = self._cleanup_postgresql_orphaned_accounts(instance, conn)
+            elif instance.db_type == 'sqlserver':
+                result = self._cleanup_sqlserver_orphaned_accounts(instance, conn)
+            else:
+                return {
+                    'success': False,
+                    'error': f'不支持的数据库类型: {instance.db_type}'
+                }
+            
+            removed_count = result['removed_count']
+            removed_accounts = result['removed_accounts']
+            
+            return {
+                'success': True,
+                'message': f'清理完成，删除了 {removed_count} 个多余账户',
+                'removed_count': removed_count,
+                'removed_accounts': removed_accounts
+            }
+            
+        except Exception as e:
+            self.logger.error(f"清理多余账户失败: {str(e)}")
+            return {
+                'success': False,
+                'error': f'清理多余账户失败: {str(e)}'
+            }
+    
+    def _cleanup_mysql_orphaned_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
+        """清理MySQL多余账户"""
+        cursor = conn.cursor()
+        
+        # 获取服务器端所有账户
+        cursor.execute("""
+            SELECT User, Host
+            FROM mysql.user
+            WHERE User NOT LIKE 'mysql.%'
+            ORDER BY User, Host
+        """)
+        
+        server_accounts = set()
+        for row in cursor.fetchall():
+            server_accounts.add((row[0], row[1]))
+        
+        # 获取本地账户并清理
+        local_accounts = Account.query.filter_by(instance_id=instance.id).all()
+        removed_accounts = []
+        removed_count = 0
+        
+        for local_account in local_accounts:
+            if (local_account.username, local_account.host) not in server_accounts:
+                removed_accounts.append({
+                    'username': local_account.username,
+                    'host': local_account.host,
+                    'database_name': local_account.database_name,
+                    'account_type': local_account.account_type
+                })
+                db.session.delete(local_account)
+                removed_count += 1
+        
+        db.session.commit()
+        cursor.close()
+        
+        return {
+            'removed_count': removed_count,
+            'removed_accounts': removed_accounts
+        }
+    
+    def _cleanup_postgresql_orphaned_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
+        """清理PostgreSQL多余账户"""
+        cursor = conn.cursor()
+        
+        # 获取服务器端所有账户
+        cursor.execute("""
+            SELECT usename
+            FROM pg_user
+            ORDER BY usename
+        """)
+        
+        server_accounts = set()
+        for row in cursor.fetchall():
+            server_accounts.add(row[0])
+        
+        # 获取本地账户并清理
+        local_accounts = Account.query.filter_by(instance_id=instance.id).all()
+        removed_accounts = []
+        removed_count = 0
+        
+        for local_account in local_accounts:
+            if local_account.username not in server_accounts:
+                removed_accounts.append({
+                    'username': local_account.username,
+                    'host': '',
+                    'database_name': local_account.database_name,
+                    'account_type': local_account.account_type
+                })
+                db.session.delete(local_account)
+                removed_count += 1
+        
+        db.session.commit()
+        cursor.close()
+        
+        return {
+            'removed_count': removed_count,
+            'removed_accounts': removed_accounts
+        }
+    
+    def _cleanup_sqlserver_orphaned_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
+        """清理SQL Server多余账户"""
+        cursor = conn.cursor()
+        
+        # 获取服务器端所有账户
+        cursor.execute("""
+            SELECT name
+            FROM sys.server_principals
+            WHERE type IN ('S', 'U', 'G')
+            AND name NOT LIKE '##%'
+            ORDER BY name
+        """)
+        
+        server_accounts = set()
+        for row in cursor.fetchall():
+            server_accounts.add(row[0])
+        
+        # 获取本地账户并清理
+        local_accounts = Account.query.filter_by(instance_id=instance.id).all()
+        removed_accounts = []
+        removed_count = 0
+        
+        for local_account in local_accounts:
+            if local_account.username not in server_accounts:
+                removed_accounts.append({
+                    'username': local_account.username,
+                    'host': '',
+                    'database_name': local_account.database_name,
+                    'account_type': local_account.account_type
+                })
+                db.session.delete(local_account)
+                removed_count += 1
+        
+        db.session.commit()
+        cursor.close()
+        
+        return {
+            'removed_count': removed_count,
+            'removed_accounts': removed_accounts
         }
 
 # 全局实例

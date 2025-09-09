@@ -231,6 +231,13 @@ def sync_all_accounts():
             result = account_sync_service.sync_accounts(instance, sync_type='batch')
             
             if result['success']:
+                # 同步成功后，自动清理多余账户
+                cleanup_result = account_sync_service.cleanup_orphaned_accounts(instance)
+                if cleanup_result.get('success', False):
+                    # 将清理结果合并到同步结果中
+                    result['cleanup_removed_count'] = cleanup_result.get('removed_count', 0)
+                    result['cleanup_message'] = cleanup_result.get('message', '')
+                
                 success_count += 1
                 # 记录同步成功
                 sync_record = SyncData(
