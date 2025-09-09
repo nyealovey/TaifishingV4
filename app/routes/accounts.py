@@ -56,6 +56,7 @@ def list(db_type=None):
     plugin = request.args.get('plugin', '', type=str)
     instance_id = request.args.get('instance_id', '', type=str)
     filter_db_type = request.args.get('db_type', '', type=str)  # 新增数据库类型筛选参数
+    environment = request.args.get('environment', '', type=str)  # 新增环境筛选参数
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     
@@ -100,6 +101,10 @@ def list(db_type=None):
     if instance_id:
         query = query.filter(Account.instance_id == int(instance_id))
     
+    # 环境筛选
+    if environment:
+        query = query.filter(Instance.environment == environment)
+    
     # 分页查询
     accounts = query.order_by(Account.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False
@@ -139,7 +144,8 @@ def list(db_type=None):
                          is_locked=is_locked,
                          plugin=plugin,
                          instance_id=instance_id,
-                         db_type=filter_db_type)  # 传递数据库类型筛选参数
+                         db_type=filter_db_type,
+                         environment=environment)  # 传递环境筛选参数
 
 @accounts_bp.route('/sync/<int:instance_id>', methods=['POST'])
 @login_required
@@ -981,6 +987,18 @@ def get_filter_options():
         db_types = db.session.query(Instance.db_type).distinct().all()
         db_type_options = [{'value': dt[0], 'label': dt[0].upper()} for dt in db_types]
         
+        # 获取环境选项
+        environments = db.session.query(Instance.environment).distinct().all()
+        environment_options = []
+        for env in environments:
+            if env[0]:  # 确保不为空
+                env_label = {
+                    'production': '生产环境',
+                    'development': '开发环境', 
+                    'testing': '测试环境'
+                }.get(env[0], env[0])
+                environment_options.append({'value': env[0], 'label': env_label})
+        
         # 获取插件/类型选项 - 合并plugin和account_type字段
         plugin_options = []
         
@@ -1004,6 +1022,7 @@ def get_filter_options():
         
         return {
             'db_types': db_type_options,
+            'environments': environment_options,
             'plugins': plugin_options,
             'instances': instance_options
         }
@@ -1011,6 +1030,7 @@ def get_filter_options():
         logging.error(f"获取筛选选项失败: {e}")
         return {
             'db_types': [],
+            'environments': [],
             'plugins': [],
             'instances': []
         }

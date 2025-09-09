@@ -51,7 +51,7 @@
                 
                 <!-- 第二行：筛选条件 -->
                 <div class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="is_locked" class="form-label fw-semibold">锁定状态</label>
                         <select class="form-select" id="is_locked" name="is_locked">
                             <option value="">全部状态</option>
@@ -59,7 +59,19 @@
                             <option value="unlocked" {% if is_locked == 'unlocked' %}selected{% endif %}>正常</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-2">
+                        <label for="environment" class="form-label fw-semibold">环境</label>
+                        <select class="form-select" id="environment" name="environment">
+                            <option value="">全部环境</option>
+                            {% for env_option in filter_options.environments %}
+                            <option value="{{ env_option.value }}" 
+                                    {% if environment == env_option.value %}selected{% endif %}>
+                                {{ env_option.label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
                         <label for="plugin" class="form-label fw-semibold">插件/类型</label>
                         <select class="form-select" id="plugin" name="plugin">
                             <option value="">全部插件</option>
@@ -71,7 +83,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-5">
+                    <div class="col-md-3">
                         <label for="db_type" class="form-label fw-semibold">数据库类型</label>
                         <select class="form-select" id="db_type" name="db_type">
                             <option value="">全部类型</option>
@@ -183,6 +195,7 @@
                         <th style="font-size: 0.8rem;">登录名</th>
                         <th style="font-size: 0.8rem;">实例名称</th>
                         <th style="font-size: 0.8rem;">IP地址</th>
+                        <th style="font-size: 0.8rem;">环境</th>
                         <th style="font-size: 0.8rem;">类型</th>
                         <th style="font-size: 0.8rem;">密码最后修改</th>
                         <th style="font-size: 0.8rem;">锁定状态</th>
@@ -192,7 +205,7 @@
                         <th style="font-size: 0.8rem;">用户</th>
                         <th style="font-size: 0.8rem;">主机</th>
                         <th style="font-size: 0.8rem;">实例名称</th>
-                        <th style="font-size: 0.8rem;">数据库类型</th>
+                        <th style="font-size: 0.8rem;">环境</th>
                         <th style="font-size: 0.8rem;">插件/类型</th>
                         <th style="font-size: 0.8rem;">密码最后修改</th>
                         <th style="font-size: 0.8rem;">锁定状态</th>
@@ -201,6 +214,7 @@
                         <th style="font-size: 0.8rem;">名称</th>
                         <th style="font-size: 0.8rem;">实例名称</th>
                         <th style="font-size: 0.8rem;">IP地址</th>
+                        <th style="font-size: 0.8rem;">环境</th>
                         <th style="font-size: 0.8rem;">数据库类型</th>
                         <th style="font-size: 0.8rem;">插件/类型</th>
                         <th style="font-size: 0.8rem;">密码最后修改</th>
@@ -227,6 +241,14 @@
                         </td>
                         <td>
                             <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
+                        </td>
+                        <td>
+                            {% set env_label = {
+                                'production': '生产',
+                                'development': '开发', 
+                                'testing': '测试'
+                            }.get(account.instance.environment, account.instance.environment) %}
+                            <span class="badge bg-{{ 'danger' if account.instance.environment == 'production' else 'warning' if account.instance.environment == 'development' else 'info' }}" style="font-size: 0.7rem;">{{ env_label }}</span>
                         </td>
                         <td>
                             {% if account.account_type %}
@@ -280,7 +302,12 @@
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-success" style="font-size: 0.7rem;">MYSQL</span>
+                            {% set env_label = {
+                                'production': '生产',
+                                'development': '开发', 
+                                'testing': '测试'
+                            }.get(account.instance.environment, account.instance.environment) %}
+                            <span class="badge bg-{{ 'danger' if account.instance.environment == 'production' else 'warning' if account.instance.environment == 'development' else 'info' }}" style="font-size: 0.7rem;">{{ env_label }}</span>
                         </td>
                         <td>
                             {% if account.plugin %}
@@ -333,17 +360,33 @@
                             <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
                         </td>
                         <td>
+                            {% set env_label = {
+                                'production': '生产',
+                                'development': '开发', 
+                                'testing': '测试'
+                            }.get(account.instance.environment, account.instance.environment) %}
+                            <span class="badge bg-{{ 'danger' if account.instance.environment == 'production' else 'warning' if account.instance.environment == 'development' else 'info' }}" style="font-size: 0.7rem;">{{ env_label }}</span>
+                        </td>
+                        <td>
                             <span class="badge bg-{{ 'primary' if account.instance.db_type == 'postgresql' else 'success' if account.instance.db_type == 'mysql' else 'warning' if account.instance.db_type == 'sqlserver' else 'info' if account.instance.db_type == 'oracle' else 'secondary' }}" style="font-size: 0.7rem;">
                                 {{ account.instance.db_type.upper() }}
                             </span>
                         </td>
                         <td>
-                            {% if account.plugin %}
-                                <span class="badge bg-secondary" style="font-size: 0.7rem;">{{ account.plugin }}</span>
-                            {% elif account.account_type %}
-                                <span class="badge bg-info" style="font-size: 0.7rem;">{{ account.account_type }}</span>
+                            {% if account.instance.db_type == 'sqlserver' %}
+                                {% if account.account_type %}
+                                    <span class="badge bg-info" style="font-size: 0.7rem;">{{ account.account_type }}</span>
+                                {% else %}
+                                    <span class="text-muted" style="font-size: 0.8rem;">未知</span>
+                                {% endif %}
                             {% else %}
-                                <span class="text-muted" style="font-size: 0.8rem;">未知</span>
+                                {% if account.plugin %}
+                                    <span class="badge bg-secondary" style="font-size: 0.7rem;">{{ account.plugin }}</span>
+                                {% elif account.account_type %}
+                                    <span class="badge bg-info" style="font-size: 0.7rem;">{{ account.account_type }}</span>
+                                {% else %}
+                                    <span class="text-muted" style="font-size: 0.8rem;">未知</span>
+                                {% endif %}
                             {% endif %}
                         </td>
                         <td>

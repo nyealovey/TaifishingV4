@@ -333,6 +333,7 @@ def register_blueprints(app):
     from app.routes.dashboard import dashboard_bp
     from app.routes.health import health_bp
     from app.routes.admin import admin_bp
+    from app.routes.account_classification import account_classification_bp
     
     # 注册蓝图
     app.register_blueprint(main_bp)
@@ -345,6 +346,7 @@ def register_blueprints(app):
     app.register_blueprint(dashboard_bp, url_prefix='/dashboard')
     app.register_blueprint(health_bp, url_prefix='/health')
     app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(account_classification_bp, url_prefix='/account-classification')
 
 def configure_logging(app):
     """

@@ -15,7 +15,7 @@
                 <form method="POST" id="instanceForm">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="name" class="form-label">实例名称 <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="name" name="name" 
@@ -23,7 +23,7 @@
                                 <div class="form-text">用于标识此数据库实例的名称</div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="db_type" class="form-label">数据库类型 <span class="text-danger">*</span></label>
                                 <select class="form-select" id="db_type" name="db_type" required>
@@ -33,6 +33,18 @@
                                     <option value="sqlserver" {% if instance.db_type == 'sqlserver' %}selected{% endif %}>SQL Server</option>
                                     <option value="oracle" {% if instance.db_type == 'oracle' %}selected{% endif %}>Oracle</option>
                                 </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="environment" class="form-label">环境 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="environment" name="environment" required>
+                                    <option value="">请选择环境</option>
+                                    <option value="production" {% if instance.environment == 'production' %}selected{% endif %}>生产环境</option>
+                                    <option value="development" {% if instance.environment == 'development' %}selected{% endif %}>开发环境</option>
+                                    <option value="testing" {% if instance.environment == 'testing' %}selected{% endif %}>测试环境</option>
+                                </select>
+                                <div class="form-text">选择此实例的部署环境</div>
                             </div>
                         </div>
                     </div>

@@ -31,6 +31,12 @@
             background: rgba(255, 255, 255, 0.95) !important;
             backdrop-filter: blur(10px);
             box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            width: 100%;
         }
         
         .navbar-brand {
@@ -47,6 +53,8 @@
             background: rgba(255, 255, 255, 0.95);
             margin-top: 8px;
             padding: 8px 0;
+            position: absolute;
+            z-index: 1050;
         }
         
         .navbar .dropdown-item {
@@ -80,6 +88,7 @@
         .main-content {
             min-height: calc(100vh - 76px);
             padding: 2rem 0;
+            margin-top: 76px;
         }
         
         .card {
@@ -163,6 +172,9 @@
                             </a></li>
                             <li><a class="dropdown-item" href="{{ url_for('accounts.list') }}">
                                 <i class="fas fa-users me-2"></i>账户管理
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('account_classification.index') }}">
+                                <i class="fas fa-tags me-2"></i>账户分类管理
                             </a></li>
                         </ul>
                     </li>

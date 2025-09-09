@@ -90,7 +90,7 @@ def create():
         data = sanitize_form_data(data)
         
         # 输入验证
-        required_fields = ['name', 'db_type', 'host', 'port']
+        required_fields = ['name', 'db_type', 'host', 'port', 'environment']
         validation_error = validate_required_fields(data, required_fields)
         if validation_error:
             if request.is_json:
@@ -104,6 +104,15 @@ def create():
             if request.is_json:
                 return jsonify({'error': db_type_error}), 400
             flash(db_type_error, 'error')
+            return render_template('instances/create.html', credentials=credentials)
+        
+        # 验证环境类型
+        valid_environments = ['production', 'development', 'testing']
+        if data.get('environment') not in valid_environments:
+            error_msg = "环境类型必须是生产环境、开发环境或测试环境"
+            if request.is_json:
+                return jsonify({'error': error_msg}), 400
+            flash(error_msg, 'error')
             return render_template('instances/create.html', credentials=credentials)
         
         # 验证端口号
@@ -353,7 +362,7 @@ def edit(instance_id):
         data = sanitize_form_data(data)
         
         # 输入验证
-        required_fields = ['name', 'db_type', 'host', 'port']
+        required_fields = ['name', 'db_type', 'host', 'port', 'environment']
         validation_error = validate_required_fields(data, required_fields)
         if validation_error:
             if request.is_json:
@@ -367,6 +376,15 @@ def edit(instance_id):
             if request.is_json:
                 return jsonify({'error': db_type_error}), 400
             flash(db_type_error, 'error')
+            return render_template('instances/edit.html', instance=instance)
+        
+        # 验证环境类型
+        valid_environments = ['production', 'development', 'testing']
+        if data.get('environment') not in valid_environments:
+            error_msg = "环境类型必须是生产环境、开发环境或测试环境"
+            if request.is_json:
+                return jsonify({'error': error_msg}), 400
+            flash(error_msg, 'error')
             return render_template('instances/edit.html', instance=instance)
         
         # 验证端口号
@@ -413,6 +431,7 @@ def edit(instance_id):
             instance.db_type = data.get('db_type', instance.db_type)
             instance.host = data.get('host', instance.host).strip()
             instance.port = int(data.get('port', instance.port))
+            instance.environment = data.get('environment', instance.environment)
             instance.credential_id = int(data.get('credential_id')) if data.get('credential_id') else None
             instance.description = data.get('description', instance.description)
             if data.get('description'):
@@ -437,6 +456,7 @@ def edit(instance_id):
                     'db_type': data.get('db_type'),
                     'host': data.get('host'),
                     'port': data.get('port'),
+                    'environment': data.get('environment'),
                     'credential_id': data.get('credential_id'),
                     'description': data.get('description'),
                     'is_active': data.get('is_active')

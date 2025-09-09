@@ -49,5 +49,6 @@ class Account(db.Model):
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
             'instance_name': self.instance.name if self.instance else None,
-            'instance_type': self.instance.db_type if self.instance else None
+            'instance_type': self.instance.db_type if self.instance else None,
+            'environment': self.instance.environment if self.instance else None
         }
