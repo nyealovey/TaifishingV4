@@ -337,14 +337,40 @@ class AccountSyncService:
             
             synced_count += 1
         
+        # 删除服务器端不存在的本地账户
+        server_accounts = set()
+        for account_data in accounts:
+            username, host, account_type, database_name, plugin_name, password_expired, password_last_changed, account_locked, password_lifetime, can_select, can_insert, can_update, can_delete, can_create, can_drop, is_superuser = account_data
+            server_accounts.add((username, host))
+        
+        local_accounts = Account.query.filter_by(instance_id=instance.id).all()
+        removed_accounts = []
+        
+        for local_account in local_accounts:
+            if (local_account.username, local_account.host) not in server_accounts:
+                removed_accounts.append({
+                    'username': local_account.username,
+                    'host': local_account.host,
+                    'database_name': local_account.database_name,
+                    'account_type': local_account.account_type,
+                    'plugin': local_account.plugin,
+                    'password_expired': local_account.password_expired,
+                    'password_last_changed': local_account.password_last_changed.isoformat() if local_account.password_last_changed else None,
+                    'is_locked': local_account.is_locked,
+                    'is_active': local_account.is_active
+                })
+                db.session.delete(local_account)
+                removed_count += 1
+        
         db.session.commit()
         cursor.close()
         
         return {
             'synced_count': synced_count,
             'added_count': added_count,
-            'removed_count': 0,  # MySQL用户表不支持删除检测
-            'modified_count': modified_count
+            'removed_count': removed_count,
+            'modified_count': modified_count,
+            'removed_accounts': removed_accounts
         }
     
     def _sync_postgresql_accounts(self, instance: Instance, conn) -> Dict[str, int]:

@@ -302,6 +302,133 @@ def sync_all_accounts():
     flash(f'批量同步完成，成功: {success_count}, 失败: {failed_count}', 'info')
     return redirect(url_for('accounts.index'))
 
+@accounts_bp.route('/cleanup-orphaned', methods=['POST'])
+@login_required
+def cleanup_orphaned_accounts():
+    """清理多余的账户（服务器上不存在的本地账户）"""
+    try:
+        from app.services.account_sync_service import account_sync_service
+        from app.utils.logger import log_operation
+        
+        # 记录清理开始日志
+        log_operation('CLEANUP_ORPHANED_ACCOUNTS_START', current_user.id, {})
+        
+        instances = Instance.query.filter_by(is_active=True).all()
+        if not instances:
+            if request.is_json:
+                return jsonify({'error': '没有可用的实例'}), 400
+            flash('没有可用的实例', 'error')
+            return redirect(url_for('accounts.list'))
+        
+        total_removed = 0
+        results = []
+        
+        for instance in instances:
+            try:
+                # 获取数据库连接
+                conn = account_sync_service._get_connection(instance)
+                if not conn:
+                    results.append({
+                        'instance_name': instance.name,
+                        'success': False,
+                        'message': '无法获取数据库连接',
+                        'removed_count': 0
+                    })
+                    continue
+                
+                # 获取服务器上的账户列表
+                if instance.db_type == 'mysql':
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        SELECT User as username, Host as host
+                        FROM mysql.user
+                        WHERE User NOT LIKE 'mysql.%'
+                        ORDER BY User, Host
+                    """)
+                    server_accounts = set((row[0], row[1]) for row in cursor.fetchall())
+                    cursor.close()
+                elif instance.db_type == 'postgresql':
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT usename as username FROM pg_user")
+                    server_accounts = set((row[0], '') for row in cursor.fetchall())
+                    cursor.close()
+                else:
+                    # 其他数据库类型暂不支持
+                    results.append({
+                        'instance_name': instance.name,
+                        'success': False,
+                        'message': f'不支持的数据库类型: {instance.db_type}',
+                        'removed_count': 0
+                    })
+                    continue
+                
+                # 获取本地账户
+                local_accounts = Account.query.filter_by(instance_id=instance.id).all()
+                removed_accounts = []
+                
+                for local_account in local_accounts:
+                    # 根据数据库类型检查账户是否存在
+                    if instance.db_type == 'mysql':
+                        account_key = (local_account.username, local_account.host)
+                    else:  # postgresql
+                        account_key = (local_account.username, '')
+                    
+                    if account_key not in server_accounts:
+                        removed_accounts.append({
+                            'username': local_account.username,
+                            'host': local_account.host,
+                            'database_name': local_account.database_name,
+                            'account_type': local_account.account_type
+                        })
+                        db.session.delete(local_account)
+                
+                db.session.commit()
+                conn.close()
+                
+                total_removed += len(removed_accounts)
+                results.append({
+                    'instance_name': instance.name,
+                    'success': True,
+                    'message': f'清理完成，删除了 {len(removed_accounts)} 个多余账户',
+                    'removed_count': len(removed_accounts),
+                    'removed_accounts': removed_accounts
+                })
+                
+            except Exception as e:
+                logging.error(f"清理实例 {instance.name} 的多余账户失败: {e}")
+                results.append({
+                    'instance_name': instance.name,
+                    'success': False,
+                    'message': f'清理失败: {str(e)}',
+                    'removed_count': 0
+                })
+        
+        # 记录清理完成日志
+        log_operation('CLEANUP_ORPHANED_ACCOUNTS_COMPLETE', current_user.id, {
+            'total_removed': total_removed,
+            'results': results
+        })
+        
+        if request.is_json:
+            return jsonify({
+                'success': True,
+                'message': f'清理完成，总共删除了 {total_removed} 个多余账户',
+                'total_removed': total_removed,
+                'results': results
+            })
+        
+        flash(f'清理完成，总共删除了 {total_removed} 个多余账户', 'success')
+        return redirect(url_for('accounts.list'))
+        
+    except Exception as e:
+        logging.error(f"清理多余账户失败: {e}")
+        
+        if request.is_json:
+            return jsonify({'error': '清理多余账户失败，请重试'}), 500
+        
+        flash('清理多余账户失败，请重试', 'error')
+        return redirect(url_for('accounts.list'))
+
 @accounts_bp.route('/sync-history')
 @login_required
 def sync_history():
