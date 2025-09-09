@@ -6,6 +6,7 @@
 
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
+from flask_wtf.csrf import generate_csrf
 from app.services.account_classification_service import account_classification_service
 from app.models.account_classification import AccountClassification, ClassificationRule
 from app.models.account import Account
@@ -48,6 +49,30 @@ def index():
                              classifications=[],
                              instances=[],
                              db_type_stats={})
+
+@account_classification_bp.route('/rules')
+@login_required
+def rules():
+    """规则管理页面"""
+    try:
+        # 获取所有规则
+        all_rules = account_classification_service.get_all_rules()
+        
+        # 按数据库类型分组
+        rules_by_db_type = {}
+        for rule in all_rules:
+            db_type = rule.get('db_type', 'unknown')
+            if db_type not in rules_by_db_type:
+                rules_by_db_type[db_type] = []
+            rules_by_db_type[db_type].append(rule)
+        
+        return render_template('account_classification/rules.html',
+                             rules_by_db_type=rules_by_db_type)
+    
+    except Exception as e:
+        flash(f'加载规则页面失败: {str(e)}', 'error')
+        return render_template('account_classification/rules.html',
+                             rules_by_db_type={})
 
 @account_classification_bp.route('/classifications')
 @login_required
@@ -167,6 +192,36 @@ def create_rule():
             'error': f'创建规则失败: {str(e)}'
         })
 
+@account_classification_bp.route('/rules/<int:rule_id>', methods=['GET'])
+@login_required
+def get_rule(rule_id):
+    """获取单个规则详情"""
+    try:
+        rule = ClassificationRule.query.get(rule_id)
+        if not rule:
+            return jsonify({
+                'success': False,
+                'error': '规则不存在'
+            }), 404
+        
+        rule_dict = rule.to_dict()
+        if rule.classification:
+            rule_dict['classification_name'] = rule.classification.name
+        
+        # 解析规则表达式
+        rule_dict['rule_expression'] = rule.get_rule_expression()
+        
+        return jsonify({
+            'success': True,
+            'rule': rule_dict
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'获取规则失败: {str(e)}'
+        })
+
 @account_classification_bp.route('/rules/<int:rule_id>', methods=['PUT'])
 @login_required
 def update_rule(rule_id):
@@ -174,7 +229,23 @@ def update_rule(rule_id):
     try:
         data = request.get_json()
         
-        result = account_classification_service.update_rule(rule_id, **data)
+        # 验证必填字段
+        required_fields = ['classification_id', 'db_type', 'rule_name', 'rule_expression']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'success': False,
+                    'error': f'缺少必填字段: {field}'
+                }), 400
+        
+        result = account_classification_service.update_rule(
+            rule_id=rule_id,
+            classification_id=data.get('classification_id'),
+            db_type=data.get('db_type'),
+            rule_name=data.get('rule_name'),
+            rule_expression=data.get('rule_expression'),
+            is_active=data.get('is_active', True)
+        )
         
         return jsonify(result)
     
@@ -273,110 +344,6 @@ def remove_assignment(assignment_id):
             'error': f'移除分配失败: {str(e)}'
         })
 
-@account_classification_bp.route('/templates')
-@login_required
-def get_templates():
-    """获取分类模板"""
-    try:
-        db_type = request.args.get('db_type')
-        
-        from app.models.account_classification import ClassificationTemplate
-        
-        query = ClassificationTemplate.query.filter_by(is_active=True)
-        if db_type:
-            query = query.filter_by(db_type=db_type)
-        
-        templates = query.all()
-        
-        return jsonify({
-            'success': True,
-            'templates': [template.to_dict() for template in templates]
-        })
-    
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        })
-
-@account_classification_bp.route('/templates/<int:template_id>/apply', methods=['POST'])
-@login_required
-def apply_template(template_id):
-    """应用分类模板"""
-    try:
-        data = request.get_json()
-        db_type = data.get('db_type')
-        
-        if not db_type:
-            return jsonify({
-                'success': False,
-                'error': '请指定数据库类型'
-            })
-        
-        from app.models.account_classification import ClassificationTemplate, ClassificationRule
-        from app import db
-        
-        # 获取模板
-        template = ClassificationTemplate.query.get(template_id)
-        if not template:
-            return jsonify({
-                'success': False,
-                'error': '模板不存在'
-            })
-        
-        # 获取模板中的规则
-        template_rules = ClassificationRule.query.filter_by(
-            template_id=template_id,
-            is_active=True
-        ).all()
-        
-        if not template_rules:
-            return jsonify({
-                'success': False,
-                'error': '模板中没有规则'
-            })
-        
-        # 创建规则副本
-        created_count = 0
-        for rule in template_rules:
-            # 检查是否已存在相同名称的规则
-            existing_rule = ClassificationRule.query.filter_by(
-                name=rule.name,
-                db_type=db_type,
-                is_active=True
-            ).first()
-            
-            if existing_rule:
-                continue  # 跳过已存在的规则
-            
-            # 创建新规则
-            new_rule = ClassificationRule(
-                name=rule.name,
-                description=rule.description,
-                db_type=db_type,
-                classification_id=rule.classification_id,
-                rule_config=rule.rule_config,
-                priority=rule.priority,
-                is_active=True,
-                created_by=current_user.id
-            )
-            
-            db.session.add(new_rule)
-            created_count += 1
-        
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': f'成功应用模板，创建了 {created_count} 个规则'
-        })
-    
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        })
 
 @account_classification_bp.route('/permissions/<db_type>')
 @login_required
@@ -401,42 +368,40 @@ def _get_db_permissions(db_type: str) -> dict:
     permissions = {
         'mysql': {
             'global_privileges': [
-                {'name': 'SUPER', 'description': '超级权限'},
-                {'name': 'GRANT OPTION', 'description': '授权权限'},
-                {'name': 'ALL PRIVILEGES', 'description': '所有权限'},
-                {'name': 'CREATE USER', 'description': '创建用户'},
-                {'name': 'RELOAD', 'description': '重载权限'},
-                {'name': 'SHUTDOWN', 'description': '关闭服务器'},
-                {'name': 'PROCESS', 'description': '查看进程'},
-                {'name': 'FILE', 'description': '文件操作'},
-                {'name': 'REPLICATION SLAVE', 'description': '复制从库'},
-                {'name': 'REPLICATION CLIENT', 'description': '复制客户端'},
-                {'name': 'CREATE', 'description': '创建数据库/表'},
-                {'name': 'DROP', 'description': '删除数据库/表'},
+                {'name': 'SUPER', 'description': '超级权限，可以执行任何操作'},
+                {'name': 'GRANT OPTION', 'description': '授权权限，可以授予其他用户权限'},
+                {'name': 'ALL PRIVILEGES', 'description': '所有权限的简写'},
+                {'name': 'CREATE USER', 'description': '创建用户权限'},
+                {'name': 'RELOAD', 'description': '重载权限表'},
+                {'name': 'SHUTDOWN', 'description': '关闭MySQL服务器'},
+                {'name': 'PROCESS', 'description': '查看所有进程'},
+                {'name': 'FILE', 'description': '文件操作权限'},
+                {'name': 'REPLICATION SLAVE', 'description': '复制从库权限'},
+                {'name': 'REPLICATION CLIENT', 'description': '复制客户端权限'},
+                {'name': 'SHOW DATABASES', 'description': '显示所有数据库'},
+                {'name': 'USAGE', 'description': '无权限，仅用于连接'}
+            ],
+            'database_privileges': [
+                {'name': 'CREATE', 'description': '创建数据库和表'},
+                {'name': 'DROP', 'description': '删除数据库和表'},
                 {'name': 'ALTER', 'description': '修改表结构'},
-                {'name': 'INDEX', 'description': '创建/删除索引'},
-                {'name': 'INSERT', 'description': '插入数据'},
-                {'name': 'UPDATE', 'description': '更新数据'},
-                {'name': 'DELETE', 'description': '删除数据'},
-                {'name': 'SELECT', 'description': '查询数据'},
-                {'name': 'SHOW DATABASES', 'description': '显示数据库'},
-                {'name': 'SHOW VIEW', 'description': '显示视图'},
-                {'name': 'CREATE VIEW', 'description': '创建视图'},
-                {'name': 'CREATE ROUTINE', 'description': '创建存储过程'},
-                {'name': 'ALTER ROUTINE', 'description': '修改存储过程'},
-                {'name': 'EXECUTE', 'description': '执行存储过程'},
-                {'name': 'TRIGGER', 'description': '触发器权限'},
-                {'name': 'EVENT', 'description': '事件权限'},
+                {'name': 'INDEX', 'description': '创建和删除索引'},
                 {'name': 'LOCK TABLES', 'description': '锁定表'},
                 {'name': 'REFERENCES', 'description': '外键权限'},
                 {'name': 'CREATE TEMPORARY TABLES', 'description': '创建临时表'},
-                {'name': 'USAGE', 'description': '使用权限'}
+                {'name': 'CREATE VIEW', 'description': '创建视图'},
+                {'name': 'SHOW VIEW', 'description': '显示视图'},
+                {'name': 'CREATE ROUTINE', 'description': '创建存储过程和函数'},
+                {'name': 'ALTER ROUTINE', 'description': '修改存储过程和函数'},
+                {'name': 'EXECUTE', 'description': '执行存储过程和函数'},
+                {'name': 'TRIGGER', 'description': '触发器权限'},
+                {'name': 'EVENT', 'description': '事件权限'}
             ],
-            'database_privileges': [
-                'CREATE', 'DROP', 'ALTER', 'INDEX', 'INSERT', 'UPDATE', 'DELETE', 
-                'SELECT', 'SHOW VIEW', 'CREATE VIEW', 'CREATE ROUTINE', 'ALTER ROUTINE', 
-                'EXECUTE', 'TRIGGER', 'EVENT', 'LOCK TABLES', 'REFERENCES', 
-                'CREATE TEMPORARY TABLES', 'USAGE'
+            'table_privileges': [
+                {'name': 'SELECT', 'description': '查询数据'},
+                {'name': 'INSERT', 'description': '插入数据'},
+                {'name': 'UPDATE', 'description': '更新数据'},
+                {'name': 'DELETE', 'description': '删除数据'}
             ]
         },
         'postgresql': {
@@ -461,6 +426,27 @@ def _get_db_permissions(db_type: str) -> dict:
             ]
         },
         'sqlserver': {
+            'global_privileges': [
+                {'name': 'CONTROL SERVER', 'description': '控制服务器'},
+                {'name': 'ALTER ANY LOGIN', 'description': '修改任意登录'},
+                {'name': 'ALTER ANY SERVER ROLE', 'description': '修改任意服务器角色'},
+                {'name': 'CREATE ANY DATABASE', 'description': '创建任意数据库'},
+                {'name': 'ALTER ANY DATABASE', 'description': '修改任意数据库'},
+                {'name': 'VIEW SERVER STATE', 'description': '查看服务器状态'},
+                {'name': 'ALTER SERVER STATE', 'description': '修改服务器状态'},
+                {'name': 'ALTER SETTINGS', 'description': '修改设置'},
+                {'name': 'ALTER TRACE', 'description': '修改跟踪'},
+                {'name': 'AUTHENTICATE SERVER', 'description': '服务器身份验证'},
+                {'name': 'BACKUP DATABASE', 'description': '备份数据库'},
+                {'name': 'BACKUP LOG', 'description': '备份日志'},
+                {'name': 'CHECKPOINT', 'description': '检查点'},
+                {'name': 'CONNECT SQL', 'description': '连接SQL'},
+                {'name': 'SHUTDOWN', 'description': '关闭服务器'},
+                {'name': 'IMPERSONATE ANY LOGIN', 'description': '模拟任意登录'},
+                {'name': 'VIEW ANY DEFINITION', 'description': '查看任意定义'},
+                {'name': 'VIEW ANY COLUMN ENCRYPTION KEY DEFINITION', 'description': '查看任意列加密密钥定义'},
+                {'name': 'VIEW ANY COLUMN MASTER KEY DEFINITION', 'description': '查看任意列主密钥定义'}
+            ],
             'server_roles': [
                 {'name': 'sysadmin', 'description': '系统管理员'},
                 {'name': 'serveradmin', 'description': '服务器管理员'},
@@ -483,24 +469,30 @@ def _get_db_permissions(db_type: str) -> dict:
                 {'name': 'db_denydatareader', 'description': '拒绝数据读取'},
                 {'name': 'db_denydatawriter', 'description': '拒绝数据写入'}
             ],
-            'permissions': [
-                'CONTROL', 'ALTER', 'ALTER ANY USER', 'ALTER ANY ROLE', 'ALTER ANY SCHEMA',
-                'ALTER ANY ASSEMBLY', 'ALTER ANY DATABASE', 'ALTER ANY FULLTEXT CATALOG',
-                'ALTER ANY LOGIN', 'ALTER ANY SERVER ROLE', 'ALTER ANY EVENT NOTIFICATION',
-                'ALTER ANY DATABASE EVENT NOTIFICATION', 'ALTER ANY ENDPOINT',
-                'ALTER RESOURCES', 'ALTER SERVER STATE', 'ALTER SETTINGS', 'ALTER TRACE',
-                'AUTHENTICATE', 'AUTHENTICATE SERVER', 'BACKUP DATABASE', 'BACKUP LOG',
-                'CHECKPOINT', 'CONNECT', 'CONNECT SQL', 'CONTROL SERVER', 'CREATE ANY DATABASE',
-                'CREATE ASSEMBLY', 'CREATE DATABASE', 'CREATE DEFAULT', 'CREATE FULLTEXT CATALOG',
-                'CREATE FUNCTION', 'CREATE PROCEDURE', 'CREATE QUEUE', 'CREATE ROLE',
-                'CREATE ROUTE', 'CREATE RULE', 'CREATE SCHEMA', 'CREATE SERVICE',
-                'CREATE SYNONYM', 'CREATE TABLE', 'CREATE TYPE', 'CREATE VIEW',
-                'CREATE XML SCHEMA COLLECTION', 'DELETE', 'EXECUTE', 'EXECUTE ANY EXTERNAL SCRIPT',
-                'IMPERSONATE', 'INSERT', 'KILL DATABASE CONNECTION', 'RECEIVE', 'REFERENCES',
-                'SELECT', 'SEND', 'SHOWPLAN', 'SHUTDOWN', 'SUBSCRIBE QUERY NOTIFICATIONS',
-                'TAKE OWNERSHIP', 'UNMASK', 'UPDATE', 'VIEW ANY COLUMN ENCRYPTION KEY DEFINITION',
-                'VIEW ANY COLUMN MASTER KEY DEFINITION', 'VIEW CHANGE TRACKING',
-                'VIEW DATABASE STATE', 'VIEW DEFINITION', 'VIEW SERVER STATE'
+            'database_privileges': [
+                {'name': 'SELECT', 'description': '查询数据'},
+                {'name': 'INSERT', 'description': '插入数据'},
+                {'name': 'UPDATE', 'description': '更新数据'},
+                {'name': 'DELETE', 'description': '删除数据'},
+                {'name': 'CREATE', 'description': '创建对象'},
+                {'name': 'ALTER', 'description': '修改/删除对象（包含DROP功能）'},
+                {'name': 'EXECUTE', 'description': '执行存储过程'},
+                {'name': 'CONTROL', 'description': '完全控制权限'},
+                {'name': 'REFERENCES', 'description': '引用权限'},
+                {'name': 'VIEW DEFINITION', 'description': '查看定义'},
+                {'name': 'TAKE OWNERSHIP', 'description': '获取所有权'},
+                {'name': 'IMPERSONATE', 'description': '模拟权限'},
+                {'name': 'CREATE SCHEMA', 'description': '创建架构'},
+                {'name': 'ALTER ANY SCHEMA', 'description': '修改任意架构'},
+                {'name': 'CREATE TABLE', 'description': '创建表'},
+                {'name': 'CREATE VIEW', 'description': '创建视图'},
+                {'name': 'CREATE PROCEDURE', 'description': '创建存储过程'},
+                {'name': 'CREATE FUNCTION', 'description': '创建函数'},
+                {'name': 'CREATE TRIGGER', 'description': '创建触发器'},
+                {'name': 'BACKUP DATABASE', 'description': '备份数据库'},
+                {'name': 'BACKUP LOG', 'description': '备份日志'},
+                {'name': 'CONNECT', 'description': '连接数据库'},
+                {'name': 'CONNECT REPLICATION', 'description': '复制连接'}
             ]
         },
         'oracle': {

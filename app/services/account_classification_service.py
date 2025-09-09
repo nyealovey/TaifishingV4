@@ -12,8 +12,7 @@ from app import db
 from app.models.account_classification import (
     AccountClassification, 
     ClassificationRule, 
-    AccountClassificationAssignment,
-    ClassificationTemplate
+    AccountClassificationAssignment
 )
 from app.models.account import Account
 from app.models.instance import Instance
@@ -117,6 +116,13 @@ class AccountClassificationService:
                     'error': '分类不存在'
                 }
             
+            # 检查是否为系统分类
+            if classification.is_system:
+                return {
+                    'success': False,
+                    'error': '系统分类不能删除'
+                }
+            
             # 检查是否有关联的账户分配
             assignments_count = classification.account_assignments.filter_by(is_active=True).count()
             if assignments_count > 0:
@@ -151,11 +157,31 @@ class AccountClassificationService:
                    rule_expression: Dict[str, Any]) -> Dict[str, Any]:
         """创建分类规则"""
         try:
+            # 验证参数
+            if not classification_id or not db_type or not rule_name or not rule_expression:
+                return {
+                    'success': False,
+                    'error': '缺少必要参数'
+                }
+            
             classification = AccountClassification.query.get(classification_id)
             if not classification:
                 return {
                     'success': False,
                     'error': '分类不存在'
+                }
+            
+            # 检查规则名称是否已存在
+            existing_rule = ClassificationRule.query.filter_by(
+                rule_name=rule_name,
+                db_type=db_type,
+                is_active=True
+            ).first()
+            
+            if existing_rule:
+                return {
+                    'success': False,
+                    'error': f'规则名称 "{rule_name}" 已存在'
                 }
             
             rule = ClassificationRule(
@@ -297,6 +323,25 @@ class AccountClassificationService:
             self.logger.error(f"获取分类规则失败: {e}")
             return []
     
+    def get_all_rules(self) -> List[Dict[str, Any]]:
+        """获取所有规则"""
+        try:
+            rules = ClassificationRule.query.filter_by(is_active=True).all()
+            
+            result = []
+            for rule in rules:
+                rule_dict = rule.to_dict()
+                # 添加分类名称
+                if rule.classification:
+                    rule_dict['classification_name'] = rule.classification.name
+                result.append(rule_dict)
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(f"获取所有规则失败: {e}")
+            return []
+    
     def classify_account(self, account_id: int, classification_id: int, 
                         assignment_type: str = 'manual', assigned_by: int = None,
                         notes: str = None) -> Dict[str, Any]:
@@ -316,18 +361,29 @@ class AccountClassificationService:
                     'error': '分类不存在'
                 }
             
-            # 检查是否已有分配
-            existing = AccountClassificationAssignment.query.filter_by(
+            # 先清除该账户的所有现有活跃分配
+            existing_assignments = AccountClassificationAssignment.query.filter_by(
+                account_id=account_id,
+                is_active=True
+            ).all()
+            
+            for existing in existing_assignments:
+                existing.is_active = False
+                existing.updated_at = datetime.utcnow()
+            
+            # 检查是否已有该账户和分类的组合记录（包括非活跃的）
+            existing_assignment = AccountClassificationAssignment.query.filter_by(
                 account_id=account_id,
                 classification_id=classification_id
             ).first()
             
-            if existing:
-                # 更新现有分配
-                existing.assignment_type = assignment_type
-                existing.assigned_by = assigned_by
-                existing.notes = notes
-                existing.updated_at = datetime.utcnow()
+            if existing_assignment:
+                # 重新激活现有记录
+                existing_assignment.is_active = True
+                existing_assignment.assigned_by = assigned_by
+                existing_assignment.assignment_type = assignment_type
+                existing_assignment.notes = notes
+                existing_assignment.updated_at = datetime.utcnow()
             else:
                 # 创建新分配
                 assignment = AccountClassificationAssignment(
@@ -372,8 +428,8 @@ class AccountClassificationService:
                     'error': '没有可用的分类规则'
                 }
             
-            # 获取需要分类的账户
-            query = Account.query.filter_by(is_active=True)
+            # 获取需要分类的账户（包括已禁用的账户）
+            query = Account.query
             if instance_id:
                 query = query.filter_by(instance_id=instance_id)
             
@@ -384,6 +440,9 @@ class AccountClassificationService:
             
             for account in accounts:
                 try:
+                    # 先清除该账户的所有现有分类
+                    self._clear_account_classifications(account.id)
+                    
                     # 根据账户的数据库类型获取对应的规则
                     account_rules = [rule for rule in rules if rule.db_type == account.instance.db_type]
                     
@@ -391,6 +450,7 @@ class AccountClassificationService:
                         continue
                     
                     # 应用规则进行自动分类
+                    classified = False
                     for rule in account_rules:
                         if self._evaluate_rule(account, rule):
                             # 分配分类
@@ -401,7 +461,12 @@ class AccountClassificationService:
                             )
                             if result['success']:
                                 classified_count += 1
+                                classified = True
                             break
+                    
+                    # 如果没有规则匹配，账户保持未分类状态（已清除现有分类）
+                    if not classified:
+                        self.logger.debug(f"账户 {account.username} 不满足任何规则，设置为未分类")
                             
                 except Exception as e:
                     errors.append(f"账户 {account.username}: {str(e)}")
@@ -434,12 +499,138 @@ class AccountClassificationService:
             if not rule_expression:
                 return False
             
-            # 这里需要根据具体的权限检查逻辑来实现
-            # 暂时返回False，后续需要实现具体的权限匹配逻辑
-            return False
+            # 根据规则类型进行不同的匹配逻辑
+            if rule_expression.get('type') == 'mysql_permissions':
+                return self._evaluate_mysql_rule(account, rule_expression)
+            elif rule_expression.get('type') == 'sqlserver_permissions':
+                return self._evaluate_sqlserver_rule(account, rule_expression)
+            else:
+                self.logger.warning(f"不支持的规则类型: {rule_expression.get('type')}")
+                return False
             
         except Exception as e:
             self.logger.error(f"评估规则失败: {e}")
+            return False
+    
+    def _evaluate_mysql_rule(self, account: Account, rule_expression: dict) -> bool:
+        """评估MySQL规则"""
+        try:
+            import json
+            
+            # 从本地数据库获取权限信息
+            if not account.permissions:
+                self.logger.debug(f"账户 {account.username} 没有权限信息")
+                return False
+            
+            permissions = json.loads(account.permissions)
+            
+            # 检查全局权限
+            required_global = rule_expression.get('global_privileges', [])
+            if required_global:
+                actual_global = [p['privilege'] for p in permissions.get('global', []) if p.get('granted', False)]
+                if not all(perm in actual_global for perm in required_global):
+                    self.logger.debug(f"账户 {account.username} 不满足全局权限要求: 需要 {required_global}, 实际 {actual_global}")
+                    return False
+            
+            # 检查数据库权限
+            required_db = rule_expression.get('database_privileges', [])
+            if required_db:
+                # 获取所有数据库的权限
+                all_db_permissions = set()
+                for db_perm in permissions.get('database', []):
+                    all_db_permissions.update(db_perm.get('privileges', []))
+                
+                if not all(perm in all_db_permissions for perm in required_db):
+                    self.logger.debug(f"账户 {account.username} 不满足数据库权限要求: 需要 {required_db}, 实际 {list(all_db_permissions)}")
+                    return False
+            
+            self.logger.info(f"账户 {account.username} 满足MySQL规则要求")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"评估MySQL规则失败: {e}")
+            return False
+    
+    def _evaluate_sqlserver_rule(self, account: Account, rule_expression: dict) -> bool:
+        """评估SQL Server规则"""
+        try:
+            import json
+            
+            # 从本地数据库获取权限信息
+            if not account.permissions:
+                self.logger.debug(f"账户 {account.username} 没有权限信息")
+                return False
+            
+            permissions = json.loads(account.permissions)
+            
+            # 检查全局权限
+            required_global = rule_expression.get('global_privileges', [])
+            if required_global:
+                actual_global = [p['privilege'] for p in permissions.get('global', []) if p.get('granted', False)]
+                if not all(perm in actual_global for perm in required_global):
+                    self.logger.debug(f"账户 {account.username} 不满足全局权限要求: 需要 {required_global}, 实际 {actual_global}")
+                    return False
+            
+            # 检查服务器角色
+            required_server_roles = rule_expression.get('server_roles', [])
+            if required_server_roles:
+                actual_server_roles = [r['role'] for r in permissions.get('server_roles', [])]
+                if not all(role in actual_server_roles for role in required_server_roles):
+                    self.logger.debug(f"账户 {account.username} 不满足服务器角色要求: 需要 {required_server_roles}, 实际 {actual_server_roles}")
+                    return False
+            
+            # 检查数据库角色
+            required_db_roles = rule_expression.get('database_roles', [])
+            if required_db_roles:
+                # 获取所有数据库的角色
+                all_db_roles = set()
+                for db_role in permissions.get('database_roles', []):
+                    all_db_roles.update(db_role.get('roles', []))
+                
+                if not all(role in all_db_roles for role in required_db_roles):
+                    self.logger.debug(f"账户 {account.username} 不满足数据库角色要求: 需要 {required_db_roles}, 实际 {list(all_db_roles)}")
+                    return False
+            
+            # 检查数据库权限
+            required_db_privs = rule_expression.get('database_privileges', [])
+            if required_db_privs:
+                # 获取所有数据库的权限
+                all_db_permissions = set()
+                for db_perm in permissions.get('database', []):
+                    all_db_permissions.update(db_perm.get('privileges', []))
+                
+                if not all(perm in all_db_permissions for perm in required_db_privs):
+                    self.logger.debug(f"账户 {account.username} 不满足数据库权限要求: 需要 {required_db_privs}, 实际 {list(all_db_permissions)}")
+                    return False
+            
+            self.logger.info(f"账户 {account.username} 满足SQL Server规则要求")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"评估SQL Server规则失败: {e}")
+            return False
+    
+    def _clear_account_classifications(self, account_id: int) -> bool:
+        """清除账户的所有现有分类"""
+        try:
+            from app.models.account_classification import AccountClassificationAssignment
+            
+            # 删除该账户的所有活跃分类分配
+            assignments = AccountClassificationAssignment.query.filter_by(
+                account_id=account_id,
+                is_active=True
+            ).all()
+            
+            for assignment in assignments:
+                assignment.is_active = False
+                assignment.updated_at = datetime.utcnow()
+            
+            db.session.commit()
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"清除账户分类失败: {e}")
+            db.session.rollback()
             return False
     
     def get_account_classifications(self, account_id: int = None) -> List[Dict[str, Any]]:

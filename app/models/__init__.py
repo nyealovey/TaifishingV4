@@ -14,7 +14,7 @@ from .log import Log
 from .global_param import GlobalParam
 from .sync_data import SyncData
 from .account_change import AccountChange
-from .account_classification import AccountClassification, ClassificationRule, AccountClassificationAssignment, ClassificationTemplate
+from .account_classification import AccountClassification, ClassificationRule, AccountClassificationAssignment
 
 # 导出所有模型
 __all__ = [
@@ -29,6 +29,5 @@ __all__ = [
     'AccountChange',
     'AccountClassification',
     'ClassificationRule',
-    'AccountClassificationAssignment',
-    'ClassificationTemplate'
+    'AccountClassificationAssignment'
 ]

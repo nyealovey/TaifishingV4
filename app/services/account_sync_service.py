@@ -292,6 +292,9 @@ class AccountSyncService:
                 except:
                     password_changed = None
             
+            # 获取完整权限信息
+            permissions_info = self._get_mysql_account_permissions(conn, username, host)
+            
             if not account:
                 account = Account(
                     instance_id=instance.id,
@@ -303,7 +306,10 @@ class AccountSyncService:
                     password_expired=is_password_expired,
                     password_last_changed=password_changed,
                     is_locked=is_locked,
-                    is_active=not is_locked
+                    is_active=not is_locked,
+                    permissions=permissions_info['permissions_json'],
+                    is_superuser=permissions_info['is_superuser'],
+                    can_grant=permissions_info['can_grant']
                 )
                 db.session.add(account)
                 added_count += 1
@@ -330,6 +336,17 @@ class AccountSyncService:
                     has_changes = True
                 if account.is_active != (not is_locked):
                     account.is_active = not is_locked
+                    has_changes = True
+                
+                # 更新权限信息
+                if account.permissions != permissions_info['permissions_json']:
+                    account.permissions = permissions_info['permissions_json']
+                    has_changes = True
+                if account.is_superuser != permissions_info['is_superuser']:
+                    account.is_superuser = permissions_info['is_superuser']
+                    has_changes = True
+                if account.can_grant != permissions_info['can_grant']:
+                    account.can_grant = permissions_info['can_grant']
                     has_changes = True
                 
                 if has_changes:
@@ -440,7 +457,7 @@ class AccountSyncService:
         """同步SQL Server账户"""
         cursor = conn.cursor()
         
-        # 查询用户信息
+        # 查询用户信息 - 只同步sa和用户创建的账户，排除内置账户
         cursor.execute("""
             SELECT 
                 name as username,
@@ -451,6 +468,11 @@ class AccountSyncService:
             FROM sys.server_principals
             WHERE type IN ('S', 'U', 'G')
             AND name NOT LIKE '##%'
+            AND name NOT LIKE 'NT SERVICE\\%'
+            AND name NOT LIKE 'NT AUTHORITY\\%'
+            AND name NOT LIKE 'BUILTIN\\%'
+            AND name NOT IN ('public', 'guest', 'dbo')
+            AND (name = 'sa' OR name NOT LIKE 'NT %')
             ORDER BY name
         """)
         
@@ -466,6 +488,9 @@ class AccountSyncService:
             # 直接使用SQL Server的原始type_desc名称
             account_type = account_type.lower()
             
+            # 获取权限信息
+            permissions_info = self._get_sqlserver_account_permissions(conn, username)
+            
             # 查找或创建账户记录
             account = Account.query.filter_by(
                 instance_id=instance.id,
@@ -478,18 +503,38 @@ class AccountSyncService:
                     username=username,
                     database_name=database_name,
                     account_type=account_type,
-                    is_active=not is_disabled
+                    is_active=not is_disabled,
+                    permissions=permissions_info['permissions_json'],
+                    is_superuser=permissions_info['is_superuser'],
+                    can_grant=permissions_info['can_grant']
                 )
                 db.session.add(account)
                 added_count += 1
             else:
                 # 检查是否有变化
-                if (account.database_name != database_name or 
-                    account.account_type != account_type or
-                    account.is_active != (not is_disabled)):
+                has_changes = False
+                if account.database_name != database_name:
                     account.database_name = database_name
+                    has_changes = True
+                if account.account_type != account_type:
                     account.account_type = account_type
+                    has_changes = True
+                if account.is_active != (not is_disabled):
                     account.is_active = not is_disabled
+                    has_changes = True
+                
+                # 更新权限信息
+                if account.permissions != permissions_info['permissions_json']:
+                    account.permissions = permissions_info['permissions_json']
+                    has_changes = True
+                if account.is_superuser != permissions_info['is_superuser']:
+                    account.is_superuser = permissions_info['is_superuser']
+                    has_changes = True
+                if account.can_grant != permissions_info['can_grant']:
+                    account.can_grant = permissions_info['can_grant']
+                    has_changes = True
+                
+                if has_changes:
                     account.updated_at = now()
                     modified_count += 1
             
@@ -768,6 +813,182 @@ class AccountSyncService:
             'removed_count': removed_count,
             'removed_accounts': removed_accounts
         }
+    
+    def _get_mysql_account_permissions(self, conn, username: str, host: str) -> Dict[str, Any]:
+        """获取MySQL账户权限信息"""
+        import json
+        
+        cursor = conn.cursor()
+        
+        try:
+            # 获取全局权限
+            cursor.execute("""
+                SELECT PRIVILEGE_TYPE, IS_GRANTABLE
+                FROM INFORMATION_SCHEMA.USER_PRIVILEGES
+                WHERE GRANTEE = %s
+            """, (f"'{username}'@'{host}'",))
+            
+            global_permissions = []
+            can_grant = False
+            is_superuser = False
+            
+            for row in cursor.fetchall():
+                privilege, is_grantable = row
+                global_permissions.append({
+                    'privilege': privilege,
+                    'granted': True,
+                    'grantable': bool(is_grantable)
+                })
+                if is_grantable:
+                    can_grant = True
+                if privilege == 'SUPER':
+                    is_superuser = True
+            
+            # 获取数据库权限
+            cursor.execute("""
+                SELECT TABLE_SCHEMA, PRIVILEGE_TYPE
+                FROM INFORMATION_SCHEMA.SCHEMA_PRIVILEGES
+                WHERE GRANTEE = %s
+                ORDER BY TABLE_SCHEMA, PRIVILEGE_TYPE
+            """, (f"'{username}'@'{host}'",))
+            
+            db_permissions = {}
+            for row in cursor.fetchall():
+                schema, privilege = row
+                if schema not in db_permissions:
+                    db_permissions[schema] = []
+                db_permissions[schema].append(privilege)
+            
+            # 转换为前端需要的格式
+            database_permissions = []
+            for schema, privileges in db_permissions.items():
+                database_permissions.append({
+                    'database': schema,
+                    'privileges': privileges
+                })
+            
+            permissions_data = {
+                'global': global_permissions,
+                'database': database_permissions
+            }
+            
+            return {
+                'permissions_json': json.dumps(permissions_data),
+                'is_superuser': is_superuser,
+                'can_grant': can_grant
+            }
+            
+        except Exception as e:
+            self.logger.error(f"获取MySQL权限失败: {e}")
+            return {
+                'permissions_json': json.dumps({'global': [], 'database': []}),
+                'is_superuser': False,
+                'can_grant': False
+            }
+        finally:
+            cursor.close()
+    
+    def _get_sqlserver_account_permissions(self, conn, username: str) -> Dict[str, Any]:
+        """获取SQL Server账户权限信息"""
+        import json
+        
+        cursor = conn.cursor()
+        
+        try:
+            # 获取服务器角色
+            cursor.execute("""
+                SELECT r.name as role_name
+                FROM sys.server_role_members rm
+                JOIN sys.server_principals r ON rm.role_principal_id = r.principal_id
+                JOIN sys.server_principals p ON rm.member_principal_id = p.principal_id
+                WHERE p.name = %s
+            """, (username,))
+            
+            server_roles = []
+            is_sysadmin = False
+            for row in cursor.fetchall():
+                role_name = row[0]
+                server_roles.append({
+                    'role': role_name,
+                    'granted': True
+                })
+                if role_name == 'sysadmin':
+                    is_sysadmin = True
+            
+            # 获取服务器权限
+            cursor.execute("""
+                SELECT p.permission_name, p.state_desc
+                FROM sys.server_permissions p
+                JOIN sys.server_principals sp ON p.grantee_principal_id = sp.principal_id
+                WHERE sp.name = %s
+            """, (username,))
+            
+            server_permissions = []
+            for row in cursor.fetchall():
+                permission, state = row
+                server_permissions.append({
+                    'permission': permission,
+                    'granted': state == 'GRANT'
+                })
+            
+            # 简化数据库权限获取 - 只获取基本权限
+            database_roles = []
+            database_permissions = []
+            
+            # 尝试获取数据库角色（简化版本）
+            try:
+                cursor.execute("""
+                    SELECT 
+                        db.name as database_name,
+                        r.name as role_name
+                    FROM sys.databases db
+                    CROSS APPLY (
+                        SELECT r.name as role_name
+                        FROM sys.database_role_members rm
+                        JOIN sys.database_principals r ON rm.role_principal_id = r.principal_id
+                        JOIN sys.database_principals p ON rm.member_principal_id = p.principal_id
+                        WHERE p.name = %s
+                    ) roles
+                    WHERE roles.role_name IS NOT NULL
+                """, (username,))
+                
+                db_roles = {}
+                for row in cursor.fetchall():
+                    db_name, role_name = row
+                    if db_name not in db_roles:
+                        db_roles[db_name] = []
+                    db_roles[db_name].append(role_name)
+                
+                for db_name, roles in db_roles.items():
+                    database_roles.append({
+                        'database': db_name,
+                        'roles': roles
+                    })
+            except Exception as e:
+                self.logger.debug(f"获取数据库角色失败: {e}")
+            
+            permissions_data = {
+                'server_roles': server_roles,
+                'server_permissions': server_permissions,
+                'database_roles': database_roles,
+                'database': database_permissions
+            }
+            
+            return {
+                'permissions_json': json.dumps(permissions_data),
+                'is_superuser': is_sysadmin,
+                'can_grant': is_sysadmin  # sysadmin角色可以授权
+            }
+            
+        except Exception as e:
+            self.logger.error(f"获取SQL Server权限失败: {e}")
+            return {
+                'permissions_json': json.dumps({'server_roles': [], 'server_permissions': [], 'database_roles': [], 'database': []}),
+                'is_superuser': False,
+                'can_grant': False
+            }
+        finally:
+            cursor.close()
 
 # 全局实例
 account_sync_service = AccountSyncService()

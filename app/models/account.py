@@ -23,6 +23,12 @@ class Account(db.Model):
     is_locked = db.Column(db.Boolean, default=False)  # 账户是否锁定/禁用
     is_active = db.Column(db.Boolean, default=True)
     last_login = db.Column(db.DateTime, nullable=True)
+    
+    # 权限信息字段
+    permissions = db.Column(db.Text, nullable=True)  # JSON格式存储权限信息
+    is_superuser = db.Column(db.Boolean, default=False)  # 是否为超级用户
+    can_grant = db.Column(db.Boolean, default=False)  # 是否有授权权限
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -33,6 +39,7 @@ class Account(db.Model):
     
     def to_dict(self):
         """转换为字典"""
+        import json
         return {
             'id': self.id,
             'instance_id': self.instance_id,
@@ -46,6 +53,9 @@ class Account(db.Model):
             'is_locked': self.is_locked,
             'is_active': self.is_active,
             'last_login': self.last_login.isoformat() if self.last_login else None,
+            'permissions': json.loads(self.permissions) if self.permissions else None,
+            'is_superuser': self.is_superuser,
+            'can_grant': self.can_grant,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
             'instance_name': self.instance.name if self.instance else None,

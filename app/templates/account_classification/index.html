@@ -13,6 +13,9 @@
             <button class="btn btn-success" onclick="autoClassifyAll()">
                 <i class="fas fa-magic me-2"></i>自动分类
             </button>
+            <a href="{{ url_for('account_classification.rules') }}" class="btn btn-info">
+                <i class="fas fa-cogs me-2"></i>规则管理
+            </a>
         </div>
     </div>
 
@@ -98,86 +101,24 @@
             </div>
         </div>
 
-        <!-- 右侧：规则配置 -->
+        <!-- 右侧：分类详情 -->
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-cogs me-2"></i>规则配置
+                        <i class="fas fa-info-circle me-2"></i>分类详情
                     </h5>
                 </div>
                 <div class="card-body">
-                    <!-- 数据库类型选择 -->
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">数据库类型</label>
-                            <select class="form-select" id="dbTypeSelect" onchange="loadRules()">
-                                <option value="">请选择数据库类型</option>
-                                <option value="mysql">MySQL</option>
-                                <option value="postgresql">PostgreSQL</option>
-                                <option value="sqlserver">SQL Server</option>
-                                <option value="oracle">Oracle</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">操作</label>
-                            <div>
-                                <button class="btn btn-primary btn-sm" onclick="showCreateRuleModal()">
-                                    <i class="fas fa-plus me-1"></i>新建规则
-                                </button>
-                                <button class="btn btn-info btn-sm" onclick="loadTemplates()">
-                                    <i class="fas fa-file-import me-1"></i>加载模板
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 规则列表 -->
-                    <div id="rulesList">
-                        <div class="text-center text-muted py-4">
-                            <i class="fas fa-info-circle fa-2x mb-2"></i>
-                            <p>请选择数据库类型查看规则</p>
-                        </div>
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-mouse-pointer fa-2x mb-2"></i>
+                        <p>点击左侧分类查看详情</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 账户分类预览 -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-eye me-2"></i>分类预览
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-sm">
-                            <thead>
-                                <tr>
-                                    <th>账户名</th>
-                                    <th>实例</th>
-                                    <th>数据库类型</th>
-                                    <th>分类</th>
-                                    <th>风险等级</th>
-                                    <th>分配方式</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="previewTableBody">
-                                <tr>
-                                    <td colspan="7" class="text-center text-muted">暂无数据</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- 创建分类模态框 -->
@@ -352,9 +293,11 @@ function displayClassifications(classifications) {
                             <button class="btn btn-outline-primary" onclick="editClassification(${classification.id})" title="编辑">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-outline-danger" onclick="deleteClassification(${classification.id})" title="删除">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            ${!classification.is_system ? `
+                                <button class="btn btn-outline-danger" onclick="deleteClassification(${classification.id})" title="删除">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : ''}
                         </div>
                     </div>
                     ${classification.description ? `<small class="text-muted d-block mt-1">${classification.description}</small>` : ''}
@@ -619,7 +562,7 @@ function createRule() {
     };
     
     const data = {
-        classification_id: classificationId,
+        classification_id: parseInt(classificationId),
         db_type: dbType,
         rule_name: ruleName,
         rule_expression: ruleExpression
@@ -659,6 +602,7 @@ function autoClassifyAll() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         body: JSON.stringify({})
     })
@@ -780,115 +724,5 @@ function deleteRule(id) {
     });
 }
 
-// 加载模板
-function loadTemplates() {
-    const dbType = document.getElementById('dbTypeSelect').value;
-    if (!dbType) {
-        showAlert('warning', '请先选择数据库类型');
-        return;
-    }
-    
-    fetch(`/account-classification/templates?db_type=${dbType}`)
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            if (data.templates.length === 0) {
-                showAlert('info', '暂无可用模板');
-                return;
-            }
-            
-            // 显示模板选择模态框
-            showTemplateModal(data.templates);
-        } else {
-            showAlert('danger', data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('danger', '加载模板失败');
-    });
-}
-
-// 显示模板选择模态框
-function showTemplateModal(templates) {
-    const modalHtml = `
-        <div class="modal fade" id="templateModal" tabindex="-1" aria-labelledby="templateModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="templateModalLabel">
-                            <i class="fas fa-file-import me-2"></i>选择模板
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            ${templates.map(template => `
-                                <div class="col-md-6 mb-3">
-                                    <div class="card h-100">
-                                        <div class="card-body">
-                                            <h6 class="card-title">${template.name}</h6>
-                                            <p class="card-text text-muted small">${template.description || '无描述'}</p>
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <small class="text-muted">${template.rule_count || 0} 个规则</small>
-                                                <button class="btn btn-primary btn-sm" onclick="applyTemplate(${template.id})">
-                                                    <i class="fas fa-check me-1"></i>应用
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // 移除已存在的模态框
-    const existingModal = document.getElementById('templateModal');
-    if (existingModal) {
-        existingModal.remove();
-    }
-    
-    // 添加新模态框
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
-    // 显示模态框
-    const modal = new bootstrap.Modal(document.getElementById('templateModal'));
-    modal.show();
-}
-
-// 应用模板
-function applyTemplate(templateId) {
-    const dbType = document.getElementById('dbTypeSelect').value;
-    
-    fetch(`/account-classification/templates/${templateId}/apply`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            db_type: dbType
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('success', '模板应用成功');
-            loadRules(); // 重新加载规则列表
-            // 关闭模态框
-            const modal = bootstrap.Modal.getInstance(document.getElementById('templateModal'));
-            modal.hide();
-        } else {
-            showAlert('danger', data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('danger', '应用模板失败');
-    });
-}
 </script>
 {% endblock %}

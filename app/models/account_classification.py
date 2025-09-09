@@ -18,6 +18,7 @@ class AccountClassification(db.Model):
     risk_level = db.Column(db.String(20), nullable=False, default='medium')  # low, medium, high, critical
     color = db.Column(db.String(20), nullable=True)  # 显示颜色
     priority = db.Column(db.Integer, default=0)  # 优先级，数字越大优先级越高
+    is_system = db.Column(db.Boolean, default=False, nullable=False)  # 是否为系统分类
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -38,6 +39,7 @@ class AccountClassification(db.Model):
             'risk_level': self.risk_level,
             'color': self.color,
             'priority': self.priority,
+            'is_system': self.is_system,
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
@@ -125,44 +127,3 @@ class AccountClassificationAssignment(db.Model):
             'classification_name': self.classification.name if self.classification else None
         }
 
-class ClassificationTemplate(db.Model):
-    """分类模板模型"""
-    __tablename__ = 'classification_templates'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False, unique=True)  # 模板名称
-    description = db.Column(db.Text, nullable=True)  # 模板描述
-    db_type = db.Column(db.String(20), nullable=False)  # mysql, postgresql, sqlserver, oracle
-    template_data = db.Column(db.Text, nullable=False)  # 模板数据（JSON格式）
-    is_builtin = db.Column(db.Boolean, default=False)  # 是否为内置模板
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    def __repr__(self):
-        return f'<ClassificationTemplate {self.name} for {self.db_type}>'
-    
-    def to_dict(self):
-        """转换为字典"""
-        return {
-            'id': self.id,
-            'name': self.name,
-            'description': self.description,
-            'db_type': self.db_type,
-            'template_data': self.template_data,
-            'is_builtin': self.is_builtin,
-            'is_active': self.is_active,
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
-        }
-    
-    def get_template_data(self):
-        """获取模板数据（解析JSON）"""
-        try:
-            return json.loads(self.template_data)
-        except (json.JSONDecodeError, TypeError):
-            return {}
-    
-    def set_template_data(self, data):
-        """设置模板数据（保存为JSON）"""
-        self.template_data = json.dumps(data, ensure_ascii=False)

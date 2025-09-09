@@ -60,7 +60,8 @@ def list(db_type=None):
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     
-    # 构建查询
+    # 构建查询 - 包含分类信息
+    from app.models.account_classification import AccountClassificationAssignment, AccountClassification
     query = db.session.query(Account).join(Instance, Account.instance_id == Instance.id)
     
     # 数据库类型筛选 - 优先使用URL参数，其次使用筛选参数
@@ -110,6 +111,25 @@ def list(db_type=None):
         page=page, per_page=per_page, error_out=False
     )
     
+    # 获取账户分类信息
+    account_ids = [account.id for account in accounts.items]
+    classifications = {}
+    if account_ids:
+        assignments = db.session.query(AccountClassificationAssignment, AccountClassification).join(
+            AccountClassification, AccountClassificationAssignment.classification_id == AccountClassification.id
+        ).filter(
+            AccountClassificationAssignment.account_id.in_(account_ids),
+            AccountClassificationAssignment.is_active == True
+        ).all()
+        
+        for assignment, classification in assignments:
+            classifications[assignment.account_id] = {
+                'id': classification.id,
+                'name': classification.name,
+                'risk_level': classification.risk_level,
+                'color': classification.color
+            }
+    
     # 获取统计信息
     stats = get_account_list_statistics()
     
@@ -139,6 +159,7 @@ def list(db_type=None):
                          stats=stats,
                          filter_options=filter_options,
                          instances=instances,
+                         classifications=classifications,  # 传递分类信息
                          current_db_type=db_type,
                          search=search,
                          is_locked=is_locked,

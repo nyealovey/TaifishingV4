@@ -197,6 +197,7 @@
                         <th style="font-size: 0.8rem;">IP地址</th>
                         <th style="font-size: 0.8rem;">环境</th>
                         <th style="font-size: 0.8rem;">类型</th>
+                        <th style="font-size: 0.8rem;">分类</th>
                         <th style="font-size: 0.8rem;">密码最后修改</th>
                         <th style="font-size: 0.8rem;">锁定状态</th>
                         <th style="font-size: 0.8rem;">操作</th>
@@ -207,6 +208,7 @@
                         <th style="font-size: 0.8rem;">实例名称</th>
                         <th style="font-size: 0.8rem;">环境</th>
                         <th style="font-size: 0.8rem;">插件/类型</th>
+                        <th style="font-size: 0.8rem;">分类</th>
                         <th style="font-size: 0.8rem;">密码最后修改</th>
                         <th style="font-size: 0.8rem;">锁定状态</th>
                         <th style="font-size: 0.8rem;">操作</th>
@@ -217,6 +219,7 @@
                         <th style="font-size: 0.8rem;">环境</th>
                         <th style="font-size: 0.8rem;">数据库类型</th>
                         <th style="font-size: 0.8rem;">插件/类型</th>
+                        <th style="font-size: 0.8rem;">分类</th>
                         <th style="font-size: 0.8rem;">密码最后修改</th>
                         <th style="font-size: 0.8rem;">锁定状态</th>
                         <th style="font-size: 0.8rem;">操作</th>
@@ -257,6 +260,16 @@
                                 <span class="badge bg-secondary" style="font-size: 0.7rem;">{{ account.plugin }}</span>
                             {% else %}
                                 <span class="text-muted" style="font-size: 0.8rem;">未知</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if classifications.get(account.id) %}
+                                {% set classification = classifications[account.id] %}
+                                <span class="badge" style="font-size: 0.7rem; background-color: {{ classification.color or '#6c757d' }};">
+                                    {{ classification.name }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted" style="font-size: 0.8rem;">未分类</span>
                             {% endif %}
                         </td>
                         <td>
@@ -314,6 +327,16 @@
                                 <span class="badge bg-secondary" style="font-size: 0.7rem;">{{ account.plugin }}</span>
                             {% else %}
                                 <span class="text-muted" style="font-size: 0.8rem;">未知</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if classifications.get(account.id) %}
+                                {% set classification = classifications[account.id] %}
+                                <span class="badge" style="font-size: 0.7rem; background-color: {{ classification.color or '#6c757d' }};">
+                                    {{ classification.name }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted" style="font-size: 0.8rem;">未分类</span>
                             {% endif %}
                         </td>
                         <td>
@@ -387,6 +410,16 @@
                                 {% else %}
                                     <span class="text-muted" style="font-size: 0.8rem;">未知</span>
                                 {% endif %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if classifications.get(account.id) %}
+                                {% set classification = classifications[account.id] %}
+                                <span class="badge" style="font-size: 0.7rem; background-color: {{ classification.color or '#6c757d' }};">
+                                    {{ classification.name }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted" style="font-size: 0.8rem;">未分类</span>
                             {% endif %}
                         </td>
                         <td>
