@@ -284,9 +284,12 @@ class DatabaseService:
         """同步PostgreSQL账户"""
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, rolconnlimit, rolvaliduntil
+            SELECT 
+                rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, 
+                rolcanlogin, rolconnlimit, rolvaliduntil, rolbypassrls, rolreplication
             FROM pg_roles
-            WHERE rolname NOT LIKE 'pg_%' AND rolname NOT IN ('postgres', 'rdsadmin')
+            WHERE rolname NOT LIKE 'pg_%' 
+            AND rolname NOT IN ('postgres', 'rdsadmin', 'rds_superuser')
         """)
         
         # 获取服务器端的所有账户
@@ -301,42 +304,67 @@ class DatabaseService:
         modified_accounts = []
         
         for row in cursor.fetchall():
-            username, is_super, inherits, can_create_role, can_create_db, can_login, conn_limit, valid_until = row
+            (username, is_super, inherits, can_create_role, can_create_db, 
+             can_login, conn_limit, valid_until, can_bypass_rls, can_replicate) = row
             
-            # 记录服务器端的账户
-            server_accounts.add((username, 'localhost'))
+            # 记录服务器端的账户（PostgreSQL没有主机概念）
+            server_accounts.add((username, ''))
+            
+            # 确定账户类型
+            if is_super:
+                account_type = 'superuser'
+            elif can_create_db or can_create_role:
+                account_type = 'admin'
+            else:
+                account_type = 'user'
+            
+            # 检查密码是否过期
+            from datetime import datetime
+            from app.utils.timezone import now
+            password_expired = valid_until is not None and valid_until < now()
+            
+            # 检查账户是否被锁定
+            is_locked = not can_login
+            
+            # 检查账户是否活跃
+            is_active = can_login and not password_expired
             
             account_data = {
                 'username': username,
-                'host': 'localhost',
+                'host': '',  # PostgreSQL没有主机概念
                 'database_name': instance.database_name or 'postgres',
-                'account_type': 'superuser' if is_super else 'user',
+                'account_type': account_type,
                 'plugin': 'postgresql',
-                'password_expired': valid_until is not None and valid_until < 'now()',
+                'password_expired': password_expired,
                 'password_last_changed': None,
-                'is_locked': not can_login,
-                'is_active': can_login and (valid_until is None or valid_until > 'now()')
+                'is_locked': is_locked,
+                'is_active': is_active,
+                'is_superuser': is_super,
+                'can_create_db': can_create_db,
+                'can_create_role': can_create_role,
+                'can_bypass_rls': can_bypass_rls,
+                'can_replicate': can_replicate
             }
             
-            # 检查账户是否已存在
+            # 检查账户是否已存在（PostgreSQL没有主机概念）
             existing = Account.query.filter_by(
                 instance_id=instance.id,
                 username=username,
-                host='localhost'  # PostgreSQL默认主机
+                host=''  # PostgreSQL没有主机概念
             ).first()
             
             if not existing:
                 account = Account(
                     instance_id=instance.id,
                     username=username,
-                    host='localhost',
+                    host='',  # PostgreSQL没有主机概念
                     database_name=instance.database_name or 'postgres',
                     account_type='superuser' if is_super else 'user',  # PostgreSQL有明确的角色概念
                     plugin='postgresql',
-                    password_expired=valid_until is not None and valid_until < 'now()',
+                    password_expired=valid_until is not None and valid_until < now(),
                     password_last_changed=None,  # PostgreSQL不直接提供此信息
                     is_locked=not can_login,  # PostgreSQL的rolcanlogin字段，False表示被禁用
-                    is_active=can_login and (valid_until is None or valid_until > 'now()')
+                    is_active=can_login and (valid_until is None or valid_until > now())
                 )
                 db.session.add(account)
                 added_count += 1
@@ -345,17 +373,17 @@ class DatabaseService:
                 # 检查是否有变化
                 has_changes = (
                     existing.account_type != ('superuser' if is_super else 'user') or
-                    existing.password_expired != (valid_until is not None and valid_until < 'now()') or
+                    existing.password_expired != (valid_until is not None and valid_until < now()) or
                     existing.is_locked != (not can_login) or
-                    existing.is_active != (can_login and (valid_until is None or valid_until > 'now()'))
+                    existing.is_active != (can_login and (valid_until is None or valid_until > now()))
                 )
                 
                 if has_changes:
                     # 更新现有账户信息
                     existing.account_type = 'superuser' if is_super else 'user'
-                    existing.password_expired = valid_until is not None and valid_until < 'now()'
+                    existing.password_expired = valid_until is not None and valid_until < now()
                     existing.is_locked = not can_login  # PostgreSQL的rolcanlogin字段，False表示被禁用
-                    existing.is_active = can_login and (valid_until is None or valid_until > 'now()')
+                    existing.is_active = can_login and (valid_until is None or valid_until > now())
                     updated_count += 1
                     modified_accounts.append(account_data)
         
@@ -683,7 +711,15 @@ class DatabaseService:
                 # 获取数据库版本
                 cursor.execute('SELECT version()')
                 version_result = cursor.fetchone()
-                database_version = version_result[0] if version_result else None
+                full_version = version_result[0] if version_result else None
+                
+                # 提取简洁的版本号（如13.4）
+                import re
+                if full_version:
+                    version_match = re.search(r'PostgreSQL (\d+\.\d+)', full_version)
+                    database_version = version_match.group(1) if version_match else full_version
+                else:
+                    database_version = None
             
             conn.close()
             
@@ -702,17 +738,60 @@ class DatabaseService:
         except ImportError:
             return {
                 'success': False,
-                'error': 'PostgreSQL驱动未安装，请安装psycopg2-binary'
+                'error': 'PostgreSQL驱动未安装',
+                'details': '系统缺少psycopg2-binary驱动包',
+                'solution': '请运行命令安装: pip install psycopg2-binary',
+                'error_type': 'missing_driver'
             }
+        except psycopg2.OperationalError as e:
+            error_msg = str(e)
+            if 'Connection refused' in error_msg:
+                return {
+                    'success': False,
+                    'error': 'PostgreSQL服务未运行',
+                    'details': f'无法连接到 {instance.host}:{instance.port}，服务器拒绝连接',
+                    'solution': '请确保PostgreSQL服务正在运行，并检查端口号是否正确',
+                    'error_type': 'connection_refused'
+                }
+            elif 'authentication failed' in error_msg.lower():
+                return {
+                    'success': False,
+                    'error': 'PostgreSQL认证失败',
+                    'details': f'用户名或密码错误: {instance.credential.username}',
+                    'solution': '请检查数据库凭据中的用户名和密码是否正确',
+                    'error_type': 'authentication_failed'
+                }
+            elif 'database' in error_msg.lower() and 'does not exist' in error_msg.lower():
+                return {
+                    'success': False,
+                    'error': 'PostgreSQL数据库不存在',
+                    'details': f'数据库 "{instance.database_name or "postgres"}" 不存在',
+                    'solution': '请检查数据库名称是否正确，或创建该数据库',
+                    'error_type': 'database_not_found'
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': 'PostgreSQL连接失败',
+                    'details': error_msg,
+                    'solution': '请检查网络连接、服务器状态和连接参数',
+                    'error_type': 'operational_error'
+                }
         except psycopg2.Error as e:
             return {
                 'success': False,
-                'error': f'PostgreSQL连接失败: {str(e)}'
+                'error': 'PostgreSQL错误',
+                'details': str(e),
+                'solution': '请检查PostgreSQL服务器配置和日志',
+                'error_type': 'psycopg2_error'
             }
         except Exception as e:
             return {
                 'success': False,
-                'error': f'PostgreSQL连接失败: {str(e)}'
+                'error': 'PostgreSQL连接失败',
+                'details': str(e),
+                'solution': '请检查所有连接参数和服务器状态',
+                'error_type': 'unknown_error'
             }
     
     def _test_mysql_connection(self, instance: Instance) -> Dict[str, Any]:
@@ -789,14 +868,45 @@ class DatabaseService:
             
         except pymysql.Error as e:
             error_code, error_msg = e.args
-            return {
-                'success': False,
-                'error': f'MySQL连接失败 [{error_code}]: {error_msg}'
-            }
+            if error_code == 2003:
+                return {
+                    'success': False,
+                    'error': 'MySQL服务未运行',
+                    'details': f'无法连接到 {instance.host}:{instance.port}，服务器拒绝连接',
+                    'solution': '请确保MySQL服务正在运行，并检查端口号是否正确',
+                    'error_type': 'connection_refused'
+                }
+            elif error_code == 1045:
+                return {
+                    'success': False,
+                    'error': 'MySQL认证失败',
+                    'details': f'用户名或密码错误: {instance.credential.username}',
+                    'solution': '请检查数据库凭据中的用户名和密码是否正确',
+                    'error_type': 'authentication_failed'
+                }
+            elif error_code == 1049:
+                return {
+                    'success': False,
+                    'error': 'MySQL数据库不存在',
+                    'details': f'数据库 "{instance.database_name}" 不存在',
+                    'solution': '请检查数据库名称是否正确，或创建该数据库',
+                    'error_type': 'database_not_found'
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': 'MySQL连接失败',
+                    'details': f'错误代码 {error_code}: {error_msg}',
+                    'solution': '请检查MySQL服务器配置和日志',
+                    'error_type': 'mysql_error'
+                }
         except Exception as e:
             return {
                 'success': False,
-                'error': f'MySQL连接失败: {str(e)}'
+                'error': 'MySQL连接失败',
+                'details': str(e),
+                'solution': '请检查所有连接参数和服务器状态',
+                'error_type': 'unknown_error'
             }
     
     def _test_sqlserver_connection(self, instance: Instance) -> Dict[str, Any]:
@@ -960,17 +1070,68 @@ class DatabaseService:
         except ImportError:
             return {
                 'success': False,
-                'error': 'Oracle驱动未安装，请安装cx_Oracle和Oracle Instant Client'
+                'error': 'Oracle驱动未安装',
+                'details': '系统缺少cx_Oracle驱动包',
+                'solution': '请运行命令安装: pip install cx_Oracle',
+                'error_type': 'missing_driver'
             }
+        except cx_Oracle.DatabaseError as e:
+            error_msg = str(e)
+            if 'DPI-1047' in error_msg:
+                return {
+                    'success': False,
+                    'error': 'Oracle Instant Client未找到',
+                    'details': '无法找到Oracle Instant Client库文件',
+                    'solution': '请安装Oracle Instant Client并设置DYLD_LIBRARY_PATH环境变量',
+                    'error_type': 'missing_instant_client'
+                }
+            elif 'ORA-01017' in error_msg:
+                return {
+                    'success': False,
+                    'error': 'Oracle认证失败',
+                    'details': f'用户名或密码错误: {instance.credential.username}',
+                    'solution': '请检查数据库凭据中的用户名和密码是否正确',
+                    'error_type': 'authentication_failed'
+                }
+            elif 'ORA-12541' in error_msg:
+                return {
+                    'success': False,
+                    'error': 'Oracle服务未运行',
+                    'details': f'无法连接到 {instance.host}:{instance.port}，TNS监听器未启动',
+                    'solution': '请确保Oracle数据库服务正在运行，并检查端口号是否正确',
+                    'error_type': 'connection_refused'
+                }
+            elif 'ORA-12514' in error_msg:
+                return {
+                    'success': False,
+                    'error': 'Oracle服务名不存在',
+                    'details': f'服务名 "{instance.database_name or "ORCL"}" 不存在',
+                    'solution': '请检查服务名是否正确，或使用正确的服务名',
+                    'error_type': 'service_not_found'
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': 'Oracle数据库错误',
+                    'details': error_msg,
+                    'solution': '请检查Oracle数据库配置和日志',
+                    'error_type': 'oracle_error'
+                }
         except cx_Oracle.Error as e:
             return {
                 'success': False,
-                'error': f'Oracle连接失败: {str(e)}'
+                'error': 'Oracle连接失败',
+                'details': str(e),
+                'solution': '请检查Oracle Instant Client安装和配置',
+                'error_type': 'cx_oracle_error'
             }
         except Exception as e:
             return {
                 'success': False,
-                'error': f'Oracle连接失败: {str(e)}'
+                'error': 'Oracle连接失败',
+                'details': str(e),
+                'solution': '请检查所有连接参数和服务器状态',
+                'error_type': 'unknown_error'
             }
 
     def get_connection(self, instance: Instance) -> Optional[Any]:
@@ -1689,75 +1850,114 @@ class DatabaseService:
     
     def _get_oracle_permissions(self, instance: Instance, account: Account) -> Dict[str, Any]:
         """获取Oracle账户权限"""
-        conn = self.get_connection(instance)
-        if not conn:
-            return {
-                'global': [],
-                'database': [],
-                'error': '无法获取数据库连接'
-            }
-        
-        cursor = conn.cursor()
-        
         try:
-            # 获取系统权限
-            cursor.execute("""
-                SELECT privilege, admin_option
-                FROM dba_sys_privs
-                WHERE grantee = %s
-                ORDER BY privilege
-            """, (account.username.upper(),))
+            # 优先使用本地数据库中已同步的权限数据
+            if account.permissions:
+                import json
+                permissions = json.loads(account.permissions)
+                
+                # 直接返回本地权限数据
+                return {
+                    'system_privileges': permissions.get('system_privileges', []),
+                    'role_privileges': permissions.get('role_privileges', []),
+                    'object_privileges': permissions.get('object_privileges', {}),
+                    'database': permissions.get('database', [])
+                }
             
-            global_permissions = []
-            for row in cursor.fetchall():
-                privilege, admin_option = row
-                global_permissions.append({
-                    'privilege': privilege,
-                    'granted': True,
-                    'grantable': admin_option == 'YES'
-                })
+            # 如果本地没有权限数据，则从服务器查询（备用方案）
+            conn = self.get_connection(instance)
+            if not conn:
+                return {
+                    'system_privileges': [],
+                    'role_privileges': [],
+                    'object_privileges': {},
+                    'database': [],
+                    'error': '无法获取数据库连接'
+                }
             
-            # 获取对象权限
-            cursor.execute("""
-                SELECT owner, table_name, privilege, grantable
-                FROM dba_tab_privs
-                WHERE grantee = %s
-                ORDER BY owner, table_name, privilege
-            """, (account.username.upper(),))
+            cursor = conn.cursor()
             
-            obj_permissions = {}
-            for row in cursor.fetchall():
-                owner, table_name, privilege, grantable = row
-                key = f"{owner}.{table_name}"
-                if key not in obj_permissions:
-                    obj_permissions[key] = []
-                obj_permissions[key].append({
-                    'privilege': privilege,
-                    'grantable': grantable == 'YES'
-                })
-            
-            # 转换为数据库权限格式
-            database_permissions = []
-            for obj_name, privileges in obj_permissions.items():
-                privilege_names = [p['privilege'] for p in privileges]
-                database_permissions.append({
-                    'database': obj_name,
-                    'privileges': privilege_names
-                })
-            
-            return {
-                'global': global_permissions,
-                'database': database_permissions
-            }
-            
+            try:
+                # 获取系统权限
+                cursor.execute("""
+                    SELECT privilege, admin_option
+                    FROM dba_sys_privs
+                    WHERE grantee = :username
+                    ORDER BY privilege
+                """, {'username': account.username.upper()})
+                
+                system_permissions = []
+                for row in cursor.fetchall():
+                    privilege, admin_option = row
+                    system_permissions.append({
+                        'privilege': privilege,
+                        'granted': True,
+                        'grantable': admin_option == 'YES'
+                    })
+                
+                # 获取角色权限
+                cursor.execute("""
+                    SELECT granted_role, admin_option
+                    FROM dba_role_privs
+                    WHERE grantee = :username
+                    ORDER BY granted_role
+                """, {'username': account.username.upper()})
+                
+                role_permissions = []
+                for row in cursor.fetchall():
+                    role, admin_option = row
+                    role_permissions.append({
+                        'role': role,
+                        'granted': True,
+                        'grantable': admin_option == 'YES'
+                    })
+                
+                # 获取对象权限
+                cursor.execute("""
+                    SELECT owner, table_name, privilege, grantable
+                    FROM dba_tab_privs
+                    WHERE grantee = :username
+                    ORDER BY owner, table_name, privilege
+                """, {'username': account.username.upper()})
+                
+                obj_permissions = {}
+                for row in cursor.fetchall():
+                    owner, table_name, privilege, grantable = row
+                    key = f"{owner}.{table_name}"
+                    if key not in obj_permissions:
+                        obj_permissions[key] = []
+                    obj_permissions[key].append({
+                        'privilege': privilege,
+                        'grantable': grantable == 'YES'
+                    })
+                
+                # 转换为数据库权限格式
+                database_permissions = []
+                for obj_name, privileges in obj_permissions.items():
+                    privilege_names = [p['privilege'] for p in privileges]
+                    database_permissions.append({
+                        'database': obj_name,
+                        'privileges': privilege_names
+                    })
+                
+                return {
+                    'system_privileges': system_permissions,
+                    'role_privileges': role_permissions,
+                    'object_privileges': obj_permissions,
+                    'database': database_permissions
+                }
+                
+            finally:
+                cursor.close()
+                
         except Exception as e:
             return {
-                'global': [],
+                'system_privileges': [],
+                'role_privileges': [],
+                'object_privileges': {},
                 'database': [],
-                'error': f'查询权限失败: {str(e)}'
+                'error': f'获取权限失败: {str(e)}'
             }
-        finally:
-            cursor.close()
     def _get_mysql_version(self, conn) -> Optional[str]:
         """获取MySQL版本"""
         try:

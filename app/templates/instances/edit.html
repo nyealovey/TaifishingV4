@@ -220,13 +220,32 @@ function testConnection() {
                 </div>
             `;
         } else {
-            contentDiv.innerHTML = `
+            // 构建详细的错误信息
+            let errorHtml = `
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     <strong>连接失败！</strong><br>
-                    ${data.error || '未知错误'}
-                </div>
+                    <strong>错误类型：</strong>${data.error || '未知错误'}<br>
             `;
+            
+            // 添加详细信息
+            if (data.details) {
+                errorHtml += `<strong>详细信息：</strong>${data.details}<br>`;
+            }
+            
+            // 添加解决方案
+            if (data.solution) {
+                errorHtml += `<strong>解决方案：</strong>${data.solution}<br>`;
+            }
+            
+            // 添加错误类型
+            if (data.error_type) {
+                errorHtml += `<small class="text-muted">错误类型: ${data.error_type}</small>`;
+            }
+            
+            errorHtml += `</div>`;
+            
+            contentDiv.innerHTML = errorHtml;
         }
         
         resultDiv.style.display = 'block';

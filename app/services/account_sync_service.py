@@ -395,53 +395,120 @@ class AccountSyncService:
         """同步PostgreSQL账户"""
         cursor = conn.cursor()
         
-        # 查询用户信息
+        # 查询角色信息（PostgreSQL中用户和角色是同一个概念）
         cursor.execute("""
             SELECT 
-                usename as username,
-                'user' as account_type,
-                '' as database_name,
-                usesuper as is_superuser,
-                usecreatedb as can_create_db,
-                usebypassrls as can_bypass_rls
-            FROM pg_user
-            ORDER BY usename
+                rolname as username,
+                rolsuper as is_superuser,
+                rolinherit as can_inherit,
+                rolcreaterole as can_create_role,
+                rolcreatedb as can_create_db,
+                rolcanlogin as can_login,
+                rolconnlimit as conn_limit,
+                rolvaliduntil as valid_until,
+                rolbypassrls as can_bypass_rls,
+                rolreplication as can_replicate
+            FROM pg_roles
+            WHERE rolname NOT LIKE 'pg_%' 
+            AND rolname NOT IN ('postgres', 'rdsadmin', 'rds_superuser')
+            ORDER BY rolname
         """)
         
         accounts = cursor.fetchall()
         synced_count = 0
         added_count = 0
         modified_count = 0
+        removed_count = 0
+        
+        # 记录服务器端的账户
+        server_accounts = set()
         
         for account_data in accounts:
-            username, account_type, database_name, is_superuser, can_create_db, can_bypass_rls = account_data
+            (username, is_superuser, can_inherit, can_create_role, can_create_db, 
+             can_login, conn_limit, valid_until, can_bypass_rls, can_replicate) = account_data
+            
+            # 记录服务器端的账户（PostgreSQL没有主机概念）
+            server_accounts.add((username, ''))
+            
+            # 确定账户类型
+            if is_superuser:
+                account_type = 'superuser'
+            elif can_create_db or can_create_role:
+                account_type = 'admin'
+            else:
+                account_type = 'user'
+            
+            # 检查密码是否过期
+            password_expired = valid_until is not None and valid_until < now()
+            
+            # 检查账户是否被锁定
+            is_locked = not can_login
+            
+            # 检查账户是否活跃
+            is_active = can_login and not password_expired
             
             # 查找或创建账户记录
             account = Account.query.filter_by(
                 instance_id=instance.id,
-                username=username
+                username=username,
+                host=''  # PostgreSQL没有主机概念
             ).first()
             
             if not account:
                 account = Account(
                     instance_id=instance.id,
                     username=username,
-                    database_name=database_name,
+                    host='',  # PostgreSQL没有主机概念
+                    database_name=instance.database_name or 'postgres',
                     account_type=account_type,
-                    is_active=True
+                    is_superuser=is_superuser,
+                    is_active=is_active,
+                    is_locked=is_locked,
+                    password_expired=password_expired,
+                    created_at=now(),
+                    updated_at=now()
                 )
                 db.session.add(account)
                 added_count += 1
             else:
                 # 检查是否有变化
-                if (account.database_name != database_name or 
-                    account.account_type != account_type):
-                    account.database_name = database_name
+                changes = False
+                if account.account_type != account_type:
                     account.account_type = account_type
+                    changes = True
+                if account.is_superuser != is_superuser:
+                    account.is_superuser = is_superuser
+                    changes = True
+                if account.is_active != is_active:
+                    account.is_active = is_active
+                    changes = True
+                if account.is_locked != is_locked:
+                    account.is_locked = is_locked
+                    changes = True
+                if account.password_expired != password_expired:
+                    account.password_expired = password_expired
+                    changes = True
+                
+                if changes:
                     account.updated_at = now()
                     modified_count += 1
             
             synced_count += 1
+            
+            # 获取账户权限
+            try:
+                permissions = self._get_postgresql_account_permissions(instance, conn, username)
+                if permissions:
+                    account.permissions = permissions
+            except Exception as e:
+                self.logger.warning(f"获取PostgreSQL账户 {username} 权限失败: {e}")
+        
+        # 删除服务器端不存在的账户
+        local_accounts = Account.query.filter_by(instance_id=instance.id).all()
+        for account in local_accounts:
+            if (account.username, account.host) not in server_accounts:
+                db.session.delete(account)
+                removed_count += 1
         
         db.session.commit()
         cursor.close()
@@ -449,9 +516,196 @@ class AccountSyncService:
         return {
             'synced_count': synced_count,
             'added_count': added_count,
-            'removed_count': 0,
+            'removed_count': removed_count,
             'modified_count': modified_count
         }
+    
+    def _get_postgresql_account_permissions(self, instance: Instance, conn, username: str) -> Dict[str, Any]:
+        """获取PostgreSQL账户权限"""
+        cursor = conn.cursor()
+        permissions = {
+            'role_attributes': [],
+            'database_privileges': [],
+            'table_privileges': [],
+            'sequence_privileges': [],
+            'function_privileges': [],
+            'schema_privileges': [],
+            'language_privileges': [],
+            'tablespace_privileges': [],
+            'fdw_privileges': [],
+            'server_privileges': [],
+            'type_privileges': []
+        }
+        
+        try:
+            # 获取角色属性
+            cursor.execute("""
+                SELECT 
+                    rolsuper, rolcreatedb, rolcreaterole, rolinherit, 
+                    rolcanlogin, rolreplication, rolbypassrls
+                FROM pg_roles 
+                WHERE rolname = %s
+            """, (username,))
+            
+            role_attrs = cursor.fetchone()
+            if role_attrs:
+                is_super, can_create_db, can_create_role, can_inherit, can_login, can_replicate, can_bypass_rls = role_attrs
+                
+                if is_super:
+                    permissions['role_attributes'].append('SUPERUSER')
+                if can_create_db:
+                    permissions['role_attributes'].append('CREATEDB')
+                if can_create_role:
+                    permissions['role_attributes'].append('CREATEROLE')
+                if can_inherit:
+                    permissions['role_attributes'].append('INHERIT')
+                if can_login:
+                    permissions['role_attributes'].append('LOGIN')
+                if can_replicate:
+                    permissions['role_attributes'].append('REPLICATION')
+                if can_bypass_rls:
+                    permissions['role_attributes'].append('BYPASSRLS')
+            
+            # 获取数据库权限
+            cursor.execute("""
+                SELECT 
+                    datname,
+                    CASE WHEN has_database_privilege(%s, datname, 'CONNECT') THEN 'CONNECT' END,
+                    CASE WHEN has_database_privilege(%s, datname, 'CREATE') THEN 'CREATE' END,
+                    CASE WHEN has_database_privilege(%s, datname, 'TEMPORARY') THEN 'TEMPORARY' END
+                FROM pg_database 
+                WHERE datistemplate = false
+                AND (has_database_privilege(%s, datname, 'CONNECT') OR 
+                     has_database_privilege(%s, datname, 'CREATE') OR 
+                     has_database_privilege(%s, datname, 'TEMPORARY'))
+            """, (username, username, username, username, username, username))
+            
+            for row in cursor.fetchall():
+                db_name, connect, create, temp = row
+                if connect:
+                    permissions['database_privileges'].append(f"CONNECT ON {db_name}")
+                if create:
+                    permissions['database_privileges'].append(f"CREATE ON {db_name}")
+                if temp:
+                    permissions['database_privileges'].append(f"TEMPORARY ON {db_name}")
+            
+            # 获取表权限
+            cursor.execute("""
+                SELECT 
+                    schemaname, tablename,
+                    CASE WHEN has_table_privilege(%s, schemaname||'.'||tablename, 'SELECT') THEN 'SELECT' END,
+                    CASE WHEN has_table_privilege(%s, schemaname||'.'||tablename, 'INSERT') THEN 'INSERT' END,
+                    CASE WHEN has_table_privilege(%s, schemaname||'.'||tablename, 'UPDATE') THEN 'UPDATE' END,
+                    CASE WHEN has_table_privilege(%s, schemaname||'.'||tablename, 'DELETE') THEN 'DELETE' END,
+                    CASE WHEN has_table_privilege(%s, schemaname||'.'||tablename, 'TRUNCATE') THEN 'TRUNCATE' END,
+                    CASE WHEN has_table_privilege(%s, schemaname||'.'||tablename, 'REFERENCES') THEN 'REFERENCES' END,
+                    CASE WHEN has_table_privilege(%s, schemaname||'.'||tablename, 'TRIGGER') THEN 'TRIGGER' END
+                FROM pg_tables 
+                WHERE schemaname NOT IN ('information_schema', 'pg_catalog')
+                AND (has_table_privilege(%s, schemaname||'.'||tablename, 'SELECT') OR 
+                     has_table_privilege(%s, schemaname||'.'||tablename, 'INSERT') OR 
+                     has_table_privilege(%s, schemaname||'.'||tablename, 'UPDATE') OR 
+                     has_table_privilege(%s, schemaname||'.'||tablename, 'DELETE') OR 
+                     has_table_privilege(%s, schemaname||'.'||tablename, 'TRUNCATE') OR 
+                     has_table_privilege(%s, schemaname||'.'||tablename, 'REFERENCES') OR 
+                     has_table_privilege(%s, schemaname||'.'||tablename, 'TRIGGER'))
+                LIMIT 100
+            """, (username, username, username, username, username, username, username, 
+                  username, username, username, username, username, username, username))
+            
+            for row in cursor.fetchall():
+                schema, table, select, insert, update, delete, truncate, references, trigger = row
+                table_name = f"{schema}.{table}"
+                if select:
+                    permissions['table_privileges'].append(f"SELECT ON {table_name}")
+                if insert:
+                    permissions['table_privileges'].append(f"INSERT ON {table_name}")
+                if update:
+                    permissions['table_privileges'].append(f"UPDATE ON {table_name}")
+                if delete:
+                    permissions['table_privileges'].append(f"DELETE ON {table_name}")
+                if truncate:
+                    permissions['table_privileges'].append(f"TRUNCATE ON {table_name}")
+                if references:
+                    permissions['table_privileges'].append(f"REFERENCES ON {table_name}")
+                if trigger:
+                    permissions['table_privileges'].append(f"TRIGGER ON {table_name}")
+            
+            # 获取序列权限
+            cursor.execute("""
+                SELECT 
+                    schemaname, sequencename,
+                    CASE WHEN has_sequence_privilege(%s, schemaname||'.'||sequencename, 'SELECT') THEN 'SELECT' END,
+                    CASE WHEN has_sequence_privilege(%s, schemaname||'.'||sequencename, 'UPDATE') THEN 'UPDATE' END,
+                    CASE WHEN has_sequence_privilege(%s, schemaname||'.'||sequencename, 'USAGE') THEN 'USAGE' END
+                FROM pg_sequences 
+                WHERE schemaname NOT IN ('information_schema', 'pg_catalog')
+                AND (has_sequence_privilege(%s, schemaname||'.'||sequencename, 'SELECT') OR 
+                     has_sequence_privilege(%s, schemaname||'.'||sequencename, 'UPDATE') OR 
+                     has_sequence_privilege(%s, schemaname||'.'||sequencename, 'USAGE'))
+                LIMIT 50
+            """, (username, username, username, username, username, username))
+            
+            for row in cursor.fetchall():
+                schema, sequence, select, update, usage = row
+                seq_name = f"{schema}.{sequence}"
+                if select:
+                    permissions['sequence_privileges'].append(f"SELECT ON {seq_name}")
+                if update:
+                    permissions['sequence_privileges'].append(f"UPDATE ON {seq_name}")
+                if usage:
+                    permissions['sequence_privileges'].append(f"USAGE ON {seq_name}")
+            
+            # 获取函数权限
+            cursor.execute("""
+                SELECT 
+                    schemaname, proname,
+                    CASE WHEN has_function_privilege(%s, oid, 'EXECUTE') THEN 'EXECUTE' END
+                FROM pg_proc p
+                JOIN pg_namespace n ON p.pronamespace = n.oid
+                WHERE n.nspname NOT IN ('information_schema', 'pg_catalog')
+                AND has_function_privilege(%s, p.oid, 'EXECUTE')
+                LIMIT 50
+            """, (username, username))
+            
+            for row in cursor.fetchall():
+                schema, func_name, execute = row
+                if execute:
+                    permissions['function_privileges'].append(f"EXECUTE ON {schema}.{func_name}")
+            
+            # 获取模式权限
+            cursor.execute("""
+                SELECT 
+                    nspname,
+                    CASE WHEN has_schema_privilege(%s, nspname, 'CREATE') THEN 'CREATE' END,
+                    CASE WHEN has_schema_privilege(%s, nspname, 'USAGE') THEN 'USAGE' END
+                FROM pg_namespace 
+                WHERE nspname NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
+                AND (has_schema_privilege(%s, nspname, 'CREATE') OR 
+                     has_schema_privilege(%s, nspname, 'USAGE'))
+            """, (username, username, username, username))
+            
+            for row in cursor.fetchall():
+                schema, create, usage = row
+                if create:
+                    permissions['schema_privileges'].append(f"CREATE ON {schema}")
+                if usage:
+                    permissions['schema_privileges'].append(f"USAGE ON {schema}")
+            
+            # 确定是否为超级用户和是否可以授权
+            is_superuser = 'SUPERUSER' in permissions['role_attributes']
+            can_grant = is_superuser or 'CREATEROLE' in permissions['role_attributes']
+            
+            permissions['is_superuser'] = is_superuser
+            permissions['can_grant'] = can_grant
+            
+        except Exception as e:
+            self.logger.error(f"获取PostgreSQL账户 {username} 权限失败: {e}")
+            return {}
+        finally:
+            cursor.close()
+        
+        return permissions
     
     def _sync_sqlserver_accounts(self, instance: Instance, conn) -> Dict[str, int]:
         """同步SQL Server账户"""
@@ -588,7 +842,8 @@ class AccountSyncService:
                 '' as database_name,
                 account_status,
                 created,
-                expiry_date
+                expiry_date,
+                profile
             FROM dba_users
             WHERE username NOT IN ('SYS', 'SYSTEM', 'OUTLN', 'DIP', 'TSMSYS', 'DBSNMP', 'WMSYS', 'EXFSYS', 'CTXSYS', 'XDB', 'ANONYMOUS', 'ORDPLUGINS', 'ORDSYS', 'SI_INFORMTN_SCHEMA', 'MDSYS', 'OLAPSYS', 'MDDATA', 'SPATIAL_CSW_ADMIN_USR', 'SPATIAL_WFS_ADMIN_USR')
             ORDER BY username
@@ -598,9 +853,19 @@ class AccountSyncService:
         synced_count = 0
         added_count = 0
         modified_count = 0
+        removed_count = 0
+        
+        # 记录服务器端的账户
+        server_accounts = set()
         
         for account_data in accounts:
-            username, account_type, database_name, account_status, created, expiry_date = account_data
+            username, account_type, database_name, account_status, created, expiry_date, profile = account_data
+            
+            # 记录服务器端的账户
+            server_accounts.add(username)
+            
+            # 获取权限信息
+            permissions_info = self._get_oracle_account_permissions(conn, username)
             
             # 查找或创建账户记录
             account = Account.query.filter_by(
@@ -614,23 +879,64 @@ class AccountSyncService:
                     username=username,
                     database_name=database_name,
                     account_type=account_type,
-                    is_active=account_status == 'OPEN'
+                    is_active=account_status == 'OPEN',
+                    permissions=permissions_info['permissions_json'],
+                    is_superuser=permissions_info['is_superuser'],
+                    can_grant=permissions_info['can_grant']
                 )
                 db.session.add(account)
                 added_count += 1
             else:
                 # 检查是否有变化
                 is_active = account_status == 'OPEN'
-                if (account.database_name != database_name or 
-                    account.account_type != account_type or
-                    account.is_active != is_active):
+                has_changes = False
+                
+                if account.database_name != database_name:
                     account.database_name = database_name
+                    has_changes = True
+                if account.account_type != account_type:
                     account.account_type = account_type
+                    has_changes = True
+                if account.is_active != is_active:
                     account.is_active = is_active
+                    has_changes = True
+                
+                # 更新权限信息
+                if account.permissions != permissions_info['permissions_json']:
+                    account.permissions = permissions_info['permissions_json']
+                    has_changes = True
+                if account.is_superuser != permissions_info['is_superuser']:
+                    account.is_superuser = permissions_info['is_superuser']
+                    has_changes = True
+                if account.can_grant != permissions_info['can_grant']:
+                    account.can_grant = permissions_info['can_grant']
+                    has_changes = True
+                
+                if has_changes:
                     account.updated_at = now()
                     modified_count += 1
             
             synced_count += 1
+        
+        # 删除服务器端不存在的本地账户
+        local_accounts = Account.query.filter_by(instance_id=instance.id).all()
+        removed_accounts = []
+        
+        for local_account in local_accounts:
+            if local_account.username not in server_accounts:
+                removed_accounts.append({
+                    'username': local_account.username,
+                    'host': local_account.host,
+                    'database_name': local_account.database_name,
+                    'account_type': local_account.account_type,
+                    'plugin': local_account.plugin,
+                    'password_expired': local_account.password_expired,
+                    'password_last_changed': local_account.password_last_changed.isoformat() if local_account.password_last_changed else None,
+                    'is_locked': local_account.is_locked,
+                    'is_active': local_account.is_active
+                })
+                db.session.delete(local_account)
+                removed_count += 1
         
         db.session.commit()
         cursor.close()
@@ -638,8 +944,9 @@ class AccountSyncService:
         return {
             'synced_count': synced_count,
             'added_count': added_count,
-            'removed_count': 0,
-            'modified_count': modified_count
+            'removed_count': removed_count,
+            'modified_count': modified_count,
+            'removed_accounts': removed_accounts
         }
     
     def cleanup_orphaned_accounts(self, instance: Instance) -> Dict[str, Any]:
@@ -999,6 +1306,111 @@ class AccountSyncService:
             self.logger.error(f"获取SQL Server权限失败: {e}")
             return {
                 'permissions_json': json.dumps({'server_roles': [], 'server_permissions': [], 'database_roles': [], 'database': []}),
+                'is_superuser': False,
+                'can_grant': False
+            }
+        finally:
+            cursor.close()
+    
+    def _get_oracle_account_permissions(self, conn, username: str) -> Dict[str, Any]:
+        """获取Oracle账户权限信息"""
+        import json
+        
+        cursor = conn.cursor()
+        
+        try:
+            # 获取系统权限
+            cursor.execute("""
+                SELECT privilege, admin_option
+                FROM dba_sys_privs
+                WHERE grantee = :username
+                ORDER BY privilege
+            """, {'username': username.upper()})
+            
+            system_permissions = []
+            can_grant = False
+            is_superuser = False
+            
+            for row in cursor.fetchall():
+                privilege, admin_option = row
+                system_permissions.append({
+                    'privilege': privilege,
+                    'granted': True,
+                    'grantable': admin_option == 'YES'
+                })
+                if admin_option == 'YES':
+                    can_grant = True
+                if privilege in ['SYSDBA', 'SYSOPER', 'DBA']:
+                    is_superuser = True
+            
+            # 获取角色权限
+            cursor.execute("""
+                SELECT granted_role, admin_option
+                FROM dba_role_privs
+                WHERE grantee = :username
+                ORDER BY granted_role
+            """, {'username': username.upper()})
+            
+            role_permissions = []
+            for row in cursor.fetchall():
+                role, admin_option = row
+                role_permissions.append({
+                    'role': role,
+                    'granted': True,
+                    'grantable': admin_option == 'YES'
+                })
+                if admin_option == 'YES':
+                    can_grant = True
+                if role in ['DBA', 'CONNECT', 'RESOURCE']:
+                    is_superuser = True
+            
+            # 获取对象权限
+            cursor.execute("""
+                SELECT owner, table_name, privilege, grantable
+                FROM dba_tab_privs
+                WHERE grantee = :username
+                ORDER BY owner, table_name, privilege
+            """, {'username': username.upper()})
+            
+            object_permissions = {}
+            for row in cursor.fetchall():
+                owner, table_name, privilege, grantable = row
+                key = f"{owner}.{table_name}"
+                if key not in object_permissions:
+                    object_permissions[key] = []
+                object_permissions[key].append({
+                    'privilege': privilege,
+                    'grantable': grantable == 'YES'
+                })
+                if grantable == 'YES':
+                    can_grant = True
+            
+            # 转换为数据库权限格式
+            database_permissions = []
+            for obj_name, privileges in object_permissions.items():
+                privilege_names = [p['privilege'] for p in privileges]
+                database_permissions.append({
+                    'database': obj_name,
+                    'privileges': privilege_names
+                })
+            
+            permissions_data = {
+                'system_privileges': system_permissions,
+                'role_privileges': role_permissions,
+                'object_privileges': object_permissions,
+                'database': database_permissions
+            }
+            
+            return {
+                'permissions_json': json.dumps(permissions_data),
+                'is_superuser': is_superuser,
+                'can_grant': can_grant
+            }
+            
+        except Exception as e:
+            self.logger.error(f"获取Oracle权限失败: {e}")
+            return {
+                'permissions_json': json.dumps({'system_privileges': [], 'role_privileges': [], 'object_privileges': {}, 'database': []}),
                 'is_superuser': False,
                 'can_grant': False
             }

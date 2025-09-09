@@ -258,14 +258,22 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-user text-primary me-2"></i>
+                                        {% if instance.db_type == 'postgresql' %}
+                                        <strong>{{ account.username }}</strong>
+                                        {% else %}
                                         <strong>{{ account.username }}@{{ account.host or '%' }}</strong>
+                                        {% endif %}
                                     </div>
                                 </td>
                                 <td>
                                     <span class="fw-bold">{{ account.username }}</span>
                                 </td>
                                 <td>
+                                    {% if instance.db_type == 'postgresql' %}
+                                    <span class="text-muted">-</span>
+                                    {% else %}
                                     <span class="badge bg-info">{{ account.host or '%' }}</span>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if account.plugin %}
@@ -326,7 +334,7 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-user text-primary me-2"></i>
-                                        {% if instance.db_type == 'sqlserver' %}
+                                        {% if instance.db_type == 'sqlserver' or instance.db_type == 'postgresql' %}
                                         <strong>{{ account.username }}</strong>
                                         {% else %}
                                         <strong>{{ account.username }}@{{ account.host or '%' }}</strong>
@@ -334,14 +342,14 @@
                                     </div>
                                 </td>
                                 <td>
-                                    {% if instance.db_type == 'sqlserver' %}
+                                    {% if instance.db_type == 'sqlserver' or instance.db_type == 'postgresql' %}
                                     <span class="text-muted">-</span>
                                     {% else %}
                                     <span class="fw-bold">{{ account.username }}</span>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if instance.db_type == 'sqlserver' %}
+                                    {% if instance.db_type == 'sqlserver' or instance.db_type == 'postgresql' %}
                                     <span class="text-muted">-</span>
                                     {% else %}
                                     <span class="badge bg-info">{{ account.host or '%' }}</span>
@@ -422,7 +430,7 @@ function testConnection() {
         const resultDiv = document.getElementById('testResult');
         const contentDiv = document.getElementById('testResultContent');
         
-        if (data.message) {
+        if (data.success) {
             statusBadge.textContent = '正常';
             statusBadge.className = 'badge bg-success';
             
@@ -430,20 +438,39 @@ function testConnection() {
                 <div class="alert alert-success">
                     <i class="fas fa-check-circle me-2"></i>
                     <strong>连接成功！</strong><br>
-                    ${data.message}
+                    ${data.message || '数据库连接正常'}
                 </div>
             `;
         } else if (data.error) {
             statusBadge.textContent = '失败';
             statusBadge.className = 'badge bg-danger';
             
-            contentDiv.innerHTML = `
+            // 构建详细的错误信息
+            let errorHtml = `
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     <strong>连接失败！</strong><br>
-                    ${data.error}
-                </div>
+                    <strong>错误类型：</strong>${data.error}<br>
             `;
+            
+            // 添加详细信息
+            if (data.details) {
+                errorHtml += `<strong>详细信息：</strong>${data.details}<br>`;
+            }
+            
+            // 添加解决方案
+            if (data.solution) {
+                errorHtml += `<strong>解决方案：</strong>${data.solution}<br>`;
+            }
+            
+            // 添加错误类型
+            if (data.error_type) {
+                errorHtml += `<small class="text-muted">错误类型: ${data.error_type}</small>`;
+            }
+            
+            errorHtml += `</div>`;
+            
+            contentDiv.innerHTML = errorHtml;
         }
         
         resultDiv.style.display = 'block';
@@ -554,7 +581,7 @@ function showPermissionsModal(permissions, account) {
                         <div class="mb-3">
                             <h6>账户信息</h6>
                             <p class="mb-1"><strong>用户名:</strong> ${account.username}</p>
-                            ${dbType !== 'sqlserver' ? `<p class="mb-1"><strong>主机:</strong> ${account.host || '%'}</p>` : ''}
+                            ${dbType !== 'sqlserver' && dbType !== 'postgresql' ? `<p class="mb-1"><strong>主机:</strong> ${account.host || '%'}</p>` : ''}
                             <p class="mb-0"><strong>插件:</strong> ${account.plugin || '未知'}</p>
                         </div>
                         ${dbType === 'sqlserver' ? `

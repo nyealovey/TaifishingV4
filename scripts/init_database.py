@@ -294,8 +294,128 @@ def init_permission_configs():
         {'db_type': 'sqlserver', 'category': 'database_privileges', 'permission_name': 'CONTROL', 'description': '控制权限', 'sort_order': 8},
     ]
     
+    # PostgreSQL权限配置
+    postgresql_permissions = [
+        # 角色属性
+        {'db_type': 'postgresql', 'category': 'role_attributes', 'permission_name': 'SUPERUSER', 'description': '超级用户属性', 'sort_order': 1},
+        {'db_type': 'postgresql', 'category': 'role_attributes', 'permission_name': 'CREATEDB', 'description': '创建数据库属性', 'sort_order': 2},
+        {'db_type': 'postgresql', 'category': 'role_attributes', 'permission_name': 'CREATEROLE', 'description': '创建角色属性', 'sort_order': 3},
+        {'db_type': 'postgresql', 'category': 'role_attributes', 'permission_name': 'INHERIT', 'description': '继承属性', 'sort_order': 4},
+        {'db_type': 'postgresql', 'category': 'role_attributes', 'permission_name': 'LOGIN', 'description': '登录属性', 'sort_order': 5},
+        {'db_type': 'postgresql', 'category': 'role_attributes', 'permission_name': 'REPLICATION', 'description': '复制属性', 'sort_order': 6},
+        {'db_type': 'postgresql', 'category': 'role_attributes', 'permission_name': 'BYPASSRLS', 'description': '绕过行级安全属性', 'sort_order': 7},
+        # 数据库权限
+        {'db_type': 'postgresql', 'category': 'database_privileges', 'permission_name': 'CONNECT', 'description': '连接数据库权限', 'sort_order': 1},
+        {'db_type': 'postgresql', 'category': 'database_privileges', 'permission_name': 'CREATE', 'description': '创建对象权限', 'sort_order': 2},
+        {'db_type': 'postgresql', 'category': 'database_privileges', 'permission_name': 'TEMPORARY', 'description': '创建临时表权限', 'sort_order': 3},
+        # 表权限
+        {'db_type': 'postgresql', 'category': 'table_privileges', 'permission_name': 'SELECT', 'description': '查询权限', 'sort_order': 1},
+        {'db_type': 'postgresql', 'category': 'table_privileges', 'permission_name': 'INSERT', 'description': '插入权限', 'sort_order': 2},
+        {'db_type': 'postgresql', 'category': 'table_privileges', 'permission_name': 'UPDATE', 'description': '更新权限', 'sort_order': 3},
+        {'db_type': 'postgresql', 'category': 'table_privileges', 'permission_name': 'DELETE', 'description': '删除权限', 'sort_order': 4},
+        {'db_type': 'postgresql', 'category': 'table_privileges', 'permission_name': 'TRUNCATE', 'description': '截断权限', 'sort_order': 5},
+        {'db_type': 'postgresql', 'category': 'table_privileges', 'permission_name': 'REFERENCES', 'description': '引用权限', 'sort_order': 6},
+        {'db_type': 'postgresql', 'category': 'table_privileges', 'permission_name': 'TRIGGER', 'description': '触发器权限', 'sort_order': 7},
+        # 序列权限
+        {'db_type': 'postgresql', 'category': 'sequence_privileges', 'permission_name': 'SELECT', 'description': '查询序列权限', 'sort_order': 1},
+        {'db_type': 'postgresql', 'category': 'sequence_privileges', 'permission_name': 'UPDATE', 'description': '更新序列权限', 'sort_order': 2},
+        {'db_type': 'postgresql', 'category': 'sequence_privileges', 'permission_name': 'USAGE', 'description': '使用序列权限', 'sort_order': 3},
+        # 函数权限
+        {'db_type': 'postgresql', 'category': 'function_privileges', 'permission_name': 'EXECUTE', 'description': '执行函数权限', 'sort_order': 1},
+        # 模式权限
+        {'db_type': 'postgresql', 'category': 'schema_privileges', 'permission_name': 'CREATE', 'description': '创建模式权限', 'sort_order': 1},
+        {'db_type': 'postgresql', 'category': 'schema_privileges', 'permission_name': 'USAGE', 'description': '使用模式权限', 'sort_order': 2},
+        # 语言权限
+        {'db_type': 'postgresql', 'category': 'language_privileges', 'permission_name': 'USAGE', 'description': '使用语言权限', 'sort_order': 1},
+        # 表空间权限
+        {'db_type': 'postgresql', 'category': 'tablespace_privileges', 'permission_name': 'CREATE', 'description': '创建表空间权限', 'sort_order': 1},
+        # 外部数据包装器权限
+        {'db_type': 'postgresql', 'category': 'fdw_privileges', 'permission_name': 'USAGE', 'description': '使用外部数据包装器权限', 'sort_order': 1},
+        # 服务器权限
+        {'db_type': 'postgresql', 'category': 'server_privileges', 'permission_name': 'USAGE', 'description': '使用服务器权限', 'sort_order': 1},
+        # 类型权限
+        {'db_type': 'postgresql', 'category': 'type_privileges', 'permission_name': 'USAGE', 'description': '使用类型权限', 'sort_order': 1},
+    ]
+    
+    # Oracle权限配置
+    oracle_permissions = [
+        # 系统权限
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE SESSION', 'description': '创建会话权限', 'sort_order': 1},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE USER', 'description': '创建用户权限', 'sort_order': 2},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'ALTER USER', 'description': '修改用户权限', 'sort_order': 3},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'DROP USER', 'description': '删除用户权限', 'sort_order': 4},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE ROLE', 'description': '创建角色权限', 'sort_order': 5},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'ALTER ROLE', 'description': '修改角色权限', 'sort_order': 6},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'DROP ROLE', 'description': '删除角色权限', 'sort_order': 7},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'GRANT ANY PRIVILEGE', 'description': '授予任意权限', 'sort_order': 8},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'GRANT ANY ROLE', 'description': '授予任意角色', 'sort_order': 9},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE TABLE', 'description': '创建表权限', 'sort_order': 10},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE ANY TABLE', 'description': '创建任意表权限', 'sort_order': 11},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'ALTER ANY TABLE', 'description': '修改任意表权限', 'sort_order': 12},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'DROP ANY TABLE', 'description': '删除任意表权限', 'sort_order': 13},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'SELECT ANY TABLE', 'description': '查询任意表权限', 'sort_order': 14},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'INSERT ANY TABLE', 'description': '插入任意表权限', 'sort_order': 15},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'UPDATE ANY TABLE', 'description': '更新任意表权限', 'sort_order': 16},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'DELETE ANY TABLE', 'description': '删除任意表权限', 'sort_order': 17},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE INDEX', 'description': '创建索引权限', 'sort_order': 18},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE ANY INDEX', 'description': '创建任意索引权限', 'sort_order': 19},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'ALTER ANY INDEX', 'description': '修改任意索引权限', 'sort_order': 20},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'DROP ANY INDEX', 'description': '删除任意索引权限', 'sort_order': 21},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE PROCEDURE', 'description': '创建存储过程权限', 'sort_order': 22},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE ANY PROCEDURE', 'description': '创建任意存储过程权限', 'sort_order': 23},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'ALTER ANY PROCEDURE', 'description': '修改任意存储过程权限', 'sort_order': 24},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'DROP ANY PROCEDURE', 'description': '删除任意存储过程权限', 'sort_order': 25},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'EXECUTE ANY PROCEDURE', 'description': '执行任意存储过程权限', 'sort_order': 26},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE SEQUENCE', 'description': '创建序列权限', 'sort_order': 27},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE ANY SEQUENCE', 'description': '创建任意序列权限', 'sort_order': 28},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'ALTER ANY SEQUENCE', 'description': '修改任意序列权限', 'sort_order': 29},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'DROP ANY SEQUENCE', 'description': '删除任意序列权限', 'sort_order': 30},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'SELECT ANY SEQUENCE', 'description': '查询任意序列权限', 'sort_order': 31},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE VIEW', 'description': '创建视图权限', 'sort_order': 32},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE ANY VIEW', 'description': '创建任意视图权限', 'sort_order': 33},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'DROP ANY VIEW', 'description': '删除任意视图权限', 'sort_order': 34},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE TRIGGER', 'description': '创建触发器权限', 'sort_order': 35},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE ANY TRIGGER', 'description': '创建任意触发器权限', 'sort_order': 36},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'ALTER ANY TRIGGER', 'description': '修改任意触发器权限', 'sort_order': 37},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'DROP ANY TRIGGER', 'description': '删除任意触发器权限', 'sort_order': 38},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE TABLESPACE', 'description': '创建表空间权限', 'sort_order': 39},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'ALTER TABLESPACE', 'description': '修改表空间权限', 'sort_order': 40},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'DROP TABLESPACE', 'description': '删除表空间权限', 'sort_order': 41},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'UNLIMITED TABLESPACE', 'description': '无限制表空间权限', 'sort_order': 42},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE DATABASE LINK', 'description': '创建数据库链接权限', 'sort_order': 43},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE PUBLIC DATABASE LINK', 'description': '创建公共数据库链接权限', 'sort_order': 44},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'DROP PUBLIC DATABASE LINK', 'description': '删除公共数据库链接权限', 'sort_order': 45},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE SYNONYM', 'description': '创建同义词权限', 'sort_order': 46},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE ANY SYNONYM', 'description': '创建任意同义词权限', 'sort_order': 47},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'CREATE PUBLIC SYNONYM', 'description': '创建公共同义词权限', 'sort_order': 48},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'DROP ANY SYNONYM', 'description': '删除任意同义词权限', 'sort_order': 49},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'DROP PUBLIC SYNONYM', 'description': '删除公共同义词权限', 'sort_order': 50},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'AUDIT SYSTEM', 'description': '系统审计权限', 'sort_order': 51},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'AUDIT ANY', 'description': '任意审计权限', 'sort_order': 52},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'EXEMPT ACCESS POLICY', 'description': '豁免访问策略权限', 'sort_order': 53},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'EXEMPT REDACTION POLICY', 'description': '豁免数据脱敏策略权限', 'sort_order': 54},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'SYSDBA', 'description': '系统数据库管理员权限', 'sort_order': 55},
+        {'db_type': 'oracle', 'category': 'system_privileges', 'permission_name': 'SYSOPER', 'description': '系统操作员权限', 'sort_order': 56},
+        # 对象权限
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'SELECT', 'description': '查询权限', 'sort_order': 1},
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'INSERT', 'description': '插入权限', 'sort_order': 2},
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'UPDATE', 'description': '更新权限', 'sort_order': 3},
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'DELETE', 'description': '删除权限', 'sort_order': 4},
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'ALTER', 'description': '修改权限', 'sort_order': 5},
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'INDEX', 'description': '索引权限', 'sort_order': 6},
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'REFERENCES', 'description': '引用权限', 'sort_order': 7},
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'EXECUTE', 'description': '执行权限', 'sort_order': 8},
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'DEBUG', 'description': '调试权限', 'sort_order': 9},
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'FLASHBACK', 'description': '闪回权限', 'sort_order': 10},
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'ON COMMIT REFRESH', 'description': '提交时刷新权限', 'sort_order': 11},
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'QUERY REWRITE', 'description': '查询重写权限', 'sort_order': 12},
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'UNDER', 'description': '继承权限', 'sort_order': 13},
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'WRITE', 'description': '写入权限', 'sort_order': 14},
+        {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'READ', 'description': '读取权限', 'sort_order': 15},
+    ]
+    
     # 合并所有权限配置
-    all_permissions = mysql_permissions + sqlserver_permissions
+    all_permissions = mysql_permissions + sqlserver_permissions + postgresql_permissions + oracle_permissions
     
     for perm_data in all_permissions:
         existing = PermissionConfig.query.filter_by(
