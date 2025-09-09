@@ -14,6 +14,7 @@ from app import db, celery
 from app.services.database_service import DatabaseService
 import logging
 from datetime import datetime, timedelta
+from app.utils.timezone import now
 
 # 创建蓝图
 tasks_bp = Blueprint('tasks', __name__)
@@ -528,7 +529,7 @@ def execute_task(task_id):
             result = executor.execute_task(task_id)
             
             # 更新任务状态
-            task.last_run = datetime.utcnow()
+            task.last_run = now()
             task.last_status = 'success' if result['success'] else 'failed'
             task.last_message = result.get('message', result.get('error', ''))
             task.run_count = (task.run_count or 0) + 1
@@ -545,7 +546,7 @@ def execute_task(task_id):
             try:
                 task = Task.query.get(task_id)
                 if task:
-                    task.last_run = datetime.utcnow()
+                    task.last_run = now()
                     task.last_status = 'failed'
                     task.last_message = str(e)
                     task.run_count = (task.run_count or 0) + 1

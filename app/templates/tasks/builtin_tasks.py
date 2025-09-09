@@ -1,3 +1,4 @@
+from app.utils.timezone import now
 # -*- coding: utf-8 -*-
 
 """
@@ -76,7 +77,7 @@ def sync_postgresql_accounts(instance, config):
                 account.database_name = database_name
                 account.account_type = account_type
                 account.is_active = not is_locked
-                account.updated_at = datetime.utcnow()
+                account.updated_at = now()
             
             synced_count += 1
         
@@ -170,7 +171,7 @@ def sync_mysql_accounts(instance, config):
             else:
                 account.database_name = database_name
                 account.account_type = account_type
-                account.updated_at = datetime.utcnow()
+                account.updated_at = now()
             
             synced_count += 1
         
@@ -234,8 +235,8 @@ def sync_postgresql_version(instance, config):
         instance.tags = instance.tags or {}
         instance.tags['version'] = version
         instance.tags['version_info'] = version_info
-        instance.tags['last_version_sync'] = datetime.utcnow().isoformat()
-        instance.updated_at = datetime.utcnow()
+        instance.tags['last_version_sync'] = now().isoformat()
+        instance.updated_at = now()
         
         db.session.commit()
         cursor.close()
@@ -296,8 +297,8 @@ def sync_mysql_version(instance, config):
         instance.tags = instance.tags or {}
         instance.tags['version'] = version
         instance.tags['version_info'] = version_info
-        instance.tags['last_version_sync'] = datetime.utcnow().isoformat()
-        instance.updated_at = datetime.utcnow()
+        instance.tags['last_version_sync'] = now().isoformat()
+        instance.updated_at = now()
         
         db.session.commit()
         cursor.close()
@@ -364,8 +365,8 @@ def sync_postgresql_size(instance, config):
             instance.tags = instance.tags or {}
             instance.tags['database_size'] = size_pretty
             instance.tags['database_size_bytes'] = size_bytes
-            instance.tags['last_size_sync'] = datetime.utcnow().isoformat()
-            instance.updated_at = datetime.utcnow()
+            instance.tags['last_size_sync'] = now().isoformat()
+            instance.updated_at = now()
             
             db.session.commit()
             
@@ -442,8 +443,8 @@ def sync_mysql_size(instance, config):
             instance.tags['database_size'] = size_pretty
             instance.tags['database_size_mb'] = size_mb
             instance.tags['database_size_gb'] = size_gb
-            instance.tags['last_size_sync'] = datetime.utcnow().isoformat()
-            instance.updated_at = datetime.utcnow()
+            instance.tags['last_size_sync'] = now().isoformat()
+            instance.updated_at = now()
             
             db.session.commit()
             

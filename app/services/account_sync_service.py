@@ -26,6 +26,7 @@ from app.models import Instance, Credential
 from app.models.account import Account
 from app import db
 from datetime import datetime
+from app.utils.timezone import now
 
 class AccountSyncService:
     """账户同步服务 - 统一处理所有账户同步逻辑"""
@@ -331,7 +332,7 @@ class AccountSyncService:
                     has_changes = True
                 
                 if has_changes:
-                    account.updated_at = datetime.utcnow()
+                    account.updated_at = now()
                     modified_count += 1
             
             synced_count += 1
@@ -393,7 +394,7 @@ class AccountSyncService:
                     account.account_type != account_type):
                     account.database_name = database_name
                     account.account_type = account_type
-                    account.updated_at = datetime.utcnow()
+                    account.updated_at = now()
                     modified_count += 1
             
             synced_count += 1
@@ -458,7 +459,7 @@ class AccountSyncService:
                     account.database_name = database_name
                     account.account_type = account_type
                     account.is_active = not is_disabled
-                    account.updated_at = datetime.utcnow()
+                    account.updated_at = now()
                     modified_count += 1
             
             synced_count += 1
@@ -524,7 +525,7 @@ class AccountSyncService:
                     account.database_name = database_name
                     account.account_type = account_type
                     account.is_active = is_active
-                    account.updated_at = datetime.utcnow()
+                    account.updated_at = now()
                     modified_count += 1
             
             synced_count += 1

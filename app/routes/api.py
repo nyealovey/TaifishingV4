@@ -1,3 +1,4 @@
+from app.utils.timezone import now
 """
 泰摸鱼吧 - API路由
 """
@@ -37,7 +38,7 @@ def status():
     
     status_info = {
         'status': 'running',
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': now().isoformat(),
         'uptime': 'unknown'
     }
     

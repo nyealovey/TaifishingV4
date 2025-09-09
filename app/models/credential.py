@@ -3,6 +3,7 @@
 """
 
 from datetime import datetime
+from app.utils.timezone import now
 from app import db, bcrypt
 from app.utils.logger import log_operation
 from app.utils.password_manager import password_manager
@@ -149,7 +150,7 @@ class Credential(db.Model):
     
     def soft_delete(self):
         """软删除凭据"""
-        self.deleted_at = datetime.utcnow()
+        self.deleted_at = now()
         db.session.commit()
         log_operation('credential_delete', details={'credential_id': self.id, 'name': self.name})
     

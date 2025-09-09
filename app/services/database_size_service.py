@@ -26,6 +26,7 @@ except ImportError:
 from app.models import Instance
 from app import db
 from datetime import datetime
+from app.utils.timezone import now
 
 class DatabaseSizeService:
     """数据库大小同步服务"""
@@ -71,7 +72,7 @@ class DatabaseSizeService:
             if result['success']:
                 # 更新实例的大小信息
                 instance.database_size = result['database_size']
-                instance.updated_at = datetime.utcnow()
+                instance.updated_at = now()
                 db.session.commit()
             
             return result

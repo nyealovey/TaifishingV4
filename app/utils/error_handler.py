@@ -1,3 +1,4 @@
+from app.utils.timezone import now
 """
 泰摸鱼吧 - 错误处理工具
 """
@@ -135,7 +136,7 @@ def _get_timestamp():
         str: ISO格式时间戳
     """
     from datetime import datetime
-    return datetime.utcnow().isoformat()
+    return now().isoformat()
 
 def safe_error_message(error):
     """

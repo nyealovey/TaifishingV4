@@ -8,7 +8,7 @@ import logging.handlers
 from datetime import datetime
 from flask import current_app
 from functools import wraps
-from app.utils.timezone import get_china_time
+from app.utils.timezone import get_china_time, now
 
 def setup_logger(name, log_file, level=logging.INFO):
     """
@@ -186,7 +186,7 @@ def log_performance(operation, duration, user_id=None):
         'operation': operation,
         'duration': duration,
         'user_id': user_id,
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': now().isoformat()
     }
     
     logger.info(f"性能日志: {perf_data}")
@@ -208,7 +208,7 @@ def log_database_operation(operation, table, record_id=None, user_id=None):
         'table': table,
         'record_id': record_id,
         'user_id': user_id,
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': now().isoformat()
     }
     
     logger.info(f"数据库操作: {db_data}")
@@ -230,7 +230,7 @@ def log_cache_operation(operation, key, hit=None, user_id=None):
         'key': key,
         'hit': hit,
         'user_id': user_id,
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': now().isoformat()
     }
     
     logger.info(f"缓存操作: {cache_data}")
@@ -252,7 +252,7 @@ def log_security_event(event_type, user_id=None, ip_address=None, details=None):
         'user_id': user_id,
         'ip_address': ip_address,
         'details': details or {},
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': now().isoformat()
     }
     
     logger.warning(f"安全事件: {security_data}")
@@ -276,7 +276,7 @@ def log_sync_operation(instance_id, sync_type, status, records_count=None, error
         'status': status,
         'records_count': records_count,
         'error': str(error) if error else None,
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': now().isoformat()
     }
     
     logger.info(f"同步操作: {sync_data}")
@@ -303,7 +303,7 @@ def log_api_request(method, endpoint, status_code, duration, user_id=None, ip_ad
         'duration': duration,
         'user_id': user_id,
         'ip_address': ip_address,
-        'timestamp': datetime.utcnow().isoformat()
+        'timestamp': now().isoformat()
     }
     
     api_logger.info(f"API请求: {api_data}")

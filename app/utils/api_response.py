@@ -8,6 +8,7 @@ import logging
 from typing import Any, Dict, Optional, List
 from flask import jsonify, request
 from datetime import datetime
+from app.utils.timezone import now
 import traceback
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ class APIResponse:
             'success': True,
             'code': code,
             'message': message,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': now().isoformat(),
             'data': data
         }
         
@@ -62,7 +63,7 @@ class APIResponse:
             'success': False,
             'code': code,
             'message': message,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': now().isoformat()
         }
         
         if error_code:
@@ -95,7 +96,7 @@ class APIResponse:
             'success': True,
             'code': 200,
             'message': message,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': now().isoformat(),
             'data': data,
             'pagination': {
                 'page': page,
@@ -202,7 +203,7 @@ class APIResponse:
             'success': False,
             'code': 429,
             'message': message,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': now().isoformat(),
             'error_code': 'RATE_LIMITED',
             'retry_after': retry_after
         }
@@ -226,7 +227,7 @@ class APIResponse:
             'success': False,
             'code': 500,
             'message': message,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': now().isoformat(),
             'error_code': 'INTERNAL_SERVER_ERROR'
         }
         
@@ -350,20 +351,20 @@ def cached_response(ttl: int = 300, key_func: callable = None):
 def log_request(func):
     """请求日志装饰器"""
     def wrapper(*args, **kwargs):
-        start_time = datetime.utcnow()
+        start_time = now()
         
         try:
             result = func(*args, **kwargs)
             
             # 记录成功请求
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (now() - start_time).total_seconds()
             logger.info(f"API请求成功: {func.__name__}, 耗时: {duration:.3f}秒")
             
             return result
             
         except Exception as e:
             # 记录失败请求
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (now() - start_time).total_seconds()
             logger.error(f"API请求失败: {func.__name__}, 耗时: {duration:.3f}秒, 错误: {e}")
             
             raise
@@ -375,12 +376,12 @@ def monitor_response_time(threshold: float = 1.0):
     """响应时间监控装饰器"""
     def api_decorator(func):
         def wrapper(*args, **kwargs):
-            start_time = datetime.utcnow()
+            start_time = now()
             
             try:
                 result = func(*args, **kwargs)
                 
-                duration = (datetime.utcnow() - start_time).total_seconds()
+                duration = (now() - start_time).total_seconds()
                 
                 if duration > threshold:
                     logger.warning(f"慢API响应: {func.__name__}, 耗时: {duration:.3f}秒")
@@ -390,7 +391,7 @@ def monitor_response_time(threshold: float = 1.0):
                 return result
                 
             except Exception as e:
-                duration = (datetime.utcnow() - start_time).total_seconds()
+                duration = (now() - start_time).total_seconds()
                 logger.error(f"API异常: {func.__name__}, 耗时: {duration:.3f}秒, 错误: {e}")
                 raise
         

@@ -100,7 +100,7 @@ def test_utility_functions():
         from datetime import datetime
         
         # 测试时区函数
-        now = datetime.utcnow()
+        now = now()
         china_time = get_china_time()
         formatted_time = format_china_time(now)
         

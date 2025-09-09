@@ -9,6 +9,7 @@ import logging
 import traceback
 import uuid
 from datetime import datetime
+from app.utils.timezone import now
 from typing import Dict, Any, Optional, Callable, List
 from functools import wraps
 from flask import current_app, request, jsonify, render_template
@@ -44,7 +45,7 @@ class ErrorContext:
     
     def __init__(self, error: Exception, request_data: Dict[str, Any] = None):
         self.error_id = str(uuid.uuid4())
-        self.timestamp = datetime.utcnow()
+        self.timestamp = now()
         self.error_type = type(error).__name__
         self.error_message = str(error)
         self.stack_trace = traceback.format_exc()

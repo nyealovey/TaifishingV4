@@ -344,7 +344,7 @@ class TestRunner:
             from datetime import datetime
             
             # 测试时区转换
-            now = datetime.utcnow()
+            now = now()
             china_time = get_china_time(now)
             formatted_time = format_china_time(now)
             

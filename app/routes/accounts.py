@@ -15,6 +15,7 @@ from app import db
 from app.services.database_service import DatabaseService
 import logging
 from datetime import datetime, timedelta
+from app.utils.timezone import now
 
 # 创建蓝图
 accounts_bp = Blueprint('accounts', __name__)
@@ -466,7 +467,7 @@ def sync_statistics():
         from datetime import datetime, timedelta
         
         # 获取最近7天的数据
-        week_ago = datetime.utcnow() - timedelta(days=7)
+        week_ago = now() - timedelta(days=7)
         
         # 总同步次数
         total_syncs = SyncData.query.filter(
@@ -502,7 +503,7 @@ def sync_statistics():
         # 按日期统计趋势数据
         trend_data = []
         for i in range(7):
-            date = (datetime.utcnow() - timedelta(days=i)).date()
+            date = (now() - timedelta(days=i)).date()
             day_syncs = SyncData.query.filter(
                 func.date(SyncData.sync_time) == date
             ).all()
@@ -720,7 +721,7 @@ def export():
     else:
         # 默认JSON格式
         data = {
-            'export_time': datetime.utcnow().isoformat(),
+            'export_time': now().isoformat(),
             'total_records': len(sync_records),
             'records': [record.to_dict() for record in sync_records]
         }
@@ -743,13 +744,13 @@ def get_account_statistics():
         failed_syncs = SyncData.query.filter_by(status='failed').count()
         
         # 今日同步次数
-        today = datetime.utcnow().date()
+        today = now().date()
         today_syncs = SyncData.query.filter(
             db.func.date(SyncData.sync_time) == today
         ).count()
         
         # 最近7天同步趋势
-        week_ago = datetime.utcnow() - timedelta(days=7)
+        week_ago = now() - timedelta(days=7)
         week_syncs = SyncData.query.filter(
             SyncData.sync_time >= week_ago
         ).count()

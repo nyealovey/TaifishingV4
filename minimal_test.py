@@ -58,7 +58,7 @@ def test_utils():
         
         # 测试时区函数
         from datetime import datetime
-        now = datetime.utcnow()
+        now = now()
         china_time = get_china_time(now)
         formatted_time = format_china_time(now)
         

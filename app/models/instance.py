@@ -3,6 +3,7 @@
 """
 
 from datetime import datetime
+from app.utils.timezone import now
 from app import db
 from app.utils.logger import log_operation
 
@@ -173,7 +174,7 @@ class Instance(db.Model):
     
     def soft_delete(self):
         """软删除实例"""
-        self.deleted_at = datetime.utcnow()
+        self.deleted_at = now()
         self.status = 'deleted'
         db.session.commit()
         log_operation('instance_delete', details={'instance_id': self.id, 'name': self.name})

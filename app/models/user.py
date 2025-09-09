@@ -3,6 +3,7 @@
 """
 
 from datetime import datetime
+from app.utils.timezone import now
 from app import db, bcrypt
 from flask_login import UserMixin
 
@@ -77,7 +78,7 @@ class User(UserMixin, db.Model):
     
     def update_last_login(self):
         """更新最后登录时间"""
-        self.last_login = datetime.utcnow()
+        self.last_login = now()
         db.session.commit()
     
     def to_dict(self):

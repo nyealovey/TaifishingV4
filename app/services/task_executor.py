@@ -8,6 +8,7 @@
 import logging
 import traceback
 from datetime import datetime
+from app.utils.timezone import now
 from app.models.task import Task
 from app.models.instance import Instance
 from app.models.sync_data import SyncData
@@ -253,8 +254,8 @@ class TaskExecutor:
                 task.last_status = 'failed'
                 task.last_message = f'执行失败，成功: {success_count}, 失败: {failed_count}'
             
-            task.last_run = datetime.utcnow()
-            task.last_run_at = datetime.utcnow()  # 兼容字段
+            task.last_run = now()
+            task.last_run_at = now()  # 兼容字段
             
             db.session.commit()
             self.logger.info(f"任务状态更新完成: 运行次数={task.run_count}, 成功次数={task.success_count}")

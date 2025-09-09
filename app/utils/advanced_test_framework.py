@@ -226,7 +226,7 @@ class AdvancedTestFramework:
                 test_name=test_name,
                 success=True,
                 duration=duration,
-                timestamp=datetime.utcnow()
+                timestamp=now()
             )
             
         except Exception as e:
@@ -238,7 +238,7 @@ class AdvancedTestFramework:
                 success=False,
                 duration=duration,
                 error_message=str(e),
-                timestamp=datetime.utcnow()
+                timestamp=now()
             )
     
     # 单元测试方法
@@ -944,7 +944,7 @@ class AdvancedTestFramework:
                 'total_time': results.get('total_time', 0)
             },
             'results': results,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': now().isoformat()
         }
 
 # 全局测试框架实例

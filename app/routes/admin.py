@@ -9,6 +9,7 @@ import json
 import time
 import logging
 from datetime import datetime, timedelta
+from app.utils.timezone import now
 from flask import Blueprint, request, jsonify, current_app, render_template
 from flask_login import login_required, current_user
 from functools import wraps
@@ -770,7 +771,7 @@ def get_recent_activities():
     from app import db
     
     # 获取最近24小时的活动
-    since = datetime.utcnow() - timedelta(hours=24)
+    since = now() - timedelta(hours=24)
     
     activities = Log.query.filter(
         Log.created_at >= since

@@ -9,6 +9,7 @@ import os
 import sys
 from pathlib import Path
 from datetime import datetime, timedelta
+from app.utils.timezone import now
 import random
 
 # 添加项目根目录到Python路径
@@ -155,7 +156,7 @@ def init_sample_logs():
             hours_ago = random.randint(0, 23)
             minutes_ago = random.randint(0, 59)
             
-            created_at = datetime.utcnow() - timedelta(
+            created_at = now() - timedelta(
                 days=days_ago, 
                 hours=hours_ago, 
                 minutes=minutes_ago

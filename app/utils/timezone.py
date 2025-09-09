@@ -2,6 +2,7 @@
 
 """
 泰摸鱼吧 - 时区工具模块
+统一管理系统的时区设置，确保所有时间都使用东八区
 """
 
 from datetime import datetime, timezone, timedelta
@@ -9,6 +10,7 @@ import pytz
 
 # 东八区时区
 CHINA_TZ = pytz.timezone('Asia/Shanghai')
+UTC_TZ = pytz.utc
 
 def get_china_time():
     """获取东八区当前时间"""
@@ -83,3 +85,19 @@ def get_china_tomorrow():
     china_tomorrow = get_china_date() + timedelta(days=1)
     china_start = CHINA_TZ.localize(datetime.combine(china_tomorrow, datetime.min.time()))
     return china_start.astimezone(pytz.utc)
+
+def now():
+    """获取当前UTC时间（用于数据库存储）"""
+    return datetime.now(UTC_TZ)
+
+def now_china():
+    """获取当前东八区时间（用于显示）"""
+    return datetime.now(CHINA_TZ)
+
+def utc_now():
+    """获取当前UTC时间（兼容旧代码）"""
+    return now()
+
+def china_now():
+    """获取当前东八区时间（兼容旧代码）"""
+    return now_china()

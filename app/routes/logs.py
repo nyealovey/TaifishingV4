@@ -13,6 +13,7 @@ from app import db
 from app.utils.api_response import APIResponse
 import logging
 from datetime import datetime, timedelta
+from app.utils.timezone import now
 
 # 创建蓝图
 logs_bp = Blueprint('logs', __name__)
@@ -310,7 +311,7 @@ def export():
     else:
         # 默认JSON格式
         data = {
-            'export_time': datetime.utcnow().isoformat(),
+            'export_time': now().isoformat(),
             'total_logs': len(logs),
             'filters': {
                 'log_level': log_level,
@@ -331,7 +332,7 @@ def cleanup():
     
     try:
         # 删除指定天数前的日志
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = now() - timedelta(days=days)
         deleted_count = Log.query.filter(Log.created_at < cutoff_date).delete()
         
         db.session.commit()
@@ -386,13 +387,13 @@ def get_log_statistics():
         ).group_by(Log.log_type).all()
         
         # 今日日志数
-        today = datetime.utcnow().date()
+        today = now().date()
         today_logs = Log.query.filter(
             db.func.date(Log.created_at) == today
         ).count()
         
         # 最近7天日志趋势
-        week_ago = datetime.utcnow() - timedelta(days=7)
+        week_ago = now() - timedelta(days=7)
         week_logs = Log.query.filter(
             Log.created_at >= week_ago
         ).count()
