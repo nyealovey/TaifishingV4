@@ -148,9 +148,9 @@ def sync_accounts(instance_id):
     instance = Instance.query.get_or_404(instance_id)
     
     try:
-        # 使用数据库服务同步账户
-        db_service = DatabaseService()
-        result = db_service.sync_accounts(instance)
+        # 使用统一的账户同步服务
+        from app.services.account_sync_service import account_sync_service
+        result = account_sync_service.sync_accounts(instance, sync_type='manual')
         
         if result['success']:
             # 记录同步结果
@@ -1066,8 +1066,8 @@ def api_sync_accounts(instance_id):
     instance = Instance.query.get_or_404(instance_id)
     
     try:
-        db_service = DatabaseService()
-        result = db_service.sync_accounts(instance)
+        from app.services.account_sync_service import account_sync_service
+        result = account_sync_service.sync_accounts(instance, sync_type='manual')
         return jsonify(result)
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
