@@ -57,6 +57,7 @@ def list(db_type=None):
     instance_id = request.args.get('instance_id', '', type=str)
     filter_db_type = request.args.get('db_type', '', type=str)  # 新增数据库类型筛选参数
     environment = request.args.get('environment', '', type=str)  # 新增环境筛选参数
+    classification = request.args.get('classification', '', type=str)  # 新增分类筛选参数
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     
@@ -105,6 +106,25 @@ def list(db_type=None):
     # 环境筛选
     if environment:
         query = query.filter(Instance.environment == environment)
+    
+    # 分类筛选
+    if classification:
+        if classification == 'unclassified':
+            # 未分类：没有活跃的分类分配
+            subquery = db.session.query(AccountClassificationAssignment.account_id).filter(
+                AccountClassificationAssignment.is_active == True
+            ).subquery()
+            query = query.filter(~Account.id.in_(subquery))
+        else:
+            # 具体分类ID
+            try:
+                classification_id = int(classification)
+                query = query.join(AccountClassificationAssignment, Account.id == AccountClassificationAssignment.account_id).filter(
+                    AccountClassificationAssignment.classification_id == classification_id,
+                    AccountClassificationAssignment.is_active == True
+                )
+            except ValueError:
+                pass  # 忽略无效的分类ID
     
     # 分页查询
     accounts = query.order_by(Account.created_at.desc()).paginate(
@@ -166,7 +186,8 @@ def list(db_type=None):
                          plugin=plugin,
                          instance_id=instance_id,
                          db_type=filter_db_type,
-                         environment=environment)  # 传递环境筛选参数
+                         environment=environment,  # 传递环境筛选参数
+                         classification=classification)  # 传递分类筛选参数
 
 @accounts_bp.route('/sync/<int:instance_id>', methods=['POST'])
 @login_required
@@ -1020,32 +1041,93 @@ def get_filter_options():
                 }.get(env[0], env[0])
                 environment_options.append({'value': env[0], 'label': env_label})
         
-        # 获取插件/类型选项 - 合并plugin和account_type字段
+        # 获取插件/类型选项 - 分别处理不同数据库类型的字段
         plugin_options = []
         
-        # 获取plugin字段的选项
-        plugins = db.session.query(Account.plugin).distinct().all()
-        for p in plugins:
-            if p[0]:  # 确保不为空
-                plugin_options.append({'value': p[0], 'label': p[0]})
+        # 获取MySQL的plugin字段选项（认证插件）
+        mysql_plugins = db.session.query(Account.plugin).join(Instance, Account.instance_id == Instance.id).filter(
+            Instance.db_type == 'mysql',
+            Account.plugin.isnot(None),
+            Account.plugin != ''
+        ).distinct().all()
         
-        # 获取account_type字段的选项（用于SQL Server等）
-        account_types = db.session.query(Account.account_type).distinct().all()
-        for at in account_types:
-            if at[0]:  # 确保不为空
-                # 避免重复添加
-                if not any(opt['value'] == at[0] for opt in plugin_options):
-                    plugin_options.append({'value': at[0], 'label': at[0]})
+        for p in mysql_plugins:
+            if p[0] and p[0] not in ['sqlserver']:  # 排除数据库类型
+                plugin_options.append({'value': p[0], 'label': f'MySQL认证插件: {p[0]}'})
+        
+        # 获取MySQL的account_type字段选项（账户类型）
+        mysql_types = db.session.query(Account.account_type).join(Instance, Account.instance_id == Instance.id).filter(
+            Instance.db_type == 'mysql',
+            Account.account_type.isnot(None),
+            Account.account_type != ''
+        ).distinct().all()
+        
+        for at in mysql_types:
+            if at[0]:
+                plugin_options.append({'value': at[0], 'label': f'MySQL账户类型: {at[0]}'})
+        
+        # 获取SQL Server的account_type字段选项（账户类型）
+        sqlserver_types = db.session.query(Account.account_type).join(Instance, Account.instance_id == Instance.id).filter(
+            Instance.db_type == 'sqlserver',
+            Account.account_type.isnot(None),
+            Account.account_type != ''
+        ).distinct().all()
+        
+        for at in sqlserver_types:
+            if at[0]:
+                plugin_options.append({'value': at[0], 'label': f'SQL Server账户类型: {at[0]}'})
+        
+        # 获取PostgreSQL的plugin字段选项
+        postgres_plugins = db.session.query(Account.plugin).join(Instance, Account.instance_id == Instance.id).filter(
+            Instance.db_type == 'postgresql',
+            Account.plugin.isnot(None),
+            Account.plugin != ''
+        ).distinct().all()
+        
+        for p in postgres_plugins:
+            if p[0] and p[0] not in ['sqlserver']:  # 排除数据库类型
+                plugin_options.append({'value': p[0], 'label': f'PostgreSQL认证插件: {p[0]}'})
+        
+        # 获取PostgreSQL的account_type字段选项
+        postgres_types = db.session.query(Account.account_type).join(Instance, Account.instance_id == Instance.id).filter(
+            Instance.db_type == 'postgresql',
+            Account.account_type.isnot(None),
+            Account.account_type != ''
+        ).distinct().all()
+        
+        for at in postgres_types:
+            if at[0]:
+                plugin_options.append({'value': at[0], 'label': f'PostgreSQL账户类型: {at[0]}'})
         
         # 获取实例选项
         instances = Instance.query.filter_by(is_active=True).all()
         instance_options = [{'value': str(i.id), 'label': i.name} for i in instances]
         
+        # 获取分类选项
+        from app.models.account_classification import AccountClassification
+        classifications = AccountClassification.query.filter_by(is_active=True).order_by(AccountClassification.priority.desc(), AccountClassification.name).all()
+        
+        # 构建分类筛选选项，包括特殊筛选条件
+        classification_options = [
+            {'value': 'unclassified', 'name': '未分类', 'type': 'special'},
+            {'value': '', 'name': '───────────────', 'type': 'separator', 'disabled': True}
+        ]
+        
+        # 添加数据库中的分类
+        for c in classifications:
+            classification_options.append({
+                'value': str(c.id), 
+                'name': f'{c.name}（分类）', 
+                'type': 'classification',
+                'risk_level': c.risk_level
+            })
+        
         return {
             'db_types': db_type_options,
             'environments': environment_options,
             'plugins': plugin_options,
-            'instances': instance_options
+            'instances': instance_options,
+            'classifications': classification_options
         }
     except Exception as e:
         logging.error(f"获取筛选选项失败: {e}")
@@ -1053,7 +1135,8 @@ def get_filter_options():
             'db_types': [],
             'environments': [],
             'plugins': [],
-            'instances': []
+            'instances': [],
+            'classifications': []
         }
 
 # API路由

@@ -13,75 +13,9 @@
             <button class="btn btn-success" onclick="autoClassifyAll()">
                 <i class="fas fa-magic me-2"></i>自动分类
             </button>
-            <a href="{{ url_for('account_classification.rules') }}" class="btn btn-info">
-                <i class="fas fa-cogs me-2"></i>规则管理
-            </a>
         </div>
     </div>
 
-    <!-- 统计信息卡片 -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="totalClassifications">0</h4>
-                            <p class="card-text">总分类数</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-tags fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="totalRules">0</h4>
-                            <p class="card-text">总规则数</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-cogs fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="totalAssignments">0</h4>
-                            <p class="card-text">已分配账户</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-users fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="highRiskAccounts">0</h4>
-                            <p class="card-text">高风险账户</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-exclamation-triangle fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- 主要内容区域 -->
     <div class="row">
@@ -101,18 +35,27 @@
             </div>
         </div>
 
-        <!-- 右侧：分类详情 -->
+        <!-- 右侧：规则管理 -->
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-info-circle me-2"></i>分类详情
-                    </h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cogs me-2"></i>规则管理
+                        </h5>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createRuleModal">
+                            <i class="fas fa-plus me-1"></i>新建规则
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-mouse-pointer fa-2x mb-2"></i>
-                        <p>点击左侧分类查看详情</p>
+
+                    <!-- 规则列表 -->
+                    <div id="rulesList">
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                            <p>加载规则中...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -230,6 +173,180 @@
         </div>
     </div>
 </div>
+
+<!-- 编辑分类模态框 -->
+<div class="modal fade" id="editClassificationModal" tabindex="-1" aria-labelledby="editClassificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editClassificationModalLabel">
+                    <i class="fas fa-edit me-2"></i>编辑账户分类
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editClassificationForm">
+                    <input type="hidden" id="editClassificationId">
+                    <div class="mb-3">
+                        <label for="editClassificationName" class="form-label">分类名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editClassificationName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editClassificationDescription" class="form-label">描述</label>
+                        <textarea class="form-control" id="editClassificationDescription" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editClassificationRiskLevel" class="form-label">风险等级</label>
+                                <select class="form-select" id="editClassificationRiskLevel">
+                                    <option value="low">低风险</option>
+                                    <option value="medium">中风险</option>
+                                    <option value="high">高风险</option>
+                                    <option value="critical">极高风险</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editClassificationColor" class="form-label">显示颜色</label>
+                                <input type="color" class="form-control form-control-color" id="editClassificationColor" value="#007bff">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editClassificationPriority" class="form-label">优先级</label>
+                        <input type="number" class="form-control" id="editClassificationPriority" value="0" min="0" max="100">
+                        <div class="form-text">数字越大优先级越高，用于控制分类显示顺序和规则匹配优先级</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateClassification()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 编辑规则模态框 -->
+<div class="modal fade" id="editRuleModal" tabindex="-1" aria-labelledby="editRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editRuleModalLabel">
+                    <i class="fas fa-edit me-2"></i>编辑分类规则
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRuleForm">
+                    <input type="hidden" id="editRuleId">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editRuleClassification" class="form-label">分类 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="editRuleClassification" required disabled>
+                                    <option value="">请选择分类</option>
+                                </select>
+                                <input type="hidden" id="editRuleClassificationHidden" name="classification_id">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editRuleName" class="form-label">规则名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editRuleName" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRuleDbType" class="form-label">数据库类型 <span class="text-danger">*</span></label>
+                        <select class="form-select" id="editRuleDbType" required disabled>
+                            <option value="">请选择数据库类型</option>
+                            <option value="mysql">MySQL</option>
+                            <option value="postgresql">PostgreSQL</option>
+                            <option value="sqlserver">SQL Server</option>
+                            <option value="oracle">Oracle</option>
+                        </select>
+                        <input type="hidden" id="editRuleDbTypeHidden" name="db_type">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">权限配置 <span class="text-danger">*</span></label>
+                        <div id="editPermissionsConfig">
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-spinner fa-spin me-2"></i>加载权限配置中...
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateRule()">更新</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 查看规则模态框 -->
+<div class="modal fade" id="viewRuleModal" tabindex="-1" aria-labelledby="viewRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewRuleModalLabel">
+                    <i class="fas fa-eye me-2"></i>查看规则详情
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">规则名称</label>
+                        <p class="form-control-plaintext" id="viewRuleName">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">分类</label>
+                        <p class="form-control-plaintext" id="viewRuleClassification">-</p>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">数据库类型</label>
+                        <p class="form-control-plaintext" id="viewRuleDbType">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">状态</label>
+                        <p class="form-control-plaintext" id="viewRuleStatus">-</p>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">权限配置</label>
+                    <div id="viewPermissionsConfig" class="border rounded p-3 bg-light">
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-spinner fa-spin me-2"></i>加载中...
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">创建时间</label>
+                        <p class="form-control-plaintext" id="viewRuleCreatedAt">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">更新时间</label>
+                        <p class="form-control-plaintext" id="viewRuleUpdatedAt">-</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" onclick="editRuleFromView()">编辑规则</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -240,7 +357,8 @@ let currentDbType = null;
 // 页面加载时初始化
 document.addEventListener('DOMContentLoaded', function() {
     loadClassifications();
-    loadStatistics();
+    loadRules();
+    loadClassificationsForRules(); // 为规则创建加载分类列表
 });
 
 // 加载分类列表
@@ -311,24 +429,11 @@ function displayClassifications(classifications) {
 
 // 加载规则
 function loadRules() {
-    const dbType = document.getElementById('dbTypeSelect').value;
-    if (!dbType) {
-        document.getElementById('rulesList').innerHTML = `
-            <div class="text-center text-muted py-4">
-                <i class="fas fa-info-circle fa-2x mb-2"></i>
-                <p>请选择数据库类型查看规则</p>
-            </div>
-        `;
-        return;
-    }
-    
-    currentDbType = dbType;
-    
-    fetch(`/account-classification/rules?db_type=${dbType}`)
+    fetch('/account-classification/rules')
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            displayRules(data.rules);
+            displayRules(data.rules_by_db_type);
         } else {
             showAlert('danger', '加载规则失败: ' + data.error);
         }
@@ -340,48 +445,76 @@ function loadRules() {
 }
 
 // 显示规则列表
-function displayRules(rules) {
+function displayRules(rulesByDbType) {
     const container = document.getElementById('rulesList');
     
-    if (rules.length === 0) {
-        container.innerHTML = `
-            <div class="text-center text-muted py-4">
-                <i class="fas fa-info-circle fa-2x mb-2"></i>
-                <p>暂无规则</p>
-                <button class="btn btn-primary btn-sm" onclick="showCreateRuleModal()">
-                    <i class="fas fa-plus me-1"></i>创建规则
-                </button>
-            </div>
-        `;
+    if (!rulesByDbType || Object.keys(rulesByDbType).length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-info-circle me-2"></i>暂无规则</div>';
         return;
     }
     
     let html = '';
-    rules.forEach(rule => {
+    for (const [dbType, rules] of Object.entries(rulesByDbType)) {
         html += `
-            <div class="card mb-2 rule-item" data-id="${rule.id}">
-                <div class="card-body py-2">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1">${rule.rule_name}</h6>
-                            <small class="text-muted">${rule.db_type.toUpperCase()}</small>
-                        </div>
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary" onclick="editRule(${rule.id})" title="编辑">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-outline-danger" onclick="deleteRule(${rule.id})" title="删除">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
+            <div class="mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-database me-2"></i>${dbType.toUpperCase()} 规则
+                            <span class="badge bg-primary ms-2">${rules.length}</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        ${rules.length > 0 ? `
+                            <div class="row">
+                                ${rules.map(rule => `
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="card-title">${rule.rule_name}</h6>
+                                                        <p class="card-text text-muted small mb-2">
+                                                            <i class="fas fa-tag me-1"></i>${rule.classification_name || '未分类'}
+                                                        </p>
+                                                        <div class="d-flex align-items-center">
+                                                            <span class="badge bg-secondary me-2">${rule.db_type.toUpperCase()}</span>
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-clock me-1"></i>${rule.created_at ? rule.created_at.substring(0, 10) : '-'}
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button class="btn btn-outline-info" onclick="viewRule(${rule.id})" title="查看">
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-primary" onclick="editRule(${rule.id})" title="编辑">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger" onclick="deleteRule(${rule.id})" title="删除">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-info-circle me-2"></i>暂无${dbType.toUpperCase()}规则
+                            </div>
+                        `}
                     </div>
                 </div>
             </div>
         `;
-    });
+    }
     
     container.innerHTML = html;
 }
+
 
 // 创建分类
 function createClassification() {
@@ -460,29 +593,6 @@ function loadClassificationOptions() {
     });
 }
 
-// 加载权限配置
-function loadPermissions() {
-    const dbType = document.getElementById('ruleDbType').value;
-    if (!dbType) {
-        document.getElementById('permissionsConfig').innerHTML = `
-            <div class="text-center text-muted py-3">
-                <i class="fas fa-info-circle me-2"></i>请先选择数据库类型
-            </div>
-        `;
-        return;
-    }
-    
-    fetch(`/account-classification/permissions/${dbType}`)
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            displayPermissionsConfig(data.permissions);
-        } else {
-            showAlert('danger', '加载权限配置失败: ' + data.error);
-        }
-    });
-}
-
 // 显示权限配置
 function displayPermissionsConfig(permissions) {
     const container = document.getElementById('permissionsConfig');
@@ -532,65 +642,6 @@ function displayPermissionsConfig(permissions) {
     container.innerHTML = html;
 }
 
-// 创建规则
-function createRule() {
-    const classificationId = document.getElementById('ruleClassification').value;
-    const ruleName = document.getElementById('ruleName').value;
-    const dbType = document.getElementById('ruleDbType').value;
-    
-    if (!classificationId || !ruleName || !dbType) {
-        showAlert('warning', '请填写所有必填字段');
-        return;
-    }
-    
-    // 收集选中的权限
-    const selectedPermissions = [];
-    const checkboxes = document.querySelectorAll('#permissionsConfig input[type="checkbox"]:checked');
-    checkboxes.forEach(checkbox => {
-        selectedPermissions.push(checkbox.value);
-    });
-    
-    if (selectedPermissions.length === 0) {
-        showAlert('warning', '请至少选择一个权限');
-        return;
-    }
-    
-    const ruleExpression = {
-        type: 'permissions',
-        permissions: selectedPermissions,
-        operator: 'OR' // 默认使用OR逻辑
-    };
-    
-    const data = {
-        classification_id: parseInt(classificationId),
-        db_type: dbType,
-        rule_name: ruleName,
-        rule_expression: ruleExpression
-    };
-    
-    fetch('/account-classification/rules', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('success', data.message);
-            bootstrap.Modal.getInstance(document.getElementById('createRuleModal')).hide();
-            document.getElementById('createRuleForm').reset();
-            loadRules();
-        } else {
-            showAlert('danger', data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('danger', '创建规则失败');
-    });
-}
 
 // 自动分类所有账户
 function autoClassifyAll() {
@@ -610,7 +661,6 @@ function autoClassifyAll() {
     .then(data => {
         if (data.success) {
             showAlert('success', data.message);
-            loadStatistics();
         } else {
             showAlert('danger', data.error);
         }
@@ -621,27 +671,6 @@ function autoClassifyAll() {
     });
 }
 
-// 加载统计信息
-function loadStatistics() {
-    // 这里可以添加统计信息的加载逻辑
-    // 暂时使用模拟数据
-    document.getElementById('totalClassifications').textContent = '0';
-    document.getElementById('totalRules').textContent = '0';
-    document.getElementById('totalAssignments').textContent = '0';
-    document.getElementById('highRiskAccounts').textContent = '0';
-}
-
-// 更新统计信息
-function updateStatistics(classifications) {
-    document.getElementById('totalClassifications').textContent = classifications.length;
-    
-    // 计算总规则数
-    let totalRules = 0;
-    classifications.forEach(classification => {
-        totalRules += classification.rules_count || 0;
-    });
-    document.getElementById('totalRules').textContent = totalRules;
-}
 
 // 显示提示信息
 function showAlert(type, message) {
@@ -666,8 +695,78 @@ function showAlert(type, message) {
 
 // 编辑分类
 function editClassification(id) {
-    // 实现编辑分类功能
-    console.log('编辑分类:', id);
+    // 获取分类信息
+    fetch(`/account-classification/classifications/${id}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const classification = data.classification;
+            
+            // 填充编辑表单
+            document.getElementById('editClassificationId').value = classification.id;
+            document.getElementById('editClassificationName').value = classification.name;
+            document.getElementById('editClassificationDescription').value = classification.description || '';
+            document.getElementById('editClassificationRiskLevel').value = classification.risk_level;
+            document.getElementById('editClassificationColor').value = classification.color || '#6c757d';
+            document.getElementById('editClassificationPriority').value = classification.priority || 0;
+            
+            // 显示编辑模态框
+            const editModal = new bootstrap.Modal(document.getElementById('editClassificationModal'));
+            editModal.show();
+        } else {
+            showAlert('danger', '获取分类信息失败: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', '获取分类信息失败');
+    });
+}
+
+// 更新分类
+function updateClassification() {
+    const id = document.getElementById('editClassificationId').value;
+    const name = document.getElementById('editClassificationName').value;
+    const description = document.getElementById('editClassificationDescription').value;
+    const riskLevel = document.getElementById('editClassificationRiskLevel').value;
+    const color = document.getElementById('editClassificationColor').value;
+    const priority = parseInt(document.getElementById('editClassificationPriority').value) || 0;
+    
+    if (!name.trim()) {
+        showAlert('warning', '请输入分类名称');
+        return;
+    }
+    
+    const data = {
+        name: name.trim(),
+        description: description.trim(),
+        risk_level: riskLevel,
+        color: color,
+        priority: priority
+    };
+    
+    fetch(`/account-classification/classifications/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', '分类更新成功');
+            bootstrap.Modal.getInstance(document.getElementById('editClassificationModal')).hide();
+            loadClassifications();
+        } else {
+            showAlert('danger', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', '更新分类失败');
+    });
 }
 
 // 删除分类
@@ -694,10 +793,643 @@ function deleteClassification(id) {
     });
 }
 
+// ==================== 规则管理相关函数 ====================
+
+// 加载分类列表（用于规则创建）
+function loadClassificationsForRules(prefix = '') {
+    return fetch('/account-classification/classifications')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const elementId = prefix ? `${prefix}RuleClassification` : 'ruleClassification';
+            const select = document.getElementById(elementId);
+            if (select) {
+                select.innerHTML = '<option value="">请选择分类</option>';
+                data.classifications.forEach(classification => {
+                    const option = document.createElement('option');
+                    option.value = classification.id;
+                    option.textContent = classification.name;
+                    select.appendChild(option);
+                });
+            }
+        }
+        return data;
+    });
+}
+
+// 加载权限配置
+function loadPermissions(prefix = '') {
+    const elementId = prefix ? `${prefix}RuleDbType` : 'ruleDbType';
+    const dbTypeElement = document.getElementById(elementId);
+    if (!dbTypeElement) {
+        console.error('找不到数据库类型选择元素:', elementId);
+        return Promise.resolve();
+    }
+    const dbType = dbTypeElement.value;
+    const containerId = prefix ? `${prefix}PermissionsConfig` : 'permissionsConfig';
+    
+    if (!dbType) {
+        document.getElementById(containerId).innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="fas fa-info-circle me-2"></i>请先选择数据库类型
+            </div>
+        `;
+        return Promise.resolve();
+    }
+    
+    return fetch(`/account-classification/permissions/${dbType}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayPermissionsConfig(data.permissions, prefix);
+        } else {
+            showAlert('danger', '加载权限配置失败: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error loading permissions:', error);
+        showAlert('danger', '加载权限配置失败: ' + error.message);
+    });
+}
+
+// 显示权限配置
+function displayPermissionsConfig(permissions, prefix = '') {
+    const container = document.getElementById(prefix ? `${prefix}PermissionsConfig` : 'permissionsConfig');
+    
+    let html = '<div class="row">';
+    
+    // 根据数据库类型显示不同的权限配置
+    const isMySQLStructure = permissions.global_privileges && permissions.database_privileges;
+    
+    if (isMySQLStructure) {
+        // MySQL新结构：全局权限和数据库权限
+        html += `
+            <div class="col-md-6">
+                <h6 class="text-primary mb-3"><i class="fas fa-globe me-2"></i>全局权限</h6>
+                <div class="permission-section">
+                    ${permissions.global_privileges.map(perm => `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="${perm}" id="${prefix}global_${perm}">
+                            <label class="form-check-label" for="${prefix}global_${perm}">
+                                <span class="badge bg-primary me-1">${perm}</span>
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-success mb-3"><i class="fas fa-database me-2"></i>数据库权限</h6>
+                <div class="permission-section">
+                    ${permissions.database_privileges.map(perm => `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="${perm}" id="${prefix}db_${perm}">
+                            <label class="form-check-label" for="${prefix}db_${perm}">
+                                <span class="badge bg-success me-1">${perm}</span>
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    } else if (permissions.server_roles && permissions.database_roles) {
+        // SQL Server结构：服务器角色、数据库角色、服务器权限、数据库权限
+        html += `
+            <div class="col-md-6">
+                <h6 class="text-info mb-3"><i class="fas fa-users me-2"></i>服务器角色</h6>
+                <div class="permission-section">
+                    ${permissions.server_roles.map(role => `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="${role}" id="${prefix}server_role_${role}">
+                            <label class="form-check-label" for="${prefix}server_role_${role}">
+                                <span class="badge bg-info me-1">${role}</span>
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <h6 class="text-warning mb-3 mt-3"><i class="fas fa-shield-alt me-2"></i>服务器权限</h6>
+                <div class="permission-section">
+                    ${permissions.server_permissions.map(perm => `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="${perm}" id="${prefix}server_perm_${perm}">
+                            <label class="form-check-label" for="${prefix}server_perm_${perm}">
+                                <span class="badge bg-warning me-1">${perm}</span>
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-primary mb-3"><i class="fas fa-database me-2"></i>数据库角色</h6>
+                <div class="permission-section">
+                    ${permissions.database_roles.map(role => `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="${role}" id="${prefix}db_role_${role}">
+                            <label class="form-check-label" for="${prefix}db_role_${role}">
+                                <span class="badge bg-primary me-1">${role}</span>
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <h6 class="text-success mb-3 mt-3"><i class="fas fa-key me-2"></i>数据库权限</h6>
+                <div class="permission-section">
+                    ${permissions.database_privileges.map(perm => `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="${perm}" id="${prefix}db_perm_${perm}">
+                            <label class="form-check-label" for="${prefix}db_perm_${perm}">
+                                <span class="badge bg-success me-1">${perm}</span>
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    } else {
+        // 其他数据库类型或旧格式
+        html += `
+            <div class="col-12">
+                <h6 class="text-secondary mb-3"><i class="fas fa-list me-2"></i>权限列表</h6>
+                <div class="permission-section">
+                    ${permissions.permissions.map(perm => `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="${perm}" id="${prefix}perm_${perm}">
+                            <label class="form-check-label" for="${prefix}perm_${perm}">
+                                <span class="badge bg-secondary me-1">${perm}</span>
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// 创建规则
+function createRule() {
+    const classificationId = document.getElementById('ruleClassification').value;
+    const ruleName = document.getElementById('ruleName').value;
+    const dbType = document.getElementById('ruleDbType').value;
+    
+    if (!classificationId || !ruleName || !dbType) {
+        showAlert('warning', '请填写所有必填字段');
+        return;
+    }
+    
+    // 收集选中的权限
+    const selectedPermissions = [];
+    const checkboxes = document.querySelectorAll('#permissionsConfig input[type="checkbox"]:checked');
+    checkboxes.forEach(checkbox => {
+        selectedPermissions.push(checkbox.value);
+    });
+    
+    if (selectedPermissions.length === 0) {
+        showAlert('warning', '请至少选择一个权限');
+        return;
+    }
+    
+    // 根据数据库类型构建规则表达式
+    let ruleExpression;
+    if (dbType === 'mysql') {
+        // MySQL新结构
+        const selectedGlobalPermissions = [];
+        const selectedDatabasePermissions = [];
+        
+        checkboxes.forEach(checkbox => {
+            if (checkbox.id.startsWith('global_')) {
+                selectedGlobalPermissions.push(checkbox.value);
+            } else if (checkbox.id.startsWith('db_')) {
+                selectedDatabasePermissions.push(checkbox.value);
+            }
+        });
+        
+        ruleExpression = {
+            type: 'mysql_permissions',
+            global_privileges: selectedGlobalPermissions,
+            database_privileges: selectedDatabasePermissions,
+            operator: 'OR'
+        };
+    } else if (dbType === 'sqlserver') {
+        // SQL Server结构
+        const selectedServerRoles = [];
+        const selectedServerPermissions = [];
+        const selectedDatabaseRoles = [];
+        const selectedDatabasePermissions = [];
+        
+        checkboxes.forEach(checkbox => {
+            if (checkbox.id.startsWith('server_role_')) {
+                selectedServerRoles.push(checkbox.value);
+            } else if (checkbox.id.startsWith('server_perm_')) {
+                selectedServerPermissions.push(checkbox.value);
+            } else if (checkbox.id.startsWith('db_role_')) {
+                selectedDatabaseRoles.push(checkbox.value);
+            } else if (checkbox.id.startsWith('db_perm_')) {
+                selectedDatabasePermissions.push(checkbox.value);
+            }
+        });
+        
+        ruleExpression = {
+            type: 'sqlserver_permissions',
+            server_roles: selectedServerRoles,
+            server_permissions: selectedServerPermissions,
+            database_roles: selectedDatabaseRoles,
+            database_privileges: selectedDatabasePermissions,
+            operator: 'OR'
+        };
+    } else {
+        // 其他数据库类型
+        ruleExpression = {
+            type: 'permissions',
+            permissions: selectedPermissions,
+            operator: 'OR'
+        };
+    }
+    
+    const data = {
+        classification_id: parseInt(classificationId),
+        rule_name: ruleName,
+        db_type: dbType,
+        rule_expression: ruleExpression
+    };
+    
+    fetch('/account-classification/rules', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', '规则创建成功');
+            bootstrap.Modal.getInstance(document.getElementById('createRuleModal')).hide();
+            document.getElementById('createRuleForm').reset();
+            loadRules();
+        } else {
+            showAlert('danger', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', '创建规则失败');
+    });
+}
+
 // 编辑规则
 function editRule(id) {
-    // 实现编辑规则功能
-    console.log('编辑规则:', id);
+    fetch(`/account-classification/rules/${id}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const rule = data.rule;
+            
+            // 填充编辑表单
+            document.getElementById('editRuleId').value = rule.id;
+            document.getElementById('editRuleName').value = rule.rule_name;
+            document.getElementById('editRuleClassificationHidden').value = rule.classification_id;
+            document.getElementById('editRuleDbTypeHidden').value = rule.db_type;
+            
+            // 设置分类和数据库类型显示
+            document.getElementById('editRuleClassification').value = rule.classification_id;
+            document.getElementById('editRuleDbType').value = rule.db_type;
+            
+            // 显示编辑模态框
+            const editModal = new bootstrap.Modal(document.getElementById('editRuleModal'));
+            editModal.show();
+            
+            // 模态框显示后加载权限配置
+            document.getElementById('editRuleModal').addEventListener('shown.bs.modal', function() {
+                loadPermissions('edit').then(() => {
+                    setSelectedPermissions(rule.rule_expression, 'edit');
+                });
+            }, { once: true });
+        } else {
+            showAlert('danger', '获取规则信息失败: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', '获取规则信息失败');
+    });
+}
+
+// 设置选中的权限
+function setSelectedPermissions(ruleExpression, prefix = '') {
+    if (!ruleExpression) return;
+    
+    // 根据规则类型设置选中的权限
+    if (ruleExpression.type === 'mysql_permissions') {
+        // MySQL新结构
+        if (ruleExpression.global_privileges) {
+            ruleExpression.global_privileges.forEach(perm => {
+                const checkbox = document.getElementById(`${prefix}global_${perm}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        if (ruleExpression.database_privileges) {
+            ruleExpression.database_privileges.forEach(perm => {
+                const checkbox = document.getElementById(`${prefix}db_${perm}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+    } else if (ruleExpression.type === 'sqlserver_permissions') {
+        // SQL Server结构
+        if (ruleExpression.server_roles) {
+            ruleExpression.server_roles.forEach(role => {
+                const checkbox = document.getElementById(`${prefix}server_role_${role}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        if (ruleExpression.server_permissions) {
+            ruleExpression.server_permissions.forEach(perm => {
+                const checkbox = document.getElementById(`${prefix}server_perm_${perm}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        if (ruleExpression.database_roles) {
+            ruleExpression.database_roles.forEach(role => {
+                const checkbox = document.getElementById(`${prefix}db_role_${role}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        if (ruleExpression.database_privileges) {
+            ruleExpression.database_privileges.forEach(perm => {
+                const checkbox = document.getElementById(`${prefix}db_perm_${perm}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+    } else if (ruleExpression.permissions) {
+        // 旧格式或其他数据库类型
+        ruleExpression.permissions.forEach(perm => {
+            const checkbox = document.getElementById(`${prefix}perm_${perm}`);
+            if (checkbox) checkbox.checked = true;
+        });
+    }
+}
+
+// 更新规则
+function updateRule() {
+    const ruleId = document.getElementById('editRuleId').value;
+    const ruleName = document.getElementById('editRuleName').value;
+    const classificationId = document.getElementById('editRuleClassificationHidden').value;
+    const dbType = document.getElementById('editRuleDbTypeHidden').value;
+    
+    if (!ruleName) {
+        showAlert('warning', '请输入规则名称');
+        return;
+    }
+    
+    // 收集选中的权限
+    const selectedPermissions = [];
+    const checkboxes = document.querySelectorAll('#editPermissionsConfig input[type="checkbox"]:checked');
+    checkboxes.forEach(checkbox => {
+        selectedPermissions.push(checkbox.value);
+    });
+    
+    if (selectedPermissions.length === 0) {
+        showAlert('warning', '请至少选择一个权限');
+        return;
+    }
+    
+    // 根据数据库类型构建规则表达式
+    let ruleExpression;
+    if (dbType === 'mysql') {
+        const selectedGlobalPermissions = [];
+        const selectedDatabasePermissions = [];
+        
+        checkboxes.forEach(checkbox => {
+            if (checkbox.id.startsWith('editglobal_')) {
+                selectedGlobalPermissions.push(checkbox.value);
+            } else if (checkbox.id.startsWith('editdb_')) {
+                selectedDatabasePermissions.push(checkbox.value);
+            }
+        });
+        
+        ruleExpression = {
+            type: 'mysql_permissions',
+            global_privileges: selectedGlobalPermissions,
+            database_privileges: selectedDatabasePermissions,
+            operator: 'OR'
+        };
+    } else if (dbType === 'sqlserver') {
+        const selectedServerRoles = [];
+        const selectedServerPermissions = [];
+        const selectedDatabaseRoles = [];
+        const selectedDatabasePermissions = [];
+        
+        checkboxes.forEach(checkbox => {
+            if (checkbox.id.startsWith('editserver_role_')) {
+                selectedServerRoles.push(checkbox.value);
+            } else if (checkbox.id.startsWith('editserver_perm_')) {
+                selectedServerPermissions.push(checkbox.value);
+            } else if (checkbox.id.startsWith('editdb_role_')) {
+                selectedDatabaseRoles.push(checkbox.value);
+            } else if (checkbox.id.startsWith('editdb_perm_')) {
+                selectedDatabasePermissions.push(checkbox.value);
+            }
+        });
+        
+        ruleExpression = {
+            type: 'sqlserver_permissions',
+            server_roles: selectedServerRoles,
+            server_permissions: selectedServerPermissions,
+            database_roles: selectedDatabaseRoles,
+            database_privileges: selectedDatabasePermissions,
+            operator: 'OR'
+        };
+    } else {
+        ruleExpression = {
+            type: 'permissions',
+            permissions: selectedPermissions,
+            operator: 'OR'
+        };
+    }
+    
+    const data = {
+        rule_name: ruleName,
+        rule_expression: ruleExpression
+    };
+    
+    fetch(`/account-classification/rules/${ruleId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', '规则更新成功');
+            bootstrap.Modal.getInstance(document.getElementById('editRuleModal')).hide();
+            loadRules();
+        } else {
+            showAlert('danger', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', '更新规则失败');
+    });
+}
+
+// 查看规则
+function viewRule(id) {
+    fetch(`/account-classification/rules/${id}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const rule = data.rule;
+            
+            // 填充查看表单
+            document.getElementById('viewRuleName').textContent = rule.rule_name;
+            document.getElementById('viewRuleClassification').textContent = rule.classification_name || '未分类';
+            document.getElementById('viewRuleDbType').textContent = rule.db_type.toUpperCase();
+            document.getElementById('viewRuleStatus').innerHTML = rule.is_active ? 
+                '<span class="badge bg-success">启用</span>' : 
+                '<span class="badge bg-secondary">禁用</span>';
+            document.getElementById('viewRuleCreatedAt').textContent = rule.created_at ? 
+                new Date(rule.created_at).toLocaleString() : '-';
+            document.getElementById('viewRuleUpdatedAt').textContent = rule.updated_at ? 
+                new Date(rule.updated_at).toLocaleString() : '-';
+            
+            // 显示权限配置
+            displayViewPermissions(rule.rule_expression, rule.db_type);
+            
+            // 显示查看模态框
+            const viewModal = new bootstrap.Modal(document.getElementById('viewRuleModal'));
+            viewModal.show();
+        } else {
+            showAlert('danger', '获取规则信息失败: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', '获取规则信息失败');
+    });
+}
+
+// 显示查看权限配置
+function displayViewPermissions(ruleExpression, dbType) {
+    const container = document.getElementById('viewPermissionsConfig');
+    
+    if (!ruleExpression) {
+        container.innerHTML = '<div class="text-muted">无权限配置</div>';
+        return;
+    }
+    
+    let html = '<div class="row">';
+    
+    if (ruleExpression.type === 'mysql_permissions') {
+        // MySQL新结构
+        if (ruleExpression.global_privileges && ruleExpression.global_privileges.length > 0) {
+            html += `
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-2"><i class="fas fa-globe me-2"></i>全局权限</h6>
+                    <div class="mb-3">
+                        ${ruleExpression.global_privileges.map(perm => 
+                            `<span class="badge bg-primary me-1 mb-1">${perm}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        if (ruleExpression.database_privileges && ruleExpression.database_privileges.length > 0) {
+            html += `
+                <div class="col-md-6">
+                    <h6 class="text-success mb-2"><i class="fas fa-database me-2"></i>数据库权限</h6>
+                    <div class="mb-3">
+                        ${ruleExpression.database_privileges.map(perm => 
+                            `<span class="badge bg-success me-1 mb-1">${perm}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    } else if (ruleExpression.type === 'sqlserver_permissions') {
+        // SQL Server结构
+        if (ruleExpression.server_roles && ruleExpression.server_roles.length > 0) {
+            html += `
+                <div class="col-md-6">
+                    <h6 class="text-info mb-2"><i class="fas fa-users me-2"></i>服务器角色</h6>
+                    <div class="mb-3">
+                        ${ruleExpression.server_roles.map(role => 
+                            `<span class="badge bg-info me-1 mb-1">${role}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        if (ruleExpression.database_roles && ruleExpression.database_roles.length > 0) {
+            html += `
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-2"><i class="fas fa-database me-2"></i>数据库角色</h6>
+                    <div class="mb-3">
+                        ${ruleExpression.database_roles.map(role => 
+                            `<span class="badge bg-primary me-1 mb-1">${role}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        if (ruleExpression.server_permissions && ruleExpression.server_permissions.length > 0) {
+            html += `
+                <div class="col-md-6">
+                    <h6 class="text-warning mb-2"><i class="fas fa-shield-alt me-2"></i>服务器权限</h6>
+                    <div class="mb-3">
+                        ${ruleExpression.server_permissions.map(perm => 
+                            `<span class="badge bg-warning me-1 mb-1">${perm}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        if (ruleExpression.database_privileges && ruleExpression.database_privileges.length > 0) {
+            html += `
+                <div class="col-md-6">
+                    <h6 class="text-success mb-2"><i class="fas fa-key me-2"></i>数据库权限</h6>
+                    <div class="mb-3">
+                        ${ruleExpression.database_privileges.map(perm => 
+                            `<span class="badge bg-success me-1 mb-1">${perm}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    } else if (ruleExpression.permissions) {
+        // 旧格式或其他数据库类型
+        html += `
+            <div class="col-12">
+                <h6 class="text-secondary mb-2"><i class="fas fa-list me-2"></i>权限列表</h6>
+                <div class="mb-3">
+                    ${ruleExpression.permissions.map(perm => 
+                        `<span class="badge bg-secondary me-1 mb-1">${perm}</span>`
+                    ).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// 从查看模态框跳转到编辑
+function editRuleFromView() {
+    const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewRuleModal'));
+    viewModal.hide();
+    
+    // 获取当前查看的规则ID（需要从全局变量或其他方式获取）
+    const ruleId = document.getElementById('viewRuleName').getAttribute('data-rule-id');
+    if (ruleId) {
+        editRule(ruleId);
+    }
 }
 
 // 删除规则
@@ -707,12 +1439,15 @@ function deleteRule(id) {
     }
     
     fetch(`/account-classification/rules/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showAlert('success', data.message);
+            showAlert('success', '规则删除成功');
             loadRules();
         } else {
             showAlert('danger', data.error);

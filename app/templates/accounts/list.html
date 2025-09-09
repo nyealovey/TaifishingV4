@@ -71,6 +71,20 @@
                             {% endfor %}
                         </select>
                     </div>
+                    <div class="col-md-2">
+                        <label for="classification" class="form-label fw-semibold">分类</label>
+                        <select class="form-select" id="classification" name="classification">
+                            <option value="">全部分类</option>
+                            {% for classification_option in filter_options.classifications %}
+                            <option value="{{ classification_option.value }}" 
+                                    {% if classification == classification_option.value %}selected{% endif %}
+                                    {% if classification_option.type == 'special' %}class="text-primary fw-semibold"{% endif %}
+                                    {% if classification_option.get('disabled') %}disabled{% endif %}>
+                                {{ classification_option.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
                     <div class="col-md-3">
                         <label for="plugin" class="form-label fw-semibold">插件/类型</label>
                         <select class="form-select" id="plugin" name="plugin">

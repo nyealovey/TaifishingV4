@@ -85,6 +85,27 @@
             transform: rotate(180deg);
         }
         
+        /* 导航栏居中样式 */
+        .navbar-collapse {
+            flex-grow: 0;
+        }
+        
+        .navbar-nav {
+            align-items: center;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 991.98px) {
+            .navbar-collapse {
+                flex-grow: 1;
+            }
+            
+            .navbar-nav.ms-auto {
+                margin-left: 0 !important;
+                margin-top: 1rem;
+            }
+        }
+        
         .main-content {
             min-height: calc(100vh - 76px);
             padding: 2rem 0;
@@ -154,8 +175,8 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav">
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('dashboard.index') }}">
@@ -203,7 +224,7 @@
                     {% endif %}
                 </ul>
                 
-                <ul class="navbar-nav">
+                <ul class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">

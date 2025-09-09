@@ -443,11 +443,14 @@ class AccountClassificationService:
                     # 先清除该账户的所有现有分类
                     self._clear_account_classifications(account.id)
                     
-                    # 根据账户的数据库类型获取对应的规则
+                    # 根据账户的数据库类型获取对应的规则，按优先级排序
                     account_rules = [rule for rule in rules if rule.db_type == account.instance.db_type]
                     
                     if not account_rules:
                         continue
+                    
+                    # 按分类优先级排序规则（优先级高的先匹配）
+                    account_rules.sort(key=lambda r: r.classification.priority if r.classification else 0, reverse=True)
                     
                     # 应用规则进行自动分类
                     classified = False
@@ -462,6 +465,7 @@ class AccountClassificationService:
                             if result['success']:
                                 classified_count += 1
                                 classified = True
+                                self.logger.info(f"账户 {account.username} 按优先级 {rule.classification.priority if rule.classification else 0} 的规则 {rule.rule_name} 分类到 {rule.classification.name if rule.classification else '未知分类'}")
                             break
                     
                     # 如果没有规则匹配，账户保持未分类状态（已清除现有分类）
@@ -563,10 +567,10 @@ class AccountClassificationService:
             
             permissions = json.loads(account.permissions)
             
-            # 检查全局权限
+            # 检查全局权限（SQL Server中对应server_permissions）
             required_global = rule_expression.get('global_privileges', [])
             if required_global:
-                actual_global = [p['privilege'] for p in permissions.get('global', []) if p.get('granted', False)]
+                actual_global = [p['permission'] for p in permissions.get('server_permissions', []) if p.get('granted', False)]
                 if not all(perm in actual_global for perm in required_global):
                     self.logger.debug(f"账户 {account.username} 不满足全局权限要求: 需要 {required_global}, 实际 {actual_global}")
                     return False

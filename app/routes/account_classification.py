@@ -50,7 +50,7 @@ def index():
                              instances=[],
                              db_type_stats={})
 
-@account_classification_bp.route('/rules')
+@account_classification_bp.route('/rules-page')
 @login_required
 def rules():
     """规则管理页面"""
@@ -113,6 +113,38 @@ def create_classification():
             'error': f'创建分类失败: {str(e)}'
         })
 
+@account_classification_bp.route('/classifications/<int:classification_id>')
+@login_required
+def get_classification(classification_id):
+    """获取单个账户分类"""
+    try:
+        classification = AccountClassification.query.get(classification_id)
+        if not classification:
+            return jsonify({
+                'success': False,
+                'error': '分类不存在'
+            })
+        
+        return jsonify({
+            'success': True,
+            'classification': {
+                'id': classification.id,
+                'name': classification.name,
+                'description': classification.description,
+                'risk_level': classification.risk_level,
+                'color': classification.color,
+                'priority': classification.priority,
+                'is_system': classification.is_system,
+                'created_at': classification.created_at.isoformat() if classification.created_at else None,
+                'updated_at': classification.updated_at.isoformat() if classification.updated_at else None
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'获取分类失败: {str(e)}'
+        })
+
 @account_classification_bp.route('/classifications/<int:classification_id>', methods=['PUT'])
 @login_required
 def update_classification(classification_id):
@@ -146,7 +178,7 @@ def delete_classification(classification_id):
             'error': f'删除分类失败: {str(e)}'
         })
 
-@account_classification_bp.route('/rules')
+@account_classification_bp.route('/rules/filter')
 @login_required
 def get_rules():
     """获取分类规则"""
@@ -162,6 +194,33 @@ def get_rules():
         return jsonify({
             'success': True,
             'rules': rules
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+@account_classification_bp.route('/rules')
+@login_required
+def list_rules():
+    """获取所有规则列表（按数据库类型分组）"""
+    try:
+        # 获取所有规则
+        all_rules = account_classification_service.get_all_rules()
+        
+        # 按数据库类型分组
+        rules_by_db_type = {}
+        for rule in all_rules:
+            db_type = rule.get('db_type', 'unknown')
+            if db_type not in rules_by_db_type:
+                rules_by_db_type[db_type] = []
+            rules_by_db_type[db_type].append(rule)
+        
+        return jsonify({
+            'success': True,
+            'rules_by_db_type': rules_by_db_type
         })
     
     except Exception as e:
