@@ -103,6 +103,7 @@
                         <div class="col-md-3">
                             <label for="time-range-filter" class="form-label">时间范围</label>
                             <select class="form-select" id="time-range-filter">
+                                <option value="">全部时间</option>
                                 <option value="1h">最近1小时</option>
                                 <option value="today">今天</option>
                                 <option value="week">最近一周</option>
@@ -201,6 +202,21 @@ let totalPages = 1;
 document.addEventListener('DOMContentLoaded', function() {
     loadLogStats();
     loadLogs();
+    
+    // 添加筛选器变化事件监听器
+    document.getElementById('log-level-filter').addEventListener('change', function() {
+        loadLogs(1); // 重置到第一页
+    });
+    
+    document.getElementById('time-range-filter').addEventListener('change', function() {
+        loadLogs(1); // 重置到第一页
+    });
+    
+    document.getElementById('keyword-filter').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            loadLogs(1); // 重置到第一页
+        }
+    });
 });
 
 // 加载日志统计

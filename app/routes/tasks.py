@@ -419,11 +419,6 @@ def task_execution_detail(task_id, execution_id):
                 success_count = int(match.group(1))
                 failed_count = int(match.group(2))
         
-        # 获取实例详情（如果有的话）
-        instance_details = []
-        if execution.data and isinstance(execution.data, dict):
-            instance_details = execution.data.get('instance_details', [])
-        
         # 构建执行详情
         execution_detail = {
             'id': execution.id,
@@ -437,7 +432,6 @@ def task_execution_detail(task_id, execution_id):
             'error_message': execution.error_message,
             'success_count': success_count,
             'failed_count': failed_count,
-            'instance_details': instance_details,  # 添加实例详情
             'instance_name': instance_info['name'] if instance else None,
             'instance_ip': instance_info['ip'] if instance else None,
             'instance_port': instance_info['port'] if instance else None,

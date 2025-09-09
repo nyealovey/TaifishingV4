@@ -539,14 +539,23 @@ def get_logs():
             query = query.filter(Log.message.contains(keyword))
         
         if time_range:
-            if time_range == 'today':
-                today = datetime.now().date()
-                query = query.filter(db.func.date(Log.created_at) == today)
+            # 使用UTC时间进行筛选，因为数据库存储的是UTC时间
+            if time_range == '1h':
+                hour_ago = datetime.utcnow() - timedelta(hours=1)
+                query = query.filter(Log.created_at >= hour_ago)
+            elif time_range == 'today':
+                # 对于今天，需要转换为UTC日期
+                from app.utils.timezone import CHINA_TZ
+                china_today = datetime.now(CHINA_TZ).date()
+                # 转换为UTC的今天开始和结束时间
+                utc_today_start = CHINA_TZ.localize(datetime.combine(china_today, datetime.min.time())).astimezone(pytz.UTC).replace(tzinfo=None)
+                utc_today_end = CHINA_TZ.localize(datetime.combine(china_today, datetime.max.time())).astimezone(pytz.UTC).replace(tzinfo=None)
+                query = query.filter(Log.created_at >= utc_today_start, Log.created_at <= utc_today_end)
             elif time_range == 'week':
-                week_ago = datetime.now() - timedelta(days=7)
+                week_ago = datetime.utcnow() - timedelta(days=7)
                 query = query.filter(Log.created_at >= week_ago)
             elif time_range == 'month':
-                month_ago = datetime.now() - timedelta(days=30)
+                month_ago = datetime.utcnow() - timedelta(days=30)
                 query = query.filter(Log.created_at >= month_ago)
         
         # 分页查询

@@ -448,7 +448,7 @@ class DatabaseService:
                     username=username,
                     host=None,  # SQL Server没有主机概念
                     database_name=instance.database_name or 'master',
-                    account_type=type_desc.lower(),  # SQL Server的登录类型
+                    account_type=type_desc.lower(),  # 直接使用原始type_desc名称
                     plugin=None,  # SQL Server没有插件概念
                     password_expired=False,  # SQL Server不直接提供此信息
                     password_last_changed=modify_date,

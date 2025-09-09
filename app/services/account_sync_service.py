@@ -444,7 +444,7 @@ class AccountSyncService:
         cursor.execute("""
             SELECT 
                 name as username,
-                'user' as account_type,
+                type_desc as account_type,
                 '' as database_name,
                 is_disabled as is_disabled,
                 create_date as created_date
@@ -462,6 +462,9 @@ class AccountSyncService:
         
         for account_data in accounts:
             username, account_type, database_name, is_disabled, created_date = account_data
+            
+            # 直接使用SQL Server的原始type_desc名称
+            account_type = account_type.lower()
             
             # 查找或创建账户记录
             account = Account.query.filter_by(

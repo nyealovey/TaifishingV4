@@ -423,42 +423,6 @@ function showExecutionDetailModal(execution) {
                                 </div>
                             </div>
                         </div>
-                        ${execution.instance_details && execution.instance_details.length > 0 ? `
-                        <div class="row mt-3">
-                            <div class="col-12">
-                                <h6><i class="fas fa-server me-2"></i>实例执行状态</h6>
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-hover">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>实例名称</th>
-                                                <th>执行状态</th>
-                                                <th>同步账户数</th>
-                                                <th>执行消息</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            ${execution.instance_details.map(detail => `
-                                                <tr>
-                                                    <td><strong>${detail.name || '未知实例'}</strong></td>
-                                                    <td>
-                                                        <span class="badge ${detail.status === 'success' ? 'bg-success' : 'bg-danger'}">
-                                                            <i class="fas ${detail.status === 'success' ? 'fa-check-circle' : 'fa-times-circle'}"></i>
-                                                            ${detail.status === 'success' ? '成功' : '失败'}
-                                                        </span>
-                                                    </td>
-                                                    <td><span class="badge bg-primary">${detail.synced_count || 0}</span></td>
-                                                    <td class="text-truncate" style="max-width: 200px;" title="${detail.message || ''}">
-                                                        ${detail.message || '-'}
-                                                    </td>
-                                                </tr>
-                                            `).join('')}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        ` : ''}
                         ${execution.error_message ? `
                         <div class="row mt-3">
                             <div class="col-12">

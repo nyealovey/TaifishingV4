@@ -91,9 +91,6 @@ def create_app(config_name=None):
     # 配置模板过滤器
     configure_template_filters(app)
     
-    # 集成Celery管理器
-    _integrate_celery_manager(app)
-    
     return app
 
 def configure_app(app, config_name):
@@ -401,63 +398,6 @@ def configure_template_filters(app):
     def china_date_filter(dt):
         """东八区日期格式化过滤器"""
         return format_china_time(dt, '%Y-%m-%d')
-
-def _integrate_celery_manager(app):
-    """
-    集成Celery管理器到Flask应用
-    
-    Args:
-        app: Flask应用实例
-    """
-    try:
-        from app.celery_manager import celery_manager
-        
-        # 在应用启动时启动Celery服务
-        def start_celery_services():
-            """启动Celery服务"""
-            try:
-                celery_manager.start_celery_services()
-                app.logger.info("Celery服务已启动")
-            except Exception as e:
-                app.logger.error(f"启动Celery服务失败: {e}")
-        
-        # 立即启动Celery服务
-        start_celery_services()
-        
-        # 在应用关闭时停止Celery服务
-        import atexit
-        def stop_celery_services():
-            """应用关闭时停止Celery服务"""
-            try:
-                celery_manager.stop_celery_services()
-                app.logger.info("Celery服务已停止")
-            except Exception as e:
-                app.logger.error(f"停止Celery服务失败: {e}")
-        
-        atexit.register(stop_celery_services)
-        
-        # 添加Celery状态检查路由
-        @app.route('/celery/status')
-        def celery_status():
-            """检查Celery服务状态"""
-            try:
-                status = celery_manager.get_status()
-                return jsonify({
-                    'success': True,
-                    'status': status
-                })
-            except Exception as e:
-                return jsonify({
-                    'success': False,
-                    'error': str(e)
-                }), 500
-        
-        app.logger.info("Celery管理器已集成")
-        
-    except ImportError as e:
-        app.logger.warning(f"Celery管理器导入失败: {e}")
-    except Exception as e:
-        app.logger.error(f"集成Celery管理器失败: {e}")
     
     @app.template_filter('china_datetime')
     def china_datetime_filter(dt):
