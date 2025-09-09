@@ -702,13 +702,15 @@ class AccountClassificationService:
             if not classification:
                 return 0
             
-            # 统计匹配该分类的账户数量
-            count = db.session.query(AccountClassificationAssignment).join(Account).filter(
-                AccountClassificationAssignment.classification_id == classification.id,
-                AccountClassificationAssignment.is_active == True
-            ).count()
+            # 重新运行规则评估，统计真正匹配该规则的账户数量
+            matched_count = 0
+            accounts = Account.query.all()
             
-            return count
+            for account in accounts:
+                if self._evaluate_rule(account, rule):
+                    matched_count += 1
+            
+            return matched_count
             
         except Exception as e:
             self.logger.error(f"获取规则匹配账户数量失败: {e}")
