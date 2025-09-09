@@ -132,8 +132,12 @@ class TaskExecutor:
             task = Task.query.get(task_id)
             if result['success']:
                 self._update_task_status(task, result['total_success'], result['total_failed'], result['results'])
+                # 记录任务执行汇总
+                self._record_task_execution_summary(task, result['total_success'], result['total_failed'], result['results'])
             else:
                 self._update_task_status(task, 0, 1, [{'instance_name': 'unknown', 'result': result}])
+                # 记录任务执行汇总（失败情况）
+                self._record_task_execution_summary(task, 0, 1, [{'success': False, 'error': result.get('error', '未知错误')}])
             
             return result
     
@@ -219,14 +223,15 @@ class TaskExecutor:
                     'error': f'执行任务代码失败: {str(e)}'
                 }
     
-    def _record_sync_data(self, task, instance, result):
+    def _record_task_execution_summary(self, task, success_count, failed_count, results):
         """
-        记录同步数据
+        记录任务执行汇总数据
         
         Args:
             task: 任务对象
-            instance: 实例对象
-            result: 执行结果
+            success_count: 成功实例数
+            failed_count: 失败实例数
+            results: 执行结果列表
         """
         from app import create_app
         
@@ -234,18 +239,38 @@ class TaskExecutor:
         app = create_app()
         with app.app_context():
             try:
+                # 计算汇总数据
+                total_synced = sum(r.get('synced_count', 0) for r in results if r.get('success', False))
+                total_added = sum(r.get('added_count', 0) for r in results if r.get('success', False))
+                total_removed = sum(r.get('removed_count', 0) for r in results if r.get('success', False))
+                total_modified = sum(r.get('modified_count', 0) for r in results if r.get('success', False))
+                
+                # 构建汇总消息
+                if failed_count == 0:
+                    status = 'success'
+                    message = f'任务执行完成，成功:{success_count}，失败:{failed_count}'
+                else:
+                    status = 'failed'
+                    message = f'任务执行完成，成功:{success_count}，失败:{failed_count}'
+                
+                # 创建汇总记录（不关联具体实例）
                 sync_record = SyncData(
-                    instance_id=instance.id,
+                    instance_id=None,  # 不关联具体实例，表示任务汇总
                     task_id=task.id,
                     sync_type='task',
-                    status='success' if result['success'] else 'failed',
-                    message=result.get('message', result.get('error', '')),
-                    synced_count=result.get('synced_count', 0)
+                    status=status,
+                    message=message,
+                    synced_count=total_synced,
+                    added_count=total_added,
+                    removed_count=total_removed,
+                    modified_count=total_modified
                 )
                 db.session.add(sync_record)
                 db.session.commit()
+                
+                self.logger.info(f"记录任务执行汇总: {task.name}, 成功:{success_count}, 失败:{failed_count}")
             except Exception as e:
-                self.logger.error(f"记录同步数据失败: {e}")
+                self.logger.error(f"记录任务执行汇总失败: {e}")
     
     def _update_task_status(self, task, success_count, failed_count, results):
         """

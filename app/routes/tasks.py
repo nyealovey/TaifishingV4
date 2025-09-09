@@ -409,6 +409,16 @@ def task_execution_detail(task_id, execution_id):
             'db_type': instance.db_type if instance else '未知类型'
         }
         
+        # 解析成功和失败实例数
+        success_count = 0
+        failed_count = 0
+        if execution.message:
+            import re
+            match = re.search(r'成功:(\d+)，失败:(\d+)', execution.message)
+            if match:
+                success_count = int(match.group(1))
+                failed_count = int(match.group(2))
+        
         # 构建执行详情
         execution_detail = {
             'id': execution.id,
@@ -420,10 +430,12 @@ def task_execution_detail(task_id, execution_id):
             'removed_count': execution.removed_count,
             'modified_count': execution.modified_count,
             'error_message': execution.error_message,
-            'instance_name': instance_info['name'],
-            'instance_ip': instance_info['ip'],
-            'instance_port': instance_info['port'],
-            'instance_db_type': instance_info['db_type']
+            'success_count': success_count,
+            'failed_count': failed_count,
+            'instance_name': instance_info['name'] if instance else None,
+            'instance_ip': instance_info['ip'] if instance else None,
+            'instance_port': instance_info['port'] if instance else None,
+            'instance_db_type': instance_info['db_type'] if instance else None
         }
         
         return jsonify({

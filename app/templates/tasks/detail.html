@@ -246,9 +246,25 @@ function updateExecutionsTable(executions) {
         const statusClass = execution.status === 'success' ? 'bg-success' : 'bg-danger';
         const statusIcon = execution.status === 'success' ? 'fas fa-check-circle' : 'fas fa-times-circle';
         
-        // 计算成功和失败实例数（这里简化处理，实际应该根据任务执行结果统计）
-        const successCount = execution.status === 'success' ? 1 : 0;
-        const failedCount = execution.status === 'failed' ? 1 : 0;
+        // 从消息中解析成功和失败实例数
+        let successCount = 0;
+        let failedCount = 0;
+        
+        if (execution.message) {
+            const match = execution.message.match(/成功:(\d+)，失败:(\d+)/);
+            if (match) {
+                successCount = parseInt(match[1]) || 0;
+                failedCount = parseInt(match[2]) || 0;
+            } else {
+                // 如果没有解析到，根据状态判断
+                successCount = execution.status === 'success' ? 1 : 0;
+                failedCount = execution.status === 'failed' ? 1 : 0;
+            }
+        } else {
+            // 如果没有消息，根据状态判断
+            successCount = execution.status === 'success' ? 1 : 0;
+            failedCount = execution.status === 'failed' ? 1 : 0;
+        }
         
         html += `
             <tr>
@@ -353,13 +369,28 @@ function showExecutionDetailModal(execution) {
                                         </td>
                                     </tr>
                                     <tr>
+                                        <td><strong>执行类型:</strong></td>
+                                        <td>${execution.instance_name ? '单实例执行' : '批量执行汇总'}</td>
+                                    </tr>
+                                    ${execution.instance_name ? `
+                                    <tr>
                                         <td><strong>实例名称:</strong></td>
-                                        <td>${execution.instance_name || '未知'}</td>
+                                        <td>${execution.instance_name}</td>
                                     </tr>
                                     <tr>
                                         <td><strong>实例IP:</strong></td>
                                         <td>${execution.instance_ip || '未知'}</td>
                                     </tr>
+                                    ` : `
+                                    <tr>
+                                        <td><strong>成功实例数:</strong></td>
+                                        <td><span class="badge bg-success">${execution.success_count || 0}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>失败实例数:</strong></td>
+                                        <td><span class="badge bg-danger">${execution.failed_count || 0}</span></td>
+                                    </tr>
+                                    `}
                                 </table>
                             </div>
                             <div class="col-md-6">
