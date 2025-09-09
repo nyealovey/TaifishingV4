@@ -368,7 +368,6 @@ function loadClassifications() {
     .then(data => {
         if (data.success) {
             displayClassifications(data.classifications);
-            updateStatistics(data.classifications);
         } else {
             showAlert('danger', '加载分类失败: ' + data.error);
         }
