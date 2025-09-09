@@ -21,6 +21,10 @@ fi
 echo "🔄 激活虚拟环境..."
 source venv/bin/activate
 
+# 设置Oracle Instant Client环境变量
+echo "🔧 设置Oracle Instant Client环境变量..."
+export DYLD_LIBRARY_PATH="/Users/apple/Downloads/instantclient_23_3:$DYLD_LIBRARY_PATH"
+
 # 安装依赖
 echo "📦 安装依赖..."
 pip install -r requirements-local.txt
