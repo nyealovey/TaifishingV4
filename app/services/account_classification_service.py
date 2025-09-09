@@ -685,6 +685,34 @@ class AccountClassificationService:
                 'success': False,
                 'error': f'移除账户分类分配失败: {str(e)}'
             }
+    
+    def get_rule_matched_accounts_count(self, rule_id):
+        """获取规则匹配的账户数量"""
+        try:
+            from app.models.account import Account
+            from app.models.account_classification import ClassificationRule, AccountClassificationAssignment
+            
+            # 获取规则
+            rule = ClassificationRule.query.get(rule_id)
+            if not rule:
+                return 0
+            
+            # 获取规则对应的分类
+            classification = rule.classification
+            if not classification:
+                return 0
+            
+            # 统计匹配该分类的账户数量
+            count = db.session.query(AccountClassificationAssignment).join(Account).filter(
+                AccountClassificationAssignment.classification_id == classification.id,
+                AccountClassificationAssignment.is_active == True
+            ).count()
+            
+            return count
+            
+        except Exception as e:
+            self.logger.error(f"获取规则匹配账户数量失败: {e}")
+            return 0
 
 # 全局实例
 account_classification_service = AccountClassificationService()

@@ -210,6 +210,15 @@ def list_rules():
         # 获取所有规则
         all_rules = account_classification_service.get_all_rules()
         
+        # 为每个规则添加匹配的账户数量
+        for rule in all_rules:
+            rule_id = rule.get('id')
+            if rule_id:
+                matched_count = account_classification_service.get_rule_matched_accounts_count(rule_id)
+                rule['matched_accounts_count'] = matched_count
+            else:
+                rule['matched_accounts_count'] = 0
+        
         # 按数据库类型分组
         rules_by_db_type = {}
         for rule in all_rules:
