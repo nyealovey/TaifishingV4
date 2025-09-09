@@ -12,7 +12,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import create_app, db
-from app.models import User, Instance, Credential, Account, Task, Log, GlobalParam, SyncData
+from app.models import User, Instance, Credential, Account, Task, Log, GlobalParam, SyncData, AccountClassification, ClassificationRule, AccountClassificationAssignment, PermissionConfig
 from app.utils.logger import setup_logger
 
 def init_database():
@@ -33,6 +33,14 @@ def init_database():
             # 初始化全局参数
             print("⚙️ 初始化全局参数...")
             init_global_params()
+            
+            # 初始化账户分类
+            print("🏷️ 初始化账户分类...")
+            init_account_classifications()
+            
+            # 初始化权限配置
+            print("🔐 初始化权限配置...")
+            init_permission_configs()
             
             print("✅ 数据库初始化完成")
             
@@ -176,6 +184,132 @@ def init_global_params():
     
     db.session.commit()
     print("✅ 全局参数初始化完成")
+
+def init_account_classifications():
+    """初始化账户分类"""
+    classifications = [
+        {
+            'name': '高风险账户',
+            'description': '拥有高权限的数据库账户，需要特别关注',
+            'risk_level': 'high',
+            'color': '#dc3545',
+            'priority': 1,
+            'is_active': True,
+            'is_system': True
+        },
+        {
+            'name': '特权账户',
+            'description': '拥有特殊权限的数据库账户',
+            'risk_level': 'medium',
+            'color': '#fd7e14',
+            'priority': 2,
+            'is_active': True,
+            'is_system': True
+        },
+        {
+            'name': '普通账户',
+            'description': '普通权限的数据库账户',
+            'risk_level': 'low',
+            'color': '#28a745',
+            'priority': 3,
+            'is_active': True,
+            'is_system': True
+        },
+        {
+            'name': '只读账户',
+            'description': '只有读取权限的数据库账户',
+            'risk_level': 'low',
+            'color': '#17a2b8',
+            'priority': 4,
+            'is_active': True,
+            'is_system': True
+        }
+    ]
+    
+    for class_data in classifications:
+        existing = AccountClassification.query.filter_by(name=class_data['name']).first()
+        if not existing:
+            classification = AccountClassification(**class_data)
+            db.session.add(classification)
+    
+    db.session.commit()
+    print("✅ 账户分类初始化完成")
+
+def init_permission_configs():
+    """初始化权限配置"""
+    # MySQL权限配置
+    mysql_permissions = [
+        # 全局权限
+        {'db_type': 'mysql', 'category': 'global_privileges', 'permission_name': 'SELECT', 'description': '查询权限', 'sort_order': 1},
+        {'db_type': 'mysql', 'category': 'global_privileges', 'permission_name': 'INSERT', 'description': '插入权限', 'sort_order': 2},
+        {'db_type': 'mysql', 'category': 'global_privileges', 'permission_name': 'UPDATE', 'description': '更新权限', 'sort_order': 3},
+        {'db_type': 'mysql', 'category': 'global_privileges', 'permission_name': 'DELETE', 'description': '删除权限', 'sort_order': 4},
+        {'db_type': 'mysql', 'category': 'global_privileges', 'permission_name': 'CREATE', 'description': '创建权限', 'sort_order': 5},
+        {'db_type': 'mysql', 'category': 'global_privileges', 'permission_name': 'DROP', 'description': '删除权限', 'sort_order': 6},
+        {'db_type': 'mysql', 'category': 'global_privileges', 'permission_name': 'SUPER', 'description': '超级权限', 'sort_order': 7},
+        {'db_type': 'mysql', 'category': 'global_privileges', 'permission_name': 'GRANT OPTION', 'description': '授权权限', 'sort_order': 8},
+        # 数据库权限
+        {'db_type': 'mysql', 'category': 'database_privileges', 'permission_name': 'SELECT', 'description': '查询权限', 'sort_order': 1},
+        {'db_type': 'mysql', 'category': 'database_privileges', 'permission_name': 'INSERT', 'description': '插入权限', 'sort_order': 2},
+        {'db_type': 'mysql', 'category': 'database_privileges', 'permission_name': 'UPDATE', 'description': '更新权限', 'sort_order': 3},
+        {'db_type': 'mysql', 'category': 'database_privileges', 'permission_name': 'DELETE', 'description': '删除权限', 'sort_order': 4},
+        {'db_type': 'mysql', 'category': 'database_privileges', 'permission_name': 'CREATE', 'description': '创建权限', 'sort_order': 5},
+        {'db_type': 'mysql', 'category': 'database_privileges', 'permission_name': 'DROP', 'description': '删除权限', 'sort_order': 6},
+        {'db_type': 'mysql', 'category': 'database_privileges', 'permission_name': 'ALTER', 'description': '修改权限', 'sort_order': 7},
+        {'db_type': 'mysql', 'category': 'database_privileges', 'permission_name': 'INDEX', 'description': '索引权限', 'sort_order': 8},
+    ]
+    
+    # SQL Server权限配置
+    sqlserver_permissions = [
+        # 服务器角色
+        {'db_type': 'sqlserver', 'category': 'server_roles', 'permission_name': 'sysadmin', 'description': '系统管理员角色', 'sort_order': 1},
+        {'db_type': 'sqlserver', 'category': 'server_roles', 'permission_name': 'serveradmin', 'description': '服务器管理员角色', 'sort_order': 2},
+        {'db_type': 'sqlserver', 'category': 'server_roles', 'permission_name': 'securityadmin', 'description': '安全管理员角色', 'sort_order': 3},
+        {'db_type': 'sqlserver', 'category': 'server_roles', 'permission_name': 'processadmin', 'description': '进程管理员角色', 'sort_order': 4},
+        {'db_type': 'sqlserver', 'category': 'server_roles', 'permission_name': 'setupadmin', 'description': '设置管理员角色', 'sort_order': 5},
+        {'db_type': 'sqlserver', 'category': 'server_roles', 'permission_name': 'bulkadmin', 'description': '批量管理员角色', 'sort_order': 6},
+        {'db_type': 'sqlserver', 'category': 'server_roles', 'permission_name': 'diskadmin', 'description': '磁盘管理员角色', 'sort_order': 7},
+        {'db_type': 'sqlserver', 'category': 'server_roles', 'permission_name': 'dbcreator', 'description': '数据库创建者角色', 'sort_order': 8},
+        # 服务器权限
+        {'db_type': 'sqlserver', 'category': 'server_permissions', 'permission_name': 'CONTROL SERVER', 'description': '控制服务器权限', 'sort_order': 1},
+        {'db_type': 'sqlserver', 'category': 'server_permissions', 'permission_name': 'VIEW SERVER STATE', 'description': '查看服务器状态权限', 'sort_order': 2},
+        {'db_type': 'sqlserver', 'category': 'server_permissions', 'permission_name': 'ALTER ANY LOGIN', 'description': '修改任意登录权限', 'sort_order': 3},
+        {'db_type': 'sqlserver', 'category': 'server_permissions', 'permission_name': 'CREATE ANY DATABASE', 'description': '创建任意数据库权限', 'sort_order': 4},
+        # 数据库角色
+        {'db_type': 'sqlserver', 'category': 'database_roles', 'permission_name': 'db_owner', 'description': '数据库所有者角色', 'sort_order': 1},
+        {'db_type': 'sqlserver', 'category': 'database_roles', 'permission_name': 'db_accessadmin', 'description': '数据库访问管理员角色', 'sort_order': 2},
+        {'db_type': 'sqlserver', 'category': 'database_roles', 'permission_name': 'db_securityadmin', 'description': '数据库安全管理员角色', 'sort_order': 3},
+        {'db_type': 'sqlserver', 'category': 'database_roles', 'permission_name': 'db_ddladmin', 'description': '数据库DDL管理员角色', 'sort_order': 4},
+        {'db_type': 'sqlserver', 'category': 'database_roles', 'permission_name': 'db_backupoperator', 'description': '数据库备份操作员角色', 'sort_order': 5},
+        {'db_type': 'sqlserver', 'category': 'database_roles', 'permission_name': 'db_datareader', 'description': '数据库数据读取者角色', 'sort_order': 6},
+        {'db_type': 'sqlserver', 'category': 'database_roles', 'permission_name': 'db_datawriter', 'description': '数据库数据写入者角色', 'sort_order': 7},
+        # 数据库权限
+        {'db_type': 'sqlserver', 'category': 'database_privileges', 'permission_name': 'SELECT', 'description': '查询权限', 'sort_order': 1},
+        {'db_type': 'sqlserver', 'category': 'database_privileges', 'permission_name': 'INSERT', 'description': '插入权限', 'sort_order': 2},
+        {'db_type': 'sqlserver', 'category': 'database_privileges', 'permission_name': 'UPDATE', 'description': '更新权限', 'sort_order': 3},
+        {'db_type': 'sqlserver', 'category': 'database_privileges', 'permission_name': 'DELETE', 'description': '删除权限', 'sort_order': 4},
+        {'db_type': 'sqlserver', 'category': 'database_privileges', 'permission_name': 'CREATE', 'description': '创建权限', 'sort_order': 5},
+        {'db_type': 'sqlserver', 'category': 'database_privileges', 'permission_name': 'ALTER', 'description': '修改权限', 'sort_order': 6},
+        {'db_type': 'sqlserver', 'category': 'database_privileges', 'permission_name': 'EXECUTE', 'description': '执行权限', 'sort_order': 7},
+        {'db_type': 'sqlserver', 'category': 'database_privileges', 'permission_name': 'CONTROL', 'description': '控制权限', 'sort_order': 8},
+    ]
+    
+    # 合并所有权限配置
+    all_permissions = mysql_permissions + sqlserver_permissions
+    
+    for perm_data in all_permissions:
+        existing = PermissionConfig.query.filter_by(
+            db_type=perm_data['db_type'],
+            category=perm_data['category'],
+            permission_name=perm_data['permission_name']
+        ).first()
+        
+        if not existing:
+            permission = PermissionConfig(**perm_data)
+            db.session.add(permission)
+    
+    db.session.commit()
+    print("✅ 权限配置初始化完成")
 
 def reset_database():
     """重置数据库"""

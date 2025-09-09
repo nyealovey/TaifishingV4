@@ -37,7 +37,7 @@ class Config:
     BCRYPT_LOG_ROUNDS = int(os.getenv('BCRYPT_LOG_ROUNDS', SystemConstants.PASSWORD_HASH_ROUNDS))
     
     # 临时禁用CSRF用于测试
-    WTF_CSRF_ENABLED = False
+    WTF_CSRF_ENABLED = True
     
     # 文件上传配置
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', DefaultConfig.UPLOAD_FOLDER)
@@ -106,7 +106,7 @@ class TestingConfig(Config):
     CACHE_REDIS_URL = os.getenv('TEST_REDIS_URL', 'redis://localhost:6379/1')
     
     # 测试环境配置
-    WTF_CSRF_ENABLED = False
+    WTF_CSRF_ENABLED = True
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=5)
 
 # 配置字典

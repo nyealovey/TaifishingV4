@@ -249,9 +249,9 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="editRuleClassification" class="form-label">分类 <span class="text-danger">*</span></label>
-                                <select class="form-select" id="editRuleClassification" required disabled>
-                                    <option value="">请选择分类</option>
-                                </select>
+                                <div class="form-control-plaintext" id="editRuleClassificationDisplay" style="border: 1px solid #ced4da; border-radius: 0.375rem; padding: 0.375rem 0.75rem; background-color: #f8f9fa;">
+                                    <span id="editRuleClassificationText">请选择分类</span>
+                                </div>
                                 <input type="hidden" id="editRuleClassificationHidden" name="classification_id">
                             </div>
                         </div>
@@ -343,7 +343,6 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                <button type="button" class="btn btn-primary" onclick="editRuleFromView()">编辑规则</button>
             </div>
         </div>
     </div>
@@ -406,7 +405,7 @@ function displayClassifications(classifications) {
                             <span class="badge bg-${riskLevelClass} me-2" style="background-color: ${classification.color || '#6c757d'} !important;">
                                 ${classification.name}
                             </span>
-                            <small class="text-muted">${classification.rules_count} 规则</small>
+                            <small class="text-muted">${classification.rules_count > 0 ? classification.rules_count + ' 规则' : '无匹配'}</small>
                         </div>
                         <div class="btn-group btn-group-sm">
                             <button class="btn btn-outline-primary" onclick="editClassification(${classification.id})" title="编辑">
@@ -857,6 +856,11 @@ function loadPermissions(prefix = '') {
 function displayPermissionsConfig(permissions, prefix = '') {
     const container = document.getElementById(prefix ? `${prefix}PermissionsConfig` : 'permissionsConfig');
     
+    // 调试信息
+    console.log('displayPermissionsConfig - permissions:', permissions);
+    console.log('displayPermissionsConfig - server_roles:', permissions.server_roles);
+    console.log('displayPermissionsConfig - database_roles:', permissions.database_roles);
+    
     let html = '<div class="row">';
     
     // 根据数据库类型显示不同的权限配置
@@ -870,9 +874,9 @@ function displayPermissionsConfig(permissions, prefix = '') {
                 <div class="permission-section">
                     ${permissions.global_privileges.map(perm => `
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="${perm}" id="${prefix}global_${perm}">
-                            <label class="form-check-label" for="${prefix}global_${perm}">
-                                <span class="badge bg-primary me-1">${perm}</span>
+                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}global_${perm.name}">
+                            <label class="form-check-label" for="${prefix}global_${perm.name}">
+                                <span class="me-1">${perm.name}</span>
                             </label>
                         </div>
                     `).join('')}
@@ -883,66 +887,66 @@ function displayPermissionsConfig(permissions, prefix = '') {
                 <div class="permission-section">
                     ${permissions.database_privileges.map(perm => `
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="${perm}" id="${prefix}db_${perm}">
-                            <label class="form-check-label" for="${prefix}db_${perm}">
-                                <span class="badge bg-success me-1">${perm}</span>
+                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}db_${perm.name}">
+                            <label class="form-check-label" for="${prefix}db_${perm.name}">
+                                <span class="me-1">${perm.name}</span>
                             </label>
                         </div>
                     `).join('')}
                 </div>
             </div>
         `;
-    } else if (permissions.server_roles && permissions.database_roles) {
+    } else if (permissions.server_roles || permissions.database_roles || permissions.server_permissions) {
         // SQL Server结构：服务器角色、数据库角色、服务器权限、数据库权限
         html += `
             <div class="col-md-6">
                 <h6 class="text-info mb-3"><i class="fas fa-users me-2"></i>服务器角色</h6>
                 <div class="permission-section">
-                    ${permissions.server_roles.map(role => `
+                    ${permissions.server_roles ? permissions.server_roles.map(role => `
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="${role}" id="${prefix}server_role_${role}">
-                            <label class="form-check-label" for="${prefix}server_role_${role}">
-                                <span class="badge bg-info me-1">${role}</span>
+                            <input class="form-check-input" type="checkbox" value="${role.name}" id="${prefix}server_role_${role.name}">
+                            <label class="form-check-label" for="${prefix}server_role_${role.name}">
+                                <span class="me-1">${role.name}</span>
                             </label>
                         </div>
-                    `).join('')}
+                    `).join('') : '<div class="text-muted">无服务器角色</div>'}
                 </div>
                 
                 <h6 class="text-warning mb-3 mt-3"><i class="fas fa-shield-alt me-2"></i>服务器权限</h6>
                 <div class="permission-section">
-                    ${permissions.server_permissions.map(perm => `
+                    ${permissions.server_permissions ? permissions.server_permissions.map(perm => `
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="${perm}" id="${prefix}server_perm_${perm}">
-                            <label class="form-check-label" for="${prefix}server_perm_${perm}">
-                                <span class="badge bg-warning me-1">${perm}</span>
+                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}server_perm_${perm.name}">
+                            <label class="form-check-label" for="${prefix}server_perm_${perm.name}">
+                                <span class="me-1">${perm.name}</span>
                             </label>
                         </div>
-                    `).join('')}
+                    `).join('') : '<div class="text-muted">无服务器权限</div>'}
                 </div>
             </div>
             <div class="col-md-6">
                 <h6 class="text-primary mb-3"><i class="fas fa-database me-2"></i>数据库角色</h6>
                 <div class="permission-section">
-                    ${permissions.database_roles.map(role => `
+                    ${permissions.database_roles ? permissions.database_roles.map(role => `
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="${role}" id="${prefix}db_role_${role}">
-                            <label class="form-check-label" for="${prefix}db_role_${role}">
-                                <span class="badge bg-primary me-1">${role}</span>
+                            <input class="form-check-input" type="checkbox" value="${role.name}" id="${prefix}db_role_${role.name}">
+                            <label class="form-check-label" for="${prefix}db_role_${role.name}">
+                                <span class="me-1">${role.name}</span>
                             </label>
                         </div>
-                    `).join('')}
+                    `).join('') : '<div class="text-muted">无数据库角色</div>'}
                 </div>
                 
                 <h6 class="text-success mb-3 mt-3"><i class="fas fa-key me-2"></i>数据库权限</h6>
                 <div class="permission-section">
-                    ${permissions.database_privileges.map(perm => `
+                    ${permissions.database_privileges ? permissions.database_privileges.map(perm => `
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="${perm}" id="${prefix}db_perm_${perm}">
-                            <label class="form-check-label" for="${prefix}db_perm_${perm}">
-                                <span class="badge bg-success me-1">${perm}</span>
+                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}db_perm_${perm.name}">
+                            <label class="form-check-label" for="${prefix}db_perm_${perm.name}">
+                                <span class="me-1">${perm.name}</span>
                             </label>
                         </div>
-                    `).join('')}
+                    `).join('') : '<div class="text-muted">无数据库权限</div>'}
                 </div>
             </div>
         `;
@@ -956,7 +960,7 @@ function displayPermissionsConfig(permissions, prefix = '') {
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" value="${perm}" id="${prefix}perm_${perm}">
                             <label class="form-check-label" for="${prefix}perm_${perm}">
-                                <span class="badge bg-secondary me-1">${perm}</span>
+                                <span class="me-1">${perm}</span>
                             </label>
                         </div>
                     `).join('')}
@@ -1095,8 +1099,7 @@ function editRule(id) {
             document.getElementById('editRuleClassificationHidden').value = rule.classification_id;
             document.getElementById('editRuleDbTypeHidden').value = rule.db_type;
             
-            // 设置分类和数据库类型显示
-            document.getElementById('editRuleClassification').value = rule.classification_id;
+            // 设置数据库类型显示
             document.getElementById('editRuleDbType').value = rule.db_type;
             
             // 显示编辑模态框
@@ -1105,6 +1108,15 @@ function editRule(id) {
             
             // 模态框显示后加载权限配置
             document.getElementById('editRuleModal').addEventListener('shown.bs.modal', function() {
+                // 直接设置分类显示文本
+                if (rule.classification_name) {
+                    document.getElementById('editRuleClassificationText').textContent = rule.classification_name;
+                }
+                
+                // 确保数据库类型字段有值
+                document.getElementById('editRuleDbType').value = rule.db_type;
+                
+                // 加载权限配置
                 loadPermissions('edit').then(() => {
                     setSelectedPermissions(rule.rule_expression, 'edit');
                 });
@@ -1335,7 +1347,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                     <h6 class="text-primary mb-2"><i class="fas fa-globe me-2"></i>全局权限</h6>
                     <div class="mb-3">
                         ${ruleExpression.global_privileges.map(perm => 
-                            `<span class="badge bg-primary me-1 mb-1">${perm}</span>`
+                            `<span class="me-1 mb-1">${perm}</span>`
                         ).join('')}
                     </div>
                 </div>
@@ -1347,7 +1359,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                     <h6 class="text-success mb-2"><i class="fas fa-database me-2"></i>数据库权限</h6>
                     <div class="mb-3">
                         ${ruleExpression.database_privileges.map(perm => 
-                            `<span class="badge bg-success me-1 mb-1">${perm}</span>`
+                            `<span class="me-1 mb-1">${perm}</span>`
                         ).join('')}
                     </div>
                 </div>
@@ -1361,7 +1373,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                     <h6 class="text-info mb-2"><i class="fas fa-users me-2"></i>服务器角色</h6>
                     <div class="mb-3">
                         ${ruleExpression.server_roles.map(role => 
-                            `<span class="badge bg-info me-1 mb-1">${role}</span>`
+                            `<span class="me-1 mb-1">${role}</span>`
                         ).join('')}
                     </div>
                 </div>
@@ -1373,7 +1385,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                     <h6 class="text-primary mb-2"><i class="fas fa-database me-2"></i>数据库角色</h6>
                     <div class="mb-3">
                         ${ruleExpression.database_roles.map(role => 
-                            `<span class="badge bg-primary me-1 mb-1">${role}</span>`
+                            `<span class="me-1 mb-1">${role}</span>`
                         ).join('')}
                     </div>
                 </div>
@@ -1385,7 +1397,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                     <h6 class="text-warning mb-2"><i class="fas fa-shield-alt me-2"></i>服务器权限</h6>
                     <div class="mb-3">
                         ${ruleExpression.server_permissions.map(perm => 
-                            `<span class="badge bg-warning me-1 mb-1">${perm}</span>`
+                            `<span class="me-1 mb-1">${perm}</span>`
                         ).join('')}
                     </div>
                 </div>
@@ -1397,7 +1409,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                     <h6 class="text-success mb-2"><i class="fas fa-key me-2"></i>数据库权限</h6>
                     <div class="mb-3">
                         ${ruleExpression.database_privileges.map(perm => 
-                            `<span class="badge bg-success me-1 mb-1">${perm}</span>`
+                            `<span class="me-1 mb-1">${perm}</span>`
                         ).join('')}
                     </div>
                 </div>
@@ -1410,7 +1422,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                 <h6 class="text-secondary mb-2"><i class="fas fa-list me-2"></i>权限列表</h6>
                 <div class="mb-3">
                     ${ruleExpression.permissions.map(perm => 
-                        `<span class="badge bg-secondary me-1 mb-1">${perm}</span>`
+                        `<span class="me-1 mb-1">${perm}</span>`
                     ).join('')}
                 </div>
             </div>
@@ -1421,17 +1433,6 @@ function displayViewPermissions(ruleExpression, dbType) {
     container.innerHTML = html;
 }
 
-// 从查看模态框跳转到编辑
-function editRuleFromView() {
-    const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewRuleModal'));
-    viewModal.hide();
-    
-    // 获取当前查看的规则ID（需要从全局变量或其他方式获取）
-    const ruleId = document.getElementById('viewRuleName').getAttribute('data-rule-id');
-    if (ruleId) {
-        editRule(ruleId);
-    }
-}
 
 // 删除规则
 function deleteRule(id) {

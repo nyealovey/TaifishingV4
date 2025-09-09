@@ -9,7 +9,6 @@ from flask_login import login_required, current_user
 from app import db
 from app.models.account_classification import AccountClassification, ClassificationRule, AccountClassificationAssignment
 from app.services.account_classification_service import AccountClassificationService
-import json
 
 account_classification_bp = Blueprint('account_classification', __name__, url_prefix='/account-classification')
 
@@ -34,12 +33,6 @@ def get_classifications():
         
         result = []
         for classification in classifications:
-            # 计算该分类的规则数量
-            rules_count = ClassificationRule.query.filter_by(
-                classification_id=classification.id, 
-                is_active=True
-            ).count()
-            
             result.append({
                 'id': classification.id,
                 'name': classification.name,
@@ -48,7 +41,6 @@ def get_classifications():
                 'color': classification.color,
                 'priority': classification.priority,
                 'is_system': classification.is_system,
-                'rules_count': rules_count,
                 'created_at': classification.created_at.isoformat() if classification.created_at else None,
                 'updated_at': classification.updated_at.isoformat() if classification.updated_at else None
             })
@@ -257,17 +249,9 @@ def list_rules():
                 'updated_at': rule.updated_at.isoformat() if rule.updated_at else None
             })
         
-        # 按数据库类型分组
-        rules_by_db_type = {}
-        for rule in result:
-            db_type = rule.get('db_type', 'unknown')
-            if db_type not in rules_by_db_type:
-                rules_by_db_type[db_type] = []
-            rules_by_db_type[db_type].append(rule)
-        
         return jsonify({
             'success': True,
-            'rules_by_db_type': rules_by_db_type
+            'rules': result
         })
     
     except Exception as e:
@@ -284,14 +268,11 @@ def create_rule():
     try:
         data = request.get_json()
         
-        # 将规则表达式对象转换为JSON字符串
-        rule_expression_json = json.dumps(data['rule_expression'], ensure_ascii=False)
-        
         rule = ClassificationRule(
             rule_name=data['rule_name'],
             classification_id=data['classification_id'],
             db_type=data['db_type'],
-            rule_expression=rule_expression_json,
+            rule_expression=data['rule_expression'],
             is_active=True
         )
         
@@ -315,19 +296,13 @@ def get_rule(rule_id):
     try:
         rule = ClassificationRule.query.get_or_404(rule_id)
         
-        # 解析规则表达式JSON字符串为对象
-        try:
-            rule_expression_obj = json.loads(rule.rule_expression) if rule.rule_expression else {}
-        except (json.JSONDecodeError, TypeError):
-            rule_expression_obj = {}
-        
         rule_dict = {
             'id': rule.id,
             'rule_name': rule.rule_name,
             'classification_id': rule.classification_id,
             'classification_name': rule.classification.name if rule.classification else None,
             'db_type': rule.db_type,
-            'rule_expression': rule_expression_obj,  # 返回解析后的对象
+            'rule_expression': rule.rule_expression,
             'is_active': rule.is_active,
             'created_at': rule.created_at.isoformat() if rule.created_at else None,
             'updated_at': rule.updated_at.isoformat() if rule.updated_at else None
@@ -353,11 +328,8 @@ def update_rule(rule_id):
         rule = ClassificationRule.query.get_or_404(rule_id)
         data = request.get_json()
         
-        # 将规则表达式对象转换为JSON字符串
-        rule_expression_json = json.dumps(data['rule_expression'], ensure_ascii=False)
-        
         rule.rule_name = data['rule_name']
-        rule.rule_expression = rule_expression_json
+        rule.rule_expression = data['rule_expression']
         rule.is_active = data.get('is_active', True)
         
         db.session.commit()
@@ -429,8 +401,10 @@ def auto_classify():
         service = AccountClassificationService()
         result = service.auto_classify_accounts(instance_id)
         
-        # 直接返回服务层的结果
-        return jsonify(result)
+        return jsonify({
+            'success': True,
+            'classified_count': result
+        })
     
     except Exception as e:
         current_app.logger.error(f"自动分类失败: {e}")

@@ -131,7 +131,7 @@ def list(db_type=None):
         page=page, per_page=per_page, error_out=False
     )
     
-    # 获取账户分类信息
+    # 获取账户分类信息（支持多个分类）
     account_ids = [account.id for account in accounts.items]
     classifications = {}
     if account_ids:
@@ -143,12 +143,14 @@ def list(db_type=None):
         ).all()
         
         for assignment, classification in assignments:
-            classifications[assignment.account_id] = {
+            if assignment.account_id not in classifications:
+                classifications[assignment.account_id] = []
+            classifications[assignment.account_id].append({
                 'id': classification.id,
                 'name': classification.name,
                 'risk_level': classification.risk_level,
                 'color': classification.color
-            }
+            })
     
     # 获取统计信息
     stats = get_account_list_statistics()

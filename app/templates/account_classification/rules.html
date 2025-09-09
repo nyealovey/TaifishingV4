@@ -744,7 +744,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                     </h6>
                     <div class="permission-list">
                         ${ruleExpression.server_roles.map(role => `
-                            <span class="badge bg-warning me-1 mb-1">${role}</span>
+                            <span class="me-1 mb-1">${role}</span>
                         `).join('')}
                     </div>
                 </div>
@@ -760,7 +760,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                     </h6>
                     <div class="permission-list">
                         ${ruleExpression.database_roles.map(role => `
-                            <span class="badge bg-info me-1 mb-1">${role}</span>
+                            <span class="me-1 mb-1">${role}</span>
                         `).join('')}
                     </div>
                 </div>
@@ -776,7 +776,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                     </h6>
                     <div class="permission-list">
                         ${ruleExpression.global_privileges.map(perm => `
-                            <span class="badge bg-primary me-1 mb-1">${perm}</span>
+                            <span class="me-1 mb-1">${perm}</span>
                         `).join('')}
                     </div>
                 </div>
@@ -792,7 +792,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                     </h6>
                     <div class="permission-list">
                         ${ruleExpression.database_privileges.map(perm => `
-                            <span class="badge bg-success me-1 mb-1">${perm}</span>
+                            <span class="me-1 mb-1">${perm}</span>
                         `).join('')}
                     </div>
                 </div>
@@ -809,7 +809,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                     </h6>
                     <div class="permission-list">
                         ${ruleExpression.global_privileges.map(perm => `
-                            <span class="badge bg-primary me-1 mb-1">${perm}</span>
+                            <span class="me-1 mb-1">${perm}</span>
                         `).join('')}
                     </div>
                 </div>
@@ -825,7 +825,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                     </h6>
                     <div class="permission-list">
                         ${ruleExpression.database_privileges.map(perm => `
-                            <span class="badge bg-success me-1 mb-1">${perm}</span>
+                            <span class="me-1 mb-1">${perm}</span>
                         `).join('')}
                     </div>
                 </div>
@@ -868,7 +868,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                             </h6>
                             <div class="permission-list">
                                 ${globalPrivileges.map(perm => `
-                                    <span class="badge bg-primary me-1 mb-1">${perm}</span>
+                                    <span class="me-1 mb-1">${perm}</span>
                                 `).join('')}
                             </div>
                         </div>
@@ -885,7 +885,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                             </h6>
                             <div class="permission-list">
                                 ${databasePrivileges.map(perm => `
-                                    <span class="badge bg-success me-1 mb-1">${perm}</span>
+                                    <span class="me-1 mb-1">${perm}</span>
                                 `).join('')}
                             </div>
                         </div>
@@ -901,7 +901,7 @@ function displayViewPermissions(ruleExpression, dbType) {
                         </h6>
                         <div class="permission-list">
                             ${ruleExpression.permissions.map(perm => `
-                                <span class="badge bg-info me-1 mb-1">${perm}</span>
+                                <span class="me-1 mb-1">${perm}</span>
                             `).join('')}
                         </div>
                     </div>

@@ -1388,69 +1388,101 @@ class DatabaseService:
     
     def _get_mysql_permissions(self, instance: Instance, account: Account) -> Dict[str, Any]:
         """获取MySQL账户权限"""
-        conn = self.get_connection(instance)
-        if not conn:
-            return {
-                'global': [],
-                'database': [],
-                'error': '无法获取数据库连接'
-            }
-        
-        cursor = conn.cursor()
-        
         try:
-            # 获取全局权限
-            cursor.execute("""
-                SELECT PRIVILEGE_TYPE, IS_GRANTABLE
-                FROM INFORMATION_SCHEMA.USER_PRIVILEGES
-                WHERE GRANTEE = %s
-            """, (f"'{account.username}'@'{account.host}'",))
+            # 优先使用本地数据库中已同步的权限数据
+            if account.permissions:
+                import json
+                permissions = json.loads(account.permissions)
+                
+                # 直接返回本地权限数据，确保包含GRANT OPTION权限
+                return {
+                    'global': permissions.get('global', []),
+                    'database': permissions.get('database', [])
+                }
             
-            global_permissions = []
-            for row in cursor.fetchall():
-                privilege, is_grantable = row
-                global_permissions.append({
-                    'privilege': privilege,
-                    'granted': True,
-                    'grantable': bool(is_grantable)
-                })
+            # 如果本地没有权限数据，则从服务器查询（备用方案）
+            conn = self.get_connection(instance)
+            if not conn:
+                return {
+                    'global': [],
+                    'database': [],
+                    'error': '无法获取数据库连接'
+                }
             
-            # 获取数据库权限
-            cursor.execute("""
-                SELECT TABLE_SCHEMA, PRIVILEGE_TYPE
-                FROM INFORMATION_SCHEMA.SCHEMA_PRIVILEGES
-                WHERE GRANTEE = %s
-                ORDER BY TABLE_SCHEMA, PRIVILEGE_TYPE
-            """, (f"'{account.username}'@'{account.host}'",))
+            cursor = conn.cursor()
             
-            db_permissions = {}
-            for row in cursor.fetchall():
-                schema, privilege = row
-                if schema not in db_permissions:
-                    db_permissions[schema] = []
-                db_permissions[schema].append(privilege)
-            
-            # 转换为前端需要的格式
-            database_permissions = []
-            for schema, privileges in db_permissions.items():
-                database_permissions.append({
-                    'database': schema,
-                    'privileges': privileges
-                })
-            
-            return {
-                'global': global_permissions,
-                'database': database_permissions
-            }
-            
+            try:
+                # 获取全局权限
+                cursor.execute("""
+                    SELECT PRIVILEGE_TYPE, IS_GRANTABLE
+                    FROM INFORMATION_SCHEMA.USER_PRIVILEGES
+                    WHERE GRANTEE = %s
+                """, (f"'{account.username}'@'{account.host}'",))
+                
+                global_permissions = []
+                can_grant = False
+                for row in cursor.fetchall():
+                    privilege, is_grantable = row
+                    global_permissions.append({
+                        'privilege': privilege,
+                        'granted': True,
+                        'grantable': bool(is_grantable)
+                    })
+                    if is_grantable:
+                        can_grant = True
+                
+                # 检查用户是否真正拥有GRANT OPTION权限
+                cursor.execute('''
+                    SELECT Grant_priv FROM mysql.user 
+                    WHERE User = %s AND Host = %s
+                ''', (account.username, account.host))
+                
+                grant_result = cursor.fetchone()
+                if grant_result and grant_result[0] == 'Y':
+                    # 用户真正拥有GRANT OPTION权限
+                    global_permissions.append({
+                        'privilege': 'GRANT OPTION',
+                        'granted': True,
+                        'grantable': False
+                    })
+                
+                # 获取数据库权限
+                cursor.execute("""
+                    SELECT TABLE_SCHEMA, PRIVILEGE_TYPE
+                    FROM INFORMATION_SCHEMA.SCHEMA_PRIVILEGES
+                    WHERE GRANTEE = %s
+                    ORDER BY TABLE_SCHEMA, PRIVILEGE_TYPE
+                """, (f"'{account.username}'@'{account.host}'",))
+                
+                db_permissions = {}
+                for row in cursor.fetchall():
+                    schema, privilege = row
+                    if schema not in db_permissions:
+                        db_permissions[schema] = []
+                    db_permissions[schema].append(privilege)
+                
+                # 转换为前端需要的格式
+                database_permissions = []
+                for schema, privileges in db_permissions.items():
+                    database_permissions.append({
+                        'database': schema,
+                        'privileges': privileges
+                    })
+                
+                return {
+                    'global': global_permissions,
+                    'database': database_permissions
+                }
+                
+            finally:
+                cursor.close()
+                
         except Exception as e:
             return {
                 'global': [],
                 'database': [],
-                'error': f'查询权限失败: {str(e)}'
+                'error': f'获取权限失败: {str(e)}'
             }
-        finally:
-            cursor.close()
     
     def _get_postgresql_permissions(self, instance: Instance, account: Account) -> Dict[str, Any]:
         """获取PostgreSQL账户权限"""

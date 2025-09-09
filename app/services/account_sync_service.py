@@ -844,6 +844,21 @@ class AccountSyncService:
                 if privilege == 'SUPER':
                     is_superuser = True
             
+            # 检查用户是否真正拥有GRANT OPTION权限
+            cursor.execute('''
+                SELECT Grant_priv FROM mysql.user 
+                WHERE User = %s AND Host = %s
+            ''', (username, host))
+            
+            grant_result = cursor.fetchone()
+            if grant_result and grant_result[0] == 'Y':
+                # 用户真正拥有GRANT OPTION权限
+                global_permissions.append({
+                    'privilege': 'GRANT OPTION',
+                    'granted': True,
+                    'grantable': False
+                })
+            
             # 获取数据库权限
             cursor.execute("""
                 SELECT TABLE_SCHEMA, PRIVILEGE_TYPE

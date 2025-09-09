@@ -361,16 +361,6 @@ class AccountClassificationService:
                     'error': '分类不存在'
                 }
             
-            # 先清除该账户的所有现有活跃分配
-            existing_assignments = AccountClassificationAssignment.query.filter_by(
-                account_id=account_id,
-                is_active=True
-            ).all()
-            
-            for existing in existing_assignments:
-                existing.is_active = False
-                existing.updated_at = datetime.utcnow()
-            
             # 检查是否已有该账户和分类的组合记录（包括非活跃的）
             existing_assignment = AccountClassificationAssignment.query.filter_by(
                 account_id=account_id,
@@ -378,12 +368,19 @@ class AccountClassificationService:
             ).first()
             
             if existing_assignment:
-                # 重新激活现有记录
-                existing_assignment.is_active = True
-                existing_assignment.assigned_by = assigned_by
-                existing_assignment.assignment_type = assignment_type
-                existing_assignment.notes = notes
-                existing_assignment.updated_at = datetime.utcnow()
+                # 如果记录存在但非活跃，重新激活它
+                if not existing_assignment.is_active:
+                    existing_assignment.is_active = True
+                    existing_assignment.assigned_by = assigned_by
+                    existing_assignment.assignment_type = assignment_type
+                    existing_assignment.notes = notes
+                    existing_assignment.updated_at = datetime.utcnow()
+                else:
+                    # 如果记录已存在且活跃，更新信息
+                    existing_assignment.assigned_by = assigned_by
+                    existing_assignment.assignment_type = assignment_type
+                    existing_assignment.notes = notes
+                    existing_assignment.updated_at = datetime.utcnow()
             else:
                 # 创建新分配
                 assignment = AccountClassificationAssignment(
@@ -460,13 +457,14 @@ class AccountClassificationService:
                             result = self.classify_account(
                                 account.id, 
                                 rule.classification_id, 
-                                'auto'
+                                'auto',
+                                None  # assigned_by
                             )
                             if result['success']:
                                 classified_count += 1
                                 classified = True
                                 self.logger.info(f"账户 {account.username} 按优先级 {rule.classification.priority if rule.classification else 0} 的规则 {rule.rule_name} 分类到 {rule.classification.name if rule.classification else '未知分类'}")
-                            break
+                            # 移除break，允许匹配多个规则
                     
                     # 如果没有规则匹配，账户保持未分类状态（已清除现有分类）
                     if not classified:
@@ -567,12 +565,12 @@ class AccountClassificationService:
             
             permissions = json.loads(account.permissions)
             
-            # 检查全局权限（SQL Server中对应server_permissions）
-            required_global = rule_expression.get('global_privileges', [])
-            if required_global:
-                actual_global = [p['permission'] for p in permissions.get('server_permissions', []) if p.get('granted', False)]
-                if not all(perm in actual_global for perm in required_global):
-                    self.logger.debug(f"账户 {account.username} 不满足全局权限要求: 需要 {required_global}, 实际 {actual_global}")
+            # 检查服务器权限
+            required_server_perms = rule_expression.get('server_permissions', [])
+            if required_server_perms:
+                actual_server_perms = [p['permission'] for p in permissions.get('server_permissions', []) if p.get('granted', False)]
+                if not all(perm in actual_server_perms for perm in required_server_perms):
+                    self.logger.debug(f"账户 {account.username} 不满足服务器权限要求: 需要 {required_server_perms}, 实际 {actual_server_perms}")
                     return False
             
             # 检查服务器角色

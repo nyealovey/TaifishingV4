@@ -9,6 +9,7 @@
 - 🔐 **用户认证与权限管理** - 基于Flask-Login的会话管理
 - 🗄️ **多数据库实例管理** - 支持PostgreSQL、MySQL、SQL Server、Oracle
 - 👥 **账户信息管理** - 数据库用户账户同步与管理
+- 🏷️ **账户分类管理** - 智能账户分类与权限规则管理
 - 🔑 **凭据管理** - 安全的数据库连接凭据存储
 - 📊 **任务调度系统** - 高度可定制化的任务管理
 - 📈 **实时监控仪表板** - 系统状态和统计信息
@@ -184,6 +185,14 @@ erDiagram
         datetime last_login
         datetime created_at
         datetime updated_at
+        string host
+        string plugin
+        boolean password_expired
+        datetime password_last_changed
+        boolean is_locked
+        text permissions
+        boolean is_superuser
+        boolean can_grant
     }
     
     Task {
@@ -239,6 +248,55 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
+    
+    AccountClassification {
+        int id PK
+        string name UK
+        text description
+        string risk_level
+        string color
+        int priority
+        boolean is_active
+        boolean is_system
+        datetime created_at
+        datetime updated_at
+    }
+    
+    ClassificationRule {
+        int id PK
+        int classification_id FK
+        string db_type
+        string rule_name
+        text rule_expression
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+    
+    AccountClassificationAssignment {
+        int id PK
+        int account_id FK
+        int classification_id FK
+        int assigned_by FK
+        string assignment_type
+        float confidence_score
+        text notes
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+    
+    PermissionConfig {
+        int id PK
+        string db_type
+        string category
+        string permission_name
+        text description
+        boolean is_active
+        int sort_order
+        datetime created_at
+        datetime updated_at
+    }
 ```
 
 ### 数据模型详细说明
@@ -281,6 +339,25 @@ erDiagram
 #### 8. 全局参数模型 (GlobalParam)
 - **功能**: 系统配置参数管理
 - **字段**: 参数键、值、描述、分类、加密状态等
+
+#### 9. 账户分类模型 (AccountClassification)
+- **功能**: 账户分类定义管理
+- **字段**: 分类名、描述、风险级别、颜色、优先级、系统标识等
+- **关系**: 一对多关联分类规则和分类分配
+
+#### 10. 分类规则模型 (ClassificationRule)
+- **功能**: 账户分类规则定义
+- **字段**: 规则名、数据库类型、规则表达式、状态等
+- **关系**: 多对一关联账户分类
+
+#### 11. 账户分类分配模型 (AccountClassificationAssignment)
+- **功能**: 账户与分类的关联关系
+- **字段**: 分配类型、置信度、备注、状态等
+- **关系**: 多对一关联账户和分类
+
+#### 12. 权限配置模型 (PermissionConfig)
+- **功能**: 数据库权限配置管理
+- **字段**: 数据库类型、权限类别、权限名、描述、排序等
 
 ## API接口设计
 
@@ -340,6 +417,22 @@ erDiagram
 | POST | `/tasks/batch-toggle` | 批量启用/禁用 | 需要 | 批量切换任务状态 |
 | POST | `/tasks/batch-execute` | 批量执行任务 | 需要 | 批量执行选中任务 |
 | POST | `/tasks/execute-all` | 执行所有任务 | 需要 | 执行所有活跃任务 |
+
+### 账户分类管理接口
+
+| 方法 | 路径 | 功能 | 认证 | 说明 |
+|------|------|------|------|------|
+| GET | `/account-classification/` | 分类管理首页 | 需要 | 显示分类和规则列表 |
+| GET | `/account-classification/classifications` | 获取分类列表 | 需要 | 获取所有账户分类 |
+| POST | `/account-classification/classifications` | 创建分类 | 需要 | 创建新的账户分类 |
+| PUT | `/account-classification/classifications/<id>` | 更新分类 | 需要 | 更新分类信息 |
+| DELETE | `/account-classification/classifications/<id>` | 删除分类 | 需要 | 删除指定分类 |
+| GET | `/account-classification/rules` | 获取规则列表 | 需要 | 获取所有分类规则 |
+| POST | `/account-classification/rules` | 创建规则 | 需要 | 创建新的分类规则 |
+| PUT | `/account-classification/rules/<id>` | 更新规则 | 需要 | 更新规则配置 |
+| DELETE | `/account-classification/rules/<id>` | 删除规则 | 需要 | 删除指定规则 |
+| POST | `/account-classification/auto-classify` | 自动分类 | 需要 | 执行自动分类操作 |
+| GET | `/account-classification/permissions/<db_type>` | 获取权限配置 | 需要 | 获取指定数据库类型的权限配置 |
 
 ### 系统管理接口
 
