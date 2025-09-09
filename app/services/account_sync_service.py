@@ -456,6 +456,7 @@ class AccountSyncService:
         accounts = cursor.fetchall()
         synced_count = 0
         added_count = 0
+        removed_count = 0
         modified_count = 0
         
         for account_data in accounts:
@@ -490,14 +491,40 @@ class AccountSyncService:
             
             synced_count += 1
         
+        # 删除服务器端不存在的本地账户
+        server_accounts = set()
+        for account_data in accounts:
+            username, account_type, database_name, is_disabled, created_date = account_data
+            server_accounts.add(username)
+        
+        local_accounts = Account.query.filter_by(instance_id=instance.id).all()
+        removed_accounts = []
+        
+        for local_account in local_accounts:
+            if local_account.username not in server_accounts:
+                removed_accounts.append({
+                    'username': local_account.username,
+                    'host': local_account.host,
+                    'database_name': local_account.database_name,
+                    'account_type': local_account.account_type,
+                    'plugin': local_account.plugin,
+                    'password_expired': local_account.password_expired,
+                    'password_last_changed': local_account.password_last_changed.isoformat() if local_account.password_last_changed else None,
+                    'is_locked': local_account.is_locked,
+                    'is_active': local_account.is_active
+                })
+                db.session.delete(local_account)
+                removed_count += 1
+        
         db.session.commit()
         cursor.close()
         
         return {
             'synced_count': synced_count,
             'added_count': added_count,
-            'removed_count': 0,
-            'modified_count': modified_count
+            'removed_count': removed_count,
+            'modified_count': modified_count,
+            'removed_accounts': removed_accounts
         }
     
     def _sync_oracle_accounts(self, instance: Instance, conn) -> Dict[str, int]:

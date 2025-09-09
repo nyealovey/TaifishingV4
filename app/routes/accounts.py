@@ -352,6 +352,17 @@ def cleanup_orphaned_accounts():
                     cursor.execute("SELECT usename as username FROM pg_user")
                     server_accounts = set((row[0], '') for row in cursor.fetchall())
                     cursor.close()
+                elif instance.db_type == 'sqlserver':
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        SELECT name as username
+                        FROM sys.server_principals
+                        WHERE type IN ('S', 'U', 'G')
+                        AND name NOT LIKE '##%'
+                        ORDER BY name
+                    """)
+                    server_accounts = set((row[0], '') for row in cursor.fetchall())
+                    cursor.close()
                 else:
                     # 其他数据库类型暂不支持
                     results.append({
@@ -370,7 +381,7 @@ def cleanup_orphaned_accounts():
                     # 根据数据库类型检查账户是否存在
                     if instance.db_type == 'mysql':
                         account_key = (local_account.username, local_account.host)
-                    else:  # postgresql
+                    else:  # postgresql 或 sqlserver
                         account_key = (local_account.username, '')
                     
                     if account_key not in server_accounts:
