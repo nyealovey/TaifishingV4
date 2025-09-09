@@ -236,6 +236,7 @@ class TaskExecutor:
             try:
                 sync_record = SyncData(
                     instance_id=instance.id,
+                    task_id=task.id,
                     sync_type='task',
                     status='success' if result['success'] else 'failed',
                     message=result.get('message', result.get('error', '')),

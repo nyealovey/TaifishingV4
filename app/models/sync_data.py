@@ -13,6 +13,7 @@ class SyncData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sync_type = db.Column(db.String(50), nullable=False, index=True)
     instance_id = db.Column(db.Integer, db.ForeignKey('instances.id'), nullable=False)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True, index=True)  # 关联任务ID
     data = db.Column(db.JSON, nullable=True)
     sync_time = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     status = db.Column(db.String(20), default='success', index=True)
@@ -24,13 +25,14 @@ class SyncData(db.Model):
     error_message = db.Column(db.Text, nullable=True)
     records_count = db.Column(db.Integer, default=0)
     
-    def __init__(self, sync_type, instance_id, data=None, status='success', message=None, synced_count=0, added_count=0, removed_count=0, modified_count=0, error_message=None, records_count=0):
+    def __init__(self, sync_type, instance_id, task_id=None, data=None, status='success', message=None, synced_count=0, added_count=0, removed_count=0, modified_count=0, error_message=None, records_count=0):
         """
         初始化同步数据
         
         Args:
             sync_type: 同步类型
             instance_id: 实例ID
+            task_id: 任务ID（可选）
             data: 同步数据
             status: 同步状态
             message: 同步消息
@@ -43,6 +45,7 @@ class SyncData(db.Model):
         """
         self.sync_type = sync_type
         self.instance_id = instance_id
+        self.task_id = task_id
         self.data = data
         self.status = status
         self.message = message
@@ -64,6 +67,7 @@ class SyncData(db.Model):
             'id': self.id,
             'sync_type': self.sync_type,
             'instance_id': self.instance_id,
+            'task_id': self.task_id,
             'data': self.data,
             'sync_time': self.sync_time.isoformat() if self.sync_time else None,
             'status': self.status,

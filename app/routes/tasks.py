@@ -330,11 +330,12 @@ def task_executions(task_id):
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         
-        # 根据任务类型查询执行记录
+        # 根据任务ID查询执行记录
         if task.task_type == 'sync_accounts':
-            # 查询账户同步记录
+            # 查询账户同步记录，只显示当前任务的记录
             query = SyncData.query.filter(
-                SyncData.sync_type == 'task'
+                SyncData.sync_type == 'task',
+                SyncData.task_id == task_id
             ).order_by(desc(SyncData.sync_time))
         else:
             # 其他任务类型暂时返回空
