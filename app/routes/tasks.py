@@ -381,6 +381,60 @@ def task_executions(task_id):
             'error': f'获取任务执行记录失败: {str(e)}'
         }), 500
 
+
+@tasks_bp.route('/<int:task_id>/executions/<int:execution_id>/detail')
+@login_required
+def task_execution_detail(task_id, execution_id):
+    """获取任务执行详情"""
+    try:
+        from app.models.sync_data import SyncData
+        from app.utils.timezone import format_china_time
+        
+        # 获取任务
+        task = Task.query.get_or_404(task_id)
+        
+        # 获取执行记录
+        execution = SyncData.query.filter(
+            SyncData.id == execution_id,
+            SyncData.task_id == task_id,
+            SyncData.sync_type == 'task'
+        ).first_or_404()
+        
+        # 获取实例信息
+        instance = execution.instance
+        instance_info = {
+            'name': instance.name if instance else '未知实例',
+            'ip': instance.host if instance else '未知IP',
+            'port': instance.port if instance else '未知端口',
+            'db_type': instance.db_type if instance else '未知类型'
+        }
+        
+        # 构建执行详情
+        execution_detail = {
+            'id': execution.id,
+            'sync_time': format_china_time(execution.sync_time, '%Y-%m-%d %H:%M:%S'),
+            'status': execution.status,
+            'message': execution.message,
+            'synced_count': execution.synced_count,
+            'added_count': execution.added_count,
+            'removed_count': execution.removed_count,
+            'modified_count': execution.modified_count,
+            'error_message': execution.error_message,
+            'instance_name': instance_info['name'],
+            'instance_ip': instance_info['ip'],
+            'instance_port': instance_info['port'],
+            'instance_db_type': instance_info['db_type']
+        }
+        
+        return jsonify({
+            'success': True,
+            'execution': execution_detail
+        })
+    except Exception as e:
+        logging.error(f"获取任务执行详情失败: {e}")
+        return jsonify({'success': False, 'error': f'获取任务执行详情失败: {str(e)}'}), 500
+
+
 @tasks_bp.route('/<int:task_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit(task_id):
