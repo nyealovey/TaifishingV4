@@ -1833,121 +1833,49 @@ class DatabaseService:
             }
     
     def _get_postgresql_permissions(self, instance: Instance, account: Account) -> Dict[str, Any]:
-        """获取PostgreSQL账户权限"""
-        conn = self.get_connection(instance)
-        if not conn:
-            return {
-                'global': [],
-                'database': [],
-                'error': '无法获取数据库连接'
-            }
-        
-        cursor = conn.cursor()
-        
+        """获取PostgreSQL账户权限 - 根据新的权限配置结构"""
         try:
-            # 获取角色权限
-            cursor.execute("""
-                SELECT rolname, rolsuper, rolcreaterole, rolcreatedb, rolcanlogin, rolconnlimit
-                FROM pg_roles
-                WHERE rolname = %s
-            """, (account.username,))
-            
-            role_info = cursor.fetchone()
-            if not role_info:
+            # 优先使用本地数据库中已同步的权限数据
+            if account.permissions:
+                import json
+                permissions = json.loads(account.permissions)
+                
+                # 转换为前端显示格式
                 return {
-                    'global': [],
-                    'database': [],
-                    'error': '用户不存在'
+                    'predefined_roles': permissions.get('predefined_roles', []),
+                    'role_attributes': permissions.get('role_attributes', []),
+                    'database_privileges': permissions.get('database_privileges', []),
+                    'tablespace_privileges': permissions.get('tablespace_privileges', [])
                 }
             
-            username, is_super, can_create_role, can_create_db, can_login, conn_limit = role_info
+            # 如果本地没有权限数据，则从服务器查询（备用方案）
+            conn = self.get_connection(instance)
+            if not conn:
+                return {
+                    'predefined_roles': [],
+                    'role_attributes': [],
+                    'database_privileges': [],
+                    'tablespace_privileges': [],
+                    'error': '无法获取数据库连接'
+                }
             
-            # 构建全局权限
-            global_permissions = []
-            if is_super:
-                global_permissions.append({'privilege': 'SUPERUSER', 'granted': True, 'grantable': False})
-            if can_create_role:
-                global_permissions.append({'privilege': 'CREATEROLE', 'granted': True, 'grantable': False})
-            if can_create_db:
-                global_permissions.append({'privilege': 'CREATEDB', 'granted': True, 'grantable': False})
-            if can_login:
-                global_permissions.append({'privilege': 'LOGIN', 'granted': True, 'grantable': False})
-            
-            # 获取数据库权限
-            cursor.execute("""
-                SELECT datname, has_database_privilege(%s, datname, 'CONNECT') as can_connect,
-                       has_database_privilege(%s, datname, 'CREATE') as can_create
-                FROM pg_database
-                WHERE has_database_privilege(%s, datname, 'CONNECT') = true
-                ORDER BY datname
-            """, (account.username, account.username, account.username))
-            
-            database_permissions = []
-            for row in cursor.fetchall():
-                db_name, can_connect, can_create = row
-                privileges = []
-                if can_connect:
-                    privileges.append('CONNECT')
-                if can_create:
-                    privileges.append('CREATE')
-                
-                if privileges:
-                    database_permissions.append({
-                        'database': db_name,
-                        'privileges': privileges
-                    })
-            
-            # 获取表空间权限
-            cursor.execute("""
-                SELECT spcname, 
-                       CASE WHEN has_tablespace_privilege(%s, spcname, 'CREATE') THEN 'CREATE' END as create_priv
-                FROM pg_tablespace
-                WHERE has_tablespace_privilege(%s, spcname, 'CREATE') = true
-                ORDER BY spcname
-            """, (account.username, account.username))
-            
-            tablespace_permissions = []
-            for row in cursor.fetchall():
-                spc_name, create_priv = row
-                if create_priv:
-                    tablespace_permissions.append({
-                        'tablespace': spc_name,
-                        'privileges': [create_priv]
-                    })
-            
-            # 获取表空间所有权
-            cursor.execute("""
-                SELECT spcname
-                FROM pg_tablespace
-                WHERE spcowner = (SELECT oid FROM pg_roles WHERE rolname = %s)
-                ORDER BY spcname
-            """, (account.username,))
-            
-            owned_tablespaces = []
-            for row in cursor.fetchall():
-                spc_name = row[0]
-                owned_tablespaces.append({
-                    'tablespace': spc_name,
-                    'privileges': ['OWNER']
-                })
-            
-            # 合并表空间权限和所有权
-            all_tablespace_permissions = tablespace_permissions + owned_tablespaces
-            
+            # 这里可以添加从服务器查询权限的逻辑
             return {
-                'global': global_permissions,
-                'database': database_permissions,
-                'tablespace': all_tablespace_permissions
+                'predefined_roles': [],
+                'role_attributes': [],
+                'database_privileges': [],
+                'tablespace_privileges': [],
+                'error': '权限数据未同步，请先同步账户'
             }
             
         except Exception as e:
             return {
-                'global': [],
-                'database': [],
-                'error': f'查询权限失败: {str(e)}'
+                'predefined_roles': [],
+                'role_attributes': [],
+                'database_privileges': [],
+                'tablespace_privileges': [],
+                'error': f'获取权限失败: {str(e)}'
             }
-        finally:
-            cursor.close()
     
     def _get_sqlserver_permissions(self, instance: Instance, account: Account) -> Dict[str, Any]:
         """获取SQL Server账户权限"""
@@ -2074,19 +2002,19 @@ class DatabaseService:
             cursor.close()
     
     def _get_oracle_permissions(self, instance: Instance, account: Account) -> Dict[str, Any]:
-        """获取Oracle账户权限"""
+        """获取Oracle账户权限 - 根据新的权限配置结构"""
         try:
             # 优先使用本地数据库中已同步的权限数据
             if account.permissions:
                 import json
                 permissions = json.loads(account.permissions)
                 
-                # 直接返回本地权限数据
+                # 转换为前端显示格式
                 return {
+                    'roles': permissions.get('roles', []),
                     'system_privileges': permissions.get('system_privileges', []),
-                    'role_privileges': permissions.get('role_privileges', []),
-                    'object_privileges': permissions.get('object_privileges', {}),
-                    'database': permissions.get('database', [])
+                    'tablespace_privileges': permissions.get('tablespace_privileges', []),
+                    'tablespace_quotas': permissions.get('tablespace_quotas', [])
                 }
             
             # 如果本地没有权限数据，则从服务器查询（备用方案）
