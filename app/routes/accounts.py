@@ -496,8 +496,8 @@ def sync_details(sync_id):
 @accounts_bp.route('/sync-report')
 @login_required
 def sync_report():
-    """同步报告页面"""
-    return render_template('accounts/sync_report.html')
+    """同步报告页面 - 重定向到统一页面"""
+    return redirect(url_for('accounts.sync_records'))
 
 @accounts_bp.route('/sync-statistics')
 @login_required
@@ -669,14 +669,16 @@ def account_statistics():
             'error': f'获取统计信息失败: {str(e)}'
         }), 500
 
-@accounts_bp.route('/history')
+@accounts_bp.route('/sync-records')
 @login_required
-def history():
-    """同步历史记录"""
+def sync_records():
+    """统一的同步记录页面"""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     instance_id = request.args.get('instance_id', type=int)
+    sync_type = request.args.get('sync_type', '', type=str)
     status = request.args.get('status', '', type=str)
+    date_range = request.args.get('date_range', '', type=str)
     
     # 构建查询
     query = SyncData.query
@@ -684,8 +686,37 @@ def history():
     if instance_id:
         query = query.filter(SyncData.instance_id == instance_id)
     
+    if sync_type:
+        query = query.filter(SyncData.sync_type == sync_type)
+    
     if status:
         query = query.filter(SyncData.status == status)
+    
+    # 时间范围筛选
+    if date_range:
+        from datetime import datetime, timedelta
+        from app.utils.timezone import CHINA_TZ
+        import pytz
+        
+        now = datetime.now(CHINA_TZ)
+        if date_range == 'today':
+            # 今天
+            today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+            # 转换为UTC
+            today_start_utc = today_start.astimezone(pytz.UTC).replace(tzinfo=None)
+            today_end_utc = today_end.astimezone(pytz.UTC).replace(tzinfo=None)
+            query = query.filter(SyncData.sync_time >= today_start_utc, SyncData.sync_time <= today_end_utc)
+        elif date_range == 'week':
+            # 最近7天
+            week_ago = now - timedelta(days=7)
+            week_ago_utc = week_ago.astimezone(pytz.UTC).replace(tzinfo=None)
+            query = query.filter(SyncData.sync_time >= week_ago_utc)
+        elif date_range == 'month':
+            # 最近30天
+            month_ago = now - timedelta(days=30)
+            month_ago_utc = month_ago.astimezone(pytz.UTC).replace(tzinfo=None)
+            query = query.filter(SyncData.sync_time >= month_ago_utc)
     
     # 分页查询
     sync_records = query.order_by(SyncData.sync_time.desc()).paginate(
@@ -709,11 +740,19 @@ def history():
             'instances': [instance.to_dict() for instance in instances]
         })
     
-    return render_template('accounts/history.html', 
+    return render_template('accounts/sync_records.html', 
                          sync_records=sync_records,
                          instances=instances,
                          instance_id=instance_id,
-                         status=status)
+                         sync_type=sync_type,
+                         status=status,
+                         date_range=date_range)
+
+@accounts_bp.route('/history')
+@login_required
+def history():
+    """同步历史记录 - 重定向到统一页面"""
+    return redirect(url_for('accounts.sync_records'))
 
 @accounts_bp.route('/export')
 @login_required

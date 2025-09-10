@@ -1,0 +1,517 @@
+{% extends "base.html" %}
+
+{% block title %}同步记录 - 泰摸鱼吧{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-history me-2"></i>同步记录</h2>
+        <div>
+            <a href="{{ url_for('accounts.export', format='csv') }}" class="btn btn-outline-success">
+                <i class="fas fa-download me-2"></i>导出CSV
+            </a>
+            <a href="{{ url_for('accounts.export', format='json') }}" class="btn btn-outline-info">
+                <i class="fas fa-download me-2"></i>导出JSON
+            </a>
+        </div>
+    </div>
+
+    <!-- 统计信息卡片 -->
+    <div class="row mb-4" id="statisticsCards">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalSyncs">0</h4>
+                            <p class="card-text">总同步次数</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-sync fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="successRate">0%</h4>
+                            <p class="card-text">同步成功率</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalAccounts">0</h4>
+                            <p class="card-text">总同步账户数</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title" id="lastSyncTime">-</h6>
+                            <p class="card-text">最近同步时间</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 趋势图表 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-area me-2"></i>账户同步趋势（最近7天）
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="syncTrendChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索和筛选 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label for="instance_id" class="form-label">实例</label>
+                    <select class="form-select" id="instance_id" name="instance_id">
+                        <option value="">全部实例</option>
+                        {% for instance in instances %}
+                        <option value="{{ instance.id }}" {% if instance_id == instance.id %}selected{% endif %}>
+                            {{ instance.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="sync_type" class="form-label">同步类型</label>
+                    <select class="form-select" id="sync_type" name="sync_type">
+                        <option value="">全部类型</option>
+                        <option value="manual" {% if sync_type == 'manual' %}selected{% endif %}>手动单台</option>
+                        <option value="batch" {% if sync_type == 'batch' %}selected{% endif %}>手动批量</option>
+                        <option value="task" {% if sync_type == 'task' %}selected{% endif %}>定时任务</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="status" class="form-label">状态</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">全部状态</option>
+                        <option value="success" {% if status == 'success' %}selected{% endif %}>成功</option>
+                        <option value="failed" {% if status == 'failed' %}selected{% endif %}>失败</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="date_range" class="form-label">时间范围</label>
+                    <select class="form-select" id="date_range" name="date_range">
+                        <option value="">全部时间</option>
+                        <option value="today" {% if date_range == 'today' %}selected{% endif %}>今天</option>
+                        <option value="week" {% if date_range == 'week' %}selected{% endif %}>最近7天</option>
+                        <option value="month" {% if date_range == 'month' %}selected{% endif %}>最近30天</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-search me-1"></i>筛选
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-grid">
+                        <a href="{{ url_for('accounts.sync_records') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>清除
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 同步记录列表 -->
+    <div class="card">
+        <div class="card-body">
+            {% if sync_records.items %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>实例</th>
+                            <th>同步类型</th>
+                            <th>状态</th>
+                            <th>同步数量</th>
+                            <th>新增</th>
+                            <th>删除</th>
+                            <th>修改</th>
+                            <th>消息</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in sync_records.items %}
+                        <tr>
+                            <td>
+                                <div>
+                                    <strong>{{ record.sync_time | china_date }}</strong>
+                                    <br><small class="text-muted">{{ record.sync_time | china_time('%H:%M:%S') }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-database text-primary me-2"></i>
+                                    <div>
+                                        <strong>{{ record.instance.name if record.instance else '未知实例' }}</strong>
+                                        {% if record.instance %}
+                                        <br><small class="text-muted">{{ record.instance.db_type.upper() }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if record.sync_type == 'manual' %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-hand-pointer me-1"></i>手动单台
+                                </span>
+                                {% elif record.sync_type == 'batch' %}
+                                <span class="badge bg-primary">
+                                    <i class="fas fa-tasks me-1"></i>手动批量
+                                </span>
+                                {% elif record.sync_type == 'task' %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-clock me-1"></i>定时任务
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ record.sync_type }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if record.status == 'success' else 'danger' }}">
+                                    <i class="fas fa-{{ 'check' if record.status == 'success' else 'times' }} me-1"></i>
+                                    {{ record.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ record.synced_count or 0 }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-success">{{ record.added_count or 0 }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-warning">{{ record.removed_count or 0 }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ record.modified_count or 0 }}</span>
+                            </td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 200px;" title="{{ record.message or record.error_message or '-' }}">
+                                    {{ record.message or record.error_message or '-' }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-info" 
+                                            onclick="viewDetails({{ record.id }})" title="查看详情">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    {% if record.status == 'failed' and record.sync_type in ['manual', 'batch'] %}
+                                    <button type="button" class="btn btn-outline-warning" 
+                                            onclick="retrySync({{ record.instance_id }})" title="重试同步">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 分页 -->
+            {% if sync_records.pages > 1 %}
+            <nav aria-label="同步记录分页">
+                <ul class="pagination justify-content-center">
+                    {% if sync_records.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('accounts.sync_records', page=sync_records.prev_num, instance_id=instance_id, sync_type=sync_type, status=status, date_range=date_range) }}">
+                            上一页
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in sync_records.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != sync_records.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('accounts.sync_records', page=page_num, instance_id=instance_id, sync_type=sync_type, status=status, date_range=date_range) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if sync_records.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('accounts.sync_records', page=sync_records.next_num, instance_id=instance_id, sync_type=sync_type, status=status, date_range=date_range) }}">
+                            下一页
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">暂无同步记录</h5>
+                <p class="text-muted">开始同步账户数据以查看历史记录</p>
+                <a href="{{ url_for('accounts.index') }}" class="btn btn-primary">
+                    <i class="fas fa-sync me-2"></i>开始同步
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- 详情模态框 -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalLabel">同步详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body" id="detailsContent">
+                <!-- 详情内容将通过JavaScript加载 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function viewDetails(recordId) {
+    // 这里可以实现查看详情的功能
+    document.getElementById('detailsContent').innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+            <p>加载详情中...</p>
+        </div>
+    `;
+    
+    new bootstrap.Modal(document.getElementById('detailsModal')).show();
+    
+    // 模拟加载详情
+    setTimeout(() => {
+        document.getElementById('detailsContent').innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                详情功能开发中，记录ID: ${recordId}
+            </div>
+        `;
+    }, 1000);
+}
+
+function retrySync(instanceId) {
+    if (confirm('确定要重试同步此实例吗？')) {
+        const btn = event.target.closest('button');
+        const originalHtml = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+        
+        fetch(`/accounts/sync/${instanceId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                showAlert('success', data.message);
+                setTimeout(() => location.reload(), 2000);
+            } else if (data.error) {
+                showAlert('danger', data.error);
+            }
+        })
+        .catch(error => {
+            showAlert('danger', '重试同步失败');
+        })
+        .finally(() => {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        });
+    }
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.container-fluid').firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// 加载统计信息
+function loadStatistics() {
+    fetch('/accounts/sync-statistics')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateStatistics(data.statistics);
+            createCharts(data.trend_data, data.db_type_distribution);
+        } else {
+            console.error('加载统计信息失败:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function updateStatistics(statistics) {
+    // 更新统计卡片
+    document.getElementById('totalSyncs').textContent = statistics.total_syncs;
+    document.getElementById('successRate').textContent = statistics.success_rate + '%';
+    document.getElementById('totalAccounts').textContent = statistics.total_accounts;
+    document.getElementById('lastSyncTime').textContent = statistics.last_sync_time || '-';
+}
+
+function createCharts(trendData, dbTypeDistribution) {
+    // 创建同步趋势图表
+    createSyncTrendChart(trendData);
+}
+
+function createSyncTrendChart(trendData) {
+    const ctx = document.getElementById('syncTrendChart').getContext('2d');
+    
+    // 按日期排序（从早到晚）
+    const sortedData = trendData.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: sortedData.map(d => d.date),
+            datasets: [
+                {
+                    label: '成功同步',
+                    data: sortedData.map(d => d.success),
+                    borderColor: 'rgb(40, 167, 69)',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    tension: 0.1
+                },
+                {
+                    label: '同步失败',
+                    data: sortedData.map(d => d.failed),
+                    borderColor: 'rgb(220, 53, 69)',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    tension: 0.1
+                },
+                {
+                    label: '同步账户数',
+                    data: sortedData.map(d => d.accounts),
+                    borderColor: 'rgb(23, 162, 184)',
+                    backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                    tension: 0.1,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '同步次数'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: '账户数量'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+// 页面加载时自动加载统计信息
+document.addEventListener('DOMContentLoaded', function() {
+    loadStatistics();
+});
+</script>
+{% endblock %}
