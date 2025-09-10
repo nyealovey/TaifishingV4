@@ -354,7 +354,11 @@
                                 </td>
                                 {% elif instance.db_type == 'oracle' %}
                                 <td>
-                                    <span class="badge bg-info">{{ account.user_id or 'N/A' }}</span>
+                                    {% if account.user_id is not none %}
+                                        <span class="badge bg-info">{{ account.user_id }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">N/A</span>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
