@@ -747,31 +747,41 @@ function showPermissionsModal(permissions, account) {
                         </div>
                         <div class="mb-3">
                             <h6><i class="fas fa-database text-success me-2"></i>数据库权限</h6>
-                            ${permissions.database_privileges && permissions.database_privileges.length > 0 ? `
-                                <div class="row">
-                                    ${permissions.database_privileges.map(priv => `
-                                        <div class="col-md-6 mb-2">
-                                            <span class="badge bg-success me-2">
-                                                <i class="fas fa-database me-1"></i>${priv}
-                                            </span>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            ` : '<p class="text-muted">无数据库权限</p>'}
+                            ${(() => {
+                                console.log('PostgreSQL database_privileges:', permissions.database_privileges);
+                                console.log('database_privileges type:', typeof permissions.database_privileges);
+                                console.log('database_privileges is array:', Array.isArray(permissions.database_privileges));
+                                return permissions.database_privileges && permissions.database_privileges.length > 0 ? `
+                                    <div class="row">
+                                        ${permissions.database_privileges.map(priv => `
+                                            <div class="col-md-6 mb-2">
+                                                <span class="badge bg-success me-2">
+                                                    <i class="fas fa-database me-1"></i>${priv}
+                                                </span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : '<p class="text-muted">无数据库权限</p>';
+                            })()}
                         </div>
                         <div class="mb-3">
                             <h6><i class="fas fa-hdd text-info me-2"></i>表空间权限</h6>
-                            ${permissions.tablespace_privileges && permissions.tablespace_privileges.length > 0 ? `
-                                <div class="row">
-                                    ${permissions.tablespace_privileges.map(priv => `
-                                        <div class="col-md-6 mb-2">
-                                            <span class="badge bg-info me-2">
-                                                <i class="fas fa-hdd me-1"></i>${priv}
-                                            </span>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            ` : '<p class="text-muted">无表空间权限</p>'}
+                            ${(() => {
+                                console.log('PostgreSQL tablespace_privileges:', permissions.tablespace_privileges);
+                                console.log('tablespace_privileges type:', typeof permissions.tablespace_privileges);
+                                console.log('tablespace_privileges is array:', Array.isArray(permissions.tablespace_privileges));
+                                return permissions.tablespace_privileges && permissions.tablespace_privileges.length > 0 ? `
+                                    <div class="row">
+                                        ${permissions.tablespace_privileges.map(priv => `
+                                            <div class="col-md-6 mb-2">
+                                                <span class="badge bg-info me-2">
+                                                    <i class="fas fa-hdd me-1"></i>${priv}
+                                                </span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : '<p class="text-muted">无表空间权限</p>';
+                            })()}
                         </div>
                         ` : ''}
                         ${dbType === 'sqlserver' ? `
