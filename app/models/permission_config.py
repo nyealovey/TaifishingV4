@@ -264,6 +264,11 @@ class PermissionConfig(db.Model):
             ('oracle', 'object_privileges', 'UNDER', '继承权限', 13),
             ('oracle', 'object_privileges', 'WRITE', '写入权限', 14),
             ('oracle', 'object_privileges', 'READ', '读取权限', 15),
+            # 表空间配额权限
+            ('oracle', 'tablespace_quotas', 'UNLIMITED', '无限制表空间配额', 1),
+            ('oracle', 'tablespace_quotas', 'DEFAULT', '默认表空间配额', 2),
+            ('oracle', 'tablespace_quotas', 'QUOTA', '指定大小表空间配额', 3),
+            ('oracle', 'tablespace_quotas', 'NO QUOTA', '无表空间配额', 4),
         ]
         
         # 批量插入权限配置

@@ -980,7 +980,7 @@ function displayPermissionsConfig(permissions, prefix = '', dbType = '') {
             </div>
         `;
     } else if (dbType === 'oracle') {
-        // Oracle结构：系统权限、表空间权限
+        // Oracle结构：系统权限、对象权限、表空间权限、表空间配额
         html += `
             <div class="col-md-6">
                 <h6 class="text-primary mb-3"><i class="fas fa-shield-alt me-2"></i>系统权限</h6>
@@ -998,6 +998,22 @@ function displayPermissionsConfig(permissions, prefix = '', dbType = '') {
                         </div>
                     `).join('') : '<div class="text-muted">无系统权限</div>'}
                 </div>
+                
+                <h6 class="text-success mb-3 mt-3"><i class="fas fa-table me-2"></i>对象权限</h6>
+                <div class="permission-section">
+                    ${permissions.object_privileges ? permissions.object_privileges.map(perm => `
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}obj_perm_${perm.name}">
+                            <label class="form-check-label d-flex align-items-center" for="${prefix}obj_perm_${perm.name}">
+                                <i class="fas fa-table text-success me-2"></i>
+                                <div>
+                                    <div class="fw-bold">${perm.name}</div>
+                                    <small class="text-muted">${perm.description || '对象权限'}</small>
+                                </div>
+                            </label>
+                        </div>
+                    `).join('') : '<div class="text-muted">无对象权限</div>'}
+                </div>
             </div>
             <div class="col-md-6">
                 <h6 class="text-info mb-3"><i class="fas fa-hdd me-2"></i>表空间权限</h6>
@@ -1014,6 +1030,22 @@ function displayPermissionsConfig(permissions, prefix = '', dbType = '') {
                             </label>
                         </div>
                     `).join('') : '<div class="text-muted">无表空间权限</div>'}
+                </div>
+                
+                <h6 class="text-warning mb-3 mt-3"><i class="fas fa-chart-pie me-2"></i>表空间配额</h6>
+                <div class="permission-section">
+                    ${permissions.tablespace_quotas ? permissions.tablespace_quotas.map(quota => `
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" value="${quota.name}" id="${prefix}tablespace_quota_${quota.name}">
+                            <label class="form-check-label d-flex align-items-center" for="${prefix}tablespace_quota_${quota.name}">
+                                <i class="fas fa-chart-pie text-warning me-2"></i>
+                                <div>
+                                    <div class="fw-bold">${quota.name}</div>
+                                    <small class="text-muted">${quota.description || '表空间配额'}</small>
+                                </div>
+                            </label>
+                        </div>
+                    `).join('') : '<div class="text-muted">无表空间配额</div>'}
                 </div>
             </div>
         `;
@@ -1138,20 +1170,28 @@ function createRule() {
     } else if (dbType === 'oracle') {
         // Oracle结构
         const selectedSystemPermissions = [];
+        const selectedObjectPermissions = [];
         const selectedTablespacePermissions = [];
+        const selectedTablespaceQuotas = [];
         
         checkboxes.forEach(checkbox => {
             if (checkbox.id.startsWith('sys_perm_')) {
                 selectedSystemPermissions.push(checkbox.value);
+            } else if (checkbox.id.startsWith('obj_perm_')) {
+                selectedObjectPermissions.push(checkbox.value);
             } else if (checkbox.id.startsWith('tablespace_perm_')) {
                 selectedTablespacePermissions.push(checkbox.value);
+            } else if (checkbox.id.startsWith('tablespace_quota_')) {
+                selectedTablespaceQuotas.push(checkbox.value);
             }
         });
         
         ruleExpression = {
             type: 'oracle_permissions',
             system_privileges: selectedSystemPermissions,
+            object_privileges: selectedObjectPermissions,
             tablespace_privileges: selectedTablespacePermissions,
+            tablespace_quotas: selectedTablespaceQuotas,
             permissions: selectedPermissions, // 兼容性
             operator: 'OR'
         };
@@ -1315,9 +1355,21 @@ function setSelectedPermissions(ruleExpression, prefix = '') {
                 if (checkbox) checkbox.checked = true;
             });
         }
+        if (ruleExpression.object_privileges) {
+            ruleExpression.object_privileges.forEach(perm => {
+                const checkbox = document.getElementById(`${prefix}obj_perm_${perm}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
         if (ruleExpression.tablespace_privileges) {
             ruleExpression.tablespace_privileges.forEach(perm => {
                 const checkbox = document.getElementById(`${prefix}tablespace_perm_${perm}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        if (ruleExpression.tablespace_quotas) {
+            ruleExpression.tablespace_quotas.forEach(quota => {
+                const checkbox = document.getElementById(`${prefix}tablespace_quota_${quota}`);
                 if (checkbox) checkbox.checked = true;
             });
         }
@@ -1424,20 +1476,28 @@ function updateRule() {
         };
     } else if (dbType === 'oracle') {
         const selectedSystemPermissions = [];
+        const selectedObjectPermissions = [];
         const selectedTablespacePermissions = [];
+        const selectedTablespaceQuotas = [];
         
         checkboxes.forEach(checkbox => {
             if (checkbox.id.startsWith('editsys_perm_')) {
                 selectedSystemPermissions.push(checkbox.value);
+            } else if (checkbox.id.startsWith('editobj_perm_')) {
+                selectedObjectPermissions.push(checkbox.value);
             } else if (checkbox.id.startsWith('edittablespace_perm_')) {
                 selectedTablespacePermissions.push(checkbox.value);
+            } else if (checkbox.id.startsWith('edittablespace_quota_')) {
+                selectedTablespaceQuotas.push(checkbox.value);
             }
         });
         
         ruleExpression = {
             type: 'oracle_permissions',
             system_privileges: selectedSystemPermissions,
+            object_privileges: selectedObjectPermissions,
             tablespace_privileges: selectedTablespacePermissions,
+            tablespace_quotas: selectedTablespaceQuotas,
             operator: 'OR'
         };
     } else {
@@ -1639,7 +1699,7 @@ function displayViewPermissions(ruleExpression, dbType) {
             `;
         }
     } else if (ruleExpression.type === 'oracle_permissions') {
-        // Oracle结构：系统权限、表空间权限
+        // Oracle结构：系统权限、对象权限、表空间权限、表空间配额
         if (ruleExpression.system_privileges && ruleExpression.system_privileges.length > 0) {
             html += `
                 <div class="col-md-6">
@@ -1652,6 +1712,18 @@ function displayViewPermissions(ruleExpression, dbType) {
                 </div>
             `;
         }
+        if (ruleExpression.object_privileges && ruleExpression.object_privileges.length > 0) {
+            html += `
+                <div class="col-md-6">
+                    <h6 class="text-success mb-2"><i class="fas fa-table me-2"></i>对象权限</h6>
+                    <div class="mb-3">
+                        ${ruleExpression.object_privileges.map(perm => 
+                            `<span class="badge bg-success me-1 mb-1">${perm}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
         if (ruleExpression.tablespace_privileges && ruleExpression.tablespace_privileges.length > 0) {
             html += `
                 <div class="col-md-6">
@@ -1659,6 +1731,18 @@ function displayViewPermissions(ruleExpression, dbType) {
                     <div class="mb-3">
                         ${ruleExpression.tablespace_privileges.map(perm => 
                             `<span class="badge bg-info me-1 mb-1">${perm}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        if (ruleExpression.tablespace_quotas && ruleExpression.tablespace_quotas.length > 0) {
+            html += `
+                <div class="col-md-6">
+                    <h6 class="text-warning mb-2"><i class="fas fa-chart-pie me-2"></i>表空间配额</h6>
+                    <div class="mb-3">
+                        ${ruleExpression.tablespace_quotas.map(quota => 
+                            `<span class="badge bg-warning me-1 mb-1">${quota}</span>`
                         ).join('')}
                     </div>
                 </div>
