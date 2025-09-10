@@ -723,11 +723,16 @@ class DatabaseService:
             
             conn.close()
             
-            # 更新实例的数据库版本
+            # 更新实例的数据库版本和最后连接时间
+            from app import db
+            from app.utils.timezone import now
+            
             if database_version:
                 instance.database_version = database_version
-                from app import db
-                db.session.commit()
+            
+            # 更新最后连接时间
+            instance.last_connected = now()
+            db.session.commit()
             
             return {
                 'success': True,
@@ -854,11 +859,16 @@ class DatabaseService:
             
             conn.close()
             
-            # 更新实例的数据库版本
+            # 更新实例的数据库版本和最后连接时间
+            from app import db
+            from app.utils.timezone import now
+            
             if database_version:
                 instance.database_version = database_version
-                from app import db
-                db.session.commit()
+            
+            # 更新最后连接时间
+            instance.last_connected = now()
+            db.session.commit()
             
             return {
                 'success': True,
@@ -974,11 +984,16 @@ class DatabaseService:
             
             conn.close()
             
-            # 更新实例的数据库版本
+            # 更新实例的数据库版本和最后连接时间
+            from app import db
+            from app.utils.timezone import now
+            
             if database_version:
                 instance.database_version = database_version
-                from app import db
-                db.session.commit()
+            
+            # 更新最后连接时间
+            instance.last_connected = now()
+            db.session.commit()
             
             return {
                 'success': True,
@@ -1151,11 +1166,16 @@ class DatabaseService:
             
             conn.close()
             
-            # 更新实例的数据库版本
+            # 更新实例的数据库版本和最后连接时间
+            from app import db
+            from app.utils.timezone import now
+            
             if database_version:
                 instance.database_version = database_version
-                from app import db
-                db.session.commit()
+            
+            # 更新最后连接时间
+            instance.last_connected = now()
+            db.session.commit()
             
             return {
                 'success': True,
