@@ -232,6 +232,14 @@
                         <th style="font-size: 0.8rem;">分类</th>
                         <th style="font-size: 0.8rem;">锁定状态</th>
                         <th style="font-size: 0.8rem;">操作</th>
+                        {% elif current_db_type == 'postgresql' %}
+                        <th style="font-size: 0.8rem;">名称</th>
+                        <th style="font-size: 0.8rem;">实例名称</th>
+                        <th style="font-size: 0.8rem;">环境</th>
+                        <th style="font-size: 0.8rem;">插件/类型</th>
+                        <th style="font-size: 0.8rem;">分类</th>
+                        <th style="font-size: 0.8rem;">锁定状态</th>
+                        <th style="font-size: 0.8rem;">操作</th>
                         {% else %}
                         <th style="font-size: 0.8rem;">名称</th>
                         <th style="font-size: 0.8rem;">实例名称</th>
@@ -386,6 +394,63 @@
                         </td>
                         <td>
                             <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
+                        </td>
+                        <td>
+                            {% set env_label = {
+                                'production': '生产',
+                                'development': '开发', 
+                                'testing': '测试'
+                            }.get(account.instance.environment, account.instance.environment) %}
+                            <span class="badge bg-{{ 'danger' if account.instance.environment == 'production' else 'warning' if account.instance.environment == 'development' else 'info' }}" style="font-size: 0.7rem;">{{ env_label }}</span>
+                        </td>
+                        <td>
+                            {% if account.plugin %}
+                                <span class="badge bg-secondary" style="font-size: 0.7rem;">{{ account.plugin }}</span>
+                            {% elif account.account_type %}
+                                <span class="badge bg-info" style="font-size: 0.7rem;">{{ account.account_type }}</span>
+                            {% else %}
+                                <span class="text-muted" style="font-size: 0.8rem;">未知</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if classifications.get(account.id) %}
+                                {% for classification in classifications[account.id] %}
+                                    <span class="badge me-1 mb-1" style="font-size: 0.7rem; background-color: {{ classification.color or '#6c757d' }};">
+                                        {{ classification.name }}
+                                    </span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted" style="font-size: 0.8rem;">未分类</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if account.is_locked %}
+                                <span class="badge bg-danger" style="font-size: 0.7rem;">已锁定</span>
+                            {% else %}
+                                <span class="badge bg-success" style="font-size: 0.7rem;">正常</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限" 
+                                   class="btn btn-outline-primary btn-sm" 
+                                   style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s ease;">
+                                    <i class="fas fa-eye me-1"></i>权限
+                                </a>
+                            </div>
+                        </td>
+                        {% elif current_db_type == 'postgresql' %}
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user text-primary me-1" style="font-size: 0.8rem;"></i>
+                                <strong style="font-size: 0.85rem;">{{ account.username }}@{{ account.host or 'localhost' }}</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-database text-info me-1" style="font-size: 0.8rem;"></i>
+                                <span style="font-size: 0.8rem;">{{ account.instance.name }}</span>
+                            </div>
                         </td>
                         <td>
                             {% set env_label = {
