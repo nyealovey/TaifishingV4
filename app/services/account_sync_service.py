@@ -524,6 +524,9 @@ class AccountSyncService:
                     # 更新权限相关字段
                     account.is_superuser = permissions.get('is_superuser', False)
                     account.can_grant = permissions.get('can_grant', False)
+                    # 标记有权限更新
+                    changes = True
+                    self.logger.info(f"PostgreSQL账户 {username} 权限已更新: {permissions}")
             except Exception as e:
                 self.logger.warning(f"获取PostgreSQL账户 {username} 权限失败: {e}")
         
