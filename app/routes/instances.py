@@ -972,7 +972,7 @@ def api_detail(instance_id):
     return jsonify(instance.to_dict())
 
 @instances_bp.route('/api/instances/<int:instance_id>/test')
-@jwt_required()
+@login_required
 def api_test_connection(instance_id):
     """测试连接API"""
     instance = Instance.query.get_or_404(instance_id)

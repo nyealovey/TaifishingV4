@@ -417,11 +417,10 @@ function testConnection() {
     // 获取CSRF token
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
     
-    fetch(`/instances/{{ instance.id }}/test`, {
-        method: 'POST',
+    fetch(`/api/instances/{{ instance.id }}/test`, {
+        method: 'GET',
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
+            'Content-Type': 'application/json'
         }
     })
     .then(response => response.json())
