@@ -387,8 +387,8 @@ function testConnection(instanceId) {
         headers['X-CSRFToken'] = csrfToken;
     }
     
-    fetch(`/instances/${instanceId}/test`, {
-        method: 'POST',
+    fetch(`/instances/api/instances/${instanceId}/test`, {
+        method: 'GET',
         headers: headers
     })
     .then(response => response.json())
