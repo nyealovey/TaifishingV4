@@ -112,16 +112,32 @@ class Instance(db.Model):
     
     def _test_oracle_connection(self):
         """测试Oracle连接"""
-        import cx_Oracle
+        import oracledb
         try:
-            dsn = cx_Oracle.makedsn(self.host, self.port, service_name='ORCL')
-            conn = cx_Oracle.connect(
-                user=self.credential.username if self.credential else '',
-                password=self.credential.password if self.credential else '',
-                dsn=dsn
-            )
-            conn.close()
-            return {'status': 'success', 'message': 'Oracle连接成功'}
+            dsn = f"{self.host}:{self.port}/ORCL"
+            
+            # 首先尝试Thin模式连接
+            try:
+                conn = oracledb.connect(
+                    user=self.credential.username if self.credential else '',
+                    password=self.credential.password if self.credential else '',
+                    dsn=dsn
+                )
+                conn.close()
+                return {'status': 'success', 'message': 'Oracle连接成功 (Thin模式)'}
+            except oracledb.DatabaseError as e:
+                # 如果Thin模式失败，尝试Thick模式
+                if "DPY-3010" in str(e) or "thin mode" in str(e).lower():
+                    oracledb.init_oracle_client()
+                    conn = oracledb.connect(
+                        user=self.credential.username if self.credential else '',
+                        password=self.credential.password if self.credential else '',
+                        dsn=dsn
+                    )
+                    conn.close()
+                    return {'status': 'success', 'message': 'Oracle连接成功 (Thick模式)'}
+                else:
+                    raise
         except Exception as e:
             return {'status': 'error', 'message': f'Oracle连接失败: {str(e)}'}
     

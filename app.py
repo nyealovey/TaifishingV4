@@ -17,13 +17,6 @@ sys.path.insert(0, str(project_root))
 os.environ.setdefault('FLASK_APP', 'app')
 os.environ.setdefault('FLASK_ENV', 'development')
 
-# 设置Oracle Instant Client环境变量
-oracle_instant_client_path = "/Users/apple/Downloads/instantclient_23_3"
-if os.path.exists(oracle_instant_client_path):
-    current_dyld_path = os.environ.get('DYLD_LIBRARY_PATH', '')
-    if oracle_instant_client_path not in current_dyld_path:
-        os.environ['DYLD_LIBRARY_PATH'] = f"{oracle_instant_client_path}:{current_dyld_path}"
-
 # 导入Flask应用
 from app import create_app
 

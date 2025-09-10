@@ -48,7 +48,7 @@ class DatabaseDriverManager:
         
         # Oracle驱动
         try:
-            import cx_Oracle
+            import oracledb
             drivers['oracle'] = True
         except ImportError:
             pass
@@ -101,7 +101,7 @@ class DatabaseDriverManager:
         
         elif db_type.lower() == 'oracle':
             if self.available_drivers['oracle']:
-                return f"oracle+cx_oracle://{username}:{password}@{host}:{port}/{database or 'ORCL'}"
+                return f"oracle+oracledb://{username}:{password}@{host}:{port}/{database or 'ORCL'}"
             else:
                 return None
         
@@ -139,9 +139,9 @@ class DatabaseDriverManager:
         
         elif db_type.lower() == 'oracle':
             if self.available_drivers['oracle']:
-                return "cx_Oracle (推荐)"
+                return "python-oracledb (推荐)"
             else:
-                return "需要安装: pip install cx_Oracle 和 Oracle Instant Client"
+                return "需要安装: pip install python-oracledb"
         
         return "未知数据库类型"
     
@@ -151,14 +151,14 @@ class DatabaseDriverManager:
             'mysql': "pip install PyMySQL",
             'postgresql': "pip install psycopg2-binary",
             'sqlserver': "pip install pymssql (或 pip install pyodbc)",
-            'oracle': "pip install cx_Oracle + Oracle Instant Client",
+            'oracle': "pip install python-oracledb",
             'odbc': "pip install pyodbc + 系统ODBC驱动"
         }
         
         # 添加平台特定说明
         if self.system == 'darwin':  # macOS
             guide['sqlserver'] += " (在ARM64 Mac上可能编译失败，建议使用pyodbc)"
-            guide['oracle'] += " (需要下载ARM64版本的Oracle Instant Client)"
+            guide['oracle'] += " (python-oracledb支持Thin模式，无需Oracle Instant Client)"
         
         return guide
     

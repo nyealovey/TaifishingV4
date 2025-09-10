@@ -16,7 +16,7 @@ alembic==1.16.5
 PyMySQL==1.1.1
 pymssql==2.3.7
 pyodbc==5.1.0
-cx-Oracle==8.3.0  # Oracle驱动，需要Oracle Instant Client
+oracledb==3.3.0  # Oracle驱动，支持Thin和Thick模式
 
 # 缓存
 redis==5.0.7

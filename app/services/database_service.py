@@ -1005,7 +1005,7 @@ class DatabaseService:
     def _test_oracle_connection(self, instance: Instance) -> Dict[str, Any]:
         """测试Oracle连接"""
         try:
-            import cx_Oracle
+            import oracledb
             
             # 验证必需参数
             if not instance.host:
@@ -1032,14 +1032,31 @@ class DatabaseService:
                     'error': '数据库用户名不能为空'
                 }
             
-            # 尝试连接Oracle
-            dsn = cx_Oracle.makedsn(instance.host, instance.port, service_name=instance.database_name or 'ORCL')
+            # 尝试连接Oracle (使用python-oracledb)
+            # 构建连接字符串
+            service_name = instance.database_name or 'ORCL'
+            dsn = f"{instance.host}:{instance.port}/{service_name}"
             password = instance.credential.get_plain_password()
-            conn = cx_Oracle.connect(
-                user=instance.credential.username,
-                password=password,
-                dsn=dsn
-            )
+            
+            # 首先尝试Thin模式连接（不需要Oracle Instant Client）
+            try:
+                conn = oracledb.connect(
+                    user=instance.credential.username,
+                    password=password,
+                    dsn=dsn
+                )
+            except oracledb.DatabaseError as e:
+                # 如果Thin模式失败，尝试Thick模式
+                if "DPY-3010" in str(e) or "thin mode" in str(e).lower():
+                    # 初始化Thick模式（需要Oracle Instant Client）
+                    oracledb.init_oracle_client()
+                    conn = oracledb.connect(
+                        user=instance.credential.username,
+                        password=password,
+                        dsn=dsn
+                    )
+                else:
+                    raise
             
             # 测试连接有效性
             with conn.cursor() as cursor:
@@ -1101,19 +1118,19 @@ class DatabaseService:
             return {
                 'success': False,
                 'error': 'Oracle驱动未安装',
-                'details': '系统缺少cx_Oracle驱动包',
-                'solution': '请运行命令安装: pip install cx_Oracle',
+                'details': '系统缺少python-oracledb驱动包',
+                'solution': '请运行命令安装: pip install python-oracledb',
                 'error_type': 'missing_driver'
             }
-        except cx_Oracle.DatabaseError as e:
+        except oracledb.DatabaseError as e:
             error_msg = str(e)
             if 'DPI-1047' in error_msg:
                 return {
                     'success': False,
-                    'error': 'Oracle Instant Client未找到',
-                    'details': '无法找到Oracle Instant Client库文件',
-                    'solution': '请安装Oracle Instant Client并设置DYLD_LIBRARY_PATH环境变量',
-                    'error_type': 'missing_instant_client'
+                    'error': 'Oracle连接失败',
+                    'details': '网络连接问题或Oracle服务不可达',
+                    'solution': '请检查网络连接和Oracle服务状态，python-oracledb使用Thin模式无需Oracle Instant Client',
+                    'error_type': 'connection_failed'
                 }
             elif 'ORA-01017' in error_msg:
                 return {
@@ -1147,13 +1164,13 @@ class DatabaseService:
                     'solution': '请检查Oracle数据库配置和日志',
                     'error_type': 'oracle_error'
                 }
-        except cx_Oracle.Error as e:
+        except oracledb.Error as e:
             return {
                 'success': False,
                 'error': 'Oracle连接失败',
                 'details': str(e),
-                'solution': '请检查Oracle Instant Client安装和配置',
-                'error_type': 'cx_oracle_error'
+                'solution': '请检查网络连接和Oracle服务配置',
+                'error_type': 'oracledb_error'
             }
         except Exception as e:
             return {
@@ -1317,16 +1334,32 @@ class DatabaseService:
     def _get_oracle_connection(self, instance: Instance) -> Optional[Any]:
         """获取Oracle连接"""
         try:
-            import cx_Oracle
-            dsn = cx_Oracle.makedsn(instance.host, instance.port, 
-                                  service_name=instance.database_name or 'ORCL')
+            import oracledb
+            # 构建连接字符串
+            service_name = instance.database_name or 'ORCL'
+            dsn = f"{instance.host}:{instance.port}/{service_name}"
             password = instance.credential.get_plain_password() if instance.credential else ""
-            conn = cx_Oracle.connect(
-                user=instance.credential.username if instance.credential else '',
-                password=password,
-                dsn=dsn
-            )
-            return conn
+            
+            # 首先尝试Thin模式连接
+            try:
+                conn = oracledb.connect(
+                    user=instance.credential.username if instance.credential else '',
+                    password=password,
+                    dsn=dsn
+                )
+                return conn
+            except oracledb.DatabaseError as e:
+                # 如果Thin模式失败，尝试Thick模式
+                if "DPY-3010" in str(e) or "thin mode" in str(e).lower():
+                    oracledb.init_oracle_client()
+                    conn = oracledb.connect(
+                        user=instance.credential.username if instance.credential else '',
+                        password=password,
+                        dsn=dsn
+                    )
+                    return conn
+                else:
+                    raise
         except Exception as e:
             log_error(e, context={'instance_id': instance.id, 'db_type': 'Oracle'})
             return None

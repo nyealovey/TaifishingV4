@@ -18,9 +18,9 @@ except ImportError:
     pyodbc = None
 
 try:
-    import cx_Oracle
+    import oracledb
 except ImportError:
-    cx_Oracle = None
+    oracledb = None
 from typing import Dict, Any, Optional, List, Tuple
 from app.models import Instance, Credential
 from app.models.account import Account
@@ -152,13 +152,27 @@ class AccountSyncService:
                         raise ImportError("SQL Server驱动配置错误")
                 
             elif instance.db_type == 'oracle':
-                if cx_Oracle is None:
-                    raise ImportError("cx_Oracle模块未安装，无法连接Oracle")
-                return cx_Oracle.connect(
-                    instance.credential.username,
-                    instance.credential.get_plain_password(),
-                    f"{instance.host}:{instance.port}/{instance.database_name or 'xe'}"
-                )
+                if oracledb is None:
+                    raise ImportError("oracledb模块未安装，无法连接Oracle")
+                
+                # 首先尝试Thin模式连接
+                try:
+                    return oracledb.connect(
+                        user=instance.credential.username,
+                        password=instance.credential.get_plain_password(),
+                        dsn=f"{instance.host}:{instance.port}/{instance.database_name or 'ORCL'}"
+                    )
+                except oracledb.DatabaseError as e:
+                    # 如果Thin模式失败，尝试Thick模式
+                    if "DPY-3010" in str(e) or "thin mode" in str(e).lower():
+                        oracledb.init_oracle_client()
+                        return oracledb.connect(
+                            user=instance.credential.username,
+                            password=instance.credential.get_plain_password(),
+                            dsn=f"{instance.host}:{instance.port}/{instance.database_name or 'ORCL'}"
+                        )
+                    else:
+                        raise
             else:
                 return None
         except Exception as e:
