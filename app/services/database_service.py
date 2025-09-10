@@ -594,9 +594,10 @@ class DatabaseService:
                 'account_type': None,
                 'plugin': 'oracle',
                 'password_expired': status in ['EXPIRED', 'EXPIRED(GRACE)'],
-                'password_last_changed': created.isoformat() if created else None,
+                'password_last_changed': None,  # Oracle没有密码最后修改时间概念
                 'is_locked': status in ['LOCKED', 'LOCKED(TIMED)'],
-                'is_active': status == 'OPEN'
+                'is_active': status == 'OPEN',
+                'created_at': created  # Oracle的created字段映射到created_at
             }
             
             # 检查账户是否已存在
@@ -615,9 +616,10 @@ class DatabaseService:
                     account_type=None,  # Oracle没有简单的账户类型概念
                     plugin='oracle',
                     password_expired=status in ['EXPIRED', 'EXPIRED(GRACE)'],
-                    password_last_changed=created,
+                    password_last_changed=None,  # Oracle没有密码最后修改时间概念
                     is_locked=status in ['LOCKED', 'LOCKED(TIMED)'],  # Oracle的锁定状态
-                    is_active=status == 'OPEN'
+                    is_active=status == 'OPEN',
+                    created_at=created  # 使用Oracle的created字段作为创建时间
                 )
                 db.session.add(account)
                 added_count += 1
@@ -626,7 +628,6 @@ class DatabaseService:
                 # 检查是否有变化
                 has_changes = (
                     existing.password_expired != (status in ['EXPIRED', 'EXPIRED(GRACE)']) or
-                    existing.password_last_changed != created or
                     existing.is_locked != (status in ['LOCKED', 'LOCKED(TIMED)']) or
                     existing.is_active != (status == 'OPEN')
                 )
@@ -634,9 +635,9 @@ class DatabaseService:
                 if has_changes:
                     # 更新现有账户信息
                     existing.password_expired = status in ['EXPIRED', 'EXPIRED(GRACE)']
-                    existing.password_last_changed = created
                     existing.is_locked = status in ['LOCKED', 'LOCKED(TIMED)']  # Oracle的锁定状态
                     existing.is_active = status == 'OPEN'
+                    # 注意：created_at字段在账户创建后不应该被更新
                     updated_count += 1
                     modified_accounts.append(account_data)
         

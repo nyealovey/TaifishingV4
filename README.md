@@ -177,11 +177,13 @@ docker run -p 5001:5001 taifish
 - **Chart.js 4.4.0** - 图表库
 
 ### 数据库支持
-- **PostgreSQL** - 生产环境主数据库
-- **MySQL** - 支持MySQL实例管理
-- **SQL Server** - 支持SQL Server实例管理
-- **Oracle** - 支持Oracle实例管理
+- **PostgreSQL** - 生产环境主数据库，支持角色属性、数据库权限、表空间权限
+- **MySQL** - 支持MySQL实例管理，支持全局权限、数据库权限
+- **SQL Server** - 支持SQL Server实例管理，支持服务器角色、服务器权限、数据库角色、数据库权限
+- **Oracle** - 支持Oracle实例管理，使用python-oracledb驱动，支持系统权限、角色、表空间权限、表空间配额
 - **SQLite** - 开发环境数据库
+
+> **Oracle驱动说明**: 项目已升级到python-oracledb 2.0.0，完全支持Apple Silicon Mac。详细安装指南请参考 [Oracle驱动指南](doc/ORACLE_DRIVER_GUIDE.md)
 
 ## 📁 项目结构
 
