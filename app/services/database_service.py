@@ -565,8 +565,7 @@ class DatabaseService:
                 'GSMUSER', 'LBACSYS', 'OJVMSYS', 'ORACLE_OCM', 'ORDDATA', 'ORDPLUGINS', 
                 'ORDS_METADATA', 'ORDS_PUBLIC_USER', 'ORDSYS', 'PDBADMIN', 'RDSADMIN', 
                 'REMOTE_SCHEDULER_AGENT', 'SYSBACKUP', 'SYSDG', 'SYSKM', 'SYSRAC', 'SYS$UMF', 
-                'XS$NULL', 'OWBSYS', 'OWBSYS_AUDIT', 'SYSMAN', 'MGMT_VIEW', 'PATENTINSIGHT', 
-                'CBRAIN', 'MONITOR'
+                'XS$NULL', 'OWBSYS', 'OWBSYS_AUDIT', 'SYSMAN', 'MGMT_VIEW', 'CBRAIN'
             )
             ORDER BY username
         """)
