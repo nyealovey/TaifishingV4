@@ -22,6 +22,14 @@
 - [Redis管理工具](../redis_manager.sh) - Redis服务管理
 - [数据库测试工具](../test_database.py) - 数据库连接测试
 
+### 数据库驱动指南
+- [Oracle驱动指南](ORACLE_DRIVER_GUIDE.md) - Oracle数据库驱动安装和配置指南
+- [数据库权限概述](DATABASE_PERMISSIONS_OVERVIEW.md) - 各数据库权限系统说明
+- [MySQL权限文档](MYSQL_PERMISSIONS.md) - MySQL权限管理详细说明
+- [PostgreSQL权限文档](POSTGRESQL_PERMISSIONS.md) - PostgreSQL权限管理详细说明
+- [SQL Server权限文档](SQL_SERVER_PERMISSIONS.md) - SQL Server权限管理详细说明
+- [Oracle权限文档](ORACLE_PERMISSIONS.md) - Oracle权限管理详细说明
+
 ### 🏗️ 架构文档
 
 #### 系统架构
