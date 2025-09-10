@@ -278,7 +278,7 @@ class AccountSyncService:
         """)
         
         accounts = cursor.fetchall()
-        synced_count = len(accounts)  # 从服务器查询到的账户总数
+        synced_count = 0
         added_count = 0
         removed_count = 0
         modified_count = 0
@@ -373,6 +373,7 @@ class AccountSyncService:
                     account.updated_at = now()
                     modified_count += 1
             
+            synced_count += 1
         
         # 删除服务器端不存在的本地账户
         server_accounts = set()
@@ -512,6 +513,7 @@ class AccountSyncService:
                     account.updated_at = now()
                     modified_count += 1
             
+            synced_count += 1
             
             # 获取账户权限
             try:
@@ -763,6 +765,7 @@ class AccountSyncService:
                     account.updated_at = now()
                     modified_count += 1
             
+            synced_count += 1
         
         # 删除服务器端不存在的本地账户
         server_accounts = set()
@@ -815,7 +818,13 @@ class AccountSyncService:
                 expiry_date,
                 profile
             FROM dba_users
-            WHERE username NOT IN (
+            WHERE username NOT LIKE 'SYS$%'
+            AND username NOT LIKE 'GSM%'
+            AND username NOT LIKE 'XDB%'
+            AND username NOT LIKE 'APEX%'
+            AND username NOT LIKE 'ORD%'
+            AND username NOT LIKE 'SPATIAL_%'
+            AND username NOT IN (
                 'OUTLN', 'DIP', 'TSMSYS', 'DBSNMP', 'WMSYS', 'EXFSYS', 'CTXSYS', 'XDB', 
                 'ANONYMOUS', 'ORDPLUGINS', 'ORDSYS', 'SI_INFORMTN_SCHEMA', 'MDSYS', 'OLAPSYS', 
                 'MDDATA', 'SPATIAL_CSW_ADMIN_USR', 'SPATIAL_WFS_ADMIN_USR', 'APEX_PUBLIC_USER', 
@@ -831,7 +840,7 @@ class AccountSyncService:
         """)
         
         accounts = cursor.fetchall()
-        synced_count = len(accounts)  # 从服务器查询到的账户总数
+        synced_count = 0
         added_count = 0
         modified_count = 0
         removed_count = 0
@@ -896,6 +905,8 @@ class AccountSyncService:
                 if has_changes:
                     account.updated_at = now()
                     modified_count += 1
+            
+            synced_count += 1
         
         # 删除服务器端不存在的本地账户
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
