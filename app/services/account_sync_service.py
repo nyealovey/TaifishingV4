@@ -820,12 +820,8 @@ class AccountSyncService:
                 profile
             FROM dba_users
             WHERE username NOT IN (
-                -- Oracle核心系统账户
-                'SYS', 'SYSTEM',
                 -- Oracle示例账户
                 'SCOTT',
-                -- Oracle管理账户
-                'SYSMAN', 'DBSNMP',
                 -- Oracle功能账户（根据官方文档）
                 'CTXSYS', 'EXFSYS', 'MDDATA', 'APPQOSSYS', 'OUTLN', 'DIP', 'TSMSYS', 'WMSYS', 
                 'XDB', 'ANONYMOUS', 'ORDPLUGINS', 'ORDSYS', 'SI_INFORMTN_SCHEMA', 'MDSYS', 
@@ -835,7 +831,7 @@ class AccountSyncService:
                 'OJVMSYS', 'ORACLE_OCM', 'ORDDATA', 'ORDPLUGINS', 'ORDS_METADATA', 
                 'ORDS_PUBLIC_USER', 'PDBADMIN', 'RDSADMIN', 'REMOTE_SCHEDULER_AGENT', 
                 'SYSBACKUP', 'SYSDG', 'SYSKM', 'SYSRAC', 'SYS$UMF', 'XS$NULL', 'OWBSYS', 
-                'OWBSYS_AUDIT', 'MGMT_VIEW'
+                'OWBSYS_AUDIT'
             )
             -- 排除系统模式账户
             AND username NOT LIKE 'SYS$%'
