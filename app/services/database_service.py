@@ -550,7 +550,25 @@ class DatabaseService:
         cursor.execute("""
             SELECT username, account_status, created, expiry_date, profile
             FROM dba_users
-            WHERE username NOT IN ('SYS', 'SYSTEM', 'SYSAUX', 'TEMP', 'USERS', 'OUTLN', 'DIP', 'TSMSYS')
+            WHERE username NOT LIKE 'SYS$%'
+            AND username NOT LIKE 'GSM%'
+            AND username NOT LIKE 'XDB%'
+            AND username NOT LIKE 'APEX%'
+            AND username NOT LIKE 'ORD%'
+            AND username NOT LIKE 'SPATIAL_%'
+            AND username NOT IN (
+                'OUTLN', 'DIP', 'TSMSYS', 'DBSNMP', 'WMSYS', 'EXFSYS', 'CTXSYS', 'XDB', 
+                'ANONYMOUS', 'ORDPLUGINS', 'ORDSYS', 'SI_INFORMTN_SCHEMA', 'MDSYS', 'OLAPSYS', 
+                'MDDATA', 'SPATIAL_CSW_ADMIN_USR', 'SPATIAL_WFS_ADMIN_USR', 'APEX_PUBLIC_USER', 
+                'APEX_030200', 'FLOWS_FILES', 'HR', 'OE', 'PM', 'IX', 'SH', 'BI', 'SCOTT', 
+                'DEMO', 'ADMIN', 'APPQOSSYS', 'AUDSYS', 'GSMADMIN_INTERNAL', 'GSMCATUSER', 
+                'GSMUSER', 'LBACSYS', 'OJVMSYS', 'ORACLE_OCM', 'ORDDATA', 'ORDPLUGINS', 
+                'ORDS_METADATA', 'ORDS_PUBLIC_USER', 'ORDSYS', 'PDBADMIN', 'RDSADMIN', 
+                'REMOTE_SCHEDULER_AGENT', 'SYSBACKUP', 'SYSDG', 'SYSKM', 'SYSRAC', 'SYS$UMF', 
+                'XS$NULL', 'OWBSYS', 'OWBSYS_AUDIT', 'SYSMAN', 'MGMT_VIEW', 'PATENTINSIGHT', 
+                'CBRAIN', 'MONITOR'
+            )
+            ORDER BY username
         """)
         
         # 获取服务器端的所有账户
