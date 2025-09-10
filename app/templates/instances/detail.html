@@ -630,6 +630,13 @@ function showPermissionsModal(permissions, account) {
         const dbType = '{{ instance.db_type }}';
         console.log('数据库类型:', dbType);
         
+        // 检查权限对象的所有属性
+        console.log('权限对象检查 - 所有属性:', Object.keys(permissions));
+        console.log('权限对象检查 - 每个属性的类型:');
+        Object.keys(permissions).forEach(key => {
+            console.log(`  ${key}: ${typeof permissions[key]}, isArray: ${Array.isArray(permissions[key])}`);
+        });
+        
         // 创建模态框
     const modalHtml = `
         <div class="modal fade" id="permissionsModal" tabindex="-1" aria-labelledby="permissionsModalLabel" aria-hidden="true">
@@ -707,6 +714,11 @@ function showPermissionsModal(permissions, account) {
                         </div>
                         ` : ''}
                         ${dbType === 'postgresql' ? `
+                        ${(() => {
+                            console.log('PostgreSQL权限显示开始 - 完整权限对象:', permissions);
+                            console.log('权限对象的所有键:', Object.keys(permissions));
+                            return '';
+                        })()}
                         <div class="mb-3">
                             <h6><i class="fas fa-users-cog text-danger me-2"></i>预定义角色</h6>
                             ${(() => {
