@@ -625,11 +625,12 @@ function showPermissionsModal(permissions, account) {
     console.log('权限数据:', permissions);
     console.log('账户数据:', account);
     
-    // 获取数据库类型
-    const dbType = '{{ instance.db_type }}';
-    console.log('数据库类型:', dbType);
-    
-    // 创建模态框
+    try {
+        // 获取数据库类型
+        const dbType = '{{ instance.db_type }}';
+        console.log('数据库类型:', dbType);
+        
+        // 创建模态框
     const modalHtml = `
         <div class="modal fade" id="permissionsModal" tabindex="-1" aria-labelledby="permissionsModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -893,11 +894,16 @@ function showPermissionsModal(permissions, account) {
     console.log('添加模态框HTML到页面');
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     
-    // 显示模态框
-    console.log('创建并显示模态框');
-    const modal = new bootstrap.Modal(document.getElementById('permissionsModal'));
-    modal.show();
-    console.log('模态框显示完成');
+        // 显示模态框
+        console.log('创建并显示模态框');
+        const modal = new bootstrap.Modal(document.getElementById('permissionsModal'));
+        modal.show();
+        console.log('模态框显示完成');
+    } catch (error) {
+        console.error('showPermissionsModal 函数执行出错:', error);
+        console.error('错误堆栈:', error.stack);
+        showAlert('danger', '显示权限信息时发生错误: ' + error.message);
+    }
 }
 
 function showAlert(type, message) {
