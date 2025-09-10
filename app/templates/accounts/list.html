@@ -481,7 +481,7 @@
                                 {% else %}
                                     <span class="text-muted" style="font-size: 0.8rem;">未知</span>
                                 {% endif %}
-                            </td>
+                            {% endif %}
                         </td>
                         <td>
                             {% if classifications.get(account.id) %}
@@ -750,7 +750,7 @@ function showPermissionsModal(permissions, account) {
                                         </div>
                                     `).join('')}
                                 </div>
-                            ` : '<p class="text-muted">无角色</p>'}
+                            ` : '<p class="text-muted" style="font-size: 0.75rem; word-wrap: break-word; white-space: normal;">无角色</p>'}
                         </div>
                         <div class="mb-3">
                             <h6><i class="fas fa-shield-alt text-primary me-2"></i>系统权限</h6>
@@ -764,7 +764,7 @@ function showPermissionsModal(permissions, account) {
                                         </div>
                                     `).join('')}
                                 </div>
-                            ` : '<p class="text-muted">无系统权限</p>'}
+                            ` : '<p class="text-muted" style="font-size: 0.75rem; word-wrap: break-word; white-space: normal;">无系统权限</p>'}
                         </div>
                         <div class="mb-3">
                             <h6><i class="fas fa-hdd text-info me-2"></i>表空间权限</h6>
