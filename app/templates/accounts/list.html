@@ -206,13 +206,12 @@
                 <thead>
                     <tr class="small">
                         {% if current_db_type == 'sqlserver' %}
-                        <th style="font-size: 0.8rem;">登录名</th>
+                        <th style="font-size: 0.8rem;">名称</th>
                         <th style="font-size: 0.8rem;">实例名称</th>
                         <th style="font-size: 0.8rem;">IP地址</th>
                         <th style="font-size: 0.8rem;">环境</th>
-                        <th style="font-size: 0.8rem;">类型</th>
+                        <th style="font-size: 0.8rem;">插件/类型</th>
                         <th style="font-size: 0.8rem;">分类</th>
-                        <th style="font-size: 0.8rem;">密码最后修改</th>
                         <th style="font-size: 0.8rem;">锁定状态</th>
                         <th style="font-size: 0.8rem;">操作</th>
                         {% elif current_db_type == 'mysql' %}
@@ -299,13 +298,6 @@
                                 {% endfor %}
                             {% else %}
                                 <span class="text-muted" style="font-size: 0.8rem;">未分类</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if account.password_last_changed %}
-                                <small class="text-muted" style="font-size: 0.75rem;">{{ account.password_last_changed | china_datetime }}</small>
-                            {% else %}
-                                <small class="text-muted" style="font-size: 0.75rem;">未知</small>
                             {% endif %}
                         </td>
                         <td>
