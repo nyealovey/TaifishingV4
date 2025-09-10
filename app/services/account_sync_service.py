@@ -278,7 +278,7 @@ class AccountSyncService:
         """)
         
         accounts = cursor.fetchall()
-        synced_count = 0
+        synced_count = len(accounts)  # 从服务器查询到的账户总数
         added_count = 0
         removed_count = 0
         modified_count = 0
@@ -373,7 +373,6 @@ class AccountSyncService:
                     account.updated_at = now()
                     modified_count += 1
             
-            synced_count += 1
         
         # 删除服务器端不存在的本地账户
         server_accounts = set()
@@ -513,7 +512,6 @@ class AccountSyncService:
                     account.updated_at = now()
                     modified_count += 1
             
-            synced_count += 1
             
             # 获取账户权限
             try:
@@ -765,7 +763,6 @@ class AccountSyncService:
                     account.updated_at = now()
                     modified_count += 1
             
-            synced_count += 1
         
         # 删除服务器端不存在的本地账户
         server_accounts = set()
@@ -834,7 +831,7 @@ class AccountSyncService:
         """)
         
         accounts = cursor.fetchall()
-        synced_count = 0
+        synced_count = len(accounts)  # 从服务器查询到的账户总数
         added_count = 0
         modified_count = 0
         removed_count = 0
@@ -899,8 +896,6 @@ class AccountSyncService:
                 if has_changes:
                     account.updated_at = now()
                     modified_count += 1
-            
-            synced_count += 1
         
         # 删除服务器端不存在的本地账户
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
