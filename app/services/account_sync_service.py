@@ -805,6 +805,7 @@ class AccountSyncService:
     
     def _sync_oracle_accounts(self, instance: Instance, conn) -> Dict[str, int]:
         """同步Oracle账户"""
+        print("DEBUG: 开始Oracle账户同步 - 函数被调用")
         cursor = conn.cursor()
         
         # 查询用户信息
