@@ -1194,8 +1194,10 @@ def get_account_permissions(instance_id, account_id):
         
         # 获取账户权限
         permissions = db_service.get_account_permissions(instance, account)
+        print(f"DEBUG API: 获取到的权限数据: {permissions}")
+        print(f"DEBUG API: 权限数据类型: {type(permissions)}")
         
-        return jsonify({
+        response = {
             'success': True,
             'account': {
                 'id': account.id,
@@ -1204,7 +1206,10 @@ def get_account_permissions(instance_id, account_id):
                 'plugin': account.plugin
             },
             'permissions': permissions
-        })
+        }
+        print(f"DEBUG API: 完整响应: {response}")
+        
+        return jsonify(response)
         
     except Exception as e:
         logging.error(f"获取账户权限失败: {e}")
