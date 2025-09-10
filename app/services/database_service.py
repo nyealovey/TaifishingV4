@@ -139,6 +139,30 @@ class DatabaseService:
             net_change = after_count - before_count
             total_operations = synced_count
             
+            # 创建同步报告记录
+            from app.models.sync_data import SyncData
+            sync_record = SyncData(
+                sync_type='manual',  # 手动同步
+                instance_id=instance.id,
+                task_id=None,
+                data={
+                    'before_count': before_count,
+                    'after_count': after_count,
+                    'net_change': net_change,
+                    'db_type': instance.db_type,
+                    'instance_name': instance.name
+                },
+                status='success',
+                message=f'成功同步 {total_operations} 个账户',
+                synced_count=total_operations,
+                added_count=added_count,
+                removed_count=removed_count,
+                modified_count=modified_count,
+                records_count=total_operations
+            )
+            db.session.add(sync_record)
+            db.session.commit()
+            
             return {
                 'success': True,
                 'message': f'账户同步完成，共同步 {total_operations} 个账户，净变化: {net_change:+d}',
@@ -156,6 +180,29 @@ class DatabaseService:
                 }
             }
         except Exception as e:
+            # 创建失败的同步报告记录
+            from app.models.sync_data import SyncData
+            sync_record = SyncData(
+                sync_type='manual',  # 手动同步
+                instance_id=instance.id,
+                task_id=None,
+                data={
+                    'db_type': instance.db_type,
+                    'instance_name': instance.name,
+                    'error': str(e)
+                },
+                status='failed',
+                message=f'账户同步失败: {str(e)}',
+                synced_count=0,
+                added_count=0,
+                removed_count=0,
+                modified_count=0,
+                error_message=str(e),
+                records_count=0
+            )
+            db.session.add(sync_record)
+            db.session.commit()
+            
             return {
                 'success': False,
                 'error': f'账户同步失败: {str(e)}'

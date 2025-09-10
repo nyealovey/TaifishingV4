@@ -53,7 +53,6 @@ def list(db_type=None):
     # 获取筛选参数
     search = request.args.get('search', '', type=str)
     is_locked = request.args.get('is_locked', '', type=str)
-    plugin = request.args.get('plugin', '', type=str)
     instance_id = request.args.get('instance_id', '', type=str)
     filter_db_type = request.args.get('db_type', '', type=str)  # 新增数据库类型筛选参数
     environment = request.args.get('environment', '', type=str)  # 新增环境筛选参数
@@ -90,14 +89,6 @@ def list(db_type=None):
         elif is_locked == 'unlocked':
             query = query.filter(Account.is_locked == False)
     
-    # 插件/类型筛选 - 同时搜索plugin和account_type字段
-    if plugin:
-        query = query.filter(
-            db.or_(
-                Account.plugin.contains(plugin),
-                Account.account_type.contains(plugin)
-            )
-        )
     
     # 实例筛选
     if instance_id:
@@ -185,7 +176,6 @@ def list(db_type=None):
                          current_db_type=db_type,
                          search=search,
                          is_locked=is_locked,
-                         plugin=plugin,
                          instance_id=instance_id,
                          db_type=filter_db_type,
                          environment=environment,  # 传递环境筛选参数
@@ -203,17 +193,6 @@ def sync_accounts(instance_id):
         result = account_sync_service.sync_accounts(instance, sync_type='manual')
         
         if result['success']:
-            # 记录同步结果
-            sync_record = SyncData(
-                instance_id=instance_id,
-                sync_type='manual',
-                status='success',
-                message=result.get('message', '同步成功'),
-                synced_count=result.get('synced_count', 0)
-            )
-            db.session.add(sync_record)
-            db.session.commit()
-            
             if request.is_json:
                 return jsonify({
                     'message': '账户同步成功',
@@ -359,143 +338,6 @@ def sync_all_accounts():
     flash(f'批量同步完成，成功: {success_count}, 失败: {failed_count}', 'info')
     return redirect(url_for('accounts.index'))
 
-@accounts_bp.route('/cleanup-orphaned', methods=['POST'])
-@login_required
-def cleanup_orphaned_accounts():
-    """清理多余的账户（服务器上不存在的本地账户）"""
-    try:
-        from app.services.account_sync_service import account_sync_service
-        from app.utils.logger import log_operation
-        
-        # 记录清理开始日志
-        log_operation('CLEANUP_ORPHANED_ACCOUNTS_START', current_user.id, {})
-        
-        instances = Instance.query.filter_by(is_active=True).all()
-        if not instances:
-            if request.is_json:
-                return jsonify({'error': '没有可用的实例'}), 400
-            flash('没有可用的实例', 'error')
-            return redirect(url_for('accounts.list'))
-        
-        total_removed = 0
-        results = []
-        
-        for instance in instances:
-            try:
-                # 获取数据库连接
-                conn = account_sync_service._get_connection(instance)
-                if not conn:
-                    results.append({
-                        'instance_name': instance.name,
-                        'success': False,
-                        'message': '无法获取数据库连接',
-                        'removed_count': 0
-                    })
-                    continue
-                
-                # 获取服务器上的账户列表
-                if instance.db_type == 'mysql':
-                    cursor = conn.cursor()
-                    cursor.execute("""
-                        SELECT User as username, Host as host
-                        FROM mysql.user
-                        WHERE User NOT LIKE 'mysql.%'
-                        ORDER BY User, Host
-                    """)
-                    server_accounts = set((row[0], row[1]) for row in cursor.fetchall())
-                    cursor.close()
-                elif instance.db_type == 'postgresql':
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT usename as username FROM pg_user")
-                    server_accounts = set((row[0], '') for row in cursor.fetchall())
-                    cursor.close()
-                elif instance.db_type == 'sqlserver':
-                    cursor = conn.cursor()
-                    cursor.execute("""
-                        SELECT name as username
-                        FROM sys.server_principals
-                        WHERE type IN ('S', 'U', 'G')
-                        AND name NOT LIKE '##%'
-                        ORDER BY name
-                    """)
-                    server_accounts = set((row[0], '') for row in cursor.fetchall())
-                    cursor.close()
-                else:
-                    # 其他数据库类型暂不支持
-                    results.append({
-                        'instance_name': instance.name,
-                        'success': False,
-                        'message': f'不支持的数据库类型: {instance.db_type}',
-                        'removed_count': 0
-                    })
-                    continue
-                
-                # 获取本地账户
-                local_accounts = Account.query.filter_by(instance_id=instance.id).all()
-                removed_accounts = []
-                
-                for local_account in local_accounts:
-                    # 根据数据库类型检查账户是否存在
-                    if instance.db_type == 'mysql':
-                        account_key = (local_account.username, local_account.host)
-                    else:  # postgresql 或 sqlserver
-                        account_key = (local_account.username, '')
-                    
-                    if account_key not in server_accounts:
-                        removed_accounts.append({
-                            'username': local_account.username,
-                            'host': local_account.host,
-                            'database_name': local_account.database_name,
-                            'account_type': local_account.account_type
-                        })
-                        db.session.delete(local_account)
-                
-                db.session.commit()
-                conn.close()
-                
-                total_removed += len(removed_accounts)
-                results.append({
-                    'instance_name': instance.name,
-                    'success': True,
-                    'message': f'清理完成，删除了 {len(removed_accounts)} 个多余账户',
-                    'removed_count': len(removed_accounts),
-                    'removed_accounts': removed_accounts
-                })
-                
-            except Exception as e:
-                logging.error(f"清理实例 {instance.name} 的多余账户失败: {e}")
-                results.append({
-                    'instance_name': instance.name,
-                    'success': False,
-                    'message': f'清理失败: {str(e)}',
-                    'removed_count': 0
-                })
-        
-        # 记录清理完成日志
-        log_operation('CLEANUP_ORPHANED_ACCOUNTS_COMPLETE', current_user.id, {
-            'total_removed': total_removed,
-            'results': results
-        })
-        
-        if request.is_json:
-            return jsonify({
-                'success': True,
-                'message': f'清理完成，总共删除了 {total_removed} 个多余账户',
-                'total_removed': total_removed,
-                'results': results
-            })
-        
-        flash(f'清理完成，总共删除了 {total_removed} 个多余账户', 'success')
-        return redirect(url_for('accounts.list'))
-        
-    except Exception as e:
-        logging.error(f"清理多余账户失败: {e}")
-        
-        if request.is_json:
-            return jsonify({'error': '清理多余账户失败，请重试'}), 500
-        
-        flash('清理多余账户失败，请重试', 'error')
-        return redirect(url_for('accounts.list'))
 
 @accounts_bp.route('/sync-history')
 @login_required
@@ -1043,63 +885,6 @@ def get_filter_options():
                 }.get(env[0], env[0])
                 environment_options.append({'value': env[0], 'label': env_label})
         
-        # 获取插件/类型选项 - 分别处理不同数据库类型的字段
-        plugin_options = []
-        
-        # 获取MySQL的plugin字段选项（认证插件）
-        mysql_plugins = db.session.query(Account.plugin).join(Instance, Account.instance_id == Instance.id).filter(
-            Instance.db_type == 'mysql',
-            Account.plugin.isnot(None),
-            Account.plugin != ''
-        ).distinct().all()
-        
-        for p in mysql_plugins:
-            if p[0] and p[0] not in ['sqlserver']:  # 排除数据库类型
-                plugin_options.append({'value': p[0], 'label': f'MySQL认证插件: {p[0]}'})
-        
-        # 获取MySQL的account_type字段选项（账户类型）
-        mysql_types = db.session.query(Account.account_type).join(Instance, Account.instance_id == Instance.id).filter(
-            Instance.db_type == 'mysql',
-            Account.account_type.isnot(None),
-            Account.account_type != ''
-        ).distinct().all()
-        
-        for at in mysql_types:
-            if at[0]:
-                plugin_options.append({'value': at[0], 'label': f'MySQL账户类型: {at[0]}'})
-        
-        # 获取SQL Server的account_type字段选项（账户类型）
-        sqlserver_types = db.session.query(Account.account_type).join(Instance, Account.instance_id == Instance.id).filter(
-            Instance.db_type == 'sqlserver',
-            Account.account_type.isnot(None),
-            Account.account_type != ''
-        ).distinct().all()
-        
-        for at in sqlserver_types:
-            if at[0]:
-                plugin_options.append({'value': at[0], 'label': f'SQL Server账户类型: {at[0]}'})
-        
-        # 获取PostgreSQL的plugin字段选项
-        postgres_plugins = db.session.query(Account.plugin).join(Instance, Account.instance_id == Instance.id).filter(
-            Instance.db_type == 'postgresql',
-            Account.plugin.isnot(None),
-            Account.plugin != ''
-        ).distinct().all()
-        
-        for p in postgres_plugins:
-            if p[0] and p[0] not in ['sqlserver']:  # 排除数据库类型
-                plugin_options.append({'value': p[0], 'label': f'PostgreSQL认证插件: {p[0]}'})
-        
-        # 获取PostgreSQL的account_type字段选项
-        postgres_types = db.session.query(Account.account_type).join(Instance, Account.instance_id == Instance.id).filter(
-            Instance.db_type == 'postgresql',
-            Account.account_type.isnot(None),
-            Account.account_type != ''
-        ).distinct().all()
-        
-        for at in postgres_types:
-            if at[0]:
-                plugin_options.append({'value': at[0], 'label': f'PostgreSQL账户类型: {at[0]}'})
         
         # 获取实例选项
         instances = Instance.query.filter_by(is_active=True).all()
@@ -1127,7 +912,6 @@ def get_filter_options():
         return {
             'db_types': db_type_options,
             'environments': environment_options,
-            'plugins': plugin_options,
             'instances': instance_options,
             'classifications': classification_options
         }
@@ -1136,7 +920,6 @@ def get_filter_options():
         return {
             'db_types': [],
             'environments': [],
-            'plugins': [],
             'instances': [],
             'classifications': []
         }
@@ -1169,7 +952,6 @@ def get_account_permissions(account_id):
                 'id': account.id,
                 'username': account.username,
                 'host': account.host,
-                'plugin': account.plugin,
                 'instance': {
                     'db_type': instance.db_type,
                     'name': instance.name

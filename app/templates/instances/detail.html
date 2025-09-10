@@ -9,7 +9,10 @@
 <div class="mb-4">
     <h2>
         <i class="fas fa-database me-2"></i>{{ instance.name }}
-        <span class="badge bg-{{ 'primary' if instance.db_type == 'postgresql' else 'success' if instance.db_type == 'mysql' else 'warning' if instance.db_type == 'sqlserver' else 'info' }} ms-2">
+        <span class="badge bg-secondary ms-2 me-2">
+            <i class="fas fa-server me-1"></i>{{ instance.host }}
+        </span>
+        <span class="badge bg-{{ 'primary' if instance.db_type == 'postgresql' else 'success' if instance.db_type == 'mysql' else 'warning' if instance.db_type == 'sqlserver' else 'info' }}">
             {{ instance.db_type.upper() }}
         </span>
     </h2>

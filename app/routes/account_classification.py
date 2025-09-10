@@ -372,6 +372,46 @@ def update_rule(rule_id):
             'error': str(e)
         })
 
+@account_classification_bp.route('/rules/<int:rule_id>/matched-accounts', methods=['GET'])
+@login_required
+def get_matched_accounts(rule_id):
+    """获取规则匹配的账户"""
+    try:
+        rule = ClassificationRule.query.get_or_404(rule_id)
+        
+        # 获取匹配的账户
+        from app.services.account_classification_service import AccountClassificationService
+        classification_service = AccountClassificationService()
+        
+        # 获取所有账户
+        from app.models.account import Account
+        from app.models.instance import Instance
+        all_accounts = Account.query.join(Instance, Account.instance_id == Instance.id).filter(Instance.db_type == rule.db_type).all()
+        
+        matched_accounts = []
+        for account in all_accounts:
+            # 检查账户是否匹配规则
+            if classification_service.evaluate_rule(rule, account):
+                matched_accounts.append({
+                    'id': account.id,
+                    'username': account.username,
+                    'instance_name': account.instance.name if account.instance else '未知实例',
+                    'instance_host': account.instance.host if account.instance else '未知IP'
+                })
+        
+        return jsonify({
+            'success': True,
+            'accounts': matched_accounts,
+            'rule_name': rule.rule_name
+        })
+    
+    except Exception as e:
+        current_app.logger.error(f"获取匹配账户失败: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
 @account_classification_bp.route('/rules/<int:rule_id>', methods=['DELETE'])
 @login_required
 def delete_rule(rule_id):

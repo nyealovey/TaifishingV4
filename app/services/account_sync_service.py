@@ -89,6 +89,31 @@ class AccountSyncService:
             after_count = Account.query.filter_by(instance_id=instance.id).count()
             net_change = after_count - before_count
             
+            # 创建同步报告记录
+            from app.models.sync_data import SyncData
+            from app import db
+            sync_record = SyncData(
+                sync_type=sync_type,  # 手动同步或任务同步
+                instance_id=instance.id,
+                task_id=None,
+                data={
+                    'before_count': before_count,
+                    'after_count': after_count,
+                    'net_change': net_change,
+                    'db_type': instance.db_type,
+                    'instance_name': instance.name
+                },
+                status='success',
+                message=f'成功同步 {synced_count} 个{instance.db_type.upper()}账户',
+                synced_count=synced_count,
+                added_count=added_count,
+                removed_count=removed_count,
+                modified_count=modified_count,
+                records_count=synced_count
+            )
+            db.session.add(sync_record)
+            db.session.commit()
+            
             return {
                 'success': True,
                 'message': f'成功同步 {synced_count} 个{instance.db_type.upper()}账户',
@@ -101,6 +126,31 @@ class AccountSyncService:
             
         except Exception as e:
             self.logger.error(f"账户同步失败: {str(e)}")
+            
+            # 创建失败的同步报告记录
+            from app.models.sync_data import SyncData
+            from app import db
+            sync_record = SyncData(
+                sync_type=sync_type,  # 手动同步或任务同步
+                instance_id=instance.id,
+                task_id=None,
+                data={
+                    'db_type': instance.db_type,
+                    'instance_name': instance.name,
+                    'error': str(e)
+                },
+                status='failed',
+                message=f'{instance.db_type.upper()}账户同步失败: {str(e)}',
+                synced_count=0,
+                added_count=0,
+                removed_count=0,
+                modified_count=0,
+                error_message=str(e),
+                records_count=0
+            )
+            db.session.add(sync_record)
+            db.session.commit()
+            
             return {
                 'success': False,
                 'error': f'{instance.db_type.upper()}账户同步失败: {str(e)}',
@@ -450,13 +500,8 @@ class AccountSyncService:
             # 记录服务器端的账户（PostgreSQL没有主机概念）
             server_accounts.add((username, ''))
             
-            # 确定账户类型（PostgreSQL中用户和角色是同一个概念）
-            if is_superuser:
-                account_type = 'role'  # 超级用户角色
-            elif can_create_db or can_create_role:
-                account_type = 'role'  # 管理员角色
-            else:
-                account_type = 'user'  # 普通用户
+            # PostgreSQL认证类型默认为scram-sha-256（定义在本地配置文件中）
+            account_type = 'scram-sha-256'
             
             # 检查密码是否过期
             password_expired = valid_until is not None and valid_until < now()
@@ -689,16 +734,16 @@ class AccountSyncService:
             SELECT 
                 name as username,
                 type_desc as account_type,
-                '' as database_name,
+                'master' as database_name,
                 is_disabled as is_disabled,
                 create_date as created_date,
                 modify_date as modified_date
             FROM sys.server_principals
             WHERE type IN ('S', 'U', 'G')
             AND name NOT LIKE '##%'
-            AND name NOT LIKE 'NT SERVICE\%'
-            AND name NOT LIKE 'NT AUTHORITY\%'
-            AND name NOT LIKE 'BUILTIN\%'
+            AND name NOT LIKE 'NT SERVICE\\%'
+            AND name NOT LIKE 'NT AUTHORITY\\%'
+            AND name NOT LIKE 'BUILTIN\\%'
             AND name NOT IN ('public', 'guest', 'dbo')
             AND (name = 'sa' OR name NOT LIKE 'NT %')
             ORDER BY name
@@ -779,7 +824,7 @@ class AccountSyncService:
         # 删除服务器端不存在的本地账户
         server_accounts = set()
         for account_data in accounts:
-            username, account_type, database_name, is_disabled, created_date = account_data
+            username, account_type, database_name, is_disabled, created_date, modified_date = account_data
             server_accounts.add(username)
         
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
@@ -821,7 +866,7 @@ class AccountSyncService:
         cursor.execute("""
             SELECT 
                 username,
-                'user' as account_type,
+                authentication_type as account_type,
                 '' as database_name,
                 account_status,
                 created,
@@ -959,177 +1004,9 @@ class AccountSyncService:
             'removed_accounts': removed_accounts
         }
     
-    def cleanup_orphaned_accounts(self, instance: Instance) -> Dict[str, Any]:
-        """
-        清理多余账户（服务器上不存在的本地账户）
-        
-        Args:
-            instance: 数据库实例
-            
-        Returns:
-            Dict: 清理结果
-        """
-        try:
-            # 获取数据库连接
-            conn = self._get_connection(instance)
-            if not conn:
-                return {
-                    'success': False,
-                    'error': '无法获取数据库连接'
-                }
-            
-            removed_count = 0
-            removed_accounts = []
-            
-            # 根据数据库类型执行清理
-            if instance.db_type == 'mysql':
-                result = self._cleanup_mysql_orphaned_accounts(instance, conn)
-            elif instance.db_type == 'postgresql':
-                result = self._cleanup_postgresql_orphaned_accounts(instance, conn)
-            elif instance.db_type == 'sqlserver':
-                result = self._cleanup_sqlserver_orphaned_accounts(instance, conn)
-            else:
-                return {
-                    'success': False,
-                    'error': f'不支持的数据库类型: {instance.db_type}'
-                }
-            
-            removed_count = result['removed_count']
-            removed_accounts = result['removed_accounts']
-            
-            return {
-                'success': True,
-                'message': f'清理完成，删除了 {removed_count} 个多余账户',
-                'removed_count': removed_count,
-                'removed_accounts': removed_accounts
-            }
-            
-        except Exception as e:
-            self.logger.error(f"清理多余账户失败: {str(e)}")
-            return {
-                'success': False,
-                'error': f'清理多余账户失败: {str(e)}'
-            }
     
-    def _cleanup_mysql_orphaned_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
-        """清理MySQL多余账户"""
-        cursor = conn.cursor()
-        
-        # 获取服务器端所有账户
-        cursor.execute("""
-            SELECT User, Host
-            FROM mysql.user
-            WHERE User NOT LIKE 'mysql.%'
-            ORDER BY User, Host
-        """)
-        
-        server_accounts = set()
-        for row in cursor.fetchall():
-            server_accounts.add((row[0], row[1]))
-        
-        # 获取本地账户并清理
-        local_accounts = Account.query.filter_by(instance_id=instance.id).all()
-        removed_accounts = []
-        removed_count = 0
-        
-        for local_account in local_accounts:
-            if (local_account.username, local_account.host) not in server_accounts:
-                removed_accounts.append({
-                    'username': local_account.username,
-                    'host': local_account.host,
-                    'database_name': local_account.database_name,
-                    'account_type': local_account.account_type
-                })
-                db.session.delete(local_account)
-                removed_count += 1
-        
-        db.session.commit()
-        cursor.close()
-        
-        return {
-            'removed_count': removed_count,
-            'removed_accounts': removed_accounts
-        }
     
-    def _cleanup_postgresql_orphaned_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
-        """清理PostgreSQL多余账户"""
-        cursor = conn.cursor()
-        
-        # 获取服务器端所有账户
-        cursor.execute("""
-            SELECT usename
-            FROM pg_user
-            ORDER BY usename
-        """)
-        
-        server_accounts = set()
-        for row in cursor.fetchall():
-            server_accounts.add(row[0])
-        
-        # 获取本地账户并清理
-        local_accounts = Account.query.filter_by(instance_id=instance.id).all()
-        removed_accounts = []
-        removed_count = 0
-        
-        for local_account in local_accounts:
-            if local_account.username not in server_accounts:
-                removed_accounts.append({
-                    'username': local_account.username,
-                    'host': '',
-                    'database_name': local_account.database_name,
-                    'account_type': local_account.account_type
-                })
-                db.session.delete(local_account)
-                removed_count += 1
-        
-        db.session.commit()
-        cursor.close()
-        
-        return {
-            'removed_count': removed_count,
-            'removed_accounts': removed_accounts
-        }
     
-    def _cleanup_sqlserver_orphaned_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
-        """清理SQL Server多余账户"""
-        cursor = conn.cursor()
-        
-        # 获取服务器端所有账户
-        cursor.execute("""
-            SELECT name
-            FROM sys.server_principals
-            WHERE type IN ('S', 'U', 'G')
-            AND name NOT LIKE '##%'
-            ORDER BY name
-        """)
-        
-        server_accounts = set()
-        for row in cursor.fetchall():
-            server_accounts.add(row[0])
-        
-        # 获取本地账户并清理
-        local_accounts = Account.query.filter_by(instance_id=instance.id).all()
-        removed_accounts = []
-        removed_count = 0
-        
-        for local_account in local_accounts:
-            if local_account.username not in server_accounts:
-                removed_accounts.append({
-                    'username': local_account.username,
-                    'host': '',
-                    'database_name': local_account.database_name,
-                    'account_type': local_account.account_type
-                })
-                db.session.delete(local_account)
-                removed_count += 1
-        
-        db.session.commit()
-        cursor.close()
-        
-        return {
-            'removed_count': removed_count,
-            'removed_accounts': removed_accounts
-        }
     
     def _get_mysql_account_permissions(self, conn, username: str, host: str) -> Dict[str, Any]:
         """获取MySQL账户权限信息"""

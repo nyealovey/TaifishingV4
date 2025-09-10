@@ -348,6 +348,30 @@
     </div>
 </div>
 
+<!-- 匹配账户模态框 -->
+<div class="modal fade" id="matchedAccountsModal" tabindex="-1" aria-labelledby="matchedAccountsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="matchedAccountsModalLabel">
+                    <i class="fas fa-users me-2"></i>匹配的账户
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+                <div id="matchedAccountsList">
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-spinner fa-spin me-2"></i>加载中...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -479,9 +503,9 @@ function displayRules(rulesByDbType) {
                                                         </p>
                                                         <div class="d-flex align-items-center">
                                                             <span class="badge bg-secondary me-2">${rule.db_type.toUpperCase()}</span>
-                                                            <span class="badge bg-info me-2">
+                                                            <button class="btn btn-sm btn-info me-2" onclick="viewMatchedAccounts(${rule.id})" title="查看匹配的账户">
                                                                 <i class="fas fa-users me-1"></i>匹配 ${rule.matched_accounts_count || 0} 个账户
-                                                            </span>
+                                                            </button>
                                                         </div>
                                                     </div>
                                                     <div class="btn-group btn-group-sm">
@@ -1565,6 +1589,54 @@ function updateRule() {
         console.error('Error:', error);
         showAlert('danger', '更新规则失败');
     });
+}
+
+// 查看匹配的账户
+function viewMatchedAccounts(ruleId) {
+    fetch(`/account-classification/rules/${ruleId}/matched-accounts`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayMatchedAccounts(data.accounts, data.rule_name);
+        } else {
+            showAlert('danger', '获取匹配账户失败: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', '获取匹配账户失败');
+    });
+}
+
+// 显示匹配的账户
+function displayMatchedAccounts(accounts, ruleName) {
+    const container = document.getElementById('matchedAccountsList');
+    
+    if (!accounts || accounts.length === 0) {
+        container.innerHTML = '<div class="text-muted text-center py-3">没有匹配的账户</div>';
+    } else {
+        let html = '<div class="table-responsive"><table class="table table-sm table-hover" style="color: white; font-size: 0.8rem;">';
+        html += '<thead class="table-dark"><tr><th style="color: white; font-size: 0.8rem;">实例名称</th><th style="color: white; font-size: 0.8rem;">实例IP</th><th style="color: white; font-size: 0.8rem;">账户名称</th></tr></thead>';
+        html += '<tbody>';
+        
+        accounts.forEach(account => {
+            html += `<tr style="color: white; font-size: 0.8rem;">
+                <td style="color: white; font-size: 0.8rem;">${account.instance_name || '-'}</td>
+                <td style="color: white; font-size: 0.8rem;">${account.instance_host || '-'}</td>
+                <td style="color: white; font-size: 0.8rem;">${account.username || '-'}</td>
+            </tr>`;
+        });
+        
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    }
+    
+    // 更新模态框标题
+    document.getElementById('matchedAccountsModalLabel').textContent = `规则 "${ruleName}" 匹配的账户`;
+    
+    // 显示模态框
+    const modal = new bootstrap.Modal(document.getElementById('matchedAccountsModal'));
+    modal.show();
 }
 
 // 查看规则

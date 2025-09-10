@@ -770,19 +770,46 @@ class AccountClassificationService:
             
             permissions = json.loads(account.permissions)
             
+            # 检查角色
+            required_roles = rule_expression.get('roles', [])
+            if required_roles:
+                account_roles = permissions.get('roles', [])
+                for required_role in required_roles:
+                    if required_role not in account_roles:
+                        self.logger.debug(f"账户 {account.username} 缺少角色: {required_role}")
+                        return False
+            
             # 检查系统权限
             required_system_perms = rule_expression.get('system_privileges', [])
-            for required_perm in required_system_perms:
-                if required_perm not in permissions.get('system_privileges', []):
-                    self.logger.debug(f"账户 {account.username} 缺少系统权限: {required_perm}")
-                    return False
+            if required_system_perms:
+                account_system_perms = permissions.get('system_privileges', [])
+                for required_perm in required_system_perms:
+                    if required_perm not in account_system_perms:
+                        self.logger.debug(f"账户 {account.username} 缺少系统权限: {required_perm}")
+                        return False
             
             # 检查表空间权限
             required_tablespace_perms = rule_expression.get('tablespace_privileges', [])
-            for required_perm in required_tablespace_perms:
-                if required_perm not in permissions.get('tablespace_privileges', []):
-                    self.logger.debug(f"账户 {account.username} 缺少表空间权限: {required_perm}")
-                    return False
+            if required_tablespace_perms:
+                account_tablespace_perms = permissions.get('tablespace_privileges', [])
+                for required_perm in required_tablespace_perms:
+                    if required_perm not in account_tablespace_perms:
+                        self.logger.debug(f"账户 {account.username} 缺少表空间权限: {required_perm}")
+                        return False
+            
+            # 检查表空间配额
+            required_tablespace_quotas = rule_expression.get('tablespace_quotas', [])
+            if required_tablespace_quotas:
+                account_tablespace_quotas = permissions.get('tablespace_quotas', [])
+                for required_quota in required_tablespace_quotas:
+                    if required_quota not in account_tablespace_quotas:
+                        self.logger.debug(f"账户 {account.username} 缺少表空间配额: {required_quota}")
+                        return False
+            
+            # 如果没有任何要求，则默认匹配
+            if not any([required_roles, required_system_perms, required_tablespace_perms, required_tablespace_quotas]):
+                self.logger.debug(f"账户 {account.username} 匹配Oracle规则（无特定要求）")
+                return True
             
             self.logger.debug(f"账户 {account.username} 匹配Oracle规则")
             return True
