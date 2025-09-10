@@ -94,9 +94,10 @@
                                 <label for="database_name" class="form-label">Oracle SID/服务名</label>
                                 <input type="text" class="form-control" id="database_name" name="database_name" 
                                        value="{{ instance.database_name or '' }}"
-                                       placeholder="例如: ORCL, XE, 或服务名">
+                                       placeholder="例如: ORCL, XE, PROD, 或 service.domain.com">
                                 <div class="form-text">
-                                    Oracle数据库的SID或服务名，默认为ORCL
+                                    <strong>SID格式</strong>: ORCL, XE (使用 host:port:sid)<br>
+                                    <strong>服务名格式</strong>: PROD, service.domain.com (使用 host:port/service_name)
                                 </div>
                             </div>
                         </div>

@@ -1034,8 +1034,16 @@ class DatabaseService:
             
             # 尝试连接Oracle (使用python-oracledb)
             # 构建连接字符串
-            service_name = instance.database_name or 'ORCL'
-            dsn = f"{instance.host}:{instance.port}/{service_name}"
+            database_name = instance.database_name or 'ORCL'
+            
+            # 判断是SID还是Service Name
+            # 如果包含点号(.)，则认为是Service Name，否则是SID
+            if '.' in database_name:
+                # Service Name格式: host:port/service_name
+                dsn = f"{instance.host}:{instance.port}/{database_name}"
+            else:
+                # SID格式: host:port:sid
+                dsn = f"{instance.host}:{instance.port}:{database_name}"
             password = instance.credential.get_plain_password()
             
             # 优先使用Thick模式连接（适用于所有Oracle版本，包括11g）
@@ -1358,8 +1366,16 @@ class DatabaseService:
         try:
             import oracledb
             # 构建连接字符串
-            service_name = instance.database_name or 'ORCL'
-            dsn = f"{instance.host}:{instance.port}/{service_name}"
+            database_name = instance.database_name or 'ORCL'
+            
+            # 判断是SID还是Service Name
+            # 如果包含点号(.)，则认为是Service Name，否则是SID
+            if '.' in database_name:
+                # Service Name格式: host:port/service_name
+                dsn = f"{instance.host}:{instance.port}/{database_name}"
+            else:
+                # SID格式: host:port:sid
+                dsn = f"{instance.host}:{instance.port}:{database_name}"
             password = instance.credential.get_plain_password() if instance.credential else ""
             
             # 优先使用Thick模式连接（适用于所有Oracle版本，包括11g）
