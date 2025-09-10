@@ -708,9 +708,7 @@ function showPermissionsModal(permissions, account) {
                     <div class="modal-body">
                         <div class="mb-3">
                             <h6>账户信息</h6>
-                            <p class="mb-1"><strong>用户名:</strong> ${account.username}</p>
-                            ${dbType !== 'sqlserver' && dbType !== 'postgresql' ? `<p class="mb-1"><strong>主机:</strong> ${account.host || '%'}</p>` : ''}
-                            <p class="mb-0"><strong>插件:</strong> ${account.plugin || '未知'}</p>
+                            <p class="mb-0"><strong>用户名:</strong> ${account.username}</p>
                         </div>
                         ${dbType === 'oracle' ? `
                         <div class="mb-3">
