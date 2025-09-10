@@ -519,7 +519,11 @@ class AccountSyncService:
             try:
                 permissions = self._get_postgresql_account_permissions(instance, conn, username)
                 if permissions:
-                    account.permissions = permissions
+                    import json
+                    account.permissions = json.dumps(permissions)
+                    # 更新权限相关字段
+                    account.is_superuser = permissions.get('is_superuser', False)
+                    account.can_grant = permissions.get('can_grant', False)
             except Exception as e:
                 self.logger.warning(f"获取PostgreSQL账户 {username} 权限失败: {e}")
         
