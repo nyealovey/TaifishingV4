@@ -696,9 +696,9 @@ class AccountSyncService:
             FROM sys.server_principals
             WHERE type IN ('S', 'U', 'G')
             AND name NOT LIKE '##%'
-            AND name NOT LIKE 'NT SERVICE\\%'
-            AND name NOT LIKE 'NT AUTHORITY\\%'
-            AND name NOT LIKE 'BUILTIN\\%'
+            AND name NOT LIKE 'NT SERVICE\%'
+            AND name NOT LIKE 'NT AUTHORITY\%'
+            AND name NOT LIKE 'BUILTIN\%'
             AND name NOT IN ('public', 'guest', 'dbo')
             AND (name = 'sa' OR name NOT LIKE 'NT %')
             ORDER BY name
