@@ -556,78 +556,98 @@ class AccountSyncService:
         }
         
         try:
-            # 获取预定义角色成员身份
-            cursor.execute("""
-                SELECT r.rolname
-                FROM pg_roles r
-                JOIN pg_auth_members m ON r.oid = m.roleid
-                JOIN pg_roles u ON m.member = u.oid
-                WHERE u.rolname = %s
-                AND r.rolname LIKE 'pg_%'
-                ORDER BY r.rolname
-            """, (username,))
+            # 首先检查用户是否存在
+            cursor.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (username,))
+            if not cursor.fetchone():
+                self.logger.warning(f"PostgreSQL用户 {username} 不存在")
+                return permissions
             
-            predefined_roles = cursor.fetchall()
-            for role in predefined_roles:
-                permissions['predefined_roles'].append(role[0])
+            # 获取预定义角色成员身份
+            try:
+                cursor.execute("""
+                    SELECT r.rolname
+                    FROM pg_roles r
+                    JOIN pg_auth_members m ON r.oid = m.roleid
+                    JOIN pg_roles u ON m.member = u.oid
+                    WHERE u.rolname = %s
+                    AND r.rolname LIKE 'pg_%'
+                    ORDER BY r.rolname
+                """, (username,))
+                
+                predefined_roles = cursor.fetchall()
+                for role in predefined_roles:
+                    permissions['predefined_roles'].append(role[0])
+            except Exception as e:
+                self.logger.warning(f"获取PostgreSQL用户 {username} 预定义角色失败: {e}")
             
             # 获取角色属性
-            cursor.execute("""
-                SELECT 
-                    rolsuper, rolcreatedb, rolcreaterole, rolinherit, 
-                    rolcanlogin, rolreplication, rolbypassrls
-                FROM pg_roles 
-                WHERE rolname = %s
-            """, (username,))
-            
-            role_attrs = cursor.fetchone()
-            if role_attrs:
-                is_super, can_create_db, can_create_role, can_inherit, can_login, can_replicate, can_bypass_rls = role_attrs
+            try:
+                cursor.execute("""
+                    SELECT 
+                        rolsuper, rolcreatedb, rolcreaterole, rolinherit, 
+                        rolcanlogin, rolreplication, rolbypassrls
+                    FROM pg_roles 
+                    WHERE rolname = %s
+                """, (username,))
                 
-                if is_super:
-                    permissions['role_attributes'].append('SUPERUSER')
-                if can_create_db:
-                    permissions['role_attributes'].append('CREATEDB')
-                if can_create_role:
-                    permissions['role_attributes'].append('CREATEROLE')
-                if can_inherit:
-                    permissions['role_attributes'].append('INHERIT')
-                if can_login:
-                    permissions['role_attributes'].append('LOGIN')
-                if can_replicate:
-                    permissions['role_attributes'].append('REPLICATION')
-                if can_bypass_rls:
-                    permissions['role_attributes'].append('BYPASSRLS')
+                role_attrs = cursor.fetchone()
+                if role_attrs:
+                    is_super, can_create_db, can_create_role, can_inherit, can_login, can_replicate, can_bypass_rls = role_attrs
+                    
+                    if is_super:
+                        permissions['role_attributes'].append('SUPERUSER')
+                    if can_create_db:
+                        permissions['role_attributes'].append('CREATEDB')
+                    if can_create_role:
+                        permissions['role_attributes'].append('CREATEROLE')
+                    if can_inherit:
+                        permissions['role_attributes'].append('INHERIT')
+                    if can_login:
+                        permissions['role_attributes'].append('LOGIN')
+                    if can_replicate:
+                        permissions['role_attributes'].append('REPLICATION')
+                    if can_bypass_rls:
+                        permissions['role_attributes'].append('BYPASSRLS')
+            except Exception as e:
+                self.logger.warning(f"获取PostgreSQL用户 {username} 角色属性失败: {e}")
             
             # 获取数据库权限（简化版本）
-            cursor.execute("""
-                SELECT 
-                    CASE WHEN has_database_privilege(%s, 'postgres', 'CONNECT') THEN 'CONNECT' END,
-                    CASE WHEN has_database_privilege(%s, 'postgres', 'CREATE') THEN 'CREATE' END,
-                    CASE WHEN has_database_privilege(%s, 'postgres', 'TEMPORARY') THEN 'TEMPORARY' END
-            """, (username, username, username))
-            
-            row = cursor.fetchone()
-            if row:
-                connect, create, temp = row
-                if connect:
-                    permissions['database_privileges'].append('CONNECT')
-                if create:
-                    permissions['database_privileges'].append('CREATE')
-                if temp:
-                    permissions['database_privileges'].append('TEMPORARY')
+            try:
+                # 使用当前连接的数据库而不是硬编码的'postgres'
+                current_db = instance.database_name or 'postgres'
+                cursor.execute("""
+                    SELECT 
+                        CASE WHEN has_database_privilege(%s, %s, 'CONNECT') THEN 'CONNECT' END,
+                        CASE WHEN has_database_privilege(%s, %s, 'CREATE') THEN 'CREATE' END,
+                        CASE WHEN has_database_privilege(%s, %s, 'TEMPORARY') THEN 'TEMPORARY' END
+                """, (username, current_db, username, current_db, username, current_db))
+                
+                row = cursor.fetchone()
+                if row:
+                    connect, create, temp = row
+                    if connect:
+                        permissions['database_privileges'].append('CONNECT')
+                    if create:
+                        permissions['database_privileges'].append('CREATE')
+                    if temp:
+                        permissions['database_privileges'].append('TEMPORARY')
+            except Exception as e:
+                self.logger.warning(f"获取PostgreSQL用户 {username} 数据库权限失败: {e}")
             
             # 获取表空间权限
-            cursor.execute("""
-                SELECT 
-                    CASE WHEN has_tablespace_privilege(%s, 'pg_default', 'CREATE') THEN 'CREATE' END
-            """, (username,))
-            
-            row = cursor.fetchone()
-            if row:
-                create = row[0]
-                if create:
-                    permissions['tablespace_privileges'].append('CREATE')
+            try:
+                cursor.execute("""
+                    SELECT 
+                        CASE WHEN has_tablespace_privilege(%s, 'pg_default', 'CREATE') THEN 'CREATE' END
+                """, (username,))
+                
+                row = cursor.fetchone()
+                if row:
+                    create = row[0]
+                    if create:
+                        permissions['tablespace_privileges'].append('CREATE')
+            except Exception as e:
+                self.logger.warning(f"获取PostgreSQL用户 {username} 表空间权限失败: {e}")
             
             # 确定是否为超级用户和是否可以授权
             is_superuser = 'SUPERUSER' in permissions['role_attributes']
@@ -636,9 +656,13 @@ class AccountSyncService:
             permissions['is_superuser'] = is_superuser
             permissions['can_grant'] = can_grant
             
+            self.logger.info(f"PostgreSQL用户 {username} 权限获取成功: {permissions}")
+            
         except Exception as e:
             self.logger.error(f"获取PostgreSQL账户 {username} 权限失败: {e}")
-            return {}
+            # 返回基本权限结构而不是空字典
+            permissions['is_superuser'] = False
+            permissions['can_grant'] = False
         finally:
             cursor.close()
         
