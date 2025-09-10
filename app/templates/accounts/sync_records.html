@@ -193,28 +193,40 @@
                                 </div>
                             </td>
                             <td>
+                                {% if record.instance %}
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-database text-primary me-2"></i>
                                     <div>
-                                        <strong>{{ record.instance.name if record.instance else '未知实例' }}</strong>
-                                        {% if record.instance %}
+                                        <strong>{{ record.instance.name }}</strong>
                                         <br><small class="text-muted">{{ record.instance.db_type.upper() }}</small>
-                                        {% endif %}
                                     </div>
                                 </div>
+                                {% else %}
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-layer-group text-info me-2"></i>
+                                    <div>
+                                        <strong>批量同步</strong>
+                                        <br><small class="text-muted">多个实例</small>
+                                    </div>
+                                </div>
+                                {% endif %}
                             </td>
                             <td>
-                                {% if record.sync_type == 'manual' %}
+                                {% if record.sync_type == '手动单台' %}
                                 <span class="badge bg-info">
                                     <i class="fas fa-hand-pointer me-1"></i>手动单台
                                 </span>
-                                {% elif record.sync_type == 'batch' %}
+                                {% elif record.sync_type == '手动批量' %}
                                 <span class="badge bg-primary">
                                     <i class="fas fa-tasks me-1"></i>手动批量
                                 </span>
-                                {% elif record.sync_type == 'task' %}
+                                {% elif record.sync_type == '定时任务' %}
                                 <span class="badge bg-warning">
                                     <i class="fas fa-clock me-1"></i>定时任务
+                                </span>
+                                {% elif record.sync_type == '定时任务 + 手动批量' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-layer-group me-1"></i>定时任务 + 手动批量
                                 </span>
                                 {% else %}
                                 <span class="badge bg-secondary">{{ record.sync_type }}</span>

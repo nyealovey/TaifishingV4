@@ -711,10 +711,119 @@ def sync_records():
             month_ago_utc = month_ago.astimezone(pytz.UTC).replace(tzinfo=None)
             query = query.filter(SyncData.sync_time >= month_ago_utc)
     
-    # 分页查询
-    sync_records = query.order_by(SyncData.sync_time.desc()).paginate(
-        page=page, per_page=per_page, error_out=False
-    )
+    # 获取所有记录进行聚合处理
+    all_records = query.order_by(SyncData.sync_time.desc()).all()
+    
+    # 按同步类型分组处理
+    from collections import defaultdict
+    
+    # 分离需要聚合的记录和单独显示的记录
+    batch_task_records = [r for r in all_records if r.sync_type in ['batch', 'task']]
+    manual_records = [r for r in all_records if r.sync_type == 'manual']
+    
+    # 聚合batch和task类型的记录
+    grouped = defaultdict(lambda: {
+        'total_instances': 0, 
+        'success_count': 0, 
+        'failed_count': 0, 
+        'total_accounts': 0, 
+        'added_count': 0,
+        'removed_count': 0,
+        'modified_count': 0,
+        'created_at': None,
+        'sync_records': [],
+        'sync_types': [],
+        'sync_type_display': ''
+    })
+    
+    for record in batch_task_records:
+        # 使用分钟级精度作为分组键，相同分钟的同步记录为一组
+        time_key = record.sync_time.strftime('%Y-%m-%d %H:%M')
+        grouped[time_key]['total_instances'] += 1
+        if record.status == 'success':
+            grouped[time_key]['success_count'] += 1
+        else:
+            grouped[time_key]['failed_count'] += 1
+        grouped[time_key]['total_accounts'] += record.synced_count or 0
+        grouped[time_key]['added_count'] += record.added_count or 0
+        grouped[time_key]['removed_count'] += record.removed_count or 0
+        grouped[time_key]['modified_count'] += record.modified_count or 0
+        grouped[time_key]['sync_records'].append(record)
+        if record.sync_type not in grouped[time_key]['sync_types']:
+            grouped[time_key]['sync_types'].append(record.sync_type)
+        if not grouped[time_key]['created_at'] or record.sync_time > grouped[time_key]['created_at']:
+            grouped[time_key]['created_at'] = record.sync_time
+    
+    # 转换为聚合记录列表
+    aggregated_records = []
+    for time_key, data in sorted(grouped.items(), key=lambda x: x[1]['created_at'], reverse=True):
+        # 使用最新记录的时间作为显示时间
+        latest_time = max(record.sync_time for record in data['sync_records'])
+        
+        # 确定同步类型显示文本
+        sync_types = data['sync_types']
+        if 'task' in sync_types and 'batch' in sync_types:
+            sync_type_display = '定时任务 + 手动批量'
+        elif 'task' in sync_types:
+            sync_type_display = '定时任务'
+        elif 'batch' in sync_types:
+            sync_type_display = '手动批量'
+        else:
+            sync_type_display = '未知'
+        
+        # 创建聚合记录对象
+        class AggregatedRecord:
+            def __init__(self, data, latest_time, sync_type_display):
+                self.sync_time = latest_time
+                self.sync_type = sync_type_display
+                self.status = 'success' if data['failed_count'] == 0 else 'failed'
+                self.synced_count = data['total_accounts']
+                self.added_count = data['added_count']
+                self.removed_count = data['removed_count']
+                self.modified_count = data['modified_count']
+                self.message = f"成功同步 {data['total_accounts']} 个账户" if data['failed_count'] == 0 else f"部分失败，成功 {data['success_count']} 个实例"
+                self.instance = None  # 聚合记录没有单一实例
+                self.sync_records = data['sync_records']  # 保存原始记录用于详情查看
+        
+        aggregated_records.append(AggregatedRecord(data, latest_time, sync_type_display))
+    
+    # 处理手动记录，添加显示名称
+    for record in manual_records:
+        if record.sync_type == 'manual':
+            record.sync_type = '手动单台'
+    
+    # 合并聚合记录和手动记录
+    all_display_records = aggregated_records + manual_records
+    
+    # 按时间排序
+    all_display_records.sort(key=lambda x: x.sync_time, reverse=True)
+    
+    # 手动分页
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    paginated_records = all_display_records[start_idx:end_idx]
+    
+    # 创建分页对象
+    class Pagination:
+        def __init__(self, items, page, per_page, total):
+            self.items = items
+            self.page = page
+            self.per_page = per_page
+            self.total = total
+            self.pages = (total + per_page - 1) // per_page
+            self.has_prev = page > 1
+            self.has_next = page < self.pages
+        
+        def iter_pages(self, left_edge=2, right_edge=2, left_current=2, right_current=3):
+            """生成分页页码迭代器，与Flask-SQLAlchemy的Pagination兼容"""
+            last = self.pages
+            for num in range(1, last + 1):
+                if num <= left_edge or \
+                   (num > self.page - left_current - 1 and num < self.page + right_current) or \
+                   num > last - right_edge:
+                    yield num
+    
+    sync_records = Pagination(paginated_records, page, per_page, len(all_display_records))
     
     # 获取实例列表用于筛选
     instances = Instance.query.filter_by(is_active=True).all()
