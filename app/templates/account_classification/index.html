@@ -593,54 +593,6 @@ function loadClassificationOptions() {
     });
 }
 
-// 显示权限配置
-function displayPermissionsConfig(permissions) {
-    const container = document.getElementById('permissionsConfig');
-    
-    let html = '<div class="row">';
-    
-    // 根据数据库类型显示不同的权限配置
-    if (permissions.global_privileges) {
-        html += `
-            <div class="col-md-6">
-                <h6>全局权限</h6>
-                <div class="permission-group">
-                    ${permissions.global_privileges.map(perm => `
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="perm_${perm.name}">
-                            <label class="form-check-label" for="perm_${perm.name}">
-                                ${perm.name}
-                                <small class="text-muted d-block">${perm.description}</small>
-                            </label>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    }
-    
-    if (permissions.database_privileges) {
-        html += `
-            <div class="col-md-6">
-                <h6>数据库权限</h6>
-                <div class="permission-group">
-                    ${permissions.database_privileges.map(perm => `
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="${perm}" id="db_perm_${perm}">
-                            <label class="form-check-label" for="db_perm_${perm}">
-                                ${perm}
-                            </label>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    }
-    
-    html += '</div>';
-    
-    container.innerHTML = html;
-}
 
 
 // 自动分类所有账户
@@ -841,7 +793,7 @@ function loadPermissions(prefix = '') {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            displayPermissionsConfig(data.permissions, prefix);
+            displayPermissionsConfig(data.permissions, prefix, dbType);
         } else {
             showAlert('danger', '加载权限配置失败: ' + data.error);
         }
@@ -853,21 +805,20 @@ function loadPermissions(prefix = '') {
 }
 
 // 显示权限配置
-function displayPermissionsConfig(permissions, prefix = '') {
+function displayPermissionsConfig(permissions, prefix = '', dbType = '') {
     const container = document.getElementById(prefix ? `${prefix}PermissionsConfig` : 'permissionsConfig');
     
     // 调试信息
     console.log('displayPermissionsConfig - permissions:', permissions);
+    console.log('displayPermissionsConfig - dbType:', dbType);
     console.log('displayPermissionsConfig - server_roles:', permissions.server_roles);
     console.log('displayPermissionsConfig - database_roles:', permissions.database_roles);
     
     let html = '<div class="row">';
     
     // 根据数据库类型显示不同的权限配置
-    const isMySQLStructure = permissions.global_privileges && permissions.database_privileges;
-    
-    if (isMySQLStructure) {
-        // MySQL新结构：全局权限和数据库权限
+    if (dbType === 'mysql') {
+        // MySQL结构：全局权限和数据库权限
         html += `
             <div class="col-md-6">
                 <h6 class="text-primary mb-3"><i class="fas fa-globe me-2"></i>全局权限</h6>
@@ -896,7 +847,7 @@ function displayPermissionsConfig(permissions, prefix = '') {
                 </div>
             </div>
         `;
-    } else if (permissions.server_roles || permissions.database_roles || permissions.server_permissions) {
+    } else if (dbType === 'sqlserver') {
         // SQL Server结构：服务器角色、数据库角色、服务器权限、数据库权限
         html += `
             <div class="col-md-6">
@@ -950,46 +901,8 @@ function displayPermissionsConfig(permissions, prefix = '') {
                 </div>
             </div>
         `;
-    } else if (permissions.system_privileges || permissions.tablespace_privileges || permissions.object_privileges) {
-        // Oracle结构：系统权限、表空间权限（移除对象权限显示）
-        html += `
-            <div class="col-md-6">
-                <h6 class="text-primary mb-3"><i class="fas fa-shield-alt me-2"></i>系统权限</h6>
-                <div class="permission-section">
-                    ${permissions.system_privileges ? permissions.system_privileges.map(perm => `
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}sys_perm_${perm.name}">
-                            <label class="form-check-label d-flex align-items-center" for="${prefix}sys_perm_${perm.name}">
-                                <i class="fas fa-shield-alt text-primary me-2"></i>
-                                <div>
-                                    <div class="fw-bold">${perm.name}</div>
-                                    <small class="text-muted">${perm.description || '系统权限'}</small>
-                                </div>
-                            </label>
-                        </div>
-                    `).join('') : '<div class="text-muted">无系统权限</div>'}
-                </div>
-            </div>
-            <div class="col-md-6">
-                <h6 class="text-info mb-3"><i class="fas fa-hdd me-2"></i>表空间权限</h6>
-                <div class="permission-section">
-                    ${permissions.tablespace_privileges ? permissions.tablespace_privileges.map(perm => `
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}tablespace_perm_${perm.name}">
-                            <label class="form-check-label d-flex align-items-center" for="${prefix}tablespace_perm_${perm.name}">
-                                <i class="fas fa-hdd text-info me-2"></i>
-                                <div>
-                                    <div class="fw-bold">${perm.name}</div>
-                                    <small class="text-muted">${perm.description || '表空间权限'}</small>
-                                </div>
-                            </label>
-                        </div>
-                    `).join('') : '<div class="text-muted">无表空间权限</div>'}
-                </div>
-            </div>
-        `;
-    } else if (permissions.role_attributes || permissions.database_privileges) {
-        // PostgreSQL结构：角色属性、数据库权限（不包含表空间权限，避免与Oracle冲突）
+    } else if (dbType === 'postgresql') {
+        // PostgreSQL结构：角色属性、数据库权限、表空间权限
         html += `
             <div class="col-md-6">
                 <h6 class="text-primary mb-3"><i class="fas fa-user-shield me-2"></i>角色属性</h6>
@@ -1022,6 +935,44 @@ function displayPermissionsConfig(permissions, prefix = '') {
                             </label>
                         </div>
                     `).join('') : '<div class="text-muted">无数据库权限</div>'}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-info mb-3"><i class="fas fa-hdd me-2"></i>表空间权限</h6>
+                <div class="permission-section">
+                    ${permissions.tablespace_privileges ? permissions.tablespace_privileges.map(perm => `
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}tablespace_perm_${perm.name}">
+                            <label class="form-check-label d-flex align-items-center" for="${prefix}tablespace_perm_${perm.name}">
+                                <i class="fas fa-hdd text-info me-2"></i>
+                                <div>
+                                    <div class="fw-bold">${perm.name}</div>
+                                    <small class="text-muted">${perm.description || '表空间权限'}</small>
+                                </div>
+                            </label>
+                        </div>
+                    `).join('') : '<div class="text-muted">无表空间权限</div>'}
+                </div>
+            </div>
+        `;
+    } else if (dbType === 'oracle') {
+        // Oracle结构：系统权限、表空间权限
+        html += `
+            <div class="col-md-6">
+                <h6 class="text-primary mb-3"><i class="fas fa-shield-alt me-2"></i>系统权限</h6>
+                <div class="permission-section">
+                    ${permissions.system_privileges ? permissions.system_privileges.map(perm => `
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}sys_perm_${perm.name}">
+                            <label class="form-check-label d-flex align-items-center" for="${prefix}sys_perm_${perm.name}">
+                                <i class="fas fa-shield-alt text-primary me-2"></i>
+                                <div>
+                                    <div class="fw-bold">${perm.name}</div>
+                                    <small class="text-muted">${perm.description || '系统权限'}</small>
+                                </div>
+                            </label>
+                        </div>
+                    `).join('') : '<div class="text-muted">无系统权限</div>'}
                 </div>
             </div>
             <div class="col-md-6">
