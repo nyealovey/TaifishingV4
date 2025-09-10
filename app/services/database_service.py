@@ -547,7 +547,8 @@ class DatabaseService:
         """同步Oracle账户"""
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT username, account_status, created, expiry_date, profile
+            SELECT username, user_id, account_status, lock_date, expiry_date, 
+                   default_tablespace, created, authentication_type
             FROM dba_users
             WHERE username NOT LIKE 'SYS$%'
             AND username NOT LIKE 'GSM%'
@@ -582,22 +583,26 @@ class DatabaseService:
         modified_accounts = []
         
         for row in cursor.fetchall():
-            username, status, created, expiry, profile = row
+            username, user_id, status, lock_date, expiry_date, default_tablespace, created, auth_type = row
             
             # 记录服务器端的账户
             server_accounts.add((username, 'localhost'))
             
             account_data = {
                 'username': username,
+                'user_id': user_id,  # Oracle数据库中的用户ID
                 'host': 'localhost',
                 'database_name': instance.database_name or 'ORCL',
-                'account_type': None,
+                'account_type': auth_type,  # 使用认证类型作为账户类型
                 'plugin': 'oracle',
                 'password_expired': status in ['EXPIRED', 'EXPIRED(GRACE)'],
                 'password_last_changed': None,  # Oracle没有密码最后修改时间概念
-                'is_locked': status in ['LOCKED', 'LOCKED(TIMED)'],
+                'is_locked': status in ['LOCKED', 'LOCKED(TIMED)'] or lock_date is not None,
                 'is_active': status == 'OPEN',
-                'created_at': created  # Oracle的created字段映射到created_at
+                'created_at': created,  # Oracle的created字段映射到created_at
+                'lock_date': lock_date,  # 锁定日期
+                'expiry_date': expiry_date,  # 过期日期
+                'default_tablespace': default_tablespace  # 默认表空间
             }
             
             # 检查账户是否已存在
@@ -613,13 +618,17 @@ class DatabaseService:
                     username=username,
                     host='localhost',
                     database_name=instance.database_name or 'ORCL',
-                    account_type=None,  # Oracle没有简单的账户类型概念
+                    account_type=auth_type,  # 使用认证类型作为账户类型
                     plugin='oracle',
                     password_expired=status in ['EXPIRED', 'EXPIRED(GRACE)'],
                     password_last_changed=None,  # Oracle没有密码最后修改时间概念
-                    is_locked=status in ['LOCKED', 'LOCKED(TIMED)'],  # Oracle的锁定状态
+                    is_locked=status in ['LOCKED', 'LOCKED(TIMED)'] or lock_date is not None,  # Oracle的锁定状态
                     is_active=status == 'OPEN',
-                    created_at=created  # 使用Oracle的created字段作为创建时间
+                    created_at=created,  # 使用Oracle的created字段作为创建时间
+                    user_id=user_id,  # Oracle数据库中的用户ID
+                    lock_date=lock_date,  # 锁定日期
+                    expiry_date=expiry_date,  # 过期日期
+                    default_tablespace=default_tablespace  # 默认表空间
                 )
                 db.session.add(account)
                 added_count += 1
@@ -628,15 +637,25 @@ class DatabaseService:
                 # 检查是否有变化
                 has_changes = (
                     existing.password_expired != (status in ['EXPIRED', 'EXPIRED(GRACE)']) or
-                    existing.is_locked != (status in ['LOCKED', 'LOCKED(TIMED)']) or
-                    existing.is_active != (status == 'OPEN')
+                    existing.is_locked != (status in ['LOCKED', 'LOCKED(TIMED)'] or lock_date is not None) or
+                    existing.is_active != (status == 'OPEN') or
+                    existing.account_type != auth_type or
+                    existing.user_id != user_id or
+                    existing.lock_date != lock_date or
+                    existing.expiry_date != expiry_date or
+                    existing.default_tablespace != default_tablespace
                 )
                 
                 if has_changes:
                     # 更新现有账户信息
                     existing.password_expired = status in ['EXPIRED', 'EXPIRED(GRACE)']
-                    existing.is_locked = status in ['LOCKED', 'LOCKED(TIMED)']  # Oracle的锁定状态
+                    existing.is_locked = status in ['LOCKED', 'LOCKED(TIMED)'] or lock_date is not None
                     existing.is_active = status == 'OPEN'
+                    existing.account_type = auth_type
+                    existing.user_id = user_id
+                    existing.lock_date = lock_date
+                    existing.expiry_date = expiry_date
+                    existing.default_tablespace = default_tablespace
                     # 注意：created_at字段在账户创建后不应该被更新
                     updated_count += 1
                     modified_accounts.append(account_data)

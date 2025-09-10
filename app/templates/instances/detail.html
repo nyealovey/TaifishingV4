@@ -234,10 +234,13 @@
                                 <th>状态</th>
                                 <th>操作</th>
                                 {% elif instance.db_type == 'oracle' %}
-                                <th>ID</th>
+                                <th>Oracle ID</th>
                                 <th>用户名</th>
-                                <th>类型</th>
+                                <th>认证类型</th>
                                 <th>状态</th>
+                                <th>锁定日期</th>
+                                <th>过期日期</th>
+                                <th>默认表空间</th>
                                 <th>创建时间</th>
                                 <th>操作</th>
                                 {% else %}
@@ -351,7 +354,7 @@
                                 </td>
                                 {% elif instance.db_type == 'oracle' %}
                                 <td>
-                                    <span class="badge bg-secondary">{{ account.id }}</span>
+                                    <span class="badge bg-info">{{ account.user_id or 'N/A' }}</span>
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
@@ -379,6 +382,33 @@
                                         <span class="badge bg-secondary">
                                             <i class="fas fa-times-circle me-1"></i>禁用
                                         </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.lock_date %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-times me-1"></i>
+                                            {{ account.lock_date.strftime('%Y-%m-%d %H:%M') }}
+                                        </small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.expiry_date %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-alt me-1"></i>
+                                            {{ account.expiry_date.strftime('%Y-%m-%d %H:%M') }}
+                                        </small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.default_tablespace %}
+                                        <span class="badge bg-light text-dark">{{ account.default_tablespace }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
                                     {% endif %}
                                 </td>
                                 <td>

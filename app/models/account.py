@@ -29,6 +29,12 @@ class Account(db.Model):
     is_superuser = db.Column(db.Boolean, default=False)  # 是否为超级用户
     can_grant = db.Column(db.Boolean, default=False)  # 是否有授权权限
     
+    # Oracle特有字段
+    user_id = db.Column(db.Integer, nullable=True)  # Oracle数据库中的用户ID
+    lock_date = db.Column(db.DateTime, nullable=True)  # 锁定日期
+    expiry_date = db.Column(db.DateTime, nullable=True)  # 过期日期
+    default_tablespace = db.Column(db.String(100), nullable=True)  # 默认表空间
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -56,6 +62,10 @@ class Account(db.Model):
             'permissions': json.loads(self.permissions) if self.permissions else None,
             'is_superuser': self.is_superuser,
             'can_grant': self.can_grant,
+            'user_id': self.user_id,  # Oracle数据库中的用户ID
+            'lock_date': self.lock_date.isoformat() if self.lock_date else None,  # 锁定日期
+            'expiry_date': self.expiry_date.isoformat() if self.expiry_date else None,  # 过期日期
+            'default_tablespace': self.default_tablespace,  # 默认表空间
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
             'instance_name': self.instance.name if self.instance else None,
