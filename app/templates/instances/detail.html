@@ -840,22 +840,23 @@ function showPermissionsModal(permissions, account) {
                             ` : '<p class="text-muted">无数据库级别角色</p>'}
                         </div>
                         ` : ''}
+                        ${dbType === 'mysql' || dbType === 'sqlserver' ? `
                         <div class="mb-3">
                             <h6>${dbType === 'sqlserver' ? '服务器权限' : '全局权限'}</h6>
                             <div class="row">
-                                ${permissions.global.map(perm => `
+                                ${permissions.global && permissions.global.map ? permissions.global.map(perm => `
                                     <div class="col-md-6 mb-2">
                                         <span class="badge ${perm.granted ? 'bg-success' : 'bg-secondary'} me-2">
                                             ${perm.granted ? '✓' : '✗'}
                                         </span>
                                         ${perm.privilege}
                                     </div>
-                                `).join('')}
+                                `).join('') : '<p class="text-muted">无全局权限</p>'}
                             </div>
                         </div>
                         <div class="mb-3">
                             <h6>数据库权限</h6>
-                            ${permissions.database.length > 0 ? `
+                            ${permissions.database && permissions.database.length > 0 ? `
                                 <div class="table-responsive">
                                     <table class="table table-sm">
                                         <thead>
@@ -880,30 +881,18 @@ function showPermissionsModal(permissions, account) {
                                 </div>
                             ` : '<p class="text-muted">无特定数据库权限</p>'}
                         </div>
-                        ${dbType === 'postgresql' && permissions.tablespace && permissions.tablespace.length > 0 ? `
+                        ` : ''}
+                        ${dbType === 'postgresql' && permissions.tablespace_privileges && permissions.tablespace_privileges.length > 0 ? `
                         <div class="mb-3">
                             <h6>表空间权限</h6>
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>表空间</th>
-                                            <th>权限</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${permissions.tablespace.map(ts => `
-                                            <tr>
-                                                <td>${ts.tablespace}</td>
-                                                <td>
-                                                    ${ts.privileges.map(priv => `
-                                                        <span class="badge ${priv === 'OWNER' ? 'bg-warning' : 'bg-success'} me-1">${priv}</span>
-                                                    `).join('')}
-                                                </td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
+                            <div class="row">
+                                ${permissions.tablespace_privileges.map(priv => `
+                                    <div class="col-md-6 mb-2">
+                                        <span class="badge bg-info me-2">
+                                            <i class="fas fa-hdd me-1"></i>${priv}
+                                        </span>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
                         ` : ''}
