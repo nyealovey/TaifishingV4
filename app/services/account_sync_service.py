@@ -378,7 +378,7 @@ class AccountSyncService:
         # 删除服务器端不存在的本地账户
         server_accounts = set()
         for account_data in accounts:
-            username, host, account_type, database_name, plugin_name, password_expired, password_last_changed, account_locked, password_lifetime, can_select, can_insert, can_update, can_delete, can_create, can_drop, is_superuser = account_data
+            username, host, account_type, database_name, plugin_name, password_expired, password_last_changed, account_locked, password_lifetime, can_select, can_insert, can_update, can_delete, can_create, can_drop, is_superuser, account_created = account_data
             server_accounts.add((username, host))
         
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
