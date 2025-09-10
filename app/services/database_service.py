@@ -1914,6 +1914,13 @@ class DatabaseService:
             print(f"DEBUG: 实时查询的权限数据: {permissions}")
             
             if permissions:
+                # 将实时查询到的权限数据保存到本地数据库
+                import json
+                account.permissions = json.dumps(permissions)
+                account.is_superuser = permissions.get('is_superuser', False)
+                account.can_grant = permissions.get('can_grant', False)
+                db.session.commit()
+                
                 result = {
                     'predefined_roles': permissions.get('predefined_roles', []),
                     'role_attributes': permissions.get('role_attributes', []),
@@ -2100,6 +2107,13 @@ class DatabaseService:
             if permissions_info and 'permissions_json' in permissions_info:
                 import json
                 permissions = json.loads(permissions_info['permissions_json'])
+                
+                # 将实时查询到的权限数据保存到本地数据库
+                account.permissions = permissions_info['permissions_json']
+                account.is_superuser = permissions_info.get('is_superuser', False)
+                account.can_grant = permissions_info.get('can_grant', False)
+                db.session.commit()
+                
                 return {
                     'roles': permissions.get('roles', []),
                     'system_privileges': permissions.get('system_privileges', []),
