@@ -494,6 +494,10 @@ class AccountClassificationService:
                 'error': f'自动分类账户失败: {str(e)}'
             }
     
+    def evaluate_rule(self, rule: ClassificationRule, account: Account) -> bool:
+        """评估规则是否匹配账户 - 公共方法"""
+        return self._evaluate_rule(account, rule)
+    
     def _evaluate_rule(self, account: Account, rule: ClassificationRule) -> bool:
         """评估规则是否匹配账户"""
         try:
