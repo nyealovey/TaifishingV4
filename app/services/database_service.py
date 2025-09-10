@@ -1039,6 +1039,9 @@ class DatabaseService:
             password = instance.credential.get_plain_password()
             
             # 优先使用Thick模式连接（适用于所有Oracle版本，包括11g）
+            conn = None
+            thick_mode_failed = False
+            
             # 首先尝试Thick模式连接
             try:
                 # 初始化Thick模式（需要Oracle Instant Client）
@@ -1048,9 +1051,13 @@ class DatabaseService:
                     password=password,
                     dsn=dsn
                 )
-            except oracledb.DatabaseError as e:
+            except Exception as e:
+                # Thick模式失败，记录错误并尝试Thin模式
+                thick_mode_failed = True
+                error_msg = str(e)
+                
                 # 如果Thick模式失败，尝试Thin模式（适用于Oracle 12c+）
-                if "DPI-1047" in str(e) or "Oracle Client library" in str(e):
+                if "DPI-1047" in error_msg or "Oracle Client library" in error_msg or "thin mode" in error_msg.lower():
                     # Thick模式失败，尝试Thin模式
                     try:
                         conn = oracledb.connect(
@@ -1058,11 +1065,14 @@ class DatabaseService:
                             password=password,
                             dsn=dsn
                         )
-                    except oracledb.DatabaseError as thin_error:
+                    except Exception as thin_error:
                         # 如果Thin模式也失败，抛出原始错误
                         raise e
                 else:
                     raise
+            
+            if not conn:
+                raise Exception("无法建立Oracle连接")
             
             # 测试连接有效性
             with conn.cursor() as cursor:
@@ -1179,11 +1189,17 @@ class DatabaseService:
                 'error_type': 'oracledb_error'
             }
         except Exception as e:
+            error_msg = str(e)
+            error_type = type(e).__name__
+            
+            # 添加详细的调试信息
+            debug_info = f"错误类型: {error_type}, 错误信息: {error_msg}"
+            
             return {
                 'success': False,
                 'error': 'Oracle连接失败',
-                'details': str(e),
-                'solution': '请检查所有连接参数和服务器状态',
+                'details': f'{error_msg} (调试信息: {debug_info})',
+                'solution': '请检查所有连接参数和服务器状态，确保Oracle Instant Client已正确安装',
                 'error_type': 'unknown_error'
             }
 

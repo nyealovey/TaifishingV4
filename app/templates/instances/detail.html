@@ -488,7 +488,18 @@ function testConnection() {
             'Content-Type': 'application/json'
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                throw new Error('认证失败，请重新登录');
+            } else if (response.status === 404) {
+                throw new Error('API接口不存在');
+            } else {
+                throw new Error(`HTTP错误: ${response.status}`);
+            }
+        }
+        return response.json();
+    })
     .then(data => {
         const statusBadge = document.getElementById('connectionStatus');
         const resultDiv = document.getElementById('testResult');
@@ -548,7 +559,8 @@ function testConnection() {
             <div class="alert alert-danger">
                 <i class="fas fa-exclamation-triangle me-2"></i>
                 <strong>测试失败！</strong><br>
-                网络错误或服务器无响应
+                <strong>错误信息：</strong>${error.message}<br>
+                <small class="text-muted">请检查网络连接或重新登录</small>
             </div>
         `;
         document.getElementById('testResult').style.display = 'block';
