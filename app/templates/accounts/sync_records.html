@@ -160,6 +160,12 @@
     <!-- 同步记录列表 -->
     <div class="card">
         <div class="card-body">
+            <!-- 调试信息 -->
+            <div class="alert alert-info">
+                <strong>调试信息:</strong> 
+                总记录数: {{ sync_records.total if sync_records else 0 }}, 
+                当前页记录数: {{ sync_records.items|length if sync_records else 0 }}
+            </div>
             {% if sync_records.items %}
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -305,7 +311,7 @@
                 <i class="fas fa-history fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">暂无同步记录</h5>
                 <p class="text-muted">开始同步账户数据以查看历史记录</p>
-                <a href="{{ url_for('accounts.index') }}" class="btn btn-primary">
+                <a href="{{ url_for('accounts.list') }}" class="btn btn-primary">
                     <i class="fas fa-sync me-2"></i>开始同步
                 </a>
             </div>
