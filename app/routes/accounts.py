@@ -806,66 +806,90 @@ def export():
 def get_account_statistics():
     """获取账户统计信息"""
     try:
-        # 总实例数
+        from app.models.account import Account
+        from app.models.account_classification import AccountClassification
+        
+        # 总体统计
+        total_accounts = Account.query.count()
+        active_accounts = Account.query.filter_by(is_locked=False).count()
+        locked_accounts = Account.query.filter_by(is_locked=True).count()
         total_instances = Instance.query.filter_by(is_active=True).count()
         
-        # 总同步次数
-        total_syncs = SyncData.query.count()
+        # 按数据库类型统计
+        db_type_stats = {}
+        for db_type in ['mysql', 'postgresql', 'oracle', 'sqlserver']:
+            accounts = db.session.query(Account).join(Instance, Account.instance_id == Instance.id).filter(Instance.db_type == db_type).all()
+            db_type_stats[db_type] = {
+                'total': len(accounts),
+                'active': len([a for a in accounts if not a.is_locked]),
+                'locked': len([a for a in accounts if a.is_locked])
+            }
         
-        # 成功同步次数
-        successful_syncs = SyncData.query.filter_by(status='success').count()
+        # 按环境统计
+        environment_stats = {}
+        for env in ['production', 'development', 'testing']:
+            accounts = db.session.query(Account).join(Instance, Account.instance_id == Instance.id).filter(Instance.environment == env).all()
+            environment_stats[env] = {
+                'total': len(accounts),
+                'active': len([a for a in accounts if not a.is_locked]),
+                'locked': len([a for a in accounts if a.is_locked])
+            }
         
-        # 失败同步次数
-        failed_syncs = SyncData.query.filter_by(status='failed').count()
+        # 按分类统计
+        classification_stats = {}
+        from app.models.account_classification import AccountClassificationAssignment
+        classifications = AccountClassification.query.all()
+        for classification in classifications:
+            account_count = db.session.query(Account).join(
+                AccountClassificationAssignment, 
+                Account.id == AccountClassificationAssignment.account_id
+            ).filter(AccountClassificationAssignment.classification_id == classification.id).count()
+            
+            classification_stats[classification.name] = {
+                'total': account_count,
+                'color': classification.color or '#6c757d'
+            }
         
-        # 今日同步次数
-        today = now().date()
-        today_syncs = SyncData.query.filter(
-            db.func.date(SyncData.sync_time) == today
-        ).count()
+        # 实例统计
+        instance_stats = []
+        instances = Instance.query.filter_by(is_active=True).all()
+        for instance in instances:
+            accounts = Account.query.filter_by(instance_id=instance.id).all()
+            instance_stats.append({
+                'name': instance.name,
+                'db_type': instance.db_type,
+                'environment': instance.environment,
+                'total_accounts': len(accounts),
+                'active_accounts': len([a for a in accounts if not a.is_locked]),
+                'locked_accounts': len([a for a in accounts if a.is_locked])
+            })
         
-        # 最近7天同步趋势
-        week_ago = now() - timedelta(days=7)
-        week_syncs = SyncData.query.filter(
-            SyncData.sync_time >= week_ago
-        ).count()
-        
-        # 各实例同步统计
-        instance_stats = db.session.query(
-            Instance.name,
-            db.func.count(SyncData.id).label('sync_count'),
-            db.func.sum(db.case((SyncData.status == 'success', 1), else_=0)).label('success_count')
-        ).outerjoin(SyncData).group_by(Instance.id, Instance.name).all()
+        # 最近账户
+        recent_accounts = Account.query.order_by(Account.created_at.desc()).limit(10).all()
         
         return {
+            'total_accounts': total_accounts,
+            'active_accounts': active_accounts,
+            'locked_accounts': locked_accounts,
             'total_instances': total_instances,
-            'total_syncs': total_syncs,
-            'successful_syncs': successful_syncs,
-            'failed_syncs': failed_syncs,
-            'success_rate': round((successful_syncs / total_syncs * 100) if total_syncs > 0 else 0, 2),
-            'today_syncs': today_syncs,
-            'week_syncs': week_syncs,
-            'instance_stats': [
-                {
-                    'name': stat.name,
-                    'sync_count': stat.sync_count or 0,
-                    'success_count': stat.success_count or 0,
-                    'success_rate': round((stat.success_count / stat.sync_count * 100) if stat.sync_count > 0 else 0, 2)
-                }
-                for stat in instance_stats
-            ]
+            'db_type_stats': db_type_stats,
+            'environment_stats': environment_stats,
+            'classification_stats': classification_stats,
+            'instance_stats': instance_stats,
+            'recent_accounts': recent_accounts
         }
     except Exception as e:
         logging.error(f"获取统计信息失败: {e}")
         return {
+            'total_accounts': 0,
+            'active_accounts': 0,
+            'locked_accounts': 0,
             'total_instances': 0,
-            'total_syncs': 0,
-            'successful_syncs': 0,
-            'failed_syncs': 0,
-            'success_rate': 0,
-            'today_syncs': 0,
-            'week_syncs': 0,
-            'instance_stats': []
+            'db_type_stats': {},
+            'environment_stats': {},
+            'classification_stats': {},
+            'instance_stats': [],
+            'recent_accounts': []
         }
 
 def get_account_list_statistics():
