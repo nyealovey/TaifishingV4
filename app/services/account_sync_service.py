@@ -541,23 +541,32 @@ class AccountSyncService:
         }
     
     def _get_postgresql_account_permissions(self, instance: Instance, conn, username: str) -> Dict[str, Any]:
-        """获取PostgreSQL账户权限"""
+        """获取PostgreSQL账户权限 - 根据新的权限配置结构"""
+        import json
         cursor = conn.cursor()
         permissions = {
+            'predefined_roles': [],
             'role_attributes': [],
             'database_privileges': [],
-            'table_privileges': [],
-            'sequence_privileges': [],
-            'function_privileges': [],
-            'schema_privileges': [],
-            'language_privileges': [],
-            'tablespace_privileges': [],
-            'fdw_privileges': [],
-            'server_privileges': [],
-            'type_privileges': []
+            'tablespace_privileges': []
         }
         
         try:
+            # 获取预定义角色成员身份
+            cursor.execute("""
+                SELECT r.rolname
+                FROM pg_roles r
+                JOIN pg_auth_members m ON r.oid = m.roleid
+                JOIN pg_roles u ON m.member = u.oid
+                WHERE u.rolname = %s
+                AND r.rolname LIKE 'pg_%'
+                ORDER BY r.rolname
+            """, (username,))
+            
+            predefined_roles = cursor.fetchall()
+            for role in predefined_roles:
+                permissions['predefined_roles'].append(role[0])
+            
             # 获取角色属性
             cursor.execute("""
                 SELECT 
@@ -586,156 +595,35 @@ class AccountSyncService:
                 if can_bypass_rls:
                     permissions['role_attributes'].append('BYPASSRLS')
             
-            # 获取数据库权限
+            # 获取数据库权限（简化版本）
             cursor.execute("""
                 SELECT 
-                    datname,
-                    CASE WHEN has_database_privilege(%s, datname, 'CONNECT') THEN 'CONNECT' END,
-                    CASE WHEN has_database_privilege(%s, datname, 'CREATE') THEN 'CREATE' END,
-                    CASE WHEN has_database_privilege(%s, datname, 'TEMPORARY') THEN 'TEMPORARY' END
-                FROM pg_database 
-                WHERE datistemplate = false
-                AND (has_database_privilege(%s, datname, 'CONNECT') OR 
-                     has_database_privilege(%s, datname, 'CREATE') OR 
-                     has_database_privilege(%s, datname, 'TEMPORARY'))
-            """, (username, username, username, username, username, username))
+                    CASE WHEN has_database_privilege(%s, 'postgres', 'CONNECT') THEN 'CONNECT' END,
+                    CASE WHEN has_database_privilege(%s, 'postgres', 'CREATE') THEN 'CREATE' END,
+                    CASE WHEN has_database_privilege(%s, 'postgres', 'TEMPORARY') THEN 'TEMPORARY' END
+            """, (username, username, username))
             
-            for row in cursor.fetchall():
-                db_name, connect, create, temp = row
+            row = cursor.fetchone()
+            if row:
+                connect, create, temp = row
                 if connect:
-                    permissions['database_privileges'].append(f"CONNECT ON {db_name}")
+                    permissions['database_privileges'].append('CONNECT')
                 if create:
-                    permissions['database_privileges'].append(f"CREATE ON {db_name}")
+                    permissions['database_privileges'].append('CREATE')
                 if temp:
-                    permissions['database_privileges'].append(f"TEMPORARY ON {db_name}")
-            
-            # 获取表权限
-            cursor.execute("""
-                SELECT 
-                    schemaname, tablename,
-                    CASE WHEN has_table_privilege(%s, schemaname||'.'||tablename, 'SELECT') THEN 'SELECT' END,
-                    CASE WHEN has_table_privilege(%s, schemaname||'.'||tablename, 'INSERT') THEN 'INSERT' END,
-                    CASE WHEN has_table_privilege(%s, schemaname||'.'||tablename, 'UPDATE') THEN 'UPDATE' END,
-                    CASE WHEN has_table_privilege(%s, schemaname||'.'||tablename, 'DELETE') THEN 'DELETE' END,
-                    CASE WHEN has_table_privilege(%s, schemaname||'.'||tablename, 'TRUNCATE') THEN 'TRUNCATE' END,
-                    CASE WHEN has_table_privilege(%s, schemaname||'.'||tablename, 'REFERENCES') THEN 'REFERENCES' END,
-                    CASE WHEN has_table_privilege(%s, schemaname||'.'||tablename, 'TRIGGER') THEN 'TRIGGER' END
-                FROM pg_tables 
-                WHERE schemaname NOT IN ('information_schema', 'pg_catalog')
-                AND (has_table_privilege(%s, schemaname||'.'||tablename, 'SELECT') OR 
-                     has_table_privilege(%s, schemaname||'.'||tablename, 'INSERT') OR 
-                     has_table_privilege(%s, schemaname||'.'||tablename, 'UPDATE') OR 
-                     has_table_privilege(%s, schemaname||'.'||tablename, 'DELETE') OR 
-                     has_table_privilege(%s, schemaname||'.'||tablename, 'TRUNCATE') OR 
-                     has_table_privilege(%s, schemaname||'.'||tablename, 'REFERENCES') OR 
-                     has_table_privilege(%s, schemaname||'.'||tablename, 'TRIGGER'))
-                LIMIT 100
-            """, (username, username, username, username, username, username, username, 
-                  username, username, username, username, username, username, username))
-            
-            for row in cursor.fetchall():
-                schema, table, select, insert, update, delete, truncate, references, trigger = row
-                table_name = f"{schema}.{table}"
-                if select:
-                    permissions['table_privileges'].append(f"SELECT ON {table_name}")
-                if insert:
-                    permissions['table_privileges'].append(f"INSERT ON {table_name}")
-                if update:
-                    permissions['table_privileges'].append(f"UPDATE ON {table_name}")
-                if delete:
-                    permissions['table_privileges'].append(f"DELETE ON {table_name}")
-                if truncate:
-                    permissions['table_privileges'].append(f"TRUNCATE ON {table_name}")
-                if references:
-                    permissions['table_privileges'].append(f"REFERENCES ON {table_name}")
-                if trigger:
-                    permissions['table_privileges'].append(f"TRIGGER ON {table_name}")
-            
-            # 获取序列权限
-            cursor.execute("""
-                SELECT 
-                    schemaname, sequencename,
-                    CASE WHEN has_sequence_privilege(%s, schemaname||'.'||sequencename, 'SELECT') THEN 'SELECT' END,
-                    CASE WHEN has_sequence_privilege(%s, schemaname||'.'||sequencename, 'UPDATE') THEN 'UPDATE' END,
-                    CASE WHEN has_sequence_privilege(%s, schemaname||'.'||sequencename, 'USAGE') THEN 'USAGE' END
-                FROM pg_sequences 
-                WHERE schemaname NOT IN ('information_schema', 'pg_catalog')
-                AND (has_sequence_privilege(%s, schemaname||'.'||sequencename, 'SELECT') OR 
-                     has_sequence_privilege(%s, schemaname||'.'||sequencename, 'UPDATE') OR 
-                     has_sequence_privilege(%s, schemaname||'.'||sequencename, 'USAGE'))
-                LIMIT 50
-            """, (username, username, username, username, username, username))
-            
-            for row in cursor.fetchall():
-                schema, sequence, select, update, usage = row
-                seq_name = f"{schema}.{sequence}"
-                if select:
-                    permissions['sequence_privileges'].append(f"SELECT ON {seq_name}")
-                if update:
-                    permissions['sequence_privileges'].append(f"UPDATE ON {seq_name}")
-                if usage:
-                    permissions['sequence_privileges'].append(f"USAGE ON {seq_name}")
-            
-            # 获取函数权限
-            cursor.execute("""
-                SELECT 
-                    schemaname, proname,
-                    CASE WHEN has_function_privilege(%s, oid, 'EXECUTE') THEN 'EXECUTE' END
-                FROM pg_proc p
-                JOIN pg_namespace n ON p.pronamespace = n.oid
-                WHERE n.nspname NOT IN ('information_schema', 'pg_catalog')
-                AND has_function_privilege(%s, p.oid, 'EXECUTE')
-                LIMIT 50
-            """, (username, username))
-            
-            for row in cursor.fetchall():
-                schema, func_name, execute = row
-                if execute:
-                    permissions['function_privileges'].append(f"EXECUTE ON {schema}.{func_name}")
-            
-            # 获取模式权限
-            cursor.execute("""
-                SELECT 
-                    nspname,
-                    CASE WHEN has_schema_privilege(%s, nspname, 'CREATE') THEN 'CREATE' END,
-                    CASE WHEN has_schema_privilege(%s, nspname, 'USAGE') THEN 'USAGE' END
-                FROM pg_namespace 
-                WHERE nspname NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
-                AND (has_schema_privilege(%s, nspname, 'CREATE') OR 
-                     has_schema_privilege(%s, nspname, 'USAGE'))
-            """, (username, username, username, username))
-            
-            for row in cursor.fetchall():
-                schema, create, usage = row
-                if create:
-                    permissions['schema_privileges'].append(f"CREATE ON {schema}")
-                if usage:
-                    permissions['schema_privileges'].append(f"USAGE ON {schema}")
+                    permissions['database_privileges'].append('TEMPORARY')
             
             # 获取表空间权限
             cursor.execute("""
                 SELECT 
-                    spcname,
-                    CASE WHEN has_tablespace_privilege(%s, spcname, 'CREATE') THEN 'CREATE' END
-                FROM pg_tablespace
-                WHERE has_tablespace_privilege(%s, spcname, 'CREATE') = true
-            """, (username, username))
-            
-            for row in cursor.fetchall():
-                tablespace, create = row
-                if create:
-                    permissions['tablespace_privileges'].append(f"CREATE ON {tablespace}")
-            
-            # 获取表空间所有权
-            cursor.execute("""
-                SELECT spcname
-                FROM pg_tablespace
-                WHERE spcowner = (SELECT oid FROM pg_roles WHERE rolname = %s)
+                    CASE WHEN has_tablespace_privilege(%s, 'pg_default', 'CREATE') THEN 'CREATE' END
             """, (username,))
             
-            for row in cursor.fetchall():
-                tablespace = row[0]
-                permissions['tablespace_privileges'].append(f"OWNER OF {tablespace}")
+            row = cursor.fetchone()
+            if row:
+                create = row[0]
+                if create:
+                    permissions['tablespace_privileges'].append('CREATE')
             
             # 确定是否为超级用户和是否可以授权
             is_superuser = 'SUPERUSER' in permissions['role_attributes']
@@ -1358,36 +1246,18 @@ class AccountSyncService:
             cursor.close()
     
     def _get_oracle_account_permissions(self, conn, username: str) -> Dict[str, Any]:
-        """获取Oracle账户权限信息"""
+        """获取Oracle账户权限信息 - 根据新的权限配置结构"""
         import json
         
         cursor = conn.cursor()
+        permissions = {
+            'roles': [],
+            'system_privileges': [],
+            'tablespace_privileges': [],
+            'tablespace_quotas': []
+        }
         
         try:
-            # 获取系统权限
-            cursor.execute("""
-                SELECT privilege, admin_option
-                FROM dba_sys_privs
-                WHERE grantee = :username
-                ORDER BY privilege
-            """, {'username': username.upper()})
-            
-            system_permissions = []
-            can_grant = False
-            is_superuser = False
-            
-            for row in cursor.fetchall():
-                privilege, admin_option = row
-                system_permissions.append({
-                    'privilege': privilege,
-                    'granted': True,
-                    'grantable': admin_option == 'YES'
-                })
-                if admin_option == 'YES':
-                    can_grant = True
-                if privilege in ['SYSDBA', 'SYSOPER', 'DBA']:
-                    is_superuser = True
-            
             # 获取角色权限
             cursor.execute("""
                 SELECT granted_role, admin_option
@@ -1396,58 +1266,61 @@ class AccountSyncService:
                 ORDER BY granted_role
             """, {'username': username.upper()})
             
-            role_permissions = []
             for row in cursor.fetchall():
                 role, admin_option = row
-                role_permissions.append({
-                    'role': role,
-                    'granted': True,
-                    'grantable': admin_option == 'YES'
-                })
-                if admin_option == 'YES':
-                    can_grant = True
-                if role in ['DBA', 'CONNECT', 'RESOURCE']:
-                    is_superuser = True
+                permissions['roles'].append(role)
             
-            # 获取对象权限
+            # 获取系统权限
             cursor.execute("""
-                SELECT owner, table_name, privilege, grantable
-                FROM dba_tab_privs
+                SELECT privilege, admin_option
+                FROM dba_sys_privs
                 WHERE grantee = :username
-                ORDER BY owner, table_name, privilege
+                ORDER BY privilege
             """, {'username': username.upper()})
             
-            object_permissions = {}
             for row in cursor.fetchall():
-                owner, table_name, privilege, grantable = row
-                key = f"{owner}.{table_name}"
-                if key not in object_permissions:
-                    object_permissions[key] = []
-                object_permissions[key].append({
-                    'privilege': privilege,
-                    'grantable': grantable == 'YES'
-                })
-                if grantable == 'YES':
-                    can_grant = True
+                privilege, admin_option = row
+                permissions['system_privileges'].append(privilege)
             
-            # 转换为数据库权限格式
-            database_permissions = []
-            for obj_name, privileges in object_permissions.items():
-                privilege_names = [p['privilege'] for p in privileges]
-                database_permissions.append({
-                    'database': obj_name,
-                    'privileges': privilege_names
-                })
+            # 获取表空间权限
+            cursor.execute("""
+                SELECT privilege
+                FROM dba_tab_privs
+                WHERE grantee = :username
+                AND table_name IN (SELECT tablespace_name FROM dba_tablespaces)
+                ORDER BY privilege
+            """, {'username': username.upper()})
             
-            permissions_data = {
-                'system_privileges': system_permissions,
-                'role_privileges': role_permissions,
-                'object_privileges': object_permissions,
-                'database': database_permissions
-            }
+            for row in cursor.fetchall():
+                privilege = row[0]
+                permissions['tablespace_privileges'].append(privilege)
+            
+            # 获取表空间配额
+            cursor.execute("""
+                SELECT 
+                    CASE 
+                        WHEN max_bytes = -1 THEN 'UNLIMITED'
+                        WHEN max_bytes = 0 THEN 'NO QUOTA'
+                        ELSE 'QUOTA'
+                    END as quota_type
+                FROM dba_ts_quotas
+                WHERE username = :username
+                ORDER BY tablespace_name
+            """, {'username': username.upper()})
+            
+            for row in cursor.fetchall():
+                quota_type = row[0]
+                permissions['tablespace_quotas'].append(quota_type)
+            
+            # 确定是否为超级用户和是否可以授权
+            is_superuser = any(role in ['DBA', 'SYSDBA', 'SYSOPER'] for role in permissions['roles'])
+            can_grant = is_superuser or any(priv in ['GRANT ANY PRIVILEGE', 'GRANT ANY ROLE'] for priv in permissions['system_privileges'])
+            
+            permissions['is_superuser'] = is_superuser
+            permissions['can_grant'] = can_grant
             
             return {
-                'permissions_json': json.dumps(permissions_data),
+                'permissions_json': json.dumps(permissions),
                 'is_superuser': is_superuser,
                 'can_grant': can_grant
             }
@@ -1455,7 +1328,7 @@ class AccountSyncService:
         except Exception as e:
             self.logger.error(f"获取Oracle权限失败: {e}")
             return {
-                'permissions_json': json.dumps({'system_privileges': [], 'role_privileges': [], 'object_privileges': {}, 'database': []}),
+                'permissions_json': json.dumps({'roles': [], 'system_privileges': [], 'tablespace_privileges': [], 'tablespace_quotas': []}),
                 'is_superuser': False,
                 'can_grant': False
             }
