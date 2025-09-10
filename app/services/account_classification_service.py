@@ -729,18 +729,26 @@ class AccountClassificationService:
                 return False
             
             permissions = json.loads(account.permissions)
-            required_permissions = rule_expression.get('permissions', [])
             
-            # 检查是否包含所有必需的权限
-            for required_perm in required_permissions:
-                found = False
-                for perm_category, perm_list in permissions.items():
-                    if required_perm in perm_list:
-                        found = True
-                        break
-                
-                if not found:
-                    self.logger.debug(f"账户 {account.username} 缺少权限: {required_perm}")
+            # 检查角色属性权限
+            required_role_attrs = rule_expression.get('role_attributes', [])
+            for required_attr in required_role_attrs:
+                if required_attr not in permissions.get('role_attributes', []):
+                    self.logger.debug(f"账户 {account.username} 缺少角色属性: {required_attr}")
+                    return False
+            
+            # 检查数据库权限
+            required_db_perms = rule_expression.get('database_privileges', [])
+            for required_perm in required_db_perms:
+                if required_perm not in permissions.get('database_privileges', []):
+                    self.logger.debug(f"账户 {account.username} 缺少数据库权限: {required_perm}")
+                    return False
+            
+            # 检查表空间权限
+            required_tablespace_perms = rule_expression.get('tablespace_privileges', [])
+            for required_perm in required_tablespace_perms:
+                if required_perm not in permissions.get('tablespace_privileges', []):
+                    self.logger.debug(f"账户 {account.username} 缺少表空间权限: {required_perm}")
                     return False
             
             self.logger.debug(f"账户 {account.username} 匹配PostgreSQL规则")
@@ -761,18 +769,19 @@ class AccountClassificationService:
                 return False
             
             permissions = json.loads(account.permissions)
-            required_permissions = rule_expression.get('permissions', [])
             
-            # 检查是否包含所有必需的权限
-            for required_perm in required_permissions:
-                found = False
-                for perm_category, perm_list in permissions.items():
-                    if required_perm in perm_list:
-                        found = True
-                        break
-                
-                if not found:
-                    self.logger.debug(f"账户 {account.username} 缺少权限: {required_perm}")
+            # 检查系统权限
+            required_system_perms = rule_expression.get('system_privileges', [])
+            for required_perm in required_system_perms:
+                if required_perm not in permissions.get('system_privileges', []):
+                    self.logger.debug(f"账户 {account.username} 缺少系统权限: {required_perm}")
+                    return False
+            
+            # 检查表空间权限
+            required_tablespace_perms = rule_expression.get('tablespace_privileges', [])
+            for required_perm in required_tablespace_perms:
+                if required_perm not in permissions.get('tablespace_privileges', []):
+                    self.logger.debug(f"账户 {account.username} 缺少表空间权限: {required_perm}")
                     return False
             
             self.logger.debug(f"账户 {account.username} 匹配Oracle规则")

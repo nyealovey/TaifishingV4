@@ -412,6 +412,11 @@ def init_permission_configs():
         {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'UNDER', 'description': '继承权限', 'sort_order': 13},
         {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'WRITE', 'description': '写入权限', 'sort_order': 14},
         {'db_type': 'oracle', 'category': 'object_privileges', 'permission_name': 'READ', 'description': '读取权限', 'sort_order': 15},
+        # 表空间权限
+        {'db_type': 'oracle', 'category': 'tablespace_privileges', 'permission_name': 'CREATE TABLESPACE', 'description': '创建表空间权限', 'sort_order': 1},
+        {'db_type': 'oracle', 'category': 'tablespace_privileges', 'permission_name': 'ALTER TABLESPACE', 'description': '修改表空间权限', 'sort_order': 2},
+        {'db_type': 'oracle', 'category': 'tablespace_privileges', 'permission_name': 'DROP TABLESPACE', 'description': '删除表空间权限', 'sort_order': 3},
+        {'db_type': 'oracle', 'category': 'tablespace_privileges', 'permission_name': 'UNLIMITED TABLESPACE', 'description': '无限制表空间权限', 'sort_order': 4},
     ]
     
     # 合并所有权限配置

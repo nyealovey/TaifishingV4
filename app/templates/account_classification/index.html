@@ -950,8 +950,8 @@ function displayPermissionsConfig(permissions, prefix = '') {
                 </div>
             </div>
         `;
-    } else if (permissions.role_attributes || permissions.database_privileges || permissions.table_privileges) {
-        // PostgreSQL结构：角色属性、数据库权限、表权限等
+    } else if (permissions.role_attributes || permissions.database_privileges || permissions.tablespace_privileges) {
+        // PostgreSQL结构：角色属性、数据库权限、表空间权限
         html += `
             <div class="col-md-6">
                 <h6 class="text-primary mb-3"><i class="fas fa-user-shield me-2"></i>角色属性</h6>
@@ -979,49 +979,21 @@ function displayPermissionsConfig(permissions, prefix = '') {
                 </div>
             </div>
             <div class="col-md-6">
-                <h6 class="text-info mb-3"><i class="fas fa-table me-2"></i>表权限</h6>
+                <h6 class="text-info mb-3"><i class="fas fa-hdd me-2"></i>表空间权限</h6>
                 <div class="permission-section">
-                    ${permissions.table_privileges ? permissions.table_privileges.map(perm => `
+                    ${permissions.tablespace_privileges ? permissions.tablespace_privileges.map(perm => `
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}table_perm_${perm.name}">
-                            <label class="form-check-label" for="${prefix}table_perm_${perm.name}">
+                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}tablespace_perm_${perm.name}">
+                            <label class="form-check-label" for="${prefix}tablespace_perm_${perm.name}">
                                 <span class="me-1">${perm.name}</span>
                             </label>
                         </div>
-                    `).join('') : '<div class="text-muted">无表权限</div>'}
-                </div>
-                
-                <h6 class="text-warning mb-3 mt-3"><i class="fas fa-cogs me-2"></i>其他权限</h6>
-                <div class="permission-section">
-                    ${permissions.sequence_privileges ? permissions.sequence_privileges.map(perm => `
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}seq_perm_${perm.name}">
-                            <label class="form-check-label" for="${prefix}seq_perm_${perm.name}">
-                                <span class="me-1">${perm.name}</span>
-                            </label>
-                        </div>
-                    `).join('') : ''}
-                    ${permissions.function_privileges ? permissions.function_privileges.map(perm => `
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}func_perm_${perm.name}">
-                            <label class="form-check-label" for="${prefix}func_perm_${perm.name}">
-                                <span class="me-1">${perm.name}</span>
-                            </label>
-                        </div>
-                    `).join('') : ''}
-                    ${permissions.schema_privileges ? permissions.schema_privileges.map(perm => `
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}schema_perm_${perm.name}">
-                            <label class="form-check-label" for="${prefix}schema_perm_${perm.name}">
-                                <span class="me-1">${perm.name}</span>
-                            </label>
-                        </div>
-                    `).join('') : ''}
+                    `).join('') : '<div class="text-muted">无表空间权限</div>'}
                 </div>
             </div>
         `;
-    } else if (permissions.system_privileges || permissions.object_privileges) {
-        // Oracle结构：系统权限、对象权限
+    } else if (permissions.system_privileges || permissions.tablespace_privileges) {
+        // Oracle结构：系统权限、表空间权限
         html += `
             <div class="col-md-6">
                 <h6 class="text-primary mb-3"><i class="fas fa-shield-alt me-2"></i>系统权限</h6>
@@ -1037,16 +1009,16 @@ function displayPermissionsConfig(permissions, prefix = '') {
                 </div>
             </div>
             <div class="col-md-6">
-                <h6 class="text-success mb-3"><i class="fas fa-cube me-2"></i>对象权限</h6>
+                <h6 class="text-info mb-3"><i class="fas fa-hdd me-2"></i>表空间权限</h6>
                 <div class="permission-section">
-                    ${permissions.object_privileges ? permissions.object_privileges.map(perm => `
+                    ${permissions.tablespace_privileges ? permissions.tablespace_privileges.map(perm => `
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}obj_perm_${perm.name}">
-                            <label class="form-check-label" for="${prefix}obj_perm_${perm.name}">
+                            <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}tablespace_perm_${perm.name}">
+                            <label class="form-check-label" for="${prefix}tablespace_perm_${perm.name}">
                                 <span class="me-1">${perm.name}</span>
                             </label>
                         </div>
-                    `).join('') : '<div class="text-muted">无对象权限</div>'}
+                    `).join('') : '<div class="text-muted">无表空间权限</div>'}
                 </div>
             </div>
         `;
@@ -1148,24 +1120,15 @@ function createRule() {
         // PostgreSQL结构
         const selectedRoleAttributes = [];
         const selectedDatabasePermissions = [];
-        const selectedTablePermissions = [];
-        const selectedSequencePermissions = [];
-        const selectedFunctionPermissions = [];
-        const selectedSchemaPermissions = [];
+        const selectedTablespacePermissions = [];
         
         checkboxes.forEach(checkbox => {
             if (checkbox.id.startsWith('role_attr_')) {
                 selectedRoleAttributes.push(checkbox.value);
             } else if (checkbox.id.startsWith('db_perm_')) {
                 selectedDatabasePermissions.push(checkbox.value);
-            } else if (checkbox.id.startsWith('table_perm_')) {
-                selectedTablePermissions.push(checkbox.value);
-            } else if (checkbox.id.startsWith('seq_perm_')) {
-                selectedSequencePermissions.push(checkbox.value);
-            } else if (checkbox.id.startsWith('func_perm_')) {
-                selectedFunctionPermissions.push(checkbox.value);
-            } else if (checkbox.id.startsWith('schema_perm_')) {
-                selectedSchemaPermissions.push(checkbox.value);
+            } else if (checkbox.id.startsWith('tablespace_perm_')) {
+                selectedTablespacePermissions.push(checkbox.value);
             }
         });
         
@@ -1173,30 +1136,27 @@ function createRule() {
             type: 'postgresql_permissions',
             role_attributes: selectedRoleAttributes,
             database_privileges: selectedDatabasePermissions,
-            table_privileges: selectedTablePermissions,
-            sequence_privileges: selectedSequencePermissions,
-            function_privileges: selectedFunctionPermissions,
-            schema_privileges: selectedSchemaPermissions,
+            tablespace_privileges: selectedTablespacePermissions,
             permissions: selectedPermissions, // 兼容性
             operator: 'OR'
         };
     } else if (dbType === 'oracle') {
         // Oracle结构
         const selectedSystemPermissions = [];
-        const selectedObjectPermissions = [];
+        const selectedTablespacePermissions = [];
         
         checkboxes.forEach(checkbox => {
             if (checkbox.id.startsWith('sys_perm_')) {
                 selectedSystemPermissions.push(checkbox.value);
-            } else if (checkbox.id.startsWith('obj_perm_')) {
-                selectedObjectPermissions.push(checkbox.value);
+            } else if (checkbox.id.startsWith('tablespace_perm_')) {
+                selectedTablespacePermissions.push(checkbox.value);
             }
         });
         
         ruleExpression = {
             type: 'oracle_permissions',
             system_privileges: selectedSystemPermissions,
-            object_privileges: selectedObjectPermissions,
+            tablespace_privileges: selectedTablespacePermissions,
             permissions: selectedPermissions, // 兼容性
             operator: 'OR'
         };
