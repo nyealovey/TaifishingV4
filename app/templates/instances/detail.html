@@ -6,24 +6,13 @@
 <!-- CSRF Token for JavaScript -->
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="mb-4">
     <h2>
         <i class="fas fa-database me-2"></i>{{ instance.name }}
         <span class="badge bg-{{ 'primary' if instance.db_type == 'postgresql' else 'success' if instance.db_type == 'mysql' else 'warning' if instance.db_type == 'sqlserver' else 'info' }} ms-2">
             {{ instance.db_type.upper() }}
         </span>
     </h2>
-    <div>
-        <a href="{{ url_for('instances.edit', instance_id=instance.id) }}" class="btn btn-warning">
-            <i class="fas fa-edit me-2"></i>编辑
-        </a>
-        <button type="button" class="btn btn-success" onclick="testConnection()">
-            <i class="fas fa-plug me-2"></i>测试连接
-        </button>
-        <button type="button" class="btn btn-info" onclick="syncAccounts()">
-            <i class="fas fa-sync me-2"></i>同步账户
-        </button>
-    </div>
 </div>
 
 <div class="row">
