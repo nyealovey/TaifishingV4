@@ -657,7 +657,23 @@ function viewAccountPermissions(accountId) {
 }
 
 function showPermissionsModal(permissions, account) {
-    // 创建模态框
+    console.log('showPermissionsModal 被调用');
+    console.log('权限数据:', permissions);
+    console.log('账户数据:', account);
+    
+    try {
+        // 获取数据库类型
+        const dbType = account.instance.db_type;
+        console.log('数据库类型:', dbType);
+        
+        // 检查权限对象的所有属性
+        console.log('权限对象检查 - 所有属性:', Object.keys(permissions));
+        console.log('权限对象检查 - 每个属性的类型:');
+        Object.keys(permissions).forEach(key => {
+            console.log(`  ${key}: ${typeof permissions[key]}, isArray: ${Array.isArray(permissions[key])}`);
+        });
+        
+        // 创建模态框
     const modalHtml = `
         <div class="modal fade" id="permissionsModal" tabindex="-1" aria-labelledby="permissionsModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -671,11 +687,150 @@ function showPermissionsModal(permissions, account) {
                     <div class="modal-body">
                         <div class="mb-3">
                             <h6>账户信息</h6>
-                            <p class="mb-1"><strong>用户名:</strong> ${account.username}</p>
-                            ${account.instance.db_type !== 'sqlserver' ? `<p class="mb-1"><strong>主机:</strong> ${account.host || '%'}</p>` : ''}
-                            <p class="mb-0"><strong>插件:</strong> ${account.plugin || '未知'}</p>
+                            <p class="mb-0"><strong>用户名:</strong> ${account.username}</p>
                         </div>
-                        ${account.instance.db_type === 'sqlserver' ? `
+                        ${dbType === 'oracle' ? `
+                        <div class="mb-3">
+                            <h6><i class="fas fa-users-cog text-danger me-2"></i>角色</h6>
+                            ${permissions.roles && permissions.roles.length > 0 ? `
+                                <div class="row">
+                                    ${permissions.roles.map(role => `
+                                        <div class="col-md-6 mb-2">
+                                            <span class="badge bg-danger me-2">
+                                                <i class="fas fa-users-cog me-1"></i>${role}
+                                            </span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : '<p class="text-muted">无角色</p>'}
+                        </div>
+                        <div class="mb-3">
+                            <h6><i class="fas fa-shield-alt text-primary me-2"></i>系统权限</h6>
+                            ${permissions.system_privileges && permissions.system_privileges.length > 0 ? `
+                                <div class="row">
+                                    ${permissions.system_privileges.map(priv => `
+                                        <div class="col-md-6 mb-2">
+                                            <span class="badge bg-primary me-2">
+                                                <i class="fas fa-shield-alt me-1"></i>${priv}
+                                            </span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : '<p class="text-muted">无系统权限</p>'}
+                        </div>
+                        <div class="mb-3">
+                            <h6><i class="fas fa-hdd text-info me-2"></i>表空间权限</h6>
+                            ${permissions.tablespace_privileges && permissions.tablespace_privileges.length > 0 ? `
+                                <div class="row">
+                                    ${permissions.tablespace_privileges.map(priv => `
+                                        <div class="col-md-6 mb-2">
+                                            <span class="badge bg-info me-2">
+                                                <i class="fas fa-hdd me-1"></i>${priv}
+                                            </span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : '<p class="text-muted">无表空间权限</p>'}
+                        </div>
+                        <div class="mb-3">
+                            <h6><i class="fas fa-chart-pie text-warning me-2"></i>表空间配额</h6>
+                            ${permissions.tablespace_quotas && permissions.tablespace_quotas.length > 0 ? `
+                                <div class="row">
+                                    ${permissions.tablespace_quotas.map(quota => `
+                                        <div class="col-md-6 mb-2">
+                                            <span class="badge bg-warning me-2">
+                                                <i class="fas fa-chart-pie me-1"></i>${quota}
+                                            </span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : '<p class="text-muted">无表空间配额</p>'}
+                        </div>
+                        ` : ''}
+                        ${dbType === 'postgresql' ? `
+                        ${(() => {
+                            console.log('PostgreSQL权限显示开始 - 完整权限对象:', permissions);
+                            console.log('权限对象的所有键:', Object.keys(permissions));
+                            return '';
+                        })()}
+                        <div class="mb-3">
+                            <h6><i class="fas fa-users-cog text-danger me-2"></i>预定义角色</h6>
+                            ${(() => {
+                                console.log('PostgreSQL predefined_roles:', permissions.predefined_roles);
+                                console.log('predefined_roles type:', typeof permissions.predefined_roles);
+                                console.log('predefined_roles is array:', Array.isArray(permissions.predefined_roles));
+                                return permissions.predefined_roles && permissions.predefined_roles.length > 0 ? `
+                                    <div class="row">
+                                        ${permissions.predefined_roles.map(role => `
+                                            <div class="col-md-6 mb-2">
+                                                <span class="badge bg-danger me-2">
+                                                    <i class="fas fa-users-cog me-1"></i>${role}
+                                                </span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : '<p class="text-muted">无预定义角色</p>';
+                            })()}
+                        </div>
+                        <div class="mb-3">
+                            <h6><i class="fas fa-user-shield text-primary me-2"></i>角色属性</h6>
+                            ${(() => {
+                                console.log('PostgreSQL role_attributes:', permissions.role_attributes);
+                                console.log('role_attributes type:', typeof permissions.role_attributes);
+                                console.log('role_attributes is array:', Array.isArray(permissions.role_attributes));
+                                return permissions.role_attributes && permissions.role_attributes.length > 0 ? `
+                                    <div class="row">
+                                        ${permissions.role_attributes.map(attr => `
+                                            <div class="col-md-6 mb-2">
+                                                <span class="badge bg-primary me-2">
+                                                    <i class="fas fa-user-cog me-1"></i>${attr}
+                                                </span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : '<p class="text-muted">无角色属性</p>';
+                            })()}
+                        </div>
+                        <div class="mb-3">
+                            <h6><i class="fas fa-database text-success me-2"></i>数据库权限</h6>
+                            ${(() => {
+                                console.log('PostgreSQL database_privileges:', permissions.database_privileges);
+                                console.log('database_privileges type:', typeof permissions.database_privileges);
+                                console.log('database_privileges is array:', Array.isArray(permissions.database_privileges));
+                                return permissions.database_privileges && permissions.database_privileges.length > 0 ? `
+                                    <div class="row">
+                                        ${permissions.database_privileges.map(priv => `
+                                            <div class="col-md-6 mb-2">
+                                                <span class="badge bg-success me-2">
+                                                    <i class="fas fa-database me-1"></i>${priv}
+                                                </span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : '<p class="text-muted">无数据库权限</p>';
+                            })()}
+                        </div>
+                        <div class="mb-3">
+                            <h6><i class="fas fa-hdd text-info me-2"></i>表空间权限</h6>
+                            ${(() => {
+                                console.log('PostgreSQL tablespace_privileges:', permissions.tablespace_privileges);
+                                console.log('tablespace_privileges type:', typeof permissions.tablespace_privileges);
+                                console.log('tablespace_privileges is array:', Array.isArray(permissions.tablespace_privileges));
+                                return permissions.tablespace_privileges && permissions.tablespace_privileges.length > 0 ? `
+                                    <div class="row">
+                                        ${permissions.tablespace_privileges.map(priv => `
+                                            <div class="col-md-6 mb-2">
+                                                <span class="badge bg-info me-2">
+                                                    <i class="fas fa-hdd me-1"></i>${priv}
+                                                </span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : '<p class="text-muted">无表空间权限</p>';
+                            })()}
+                        </div>
+                        ` : ''}
+                        ${dbType === 'sqlserver' ? `
                         <div class="mb-3">
                             <h6>服务器级别角色</h6>
                             ${permissions.server_roles && permissions.server_roles.length > 0 ? `
@@ -719,22 +874,23 @@ function showPermissionsModal(permissions, account) {
                             ` : '<p class="text-muted">无数据库级别角色</p>'}
                         </div>
                         ` : ''}
+                        ${dbType === 'mysql' || dbType === 'sqlserver' ? `
                         <div class="mb-3">
-                            <h6>${account.instance.db_type === 'sqlserver' ? '服务器权限' : '全局权限'}</h6>
+                            <h6>${dbType === 'sqlserver' ? '服务器权限' : '全局权限'}</h6>
                             <div class="row">
-                                ${permissions.global.map(perm => `
+                                ${permissions.global && permissions.global.map ? permissions.global.map(perm => `
                                     <div class="col-md-6 mb-2">
                                         <span class="badge ${perm.granted ? 'bg-success' : 'bg-secondary'} me-2">
                                             ${perm.granted ? '✓' : '✗'}
                                         </span>
                                         ${perm.privilege}
                                     </div>
-                                `).join('')}
+                                `).join('') : '<p class="text-muted">无全局权限</p>'}
                             </div>
                         </div>
                         <div class="mb-3">
                             <h6>数据库权限</h6>
-                            ${permissions.database.length > 0 ? `
+                            ${permissions.database && permissions.database.length > 0 ? `
                                 <div class="table-responsive">
                                     <table class="table table-sm">
                                         <thead>
@@ -759,30 +915,18 @@ function showPermissionsModal(permissions, account) {
                                 </div>
                             ` : '<p class="text-muted">无特定数据库权限</p>'}
                         </div>
-                        ${account.instance.db_type === 'postgresql' && permissions.tablespace && permissions.tablespace.length > 0 ? `
+                        ` : ''}
+                        ${dbType === 'postgresql' && permissions.tablespace_privileges && permissions.tablespace_privileges.length > 0 ? `
                         <div class="mb-3">
                             <h6>表空间权限</h6>
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>表空间</th>
-                                            <th>权限</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${permissions.tablespace.map(ts => `
-                                            <tr>
-                                                <td>${ts.tablespace}</td>
-                                                <td>
-                                                    ${ts.privileges.map(priv => `
-                                                        <span class="badge ${priv === 'OWNER' ? 'bg-warning' : 'bg-success'} me-1">${priv}</span>
-                                                    `).join('')}
-                                                </td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
+                            <div class="row">
+                                ${permissions.tablespace_privileges.map(priv => `
+                                    <div class="col-md-6 mb-2">
+                                        <span class="badge bg-info me-2">
+                                            <i class="fas fa-hdd me-1"></i>${priv}
+                                        </span>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
                         ` : ''}
@@ -802,11 +946,19 @@ function showPermissionsModal(permissions, account) {
     }
     
     // 添加新模态框
+    console.log('添加模态框HTML到页面');
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     
-    // 显示模态框
-    const modal = new bootstrap.Modal(document.getElementById('permissionsModal'));
-    modal.show();
+        // 显示模态框
+        console.log('创建并显示模态框');
+        const modal = new bootstrap.Modal(document.getElementById('permissionsModal'));
+        modal.show();
+        console.log('模态框显示完成');
+    } catch (error) {
+        console.error('showPermissionsModal 函数执行出错:', error);
+        console.error('错误堆栈:', error.stack);
+        showAlert('danger', '显示权限信息时发生错误: ' + error.message);
+    }
 }
 
 function viewAccount(accountId) {
