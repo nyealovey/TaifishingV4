@@ -545,7 +545,6 @@ class DatabaseService:
     
     def _sync_oracle_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
         """同步Oracle账户"""
-        print("DEBUG: DatabaseService._sync_oracle_accounts 被调用")
         cursor = conn.cursor()
         cursor.execute("""
             SELECT username, account_status, created, expiry_date, profile
@@ -645,12 +644,8 @@ class DatabaseService:
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
         removed_accounts = []
         
-        print(f"DEBUG: DatabaseService Oracle账户清理 - 服务器端账户: {server_accounts}")
-        print(f"DEBUG: DatabaseService Oracle账户清理 - 本地账户数量: {len(local_accounts)}")
-        
         for local_account in local_accounts:
             if (local_account.username, local_account.host) not in server_accounts:
-                print(f"DEBUG: DatabaseService Oracle账户清理 - 删除账户: {local_account.username}")
                 removed_accounts.append({
                     'username': local_account.username,
                     'host': local_account.host,
