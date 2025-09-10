@@ -1323,59 +1323,86 @@ class AccountSyncService:
         }
         
         try:
-            # 获取角色权限
-            cursor.execute("""
-                SELECT granted_role, admin_option
-                FROM dba_role_privs
-                WHERE grantee = :username
-                ORDER BY granted_role
-            """, {'username': username.upper()})
+            # 检查用户是否为SYS或SYSTEM，这些是Oracle的核心账户
+            if username.upper() in ['SYS', 'SYSTEM']:
+                # SYS和SYSTEM账户拥有所有权限
+                permissions['roles'] = ['DBA', 'SYSDBA', 'SYSOPER']
+                permissions['system_privileges'] = ['ALL PRIVILEGES', 'GRANT ANY PRIVILEGE', 'GRANT ANY ROLE']
+                permissions['tablespace_privileges'] = ['UNLIMITED TABLESPACE']
+                permissions['tablespace_quotas'] = ['UNLIMITED']
+                
+                return {
+                    'permissions_json': json.dumps(permissions),
+                    'is_superuser': True,
+                    'can_grant': True
+                }
             
-            for row in cursor.fetchall():
-                role, admin_option = row
-                permissions['roles'].append(role)
+            # 对于其他账户，尝试查询权限（如果视图存在的话）
+            try:
+                # 获取角色权限
+                cursor.execute("""
+                    SELECT granted_role, admin_option
+                    FROM dba_role_privs
+                    WHERE grantee = :username
+                    ORDER BY granted_role
+                """, {'username': username.upper()})
+                
+                for row in cursor.fetchall():
+                    role, admin_option = row
+                    permissions['roles'].append(role)
+            except Exception as e:
+                self.logger.debug(f"无法查询角色权限: {e}")
             
-            # 获取系统权限
-            cursor.execute("""
-                SELECT privilege, admin_option
-                FROM dba_sys_privs
-                WHERE grantee = :username
-                ORDER BY privilege
-            """, {'username': username.upper()})
+            try:
+                # 获取系统权限
+                cursor.execute("""
+                    SELECT privilege, admin_option
+                    FROM dba_sys_privs
+                    WHERE grantee = :username
+                    ORDER BY privilege
+                """, {'username': username.upper()})
+                
+                for row in cursor.fetchall():
+                    privilege, admin_option = row
+                    permissions['system_privileges'].append(privilege)
+            except Exception as e:
+                self.logger.debug(f"无法查询系统权限: {e}")
             
-            for row in cursor.fetchall():
-                privilege, admin_option = row
-                permissions['system_privileges'].append(privilege)
+            try:
+                # 获取表空间权限
+                cursor.execute("""
+                    SELECT privilege
+                    FROM dba_tab_privs
+                    WHERE grantee = :username
+                    AND table_name IN (SELECT tablespace_name FROM dba_tablespaces)
+                    ORDER BY privilege
+                """, {'username': username.upper()})
+                
+                for row in cursor.fetchall():
+                    privilege = row[0]
+                    permissions['tablespace_privileges'].append(privilege)
+            except Exception as e:
+                self.logger.debug(f"无法查询表空间权限: {e}")
             
-            # 获取表空间权限
-            cursor.execute("""
-                SELECT privilege
-                FROM dba_tab_privs
-                WHERE grantee = :username
-                AND table_name IN (SELECT tablespace_name FROM dba_tablespaces)
-                ORDER BY privilege
-            """, {'username': username.upper()})
-            
-            for row in cursor.fetchall():
-                privilege = row[0]
-                permissions['tablespace_privileges'].append(privilege)
-            
-            # 获取表空间配额
-            cursor.execute("""
-                SELECT 
-                    CASE 
-                        WHEN max_bytes = -1 THEN 'UNLIMITED'
-                        WHEN max_bytes = 0 THEN 'NO QUOTA'
-                        ELSE 'QUOTA'
-                    END as quota_type
-                FROM dba_ts_quotas
-                WHERE username = :username
-                ORDER BY tablespace_name
-            """, {'username': username.upper()})
-            
-            for row in cursor.fetchall():
-                quota_type = row[0]
-                permissions['tablespace_quotas'].append(quota_type)
+            try:
+                # 获取表空间配额
+                cursor.execute("""
+                    SELECT 
+                        CASE 
+                            WHEN max_bytes = -1 THEN 'UNLIMITED'
+                            WHEN max_bytes = 0 THEN 'NO QUOTA'
+                            ELSE 'QUOTA'
+                        END as quota_type
+                    FROM dba_ts_quotas
+                    WHERE username = :username
+                    ORDER BY tablespace_name
+                """, {'username': username.upper()})
+                
+                for row in cursor.fetchall():
+                    quota_type = row[0]
+                    permissions['tablespace_quotas'].append(quota_type)
+            except Exception as e:
+                self.logger.debug(f"无法查询表空间配额: {e}")
             
             # 确定是否为超级用户和是否可以授权
             is_superuser = any(role in ['DBA', 'SYSDBA', 'SYSOPER'] for role in permissions['roles'])
