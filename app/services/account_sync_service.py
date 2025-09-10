@@ -912,8 +912,12 @@ class AccountSyncService:
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
         removed_accounts = []
         
+        self.logger.info(f"Oracle账户清理 - 服务器端账户: {server_accounts}")
+        self.logger.info(f"Oracle账户清理 - 本地账户数量: {len(local_accounts)}")
+        
         for local_account in local_accounts:
             if local_account.username not in server_accounts:
+                self.logger.info(f"Oracle账户清理 - 删除账户: {local_account.username}")
                 removed_accounts.append({
                     'username': local_account.username,
                     'host': local_account.host,
