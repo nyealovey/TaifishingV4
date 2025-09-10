@@ -819,23 +819,31 @@ class AccountSyncService:
                 expiry_date,
                 profile
             FROM dba_users
-            WHERE username NOT LIKE 'SYS$%'
+            WHERE username NOT IN (
+                -- Oracle核心系统账户
+                'SYS', 'SYSTEM',
+                -- Oracle示例账户
+                'SCOTT',
+                -- Oracle管理账户
+                'SYSMAN', 'DBSNMP',
+                -- Oracle功能账户（根据官方文档）
+                'CTXSYS', 'EXFSYS', 'MDDATA', 'APPQOSSYS', 'OUTLN', 'DIP', 'TSMSYS', 'WMSYS', 
+                'XDB', 'ANONYMOUS', 'ORDPLUGINS', 'ORDSYS', 'SI_INFORMTN_SCHEMA', 'MDSYS', 
+                'OLAPSYS', 'SPATIAL_CSW_ADMIN_USR', 'SPATIAL_WFS_ADMIN_USR', 'APEX_PUBLIC_USER', 
+                'APEX_030200', 'FLOWS_FILES', 'HR', 'OE', 'PM', 'IX', 'SH', 'BI', 'DEMO', 
+                'ADMIN', 'AUDSYS', 'GSMADMIN_INTERNAL', 'GSMCATUSER', 'GSMUSER', 'LBACSYS', 
+                'OJVMSYS', 'ORACLE_OCM', 'ORDDATA', 'ORDPLUGINS', 'ORDS_METADATA', 
+                'ORDS_PUBLIC_USER', 'PDBADMIN', 'RDSADMIN', 'REMOTE_SCHEDULER_AGENT', 
+                'SYSBACKUP', 'SYSDG', 'SYSKM', 'SYSRAC', 'SYS$UMF', 'XS$NULL', 'OWBSYS', 
+                'OWBSYS_AUDIT', 'MGMT_VIEW'
+            )
+            -- 排除系统模式账户
+            AND username NOT LIKE 'SYS$%'
             AND username NOT LIKE 'GSM%'
             AND username NOT LIKE 'XDB%'
             AND username NOT LIKE 'APEX%'
             AND username NOT LIKE 'ORD%'
             AND username NOT LIKE 'SPATIAL_%'
-            AND username NOT IN (
-                'OUTLN', 'DIP', 'TSMSYS', 'DBSNMP', 'WMSYS', 'EXFSYS', 'CTXSYS', 'XDB', 
-                'ANONYMOUS', 'ORDPLUGINS', 'ORDSYS', 'SI_INFORMTN_SCHEMA', 'MDSYS', 'OLAPSYS', 
-                'MDDATA', 'SPATIAL_CSW_ADMIN_USR', 'SPATIAL_WFS_ADMIN_USR', 'APEX_PUBLIC_USER', 
-                'APEX_030200', 'FLOWS_FILES', 'HR', 'OE', 'PM', 'IX', 'SH', 'BI', 'SCOTT', 
-                'DEMO', 'ADMIN', 'APPQOSSYS', 'AUDSYS', 'GSMADMIN_INTERNAL', 'GSMCATUSER', 
-                'GSMUSER', 'LBACSYS', 'OJVMSYS', 'ORACLE_OCM', 'ORDDATA', 'ORDPLUGINS', 
-                'ORDS_METADATA', 'ORDS_PUBLIC_USER', 'ORDSYS', 'PDBADMIN', 'RDSADMIN', 
-                'REMOTE_SCHEDULER_AGENT', 'SYSBACKUP', 'SYSDG', 'SYSKM', 'SYSRAC', 'SYS$UMF', 
-                'XS$NULL', 'OWBSYS', 'OWBSYS_AUDIT', 'SYSMAN', 'MGMT_VIEW', 'CBRAIN'
-            )
             ORDER BY username
         """)
         
