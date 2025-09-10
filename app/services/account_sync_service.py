@@ -430,7 +430,7 @@ class AccountSyncService:
                 rolreplication as can_replicate
             FROM pg_roles
             WHERE rolname NOT LIKE 'pg_%' 
-            AND rolname NOT IN ('postgres', 'rdsadmin', 'rds_superuser')
+            AND rolname NOT IN ('rdsadmin', 'rds_superuser')
             ORDER BY rolname
         """)
         
@@ -711,6 +711,31 @@ class AccountSyncService:
                     permissions['schema_privileges'].append(f"CREATE ON {schema}")
                 if usage:
                     permissions['schema_privileges'].append(f"USAGE ON {schema}")
+            
+            # 获取表空间权限
+            cursor.execute("""
+                SELECT 
+                    spcname,
+                    CASE WHEN has_tablespace_privilege(%s, spcname, 'CREATE') THEN 'CREATE' END
+                FROM pg_tablespace
+                WHERE has_tablespace_privilege(%s, spcname, 'CREATE') = true
+            """, (username, username))
+            
+            for row in cursor.fetchall():
+                tablespace, create = row
+                if create:
+                    permissions['tablespace_privileges'].append(f"CREATE ON {tablespace}")
+            
+            # 获取表空间所有权
+            cursor.execute("""
+                SELECT spcname
+                FROM pg_tablespace
+                WHERE spcowner = (SELECT oid FROM pg_roles WHERE rolname = %s)
+            """, (username,))
+            
+            for row in cursor.fetchall():
+                tablespace = row[0]
+                permissions['tablespace_privileges'].append(f"OWNER OF {tablespace}")
             
             # 确定是否为超级用户和是否可以授权
             is_superuser = 'SUPERUSER' in permissions['role_attributes']

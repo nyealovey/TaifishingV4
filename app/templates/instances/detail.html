@@ -723,6 +723,33 @@ function showPermissionsModal(permissions, account) {
                                 </div>
                             ` : '<p class="text-muted">无特定数据库权限</p>'}
                         </div>
+                        ${dbType === 'postgresql' && permissions.tablespace && permissions.tablespace.length > 0 ? `
+                        <div class="mb-3">
+                            <h6>表空间权限</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>表空间</th>
+                                            <th>权限</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${permissions.tablespace.map(ts => `
+                                            <tr>
+                                                <td>${ts.tablespace}</td>
+                                                <td>
+                                                    ${ts.privileges.map(priv => `
+                                                        <span class="badge ${priv === 'OWNER' ? 'bg-warning' : 'bg-success'} me-1">${priv}</span>
+                                                    `).join('')}
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        ` : ''}
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>

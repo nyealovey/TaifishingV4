@@ -1897,9 +1897,47 @@ class DatabaseService:
                         'privileges': privileges
                     })
             
+            # 获取表空间权限
+            cursor.execute("""
+                SELECT spcname, 
+                       CASE WHEN has_tablespace_privilege(%s, spcname, 'CREATE') THEN 'CREATE' END as create_priv
+                FROM pg_tablespace
+                WHERE has_tablespace_privilege(%s, spcname, 'CREATE') = true
+                ORDER BY spcname
+            """, (account.username, account.username))
+            
+            tablespace_permissions = []
+            for row in cursor.fetchall():
+                spc_name, create_priv = row
+                if create_priv:
+                    tablespace_permissions.append({
+                        'tablespace': spc_name,
+                        'privileges': [create_priv]
+                    })
+            
+            # 获取表空间所有权
+            cursor.execute("""
+                SELECT spcname
+                FROM pg_tablespace
+                WHERE spcowner = (SELECT oid FROM pg_roles WHERE rolname = %s)
+                ORDER BY spcname
+            """, (account.username,))
+            
+            owned_tablespaces = []
+            for row in cursor.fetchall():
+                spc_name = row[0]
+                owned_tablespaces.append({
+                    'tablespace': spc_name,
+                    'privileges': ['OWNER']
+                })
+            
+            # 合并表空间权限和所有权
+            all_tablespace_permissions = tablespace_permissions + owned_tablespaces
+            
             return {
                 'global': global_permissions,
-                'database': database_permissions
+                'database': database_permissions,
+                'tablespace': all_tablespace_permissions
             }
             
         except Exception as e:
