@@ -466,7 +466,8 @@ class DatabaseService:
                 'password_expired': False,
                 'password_last_changed': modify_date.isoformat() if modify_date else None,
                 'is_locked': bool(is_disabled),
-                'is_active': not is_disabled
+                'is_active': not is_disabled,
+                'account_created_at': create_date.isoformat() if create_date else None
             }
             
             # 检查账户是否已存在（SQL Server没有主机概念）
@@ -487,7 +488,8 @@ class DatabaseService:
                     password_expired=False,  # SQL Server不直接提供此信息
                     password_last_changed=modify_date,
                     is_locked=bool(is_disabled),  # SQL Server的is_disabled字段
-                    is_active=not is_disabled
+                    is_active=not is_disabled,
+                    account_created_at=create_date
                 )
                 db.session.add(account)
                 added_count += 1
@@ -498,7 +500,8 @@ class DatabaseService:
                     existing.account_type != type_desc.lower() or
                     existing.password_last_changed != modify_date or
                     existing.is_locked != bool(is_disabled) or
-                    existing.is_active != (not is_disabled)
+                    existing.is_active != (not is_disabled) or
+                    existing.account_created_at != create_date
                 )
                 
                 if has_changes:
@@ -507,6 +510,7 @@ class DatabaseService:
                     existing.password_last_changed = modify_date
                     existing.is_locked = bool(is_disabled)  # SQL Server的is_disabled字段
                     existing.is_active = not is_disabled
+                    existing.account_created_at = create_date
                     updated_count += 1
                     modified_accounts.append(account_data)
         

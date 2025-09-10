@@ -713,6 +713,9 @@ class AccountSyncService:
         for account_data in accounts:
             username, account_type, database_name, is_disabled, created_date, modified_date = account_data
             
+            # 调试信息
+            self.logger.info(f"SQL Server账户同步: {username}, created_date: {created_date}, modified_date: {modified_date}")
+            
             # 直接使用SQL Server的原始type_desc名称
             account_type = account_type.lower()
             
