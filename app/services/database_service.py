@@ -1835,18 +1835,24 @@ class DatabaseService:
     def _get_postgresql_permissions(self, instance: Instance, account: Account) -> Dict[str, Any]:
         """获取PostgreSQL账户权限 - 根据新的权限配置结构"""
         try:
+            print(f"DEBUG: 获取PostgreSQL权限 - 账户: {account.username}")
+            print(f"DEBUG: 本地权限数据: {account.permissions}")
+            
             # 优先使用本地数据库中已同步的权限数据
             if account.permissions:
                 import json
                 permissions = json.loads(account.permissions)
+                print(f"DEBUG: 解析后的权限数据: {permissions}")
                 
                 # 转换为前端显示格式
-                return {
+                result = {
                     'predefined_roles': permissions.get('predefined_roles', []),
                     'role_attributes': permissions.get('role_attributes', []),
                     'database_privileges': permissions.get('database_privileges', []),
                     'tablespace_privileges': permissions.get('tablespace_privileges', [])
                 }
+                print(f"DEBUG: 返回的权限结果: {result}")
+                return result
             
             # 如果本地没有权限数据，则从服务器查询（备用方案）
             conn = self.get_connection(instance)
@@ -1860,18 +1866,23 @@ class DatabaseService:
                 }
             
             # 从服务器查询权限数据
+            print("DEBUG: 从服务器实时查询权限数据")
             from app.services.account_sync_service import AccountSyncService
             sync_service = AccountSyncService()
             permissions = sync_service._get_postgresql_account_permissions(instance, conn, account.username)
+            print(f"DEBUG: 实时查询的权限数据: {permissions}")
             
             if permissions:
-                return {
+                result = {
                     'predefined_roles': permissions.get('predefined_roles', []),
                     'role_attributes': permissions.get('role_attributes', []),
                     'database_privileges': permissions.get('database_privileges', []),
                     'tablespace_privileges': permissions.get('tablespace_privileges', [])
                 }
+                print(f"DEBUG: 实时查询返回的权限结果: {result}")
+                return result
             else:
+                print("DEBUG: 实时查询返回空权限数据")
                 return {
                     'predefined_roles': [],
                     'role_attributes': [],
