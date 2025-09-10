@@ -1433,10 +1433,37 @@ class DatabaseService:
                         )
                         return conn
                     except oracledb.DatabaseError as thin_error:
-                        # 如果Thin模式也失败，抛出原始错误
-                        raise e
+                        # 如果Thin模式也失败，尝试SID格式（如果当前是服务名格式）
+                        if not dsn.endswith(f":{database_name}") and not '.' in database_name:
+                            try:
+                                sid_dsn = f"{instance.host}:{instance.port}:{database_name}"
+                                conn = oracledb.connect(
+                                    user=instance.credential.username if instance.credential else '',
+                                    password=password,
+                                    dsn=sid_dsn
+                                )
+                                return conn
+                            except oracledb.DatabaseError as sid_error:
+                                # 如果SID格式也失败，抛出原始错误
+                                raise e
+                        else:
+                            raise e
                 else:
-                    raise
+                    # 如果不是驱动问题，尝试SID格式（如果当前是服务名格式）
+                    if not dsn.endswith(f":{database_name}") and not '.' in database_name:
+                        try:
+                            sid_dsn = f"{instance.host}:{instance.port}:{database_name}"
+                            conn = oracledb.connect(
+                                user=instance.credential.username if instance.credential else '',
+                                password=password,
+                                dsn=sid_dsn
+                            )
+                            return conn
+                        except oracledb.DatabaseError as sid_error:
+                            # 如果SID格式也失败，抛出原始错误
+                            raise e
+                    else:
+                        raise
         except Exception as e:
             log_error(e, context={'instance_id': instance.id, 'db_type': 'Oracle'})
             return None
