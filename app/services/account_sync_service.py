@@ -155,22 +155,28 @@ class AccountSyncService:
                 if oracledb is None:
                     raise ImportError("oracledb模块未安装，无法连接Oracle")
                 
-                # 首先尝试Thin模式连接
+                # 优先使用Thick模式连接（适用于所有Oracle版本，包括11g）
                 try:
+                    # 初始化Thick模式（需要Oracle Instant Client）
+                    oracledb.init_oracle_client()
                     return oracledb.connect(
                         user=instance.credential.username,
                         password=instance.credential.get_plain_password(),
                         dsn=f"{instance.host}:{instance.port}/{instance.database_name or 'ORCL'}"
                     )
                 except oracledb.DatabaseError as e:
-                    # 如果Thin模式失败，尝试Thick模式
-                    if "DPY-3010" in str(e) or "thin mode" in str(e).lower():
-                        oracledb.init_oracle_client()
-                        return oracledb.connect(
-                            user=instance.credential.username,
-                            password=instance.credential.get_plain_password(),
-                            dsn=f"{instance.host}:{instance.port}/{instance.database_name or 'ORCL'}"
-                        )
+                    # 如果Thick模式失败，尝试Thin模式（适用于Oracle 12c+）
+                    if "DPI-1047" in str(e) or "Oracle Client library" in str(e):
+                        # Thick模式失败，尝试Thin模式
+                        try:
+                            return oracledb.connect(
+                                user=instance.credential.username,
+                                password=instance.credential.get_plain_password(),
+                                dsn=f"{instance.host}:{instance.port}/{instance.database_name or 'ORCL'}"
+                            )
+                        except oracledb.DatabaseError as thin_error:
+                            # 如果Thin模式也失败，抛出原始错误
+                            raise e
                     else:
                         raise
             else:

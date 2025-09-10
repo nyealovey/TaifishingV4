@@ -116,26 +116,32 @@ class Instance(db.Model):
         try:
             dsn = f"{self.host}:{self.port}/ORCL"
             
-            # 首先尝试Thin模式连接
+            # 优先使用Thick模式连接（适用于所有Oracle版本，包括11g）
             try:
+                # 初始化Thick模式（需要Oracle Instant Client）
+                oracledb.init_oracle_client()
                 conn = oracledb.connect(
                     user=self.credential.username if self.credential else '',
                     password=self.credential.password if self.credential else '',
                     dsn=dsn
                 )
                 conn.close()
-                return {'status': 'success', 'message': 'Oracle连接成功 (Thin模式)'}
+                return {'status': 'success', 'message': 'Oracle连接成功 (Thick模式)'}
             except oracledb.DatabaseError as e:
-                # 如果Thin模式失败，尝试Thick模式
-                if "DPY-3010" in str(e) or "thin mode" in str(e).lower():
-                    oracledb.init_oracle_client()
-                    conn = oracledb.connect(
-                        user=self.credential.username if self.credential else '',
-                        password=self.credential.password if self.credential else '',
-                        dsn=dsn
-                    )
-                    conn.close()
-                    return {'status': 'success', 'message': 'Oracle连接成功 (Thick模式)'}
+                # 如果Thick模式失败，尝试Thin模式（适用于Oracle 12c+）
+                if "DPI-1047" in str(e) or "Oracle Client library" in str(e):
+                    # Thick模式失败，尝试Thin模式
+                    try:
+                        conn = oracledb.connect(
+                            user=self.credential.username if self.credential else '',
+                            password=self.credential.password if self.credential else '',
+                            dsn=dsn
+                        )
+                        conn.close()
+                        return {'status': 'success', 'message': 'Oracle连接成功 (Thin模式)'}
+                    except oracledb.DatabaseError as thin_error:
+                        # 如果Thin模式也失败，抛出原始错误
+                        raise e
                 else:
                     raise
         except Exception as e:

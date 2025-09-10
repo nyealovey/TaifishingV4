@@ -1038,25 +1038,29 @@ class DatabaseService:
             dsn = f"{instance.host}:{instance.port}/{service_name}"
             password = instance.credential.get_plain_password()
             
-            # 对于Oracle 11g，直接使用Thick模式（需要Oracle Instant Client）
-            # 对于较新版本，先尝试Thin模式，失败则使用Thick模式
+            # 优先使用Thick模式连接（适用于所有Oracle版本，包括11g）
+            # 首先尝试Thick模式连接
             try:
-                # 首先尝试Thin模式连接（适用于Oracle 12c+）
+                # 初始化Thick模式（需要Oracle Instant Client）
+                oracledb.init_oracle_client()
                 conn = oracledb.connect(
                     user=instance.credential.username,
                     password=password,
                     dsn=dsn
                 )
             except oracledb.DatabaseError as e:
-                # 如果Thin模式失败（如Oracle 11g不支持），尝试Thick模式
-                if "DPY-3010" in str(e) or "thin mode" in str(e).lower():
-                    # 初始化Thick模式（需要Oracle Instant Client）
-                    oracledb.init_oracle_client()
-                    conn = oracledb.connect(
-                        user=instance.credential.username,
-                        password=password,
-                        dsn=dsn
-                    )
+                # 如果Thick模式失败，尝试Thin模式（适用于Oracle 12c+）
+                if "DPI-1047" in str(e) or "Oracle Client library" in str(e):
+                    # Thick模式失败，尝试Thin模式
+                    try:
+                        conn = oracledb.connect(
+                            user=instance.credential.username,
+                            password=password,
+                            dsn=dsn
+                        )
+                    except oracledb.DatabaseError as thin_error:
+                        # 如果Thin模式也失败，抛出原始错误
+                        raise e
                 else:
                     raise
             
@@ -1342,8 +1346,10 @@ class DatabaseService:
             dsn = f"{instance.host}:{instance.port}/{service_name}"
             password = instance.credential.get_plain_password() if instance.credential else ""
             
-            # 首先尝试Thin模式连接
+            # 优先使用Thick模式连接（适用于所有Oracle版本，包括11g）
             try:
+                # 初始化Thick模式（需要Oracle Instant Client）
+                oracledb.init_oracle_client()
                 conn = oracledb.connect(
                     user=instance.credential.username if instance.credential else '',
                     password=password,
@@ -1351,15 +1357,19 @@ class DatabaseService:
                 )
                 return conn
             except oracledb.DatabaseError as e:
-                # 如果Thin模式失败，尝试Thick模式
-                if "DPY-3010" in str(e) or "thin mode" in str(e).lower():
-                    oracledb.init_oracle_client()
-                    conn = oracledb.connect(
-                        user=instance.credential.username if instance.credential else '',
-                        password=password,
-                        dsn=dsn
-                    )
-                    return conn
+                # 如果Thick模式失败，尝试Thin模式（适用于Oracle 12c+）
+                if "DPI-1047" in str(e) or "Oracle Client library" in str(e):
+                    # Thick模式失败，尝试Thin模式
+                    try:
+                        conn = oracledb.connect(
+                            user=instance.credential.username if instance.credential else '',
+                            password=password,
+                            dsn=dsn
+                        )
+                        return conn
+                    except oracledb.DatabaseError as thin_error:
+                        # 如果Thin模式也失败，抛出原始错误
+                        raise e
                 else:
                     raise
         except Exception as e:
