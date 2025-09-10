@@ -506,6 +506,10 @@ class AccountClassificationService:
                 return self._evaluate_mysql_rule(account, rule_expression)
             elif rule_expression.get('type') == 'sqlserver_permissions':
                 return self._evaluate_sqlserver_rule(account, rule_expression)
+            elif rule_expression.get('type') == 'postgresql_permissions':
+                return self._evaluate_postgresql_rule(account, rule_expression)
+            elif rule_expression.get('type') == 'oracle_permissions':
+                return self._evaluate_oracle_rule(account, rule_expression)
             else:
                 self.logger.warning(f"不支持的规则类型: {rule_expression.get('type')}")
                 return False
@@ -713,6 +717,70 @@ class AccountClassificationService:
         except Exception as e:
             self.logger.error(f"获取规则匹配账户数量失败: {e}")
             return 0
+    
+    def _evaluate_postgresql_rule(self, account: Account, rule_expression: dict) -> bool:
+        """评估PostgreSQL规则"""
+        try:
+            import json
+            
+            # 从本地数据库获取权限信息
+            if not account.permissions:
+                self.logger.debug(f"账户 {account.username} 没有权限信息")
+                return False
+            
+            permissions = json.loads(account.permissions)
+            required_permissions = rule_expression.get('permissions', [])
+            
+            # 检查是否包含所有必需的权限
+            for required_perm in required_permissions:
+                found = False
+                for perm_category, perm_list in permissions.items():
+                    if required_perm in perm_list:
+                        found = True
+                        break
+                
+                if not found:
+                    self.logger.debug(f"账户 {account.username} 缺少权限: {required_perm}")
+                    return False
+            
+            self.logger.debug(f"账户 {account.username} 匹配PostgreSQL规则")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"评估PostgreSQL规则失败: {e}")
+            return False
+    
+    def _evaluate_oracle_rule(self, account: Account, rule_expression: dict) -> bool:
+        """评估Oracle规则"""
+        try:
+            import json
+            
+            # 从本地数据库获取权限信息
+            if not account.permissions:
+                self.logger.debug(f"账户 {account.username} 没有权限信息")
+                return False
+            
+            permissions = json.loads(account.permissions)
+            required_permissions = rule_expression.get('permissions', [])
+            
+            # 检查是否包含所有必需的权限
+            for required_perm in required_permissions:
+                found = False
+                for perm_category, perm_list in permissions.items():
+                    if required_perm in perm_list:
+                        found = True
+                        break
+                
+                if not found:
+                    self.logger.debug(f"账户 {account.username} 缺少权限: {required_perm}")
+                    return False
+            
+            self.logger.debug(f"账户 {account.username} 匹配Oracle规则")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"评估Oracle规则失败: {e}")
+            return False
 
 # 全局实例
 account_classification_service = AccountClassificationService()
