@@ -164,44 +164,17 @@ document.getElementById('instanceForm').addEventListener('submit', function(e) {
 
 // 测试连接功能
 function testConnection() {
-    const form = document.getElementById('instanceForm');
-    const formData = new FormData(form);
-    
-    // 检查必填字段
-    const requiredFields = ['name', 'db_type', 'host', 'port', 'credential_id'];
-    for (const field of requiredFields) {
-        if (!formData.get(field)) {
-            showAlert('warning', '请先填写必填字段');
-            return;
-        }
-    }
-    
     const testBtn = event.target;
     const originalText = testBtn.innerHTML;
     
     testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>测试中...';
     testBtn.disabled = true;
     
-    // 创建临时实例对象进行测试
-    const testData = {
-        name: formData.get('name'),
-        db_type: formData.get('db_type'),
-        host: formData.get('host'),
-        port: parseInt(formData.get('port')),
-        database_name: formData.get('database_name'),
-        credential_id: formData.get('credential_id')
-    };
-    
-    // 获取CSRF token
-    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-    
-    fetch('/instances/test-connection', {
-        method: 'POST',
+    fetch(`/instances/api/instances/{{ instance.id }}/test`, {
+        method: 'GET',
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify(testData)
+            'Content-Type': 'application/json'
+        }
     })
     .then(response => response.json())
     .then(data => {
