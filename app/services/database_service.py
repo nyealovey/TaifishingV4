@@ -1038,15 +1038,17 @@ class DatabaseService:
             dsn = f"{instance.host}:{instance.port}/{service_name}"
             password = instance.credential.get_plain_password()
             
-            # 首先尝试Thin模式连接（不需要Oracle Instant Client）
+            # 对于Oracle 11g，直接使用Thick模式（需要Oracle Instant Client）
+            # 对于较新版本，先尝试Thin模式，失败则使用Thick模式
             try:
+                # 首先尝试Thin模式连接（适用于Oracle 12c+）
                 conn = oracledb.connect(
                     user=instance.credential.username,
                     password=password,
                     dsn=dsn
                 )
             except oracledb.DatabaseError as e:
-                # 如果Thin模式失败，尝试Thick模式
+                # 如果Thin模式失败（如Oracle 11g不支持），尝试Thick模式
                 if "DPY-3010" in str(e) or "thin mode" in str(e).lower():
                     # 初始化Thick模式（需要Oracle Instant Client）
                     oracledb.init_oracle_client()
@@ -1129,7 +1131,7 @@ class DatabaseService:
                     'success': False,
                     'error': 'Oracle连接失败',
                     'details': '网络连接问题或Oracle服务不可达',
-                    'solution': '请检查网络连接和Oracle服务状态，python-oracledb使用Thin模式无需Oracle Instant Client',
+                    'solution': '请检查网络连接和Oracle服务状态，Oracle 11g需要使用Thick模式，请确保已安装Oracle Instant Client',
                     'error_type': 'connection_failed'
                 }
             elif 'ORA-01017' in error_msg:
