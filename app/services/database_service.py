@@ -358,7 +358,7 @@ class DatabaseService:
                     instance_id=instance.id,
                     username=username,
                     host='',  # PostgreSQL没有主机概念
-                    database_name=instance.database_name or 'postgres',
+                    database_name='postgres',  # PostgreSQL默认数据库
                     account_type='superuser' if is_super else 'user',  # PostgreSQL有明确的角色概念
                     plugin='postgresql',
                     password_expired=valid_until is not None and valid_until < now(),
@@ -695,7 +695,7 @@ class DatabaseService:
             conn = psycopg2.connect(
                 host=instance.host,
                 port=instance.port,
-                database=instance.database_name or 'postgres',
+                database='postgres',  # PostgreSQL默认数据库
                 user=instance.credential.username,
                 password=password,
                 connect_timeout=10
@@ -1386,7 +1386,7 @@ class DatabaseService:
             conn = psycopg2.connect(
                 host=instance.host,
                 port=instance.port,
-                database=instance.database_name or 'postgres',
+                database='postgres',  # PostgreSQL默认数据库
                 user=instance.credential.username if instance.credential else '',
                 password=password,
                 connect_timeout=30

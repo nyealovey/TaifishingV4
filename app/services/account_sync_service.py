@@ -479,7 +479,7 @@ class AccountSyncService:
                     instance_id=instance.id,
                     username=username,
                     host='',  # PostgreSQL没有主机概念
-                    database_name=instance.database_name or 'postgres',
+                    database_name='postgres',  # PostgreSQL默认数据库
                     account_type=account_type,
                     is_superuser=is_superuser,
                     is_active=is_active,
@@ -556,11 +556,15 @@ class AccountSyncService:
         }
         
         try:
+            self.logger.info(f"开始获取PostgreSQL用户 {username} 的权限信息")
+            
             # 首先检查用户是否存在
             cursor.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (username,))
             if not cursor.fetchone():
                 self.logger.warning(f"PostgreSQL用户 {username} 不存在")
                 return permissions
+            
+            self.logger.info(f"PostgreSQL用户 {username} 存在，继续获取权限")
             
             # 获取预定义角色成员身份
             try:
@@ -613,8 +617,11 @@ class AccountSyncService:
             
             # 获取数据库权限（简化版本）
             try:
-                # 使用当前连接的数据库而不是硬编码的'postgres'
-                current_db = instance.database_name or 'postgres'
+                # PostgreSQL默认使用'postgres'数据库进行权限查询
+                # 因为PostgreSQL实例创建时没有要求填写database_name字段
+                current_db = 'postgres'
+                self.logger.info(f"PostgreSQL用户 {username} 权限查询使用默认数据库: {current_db}")
+                
                 cursor.execute("""
                     SELECT 
                         CASE WHEN has_database_privilege(%s, %s, 'CONNECT') THEN 'CONNECT' END,

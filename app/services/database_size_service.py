@@ -189,7 +189,7 @@ class DatabaseSizeService:
             cursor.execute("""
                 SELECT pg_size_pretty(pg_database_size(%s)) as size,
                        pg_database_size(%s) / 1024 / 1024 as size_mb
-            """, (instance.database_name or 'postgres', instance.database_name or 'postgres'))
+            """, ('postgres', 'postgres'))  # PostgreSQL默认数据库
             
             result = cursor.fetchone()
             size_mb = result[1] if result and result[1] else 0
