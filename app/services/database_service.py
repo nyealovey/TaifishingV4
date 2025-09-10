@@ -1036,14 +1036,14 @@ class DatabaseService:
             # 构建连接字符串
             database_name = instance.database_name or 'ORCL'
             
-            # 判断是SID还是Service Name
-            # 如果包含点号(.)，则认为是Service Name，否则是SID
+            # 优先使用服务名格式，因为大多数现代Oracle配置都使用服务名
+            # 如果包含点号(.)，则认为是Service Name，否则也尝试服务名格式
             if '.' in database_name:
                 # Service Name格式: host:port/service_name
                 dsn = f"{instance.host}:{instance.port}/{database_name}"
             else:
-                # SID格式: host:port:sid
-                dsn = f"{instance.host}:{instance.port}:{database_name}"
+                # 对于简单名称，优先尝试服务名格式，如果失败再尝试SID格式
+                dsn = f"{instance.host}:{instance.port}/{database_name}"
             password = instance.credential.get_plain_password()
             
             # 优先使用Thick模式连接（适用于所有Oracle版本，包括11g）
@@ -1074,10 +1074,35 @@ class DatabaseService:
                             dsn=dsn
                         )
                     except Exception as thin_error:
-                        # 如果Thin模式也失败，抛出原始错误
-                        raise e
+                        # 如果Thin模式也失败，尝试SID格式（如果当前是服务名格式）
+                        if not dsn.endswith(f":{database_name}") and not '.' in database_name:
+                            try:
+                                sid_dsn = f"{instance.host}:{instance.port}:{database_name}"
+                                conn = oracledb.connect(
+                                    user=instance.credential.username,
+                                    password=password,
+                                    dsn=sid_dsn
+                                )
+                            except Exception as sid_error:
+                                # 如果SID格式也失败，抛出原始错误
+                                raise e
+                        else:
+                            raise e
                 else:
-                    raise
+                    # 如果不是驱动问题，尝试SID格式（如果当前是服务名格式）
+                    if not dsn.endswith(f":{database_name}") and not '.' in database_name:
+                        try:
+                            sid_dsn = f"{instance.host}:{instance.port}:{database_name}"
+                            conn = oracledb.connect(
+                                user=instance.credential.username,
+                                password=password,
+                                dsn=sid_dsn
+                            )
+                        except Exception as sid_error:
+                            # 如果SID格式也失败，抛出原始错误
+                            raise e
+                    else:
+                        raise
             
             if not conn:
                 raise Exception("无法建立Oracle连接")
@@ -1179,6 +1204,14 @@ class DatabaseService:
                     'details': f'服务名 "{instance.database_name or "ORCL"}" 不存在',
                     'solution': '请检查服务名是否正确，或使用正确的服务名',
                     'error_type': 'service_not_found'
+                }
+            elif 'ORA-12545' in error_msg:
+                return {
+                    'success': False,
+                    'error': 'Oracle连接失败',
+                    'details': f'目标主机或对象不存在: {instance.host}:{instance.port}',
+                    'solution': '请检查主机地址和端口号是否正确，确保Oracle服务正在运行',
+                    'error_type': 'host_not_found'
                 }
             else:
                 return {
@@ -1368,14 +1401,14 @@ class DatabaseService:
             # 构建连接字符串
             database_name = instance.database_name or 'ORCL'
             
-            # 判断是SID还是Service Name
-            # 如果包含点号(.)，则认为是Service Name，否则是SID
+            # 优先使用服务名格式，因为大多数现代Oracle配置都使用服务名
+            # 如果包含点号(.)，则认为是Service Name，否则也尝试服务名格式
             if '.' in database_name:
                 # Service Name格式: host:port/service_name
                 dsn = f"{instance.host}:{instance.port}/{database_name}"
             else:
-                # SID格式: host:port:sid
-                dsn = f"{instance.host}:{instance.port}:{database_name}"
+                # 对于简单名称，优先尝试服务名格式，如果失败再尝试SID格式
+                dsn = f"{instance.host}:{instance.port}/{database_name}"
             password = instance.credential.get_plain_password() if instance.credential else ""
             
             # 优先使用Thick模式连接（适用于所有Oracle版本，包括11g）
