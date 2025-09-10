@@ -1263,6 +1263,40 @@ function setSelectedPermissions(ruleExpression, prefix = '') {
                 if (checkbox) checkbox.checked = true;
             });
         }
+    } else if (ruleExpression.type === 'postgresql_permissions') {
+        // PostgreSQL结构
+        if (ruleExpression.role_attributes) {
+            ruleExpression.role_attributes.forEach(attr => {
+                const checkbox = document.getElementById(`${prefix}role_attr_${attr}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        if (ruleExpression.database_privileges) {
+            ruleExpression.database_privileges.forEach(perm => {
+                const checkbox = document.getElementById(`${prefix}db_perm_${perm}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        if (ruleExpression.tablespace_privileges) {
+            ruleExpression.tablespace_privileges.forEach(perm => {
+                const checkbox = document.getElementById(`${prefix}tablespace_perm_${perm}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+    } else if (ruleExpression.type === 'oracle_permissions') {
+        // Oracle结构
+        if (ruleExpression.system_privileges) {
+            ruleExpression.system_privileges.forEach(perm => {
+                const checkbox = document.getElementById(`${prefix}sys_perm_${perm}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        if (ruleExpression.tablespace_privileges) {
+            ruleExpression.tablespace_privileges.forEach(perm => {
+                const checkbox = document.getElementById(`${prefix}tablespace_perm_${perm}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
     } else if (ruleExpression.permissions) {
         // 旧格式或其他数据库类型
         ruleExpression.permissions.forEach(perm => {
