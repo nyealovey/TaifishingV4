@@ -1342,6 +1342,46 @@ function updateRule() {
             database_privileges: selectedDatabasePermissions,
             operator: 'OR'
         };
+    } else if (dbType === 'postgresql') {
+        const selectedRoleAttributes = [];
+        const selectedDatabasePermissions = [];
+        const selectedTablespacePermissions = [];
+        
+        checkboxes.forEach(checkbox => {
+            if (checkbox.id.startsWith('editrole_attr_')) {
+                selectedRoleAttributes.push(checkbox.value);
+            } else if (checkbox.id.startsWith('editdb_perm_')) {
+                selectedDatabasePermissions.push(checkbox.value);
+            } else if (checkbox.id.startsWith('edittablespace_perm_')) {
+                selectedTablespacePermissions.push(checkbox.value);
+            }
+        });
+        
+        ruleExpression = {
+            type: 'postgresql_permissions',
+            role_attributes: selectedRoleAttributes,
+            database_privileges: selectedDatabasePermissions,
+            tablespace_privileges: selectedTablespacePermissions,
+            operator: 'OR'
+        };
+    } else if (dbType === 'oracle') {
+        const selectedSystemPermissions = [];
+        const selectedTablespacePermissions = [];
+        
+        checkboxes.forEach(checkbox => {
+            if (checkbox.id.startsWith('editsys_perm_')) {
+                selectedSystemPermissions.push(checkbox.value);
+            } else if (checkbox.id.startsWith('edittablespace_perm_')) {
+                selectedTablespacePermissions.push(checkbox.value);
+            }
+        });
+        
+        ruleExpression = {
+            type: 'oracle_permissions',
+            system_privileges: selectedSystemPermissions,
+            tablespace_privileges: selectedTablespacePermissions,
+            operator: 'OR'
+        };
     } else {
         ruleExpression = {
             type: 'permissions',
