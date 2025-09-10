@@ -224,10 +224,18 @@
                         </a>
                     </li>
                     {% if current_user.is_authenticated and current_user.role == 'admin' %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.admin') }}" style="color: #ff6b6b; font-weight: bold;">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: #ff6b6b; font-weight: bold;">
                             <i class="fas fa-cogs me-1"></i>管理中心
                         </a>
+                        <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('main.admin') }}">
+                                <i class="fas fa-tachometer-alt me-2"></i>管理首页
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.admin_dashboard') }}">
+                                <i class="fas fa-chart-pie me-2"></i>管理仪表板
+                            </a></li>
+                        </ul>
                     </li>
                     {% endif %}
                     {% endif %}
