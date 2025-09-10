@@ -1551,6 +1551,70 @@ function displayViewPermissions(ruleExpression, dbType) {
                 </div>
             `;
         }
+    } else if (ruleExpression.type === 'postgresql_permissions') {
+        // PostgreSQL结构：角色属性、数据库权限、表空间权限
+        if (ruleExpression.role_attributes && ruleExpression.role_attributes.length > 0) {
+            html += `
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-2"><i class="fas fa-user-shield me-2"></i>角色属性</h6>
+                    <div class="mb-3">
+                        ${ruleExpression.role_attributes.map(attr => 
+                            `<span class="badge bg-primary me-1 mb-1">${attr}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        if (ruleExpression.database_privileges && ruleExpression.database_privileges.length > 0) {
+            html += `
+                <div class="col-md-6">
+                    <h6 class="text-success mb-2"><i class="fas fa-database me-2"></i>数据库权限</h6>
+                    <div class="mb-3">
+                        ${ruleExpression.database_privileges.map(perm => 
+                            `<span class="badge bg-success me-1 mb-1">${perm}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        if (ruleExpression.tablespace_privileges && ruleExpression.tablespace_privileges.length > 0) {
+            html += `
+                <div class="col-md-6">
+                    <h6 class="text-info mb-2"><i class="fas fa-hdd me-2"></i>表空间权限</h6>
+                    <div class="mb-3">
+                        ${ruleExpression.tablespace_privileges.map(perm => 
+                            `<span class="badge bg-info me-1 mb-1">${perm}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    } else if (ruleExpression.type === 'oracle_permissions') {
+        // Oracle结构：系统权限、表空间权限
+        if (ruleExpression.system_privileges && ruleExpression.system_privileges.length > 0) {
+            html += `
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-2"><i class="fas fa-shield-alt me-2"></i>系统权限</h6>
+                    <div class="mb-3">
+                        ${ruleExpression.system_privileges.map(perm => 
+                            `<span class="badge bg-primary me-1 mb-1">${perm}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        if (ruleExpression.tablespace_privileges && ruleExpression.tablespace_privileges.length > 0) {
+            html += `
+                <div class="col-md-6">
+                    <h6 class="text-info mb-2"><i class="fas fa-hdd me-2"></i>表空间权限</h6>
+                    <div class="mb-3">
+                        ${ruleExpression.tablespace_privileges.map(perm => 
+                            `<span class="badge bg-info me-1 mb-1">${perm}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
     } else if (ruleExpression.permissions) {
         // 旧格式或其他数据库类型
         html += `
