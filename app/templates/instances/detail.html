@@ -485,7 +485,8 @@ function testConnection() {
     fetch(`/instances/api/instances/{{ instance.id }}/test`, {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
         }
     })
     .then(response => {
