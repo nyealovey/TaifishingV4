@@ -579,8 +579,10 @@ class AccountSyncService:
                 """, (username,))
                 
                 predefined_roles = cursor.fetchall()
-                for role in predefined_roles:
-                    permissions['predefined_roles'].append(role[0])
+                if predefined_roles:
+                    for role in predefined_roles:
+                        if role and len(role) > 0:
+                            permissions['predefined_roles'].append(role[0])
             except Exception as e:
                 self.logger.warning(f"获取PostgreSQL用户 {username} 预定义角色失败: {e}")
             

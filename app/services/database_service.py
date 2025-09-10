@@ -1859,14 +1859,26 @@ class DatabaseService:
                     'error': '无法获取数据库连接'
                 }
             
-            # 这里可以添加从服务器查询权限的逻辑
-            return {
-                'predefined_roles': [],
-                'role_attributes': [],
-                'database_privileges': [],
-                'tablespace_privileges': [],
-                'error': '权限数据未同步，请先同步账户'
-            }
+            # 从服务器查询权限数据
+            from app.services.account_sync_service import AccountSyncService
+            sync_service = AccountSyncService()
+            permissions = sync_service._get_postgresql_account_permissions(instance, conn, account.username)
+            
+            if permissions:
+                return {
+                    'predefined_roles': permissions.get('predefined_roles', []),
+                    'role_attributes': permissions.get('role_attributes', []),
+                    'database_privileges': permissions.get('database_privileges', []),
+                    'tablespace_privileges': permissions.get('tablespace_privileges', [])
+                }
+            else:
+                return {
+                    'predefined_roles': [],
+                    'role_attributes': [],
+                    'database_privileges': [],
+                    'tablespace_privileges': [],
+                    'error': '权限数据未同步，请先同步账户'
+                }
             
         except Exception as e:
             return {
@@ -2021,94 +2033,42 @@ class DatabaseService:
             conn = self.get_connection(instance)
             if not conn:
                 return {
+                    'roles': [],
                     'system_privileges': [],
-                    'role_privileges': [],
-                    'object_privileges': {},
-                    'database': [],
+                    'tablespace_privileges': [],
+                    'tablespace_quotas': [],
                     'error': '无法获取数据库连接'
                 }
             
-            cursor = conn.cursor()
+            # 从服务器查询权限数据
+            from app.services.account_sync_service import AccountSyncService
+            sync_service = AccountSyncService()
+            permissions_info = sync_service._get_oracle_account_permissions(conn, account.username)
             
-            try:
-                # 获取系统权限
-                cursor.execute("""
-                    SELECT privilege, admin_option
-                    FROM dba_sys_privs
-                    WHERE grantee = :username
-                    ORDER BY privilege
-                """, {'username': account.username.upper()})
-                
-                system_permissions = []
-                for row in cursor.fetchall():
-                    privilege, admin_option = row
-                    system_permissions.append({
-                        'privilege': privilege,
-                        'granted': True,
-                        'grantable': admin_option == 'YES'
-                    })
-                
-                # 获取角色权限
-                cursor.execute("""
-                    SELECT granted_role, admin_option
-                    FROM dba_role_privs
-                    WHERE grantee = :username
-                    ORDER BY granted_role
-                """, {'username': account.username.upper()})
-                
-                role_permissions = []
-                for row in cursor.fetchall():
-                    role, admin_option = row
-                    role_permissions.append({
-                        'role': role,
-                        'granted': True,
-                        'grantable': admin_option == 'YES'
-                    })
-                
-                # 获取对象权限
-                cursor.execute("""
-                    SELECT owner, table_name, privilege, grantable
-                    FROM dba_tab_privs
-                    WHERE grantee = :username
-                    ORDER BY owner, table_name, privilege
-                """, {'username': account.username.upper()})
-                
-                obj_permissions = {}
-                for row in cursor.fetchall():
-                    owner, table_name, privilege, grantable = row
-                    key = f"{owner}.{table_name}"
-                    if key not in obj_permissions:
-                        obj_permissions[key] = []
-                    obj_permissions[key].append({
-                        'privilege': privilege,
-                        'grantable': grantable == 'YES'
-                    })
-                
-                # 转换为数据库权限格式
-                database_permissions = []
-                for obj_name, privileges in obj_permissions.items():
-                    privilege_names = [p['privilege'] for p in privileges]
-                    database_permissions.append({
-                        'database': obj_name,
-                        'privileges': privilege_names
-                    })
-                
+            if permissions_info and 'permissions_json' in permissions_info:
+                import json
+                permissions = json.loads(permissions_info['permissions_json'])
                 return {
-                    'system_privileges': system_permissions,
-                    'role_privileges': role_permissions,
-                    'object_privileges': obj_permissions,
-                    'database': database_permissions
+                    'roles': permissions.get('roles', []),
+                    'system_privileges': permissions.get('system_privileges', []),
+                    'tablespace_privileges': permissions.get('tablespace_privileges', []),
+                    'tablespace_quotas': permissions.get('tablespace_quotas', [])
                 }
-                
-            finally:
-                cursor.close()
+            else:
+                return {
+                    'roles': [],
+                    'system_privileges': [],
+                    'tablespace_privileges': [],
+                    'tablespace_quotas': [],
+                    'error': '权限数据未同步，请先同步账户'
+                }
                 
         except Exception as e:
             return {
+                'roles': [],
                 'system_privileges': [],
-                'role_privileges': [],
-                'object_privileges': {},
-                'database': [],
+                'tablespace_privileges': [],
+                'tablespace_quotas': [],
                 'error': f'获取权限失败: {str(e)}'
             }
     def _get_mysql_version(self, conn) -> Optional[str]:
