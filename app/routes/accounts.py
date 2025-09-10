@@ -958,11 +958,73 @@ def get_filter_options():
 
 # API路由
 @accounts_bp.route('/api/statistics')
-@jwt_required()
+@login_required
 def api_statistics():
-    """获取统计信息API"""
-    stats = get_account_statistics()
-    return jsonify(stats)
+    """账户统计API"""
+    try:
+        from app.models.account import Account
+        from app.models.instance import Instance
+        from app.models.account_classification import AccountClassification
+        
+        # 总体统计
+        total_accounts = Account.query.count()
+        active_accounts = Account.query.filter_by(is_locked=False).count()
+        locked_accounts = Account.query.filter_by(is_locked=True).count()
+        total_instances = Instance.query.count()
+        
+        # 按数据库类型统计
+        db_type_stats = {}
+        for db_type in ['mysql', 'postgresql', 'oracle', 'sqlserver']:
+            accounts = db.session.query(Account).join(Instance, Account.instance_id == Instance.id).filter(Instance.db_type == db_type).all()
+            db_type_stats[db_type] = {
+                'total': len(accounts),
+                'active': len([a for a in accounts if not a.is_locked]),
+                'locked': len([a for a in accounts if a.is_locked])
+            }
+        
+        # 按环境统计
+        environment_stats = {}
+        for env in ['production', 'development', 'testing']:
+            accounts = db.session.query(Account).join(Instance, Account.instance_id == Instance.id).filter(Instance.environment == env).all()
+            environment_stats[env] = {
+                'total': len(accounts),
+                'active': len([a for a in accounts if not a.is_locked]),
+                'locked': len([a for a in accounts if a.is_locked])
+            }
+        
+        # 按分类统计
+        classification_stats = {}
+        classifications = AccountClassification.query.all()
+        for classification in classifications:
+            account_count = db.session.query(Account).join(
+                AccountClassification, 
+                Account.id == AccountClassification.account_id
+            ).filter(AccountClassification.classification_id == classification.id).count()
+            
+            classification_stats[classification.name] = {
+                'total': account_count,
+                'color': classification.color or '#6c757d'
+            }
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'total_accounts': total_accounts,
+                'active_accounts': active_accounts,
+                'locked_accounts': locked_accounts,
+                'total_instances': total_instances,
+                'db_type_stats': db_type_stats,
+                'environment_stats': environment_stats,
+                'classification_stats': classification_stats
+            }
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"统计API错误: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'获取统计数据失败: {str(e)}'
+        }), 500
 
 @accounts_bp.route('/<int:account_id>/permissions')
 @login_required
