@@ -602,9 +602,12 @@ function viewAccountPermissions(accountId) {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('权限API响应:', data);
         if (data.success) {
+            console.log('权限获取成功，显示模态框');
             showPermissionsModal(data.permissions, data.account);
         } else {
+            console.log('权限获取失败:', data.error);
             showAlert('danger', data.error || '获取权限信息失败');
         }
     })
@@ -618,8 +621,13 @@ function viewAccountPermissions(accountId) {
 }
 
 function showPermissionsModal(permissions, account) {
+    console.log('showPermissionsModal 被调用');
+    console.log('权限数据:', permissions);
+    console.log('账户数据:', account);
+    
     // 获取数据库类型
     const dbType = '{{ instance.db_type }}';
+    console.log('数据库类型:', dbType);
     
     // 创建模态框
     const modalHtml = `
@@ -882,11 +890,14 @@ function showPermissionsModal(permissions, account) {
     }
     
     // 添加新模态框
+    console.log('添加模态框HTML到页面');
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     
     // 显示模态框
+    console.log('创建并显示模态框');
     const modal = new bootstrap.Modal(document.getElementById('permissionsModal'));
     modal.show();
+    console.log('模态框显示完成');
 }
 
 function showAlert(type, message) {
