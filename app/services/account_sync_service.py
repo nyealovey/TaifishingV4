@@ -444,13 +444,13 @@ class AccountSyncService:
             # 记录服务器端的账户（PostgreSQL没有主机概念）
             server_accounts.add((username, ''))
             
-            # 确定账户类型
+            # 确定账户类型（PostgreSQL中用户和角色是同一个概念）
             if is_superuser:
-                account_type = 'superuser'
+                account_type = 'role'  # 超级用户角色
             elif can_create_db or can_create_role:
-                account_type = 'admin'
+                account_type = 'role'  # 管理员角色
             else:
-                account_type = 'user'
+                account_type = 'user'  # 普通用户
             
             # 检查密码是否过期
             password_expired = valid_until is not None and valid_until < now()
