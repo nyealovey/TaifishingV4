@@ -445,9 +445,9 @@
 
 {% block extra_js %}
 <script>
-// 页面加载时自动测试连接
+// 页面加载完成，不自动测试连接
 document.addEventListener('DOMContentLoaded', function() {
-    testConnection();
+    // 页面加载完成，等待用户手动测试连接
 });
 
 function testConnection() {
