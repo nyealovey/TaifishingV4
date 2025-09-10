@@ -24,6 +24,7 @@
 
 ### 数据库驱动指南
 - [Oracle驱动指南](ORACLE_DRIVER_GUIDE.md) - Oracle数据库驱动安装和配置指南
+- [Oracle权限要求](ORACLE_PERMISSION_REQUIREMENTS.md) - Oracle权限查询所需的最低权限要求
 - [数据库权限概述](DATABASE_PERMISSIONS_OVERVIEW.md) - 各数据库权限系统说明
 - [MySQL权限文档](MYSQL_PERMISSIONS.md) - MySQL权限管理详细说明
 - [PostgreSQL权限文档](POSTGRESQL_PERMISSIONS.md) - PostgreSQL权限管理详细说明
