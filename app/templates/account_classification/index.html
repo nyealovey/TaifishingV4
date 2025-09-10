@@ -980,10 +980,26 @@ function displayPermissionsConfig(permissions, prefix = '', dbType = '') {
             </div>
         `;
     } else if (dbType === 'oracle') {
-        // Oracle结构：系统权限、表空间权限、表空间配额
+        // Oracle结构：角色、系统权限、表空间权限、表空间配额
         html += `
             <div class="col-md-6">
-                <h6 class="text-primary mb-3"><i class="fas fa-shield-alt me-2"></i>系统权限</h6>
+                <h6 class="text-danger mb-3"><i class="fas fa-users-cog me-2"></i>角色</h6>
+                <div class="permission-section">
+                    ${permissions.roles ? permissions.roles.map(role => `
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" value="${role.name}" id="${prefix}role_${role.name}">
+                            <label class="form-check-label d-flex align-items-center" for="${prefix}role_${role.name}">
+                                <i class="fas fa-users-cog text-danger me-2"></i>
+                                <div>
+                                    <div class="fw-bold">${role.name}</div>
+                                    <small class="text-muted">${role.description || '数据库角色'}</small>
+                                </div>
+                            </label>
+                        </div>
+                    `).join('') : '<div class="text-muted">无角色</div>'}
+                </div>
+                
+                <h6 class="text-primary mb-3 mt-3"><i class="fas fa-shield-alt me-2"></i>系统权限</h6>
                 <div class="permission-section">
                     ${permissions.system_privileges ? permissions.system_privileges.map(perm => `
                         <div class="form-check mb-2">
@@ -1153,12 +1169,15 @@ function createRule() {
         };
     } else if (dbType === 'oracle') {
         // Oracle结构
+        const selectedRoles = [];
         const selectedSystemPermissions = [];
         const selectedTablespacePermissions = [];
         const selectedTablespaceQuotas = [];
         
         checkboxes.forEach(checkbox => {
-            if (checkbox.id.startsWith('sys_perm_')) {
+            if (checkbox.id.startsWith('role_')) {
+                selectedRoles.push(checkbox.value);
+            } else if (checkbox.id.startsWith('sys_perm_')) {
                 selectedSystemPermissions.push(checkbox.value);
             } else if (checkbox.id.startsWith('tablespace_perm_')) {
                 selectedTablespacePermissions.push(checkbox.value);
@@ -1169,6 +1188,7 @@ function createRule() {
         
         ruleExpression = {
             type: 'oracle_permissions',
+            roles: selectedRoles,
             system_privileges: selectedSystemPermissions,
             tablespace_privileges: selectedTablespacePermissions,
             tablespace_quotas: selectedTablespaceQuotas,
@@ -1329,6 +1349,12 @@ function setSelectedPermissions(ruleExpression, prefix = '') {
         }
     } else if (ruleExpression.type === 'oracle_permissions') {
         // Oracle结构
+        if (ruleExpression.roles) {
+            ruleExpression.roles.forEach(role => {
+                const checkbox = document.getElementById(`${prefix}role_${role}`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
         if (ruleExpression.system_privileges) {
             ruleExpression.system_privileges.forEach(perm => {
                 const checkbox = document.getElementById(`${prefix}sys_perm_${perm}`);
@@ -1449,12 +1475,15 @@ function updateRule() {
             operator: 'OR'
         };
     } else if (dbType === 'oracle') {
+        const selectedRoles = [];
         const selectedSystemPermissions = [];
         const selectedTablespacePermissions = [];
         const selectedTablespaceQuotas = [];
         
         checkboxes.forEach(checkbox => {
-            if (checkbox.id.startsWith('editsys_perm_')) {
+            if (checkbox.id.startsWith('editrole_')) {
+                selectedRoles.push(checkbox.value);
+            } else if (checkbox.id.startsWith('editsys_perm_')) {
                 selectedSystemPermissions.push(checkbox.value);
             } else if (checkbox.id.startsWith('edittablespace_perm_')) {
                 selectedTablespacePermissions.push(checkbox.value);
@@ -1465,6 +1494,7 @@ function updateRule() {
         
         ruleExpression = {
             type: 'oracle_permissions',
+            roles: selectedRoles,
             system_privileges: selectedSystemPermissions,
             tablespace_privileges: selectedTablespacePermissions,
             tablespace_quotas: selectedTablespaceQuotas,
@@ -1669,7 +1699,19 @@ function displayViewPermissions(ruleExpression, dbType) {
             `;
         }
     } else if (ruleExpression.type === 'oracle_permissions') {
-        // Oracle结构：系统权限、表空间权限、表空间配额
+        // Oracle结构：角色、系统权限、表空间权限、表空间配额
+        if (ruleExpression.roles && ruleExpression.roles.length > 0) {
+            html += `
+                <div class="col-md-6">
+                    <h6 class="text-danger mb-2"><i class="fas fa-users-cog me-2"></i>角色</h6>
+                    <div class="mb-3">
+                        ${ruleExpression.roles.map(role => 
+                            `<span class="badge bg-danger me-1 mb-1">${role}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
         if (ruleExpression.system_privileges && ruleExpression.system_privileges.length > 0) {
             html += `
                 <div class="col-md-6">
