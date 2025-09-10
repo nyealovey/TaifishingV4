@@ -824,10 +824,14 @@ function displayPermissionsConfig(permissions, prefix = '', dbType = '') {
                 <h6 class="text-primary mb-3"><i class="fas fa-globe me-2"></i>全局权限</h6>
                 <div class="permission-section">
                     ${permissions.global_privileges.map(perm => `
-                        <div class="form-check">
+                        <div class="form-check mb-2">
                             <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}global_${perm.name}">
-                            <label class="form-check-label" for="${prefix}global_${perm.name}">
-                                <span class="me-1">${perm.name}</span>
+                            <label class="form-check-label d-flex align-items-center" for="${prefix}global_${perm.name}">
+                                <i class="fas fa-globe text-primary me-2"></i>
+                                <div>
+                                    <div class="fw-bold">${perm.name}</div>
+                                    <small class="text-muted">${perm.description || '全局权限'}</small>
+                                </div>
                             </label>
                         </div>
                     `).join('')}
@@ -837,10 +841,14 @@ function displayPermissionsConfig(permissions, prefix = '', dbType = '') {
                 <h6 class="text-success mb-3"><i class="fas fa-database me-2"></i>数据库权限</h6>
                 <div class="permission-section">
                     ${permissions.database_privileges.map(perm => `
-                        <div class="form-check">
+                        <div class="form-check mb-2">
                             <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}db_${perm.name}">
-                            <label class="form-check-label" for="${prefix}db_${perm.name}">
-                                <span class="me-1">${perm.name}</span>
+                            <label class="form-check-label d-flex align-items-center" for="${prefix}db_${perm.name}">
+                                <i class="fas fa-database text-success me-2"></i>
+                                <div>
+                                    <div class="fw-bold">${perm.name}</div>
+                                    <small class="text-muted">${perm.description || '数据库权限'}</small>
+                                </div>
                             </label>
                         </div>
                     `).join('')}
@@ -854,10 +862,14 @@ function displayPermissionsConfig(permissions, prefix = '', dbType = '') {
                 <h6 class="text-info mb-3"><i class="fas fa-users me-2"></i>服务器角色</h6>
                 <div class="permission-section">
                     ${permissions.server_roles ? permissions.server_roles.map(role => `
-                        <div class="form-check">
+                        <div class="form-check mb-2">
                             <input class="form-check-input" type="checkbox" value="${role.name}" id="${prefix}server_role_${role.name}">
-                            <label class="form-check-label" for="${prefix}server_role_${role.name}">
-                                <span class="me-1">${role.name}</span>
+                            <label class="form-check-label d-flex align-items-center" for="${prefix}server_role_${role.name}">
+                                <i class="fas fa-users text-info me-2"></i>
+                                <div>
+                                    <div class="fw-bold">${role.name}</div>
+                                    <small class="text-muted">${role.description || '服务器角色'}</small>
+                                </div>
                             </label>
                         </div>
                     `).join('') : '<div class="text-muted">无服务器角色</div>'}
@@ -866,10 +878,14 @@ function displayPermissionsConfig(permissions, prefix = '', dbType = '') {
                 <h6 class="text-warning mb-3 mt-3"><i class="fas fa-shield-alt me-2"></i>服务器权限</h6>
                 <div class="permission-section">
                     ${permissions.server_permissions ? permissions.server_permissions.map(perm => `
-                        <div class="form-check">
+                        <div class="form-check mb-2">
                             <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}server_perm_${perm.name}">
-                            <label class="form-check-label" for="${prefix}server_perm_${perm.name}">
-                                <span class="me-1">${perm.name}</span>
+                            <label class="form-check-label d-flex align-items-center" for="${prefix}server_perm_${perm.name}">
+                                <i class="fas fa-shield-alt text-warning me-2"></i>
+                                <div>
+                                    <div class="fw-bold">${perm.name}</div>
+                                    <small class="text-muted">${perm.description || '服务器权限'}</small>
+                                </div>
                             </label>
                         </div>
                     `).join('') : '<div class="text-muted">无服务器权限</div>'}
@@ -879,10 +895,14 @@ function displayPermissionsConfig(permissions, prefix = '', dbType = '') {
                 <h6 class="text-primary mb-3"><i class="fas fa-database me-2"></i>数据库角色</h6>
                 <div class="permission-section">
                     ${permissions.database_roles ? permissions.database_roles.map(role => `
-                        <div class="form-check">
+                        <div class="form-check mb-2">
                             <input class="form-check-input" type="checkbox" value="${role.name}" id="${prefix}db_role_${role.name}">
-                            <label class="form-check-label" for="${prefix}db_role_${role.name}">
-                                <span class="me-1">${role.name}</span>
+                            <label class="form-check-label d-flex align-items-center" for="${prefix}db_role_${role.name}">
+                                <i class="fas fa-database text-primary me-2"></i>
+                                <div>
+                                    <div class="fw-bold">${role.name}</div>
+                                    <small class="text-muted">${role.description || '数据库角色'}</small>
+                                </div>
                             </label>
                         </div>
                     `).join('') : '<div class="text-muted">无数据库角色</div>'}
@@ -891,10 +911,14 @@ function displayPermissionsConfig(permissions, prefix = '', dbType = '') {
                 <h6 class="text-success mb-3 mt-3"><i class="fas fa-key me-2"></i>数据库权限</h6>
                 <div class="permission-section">
                     ${permissions.database_privileges ? permissions.database_privileges.map(perm => `
-                        <div class="form-check">
+                        <div class="form-check mb-2">
                             <input class="form-check-input" type="checkbox" value="${perm.name}" id="${prefix}db_perm_${perm.name}">
-                            <label class="form-check-label" for="${prefix}db_perm_${perm.name}">
-                                <span class="me-1">${perm.name}</span>
+                            <label class="form-check-label d-flex align-items-center" for="${prefix}db_perm_${perm.name}">
+                                <i class="fas fa-key text-success me-2"></i>
+                                <div>
+                                    <div class="fw-bold">${perm.name}</div>
+                                    <small class="text-muted">${perm.description || '数据库权限'}</small>
+                                </div>
                             </label>
                         </div>
                     `).join('') : '<div class="text-muted">无数据库权限</div>'}
