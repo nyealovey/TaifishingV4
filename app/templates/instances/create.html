@@ -85,6 +85,20 @@
                         </div>
                     </div>
                     
+                    <!-- Oracle SID字段 -->
+                    <div class="row" id="oracle-sid-row" style="display: none;">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label for="database_name" class="form-label">Oracle SID/服务名</label>
+                                <input type="text" class="form-control" id="database_name" name="database_name" 
+                                       placeholder="例如: ORCL, XE, 或服务名">
+                                <div class="form-text">
+                                    Oracle数据库的SID或服务名，默认为ORCL
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="mb-3">
                         <label for="description" class="form-label">描述</label>
                         <textarea class="form-control" id="description" name="description" rows="3" 
@@ -115,9 +129,10 @@
 
 {% block extra_js %}
 <script>
-// 根据数据库类型设置默认端口
+// 根据数据库类型设置默认端口和显示相关字段
 document.getElementById('db_type').addEventListener('change', function() {
     const portInput = document.getElementById('port');
+    const oracleSidRow = document.getElementById('oracle-sid-row');
     const dbType = this.value;
     
     const defaultPorts = {
@@ -129,6 +144,13 @@ document.getElementById('db_type').addEventListener('change', function() {
     
     if (defaultPorts[dbType]) {
         portInput.value = defaultPorts[dbType];
+    }
+    
+    // 控制Oracle SID字段的显示
+    if (dbType === 'oracle') {
+        oracleSidRow.style.display = 'block';
+    } else {
+        oracleSidRow.style.display = 'none';
     }
 });
 
