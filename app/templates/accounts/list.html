@@ -217,13 +217,10 @@
                         <th style="font-size: 0.8rem;">操作</th>
                         {% elif current_db_type == 'mysql' %}
                         <th style="font-size: 0.8rem;">名称</th>
-                        <th style="font-size: 0.8rem;">用户</th>
-                        <th style="font-size: 0.8rem;">主机</th>
                         <th style="font-size: 0.8rem;">实例名称</th>
                         <th style="font-size: 0.8rem;">环境</th>
                         <th style="font-size: 0.8rem;">插件/类型</th>
                         <th style="font-size: 0.8rem;">分类</th>
-                        <th style="font-size: 0.8rem;">密码最后修改</th>
                         <th style="font-size: 0.8rem;">锁定状态</th>
                         <th style="font-size: 0.8rem;">操作</th>
                         {% else %}
@@ -318,12 +315,6 @@
                             </div>
                         </td>
                         <td>
-                            <span class="fw-bold" style="font-size: 0.85rem;">{{ account.username }}</span>
-                        </td>
-                        <td>
-                            <span class="badge bg-info" style="font-size: 0.7rem;">{{ account.host or '%' }}</span>
-                        </td>
-                        <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-database text-info me-1" style="font-size: 0.8rem;"></i>
                                 <span style="font-size: 0.8rem;">{{ account.instance.name }}</span>
@@ -353,13 +344,6 @@
                                 {% endfor %}
                             {% else %}
                                 <span class="text-muted" style="font-size: 0.8rem;">未分类</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if account.password_last_changed %}
-                                <small class="text-muted" style="font-size: 0.75rem;">{{ account.password_last_changed | china_datetime }}</small>
-                            {% else %}
-                                <small class="text-muted" style="font-size: 0.75rem;">未知</small>
                             {% endif %}
                         </td>
                         <td>
