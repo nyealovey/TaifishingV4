@@ -102,24 +102,11 @@
                         <a href="{{ url_for('instances.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-2"></i>返回列表
                         </a>
-                        <button type="button" class="btn btn-outline-info" onclick="testConnection()">
-                            <i class="fas fa-plug me-2"></i>测试连接
-                        </button>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save me-2"></i>创建实例
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
-        
-        <!-- 连接测试结果 -->
-        <div class="card mt-3" id="testResult" style="display: none;">
-            <div class="card-body">
-                <h6 class="card-title">
-                    <i class="fas fa-plug me-2"></i>连接测试结果
-                </h6>
-                <div id="testResultContent"></div>
             </div>
         </div>
     </div>
@@ -160,106 +147,6 @@ document.getElementById('instanceForm').addEventListener('submit', function(e) {
     }, 5000);
 });
 
-// 测试连接功能
-function testConnection() {
-    const form = document.getElementById('instanceForm');
-    const formData = new FormData(form);
-    
-    // 检查必填字段
-    const requiredFields = ['name', 'db_type', 'host', 'port', 'credential_id'];
-    for (const field of requiredFields) {
-        if (!formData.get(field)) {
-            showAlert('warning', '请先填写必填字段');
-            return;
-        }
-    }
-    
-    const testBtn = event.target;
-    const originalText = testBtn.innerHTML;
-    
-    testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>测试中...';
-    testBtn.disabled = true;
-    
-    // 创建临时实例对象进行测试
-    const testData = {
-        name: formData.get('name'),
-        db_type: formData.get('db_type'),
-        host: formData.get('host'),
-        port: parseInt(formData.get('port')),
-        database_name: formData.get('database_name'),
-        credential_id: formData.get('credential_id')
-    };
-    
-    // 获取CSRF token
-    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-    
-    fetch('/instances/test-connection', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        },
-        body: JSON.stringify(testData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        const resultDiv = document.getElementById('testResult');
-        const contentDiv = document.getElementById('testResultContent');
-        
-        if (data.success) {
-            contentDiv.innerHTML = `
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle me-2"></i>
-                    <strong>连接成功！</strong><br>
-                    ${data.message || '数据库连接正常'}
-                </div>
-            `;
-        } else {
-            // 构建详细的错误信息
-            let errorHtml = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>连接失败！</strong><br>
-                    <strong>错误类型：</strong>${data.error || '未知错误'}<br>
-            `;
-            
-            // 添加详细信息
-            if (data.details) {
-                errorHtml += `<strong>详细信息：</strong>${data.details}<br>`;
-            }
-            
-            // 添加解决方案
-            if (data.solution) {
-                errorHtml += `<strong>解决方案：</strong>${data.solution}<br>`;
-            }
-            
-            // 添加错误类型
-            if (data.error_type) {
-                errorHtml += `<small class="text-muted">错误类型: ${data.error_type}</small>`;
-            }
-            
-            errorHtml += `</div>`;
-            
-            contentDiv.innerHTML = errorHtml;
-        }
-        
-        resultDiv.style.display = 'block';
-    })
-    .catch(error => {
-        document.getElementById('testResultContent').innerHTML = `
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <strong>测试失败！</strong><br>
-                网络错误或服务器无响应
-            </div>
-        `;
-        document.getElementById('testResult').style.display = 'block';
-    })
-    .finally(() => {
-        testBtn.innerHTML = originalText;
-        testBtn.disabled = false;
-    });
-}
 
 function showAlert(type, message) {
     const alertDiv = document.createElement('div');
