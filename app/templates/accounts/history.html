@@ -110,7 +110,7 @@
                             <span class="badge bg-secondary">{{ record.synced_count or 0 }}</span>
                         </td>
                         <td>
-                            <div class="text-truncate" style="max-width: 200px;" title="{{ record.message or record.error_message or '-' }}">
+                            <div style="max-width: 200px; font-size: 0.75rem; word-wrap: break-word; white-space: normal; line-height: 1.2;" title="{{ record.message or record.error_message or '-' }}">
                                 {{ record.message or record.error_message or '-' }}
                             </div>
                         </td>
