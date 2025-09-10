@@ -35,6 +35,9 @@ class Account(db.Model):
     expiry_date = db.Column(db.DateTime, nullable=True)  # 过期日期
     default_tablespace = db.Column(db.String(100), nullable=True)  # 默认表空间
     
+    # SQL Server特有字段
+    account_created_at = db.Column(db.DateTime, nullable=True)  # 账户在数据库中的创建时间
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -66,6 +69,7 @@ class Account(db.Model):
             'lock_date': self.lock_date.isoformat() if self.lock_date else None,  # 锁定日期
             'expiry_date': self.expiry_date.isoformat() if self.expiry_date else None,  # 过期日期
             'default_tablespace': self.default_tablespace,  # 默认表空间
+            'account_created_at': self.account_created_at.isoformat() if self.account_created_at else None,  # 账户创建时间
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
             'instance_name': self.instance.name if self.instance else None,

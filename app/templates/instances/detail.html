@@ -224,6 +224,7 @@
                                 {% elif instance.db_type == 'sqlserver' %}
                                 <th>登录名</th>
                                 <th>类型</th>
+                                <th>创建时间</th>
                                 <th>最后修改</th>
                                 <th>状态</th>
                                 <th>操作</th>
@@ -297,6 +298,13 @@
                                 </td>
                                 <td>
                                     <span class="badge bg-info">{{ account.account_type or '未知' }}</span>
+                                </td>
+                                <td>
+                                    {% if account.account_created_at %}
+                                        <small class="text-muted">{{ account.account_created_at | china_datetime }}</small>
+                                    {% else %}
+                                        <small class="text-muted">未知</small>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if account.password_last_changed %}

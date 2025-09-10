@@ -691,7 +691,8 @@ class AccountSyncService:
                 type_desc as account_type,
                 '' as database_name,
                 is_disabled as is_disabled,
-                create_date as created_date
+                create_date as created_date,
+                modify_date as modified_date
             FROM sys.server_principals
             WHERE type IN ('S', 'U', 'G')
             AND name NOT LIKE '##%'
@@ -710,7 +711,7 @@ class AccountSyncService:
         modified_count = 0
         
         for account_data in accounts:
-            username, account_type, database_name, is_disabled, created_date = account_data
+            username, account_type, database_name, is_disabled, created_date, modified_date = account_data
             
             # 直接使用SQL Server的原始type_desc名称
             account_type = account_type.lower()
@@ -733,7 +734,9 @@ class AccountSyncService:
                     is_active=not is_disabled,
                     permissions=permissions_info['permissions_json'],
                     is_superuser=permissions_info['is_superuser'],
-                    can_grant=permissions_info['can_grant']
+                    can_grant=permissions_info['can_grant'],
+                    account_created_at=created_date,
+                    password_last_changed=modified_date
                 )
                 db.session.add(account)
                 added_count += 1
@@ -748,6 +751,12 @@ class AccountSyncService:
                     has_changes = True
                 if account.is_active != (not is_disabled):
                     account.is_active = not is_disabled
+                    has_changes = True
+                if account.account_created_at != created_date:
+                    account.account_created_at = created_date
+                    has_changes = True
+                if account.password_last_changed != modified_date:
+                    account.password_last_changed = modified_date
                     has_changes = True
                 
                 # 更新权限信息
