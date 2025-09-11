@@ -19,7 +19,6 @@ from app.utils.logger import log_operation
 from app.utils.rate_limiter import (
     login_rate_limit,
     password_reset_rate_limit,
-    registration_rate_limit,
 )
 
 # 创建蓝图
@@ -126,66 +125,7 @@ def logout():
     return redirect(url_for("auth.login"))
 
 
-@auth_bp.route("/register", methods=["GET", "POST"])
-@registration_rate_limit
-def register():
-    """用户注册页面"""
-    if request.method == "POST":
-        data = request.get_json() if request.is_json else request.form
-        username = data.get("username")
-        password = data.get("password")
-        confirm_password = data.get("confirm_password")
-        email = data.get("email")
-
-        # 验证输入
-        if not username or not password:
-            if request.is_json:
-                return jsonify({"error": "用户名和密码不能为空"}), 400
-            flash("用户名和密码不能为空", "error")
-            return render_template("auth/register.html")
-
-        if password != confirm_password:
-            if request.is_json:
-                return jsonify({"error": "两次输入的密码不一致"}), 400
-            flash("两次输入的密码不一致", "error")
-            return render_template("auth/register.html")
-
-        # 检查用户名是否已存在
-        if User.query.filter_by(username=username).first():
-            if request.is_json:
-                return jsonify({"error": "用户名已存在"}), 400
-            flash("用户名已存在", "error")
-            return render_template("auth/register.html")
-
-        # 创建新用户
-        try:
-            user = User(
-                username=username,
-                password_hash=bcrypt.generate_password_hash(password).decode("utf-8"),
-                email=email,
-                role="user",
-                is_active=True,
-            )
-            db.session.add(user)
-            db.session.commit()
-
-            if request.is_json:
-                return jsonify({"message": "注册成功"}), 201
-
-            flash("注册成功！请登录", "success")
-            return redirect(url_for("auth.login"))
-
-        except Exception as e:
-            db.session.rollback()
-            if request.is_json:
-                return jsonify({"error": "注册失败，请重试"}), 500
-            flash("注册失败，请重试", "error")
-
-    # GET请求，显示注册页面
-    if request.is_json:
-        return jsonify({"error": "请使用POST方法注册"}), 405
-
-    return render_template("auth/register.html")
+# 注册功能已移除
 
 
 @auth_bp.route("/profile")
