@@ -38,7 +38,7 @@ def register_error_logging_middleware(app):
     
     @app.after_request
     def log_request_end(response):
-        """记录请求结束并合并日志"""
+        """记录请求结束"""
         try:
             if request.endpoint and not request.endpoint.startswith('static'):
                 status_code = response.status_code
@@ -47,56 +47,13 @@ def register_error_logging_middleware(app):
                 # 获取请求ID
                 request_id = getattr(g, 'request_id', 'unknown')
                 
-                # 查找对应的开始日志
-                start_log = None
-                if request_id != 'unknown':
-                    start_log = Log.query.filter(
-                        Log.message.like(f'%请求开始: {request.method} {request.path} [request_id: {request_id}]%')
-                    ).order_by(Log.created_at.desc()).first()
-                
-                if start_log:
-                    # 计算持续时间
-                    from datetime import datetime
-                    end_time = datetime.now()
-                    duration = (end_time - start_log.created_at).total_seconds() * 1000
-                    
-                    # 创建合并后的日志
-                    merged_message = f"请求: {request.method} {request.path} - {status_code} ({duration:.2f}ms)"
-                    
-                    # 确定最严重的级别
-                    levels = [start_log.level, log_level.upper()]
-                    level_priority = {'CRITICAL': 5, 'ERROR': 4, 'WARNING': 3, 'INFO': 2, 'DEBUG': 1}
-                    max_level = max(levels, key=lambda x: level_priority.get(x, 0))
-                    
-                    # 保存合并后的日志
-                    merged_log = Log(
-                        level=max_level,
-                        log_type='request',
-                        module='request_handler',
-                        message=merged_message,
-                        details=f"开始时间: {start_log.created_at}, 结束时间: {end_time}, 持续时间: {duration:.2f}ms",
-                        user_id=current_user.id if current_user and hasattr(current_user, 'id') else None,
-                        ip_address=request.remote_addr,
-                        user_agent=request.headers.get('User-Agent'),
-                        created_at=start_log.created_at  # 使用开始时间作为创建时间
-                    )
-                    
-                    db.session.add(merged_log)
-                    
-                    # 删除原始的开始和结束日志
-                    db.session.delete(start_log)
-                    
-                    # 提交事务
-                    db.session.commit()
-                else:
-                    # 如果没有找到开始日志，记录结束日志
-                    getattr(enhanced_logger, log_level)(
-                        f"请求结束: {request.method} {request.path} - {status_code} [request_id: {request_id}]",
-                        "request_handler",
-                        f"用户: {current_user.id if current_user and hasattr(current_user, 'id') else 'anonymous'}, "
-                        f"IP: {request.remote_addr}, "
-                        f"响应大小: {response.content_length or 0} bytes"
-                    )
+                getattr(enhanced_logger, log_level)(
+                    f"请求结束: {request.method} {request.path} - {status_code} [request_id: {request_id}]",
+                    "request_handler",
+                    f"用户: {current_user.id if current_user and hasattr(current_user, 'id') else 'anonymous'}, "
+                    f"IP: {request.remote_addr}, "
+                    f"响应大小: {response.content_length or 0} bytes"
+                )
         except Exception as e:
             # 避免在日志记录过程中出错
             pass

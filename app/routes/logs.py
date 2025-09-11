@@ -22,7 +22,7 @@ logs_bp = Blueprint("logs", __name__)
 
 def get_merged_request_logs(query, page=1, per_page=20):
     """
-    获取日志列表（合并已在保存时完成）
+    获取日志列表（显示原始日志）
     
     Args:
         query: SQLAlchemy查询对象
@@ -38,9 +38,9 @@ def get_merged_request_logs(query, page=1, per_page=20):
             page=page, per_page=per_page, error_out=False
         )
         
-        # 为每个日志添加is_merged属性（现在所有日志都是合并后的）
+        # 为每个日志添加is_merged属性（现在显示原始日志，不合并）
         for log in logs.items:
-            log.is_merged = True
+            log.is_merged = False
         
         return logs
     except Exception as e:
