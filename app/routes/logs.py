@@ -283,14 +283,14 @@ def get_merged_info(log_id):
             'request_body': None
         }
         
-            # 如果是请求日志，解析消息
-            if log.log_type == 'request' and '请求:' in log.message:
-                # 解析路径（新格式：请求: GET /path）
-                import re
-                match = re.search(r'请求:\s+(\w+)\s+(.+)', log.message)
-                if match:
-                    merged_info['request_method'] = match.group(1)
-                    merged_info['path'] = match.group(2)
+        # 如果是请求日志，解析消息
+        if log.log_type == 'request' and '请求:' in log.message:
+            # 解析路径（新格式：请求: GET /path）
+            import re
+            match = re.search(r'请求:\s+(\w+)\s+(.+)', log.message)
+            if match:
+                merged_info['request_method'] = match.group(1)
+                merged_info['path'] = match.group(2)
         
         # 解析详情信息
         if log.details:

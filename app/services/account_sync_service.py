@@ -1287,7 +1287,7 @@ class AccountSyncService:
 
             server_roles = []
             is_sysadmin = False
-        for row in cursor.fetchall():
+            for row in cursor.fetchall():
                 role_name = row[0]
                 server_roles.append({"role": role_name, "granted": True})
                 if role_name == "sysadmin":
@@ -1353,8 +1353,8 @@ class AccountSyncService:
                 "database_roles": database_roles,
                 "database": database_permissions,
             }
-        
-        return {
+            
+            return {
                 "permissions_json": json.dumps(permissions_data),
                 "is_superuser": is_sysadmin,
                 "can_grant": is_sysadmin,  # sysadmin角色可以授权
@@ -1403,7 +1403,7 @@ class AccountSyncService:
                     {"username": username.upper()},
                 )
 
-        for row in cursor.fetchall():
+                for row in cursor.fetchall():
                     role, admin_option = row
                     permissions["roles"].append(role)
             except Exception as e:
@@ -1463,7 +1463,7 @@ class AccountSyncService:
                     {"username": username.upper()},
                 )
 
-        for row in cursor.fetchall():
+                for row in cursor.fetchall():
                     quota_type = row[0]
                     permissions["tablespace_quotas"].append(quota_type)
             except Exception as e:
@@ -1489,7 +1489,7 @@ class AccountSyncService:
 
         except Exception as e:
             self.logger.error(f"获取Oracle权限失败: {e}")
-        return {
+            return {
                 "permissions_json": json.dumps(
                     {
                         "roles": [],
