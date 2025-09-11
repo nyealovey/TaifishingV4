@@ -46,6 +46,7 @@ def register_error_logging_middleware(app):
                 
                 # 获取请求ID
                 request_id = getattr(g, 'request_id', 'unknown')
+                print(f"DEBUG: 处理请求结束: {request.method} {request.path} - {status_code} [request_id: {request_id}]")
                 
                 # 查找对应的开始日志
                 start_log = None
@@ -58,6 +59,7 @@ def register_error_logging_middleware(app):
                     print(f"DEBUG: 找到开始日志: {start_log.id if start_log else 'None'}")
                 
                 if start_log:
+                    print(f"DEBUG: 开始合并日志")
                     # 计算持续时间
                     from datetime import datetime
                     end_time = datetime.now()
@@ -91,7 +93,9 @@ def register_error_logging_middleware(app):
                     
                     # 提交事务
                     db.session.commit()
+                    print(f"DEBUG: 合并日志完成，新日志ID: {merged_log.id}")
                 else:
+                    print(f"DEBUG: 没有找到开始日志，记录结束日志")
                     # 如果没有找到开始日志，记录结束日志
                     getattr(enhanced_logger, log_level)(
                         f"请求结束: {request.method} {request.path} - {status_code} [request_id: {request_id}]",
@@ -101,8 +105,10 @@ def register_error_logging_middleware(app):
                         f"响应大小: {response.content_length or 0} bytes"
                     )
         except Exception as e:
-            # 避免在日志记录过程中出错
-            pass
+            # 记录中间件错误
+            print(f"ERROR: 中间件错误: {e}")
+            import traceback
+            traceback.print_exc()
         
         return response
     
