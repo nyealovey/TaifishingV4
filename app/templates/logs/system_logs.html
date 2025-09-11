@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // 加载日志统计
 async function loadLogStats() {
     try {
-        const response = await fetch('/logs/stats');
+        const response = await fetch('/logs/api/stats');
         const data = await response.json();
         
         if (data.success) {
