@@ -30,7 +30,7 @@ def sync_postgresql_accounts(instance, config):
         conn = psycopg.connect(
             host=instance.host,
             port=instance.port,
-            database=instance.database_name or 'postgres',
+            dbname=instance.database_name or 'postgres',
             user=instance.credential.username,
             password=instance.credential.password
         )
@@ -217,7 +217,7 @@ def sync_postgresql_version(instance, config):
         conn = psycopg.connect(
             host=instance.host,
             port=instance.port,
-            database=instance.database_name or 'postgres',
+            dbname=instance.database_name or 'postgres',
             user=instance.credential.username,
             password=instance.credential.password
         )
@@ -341,7 +341,7 @@ def sync_postgresql_size(instance, config):
         conn = psycopg.connect(
             host=instance.host,
             port=instance.port,
-            database=instance.database_name or 'postgres',
+            dbname=instance.database_name or 'postgres',
             user=instance.credential.username,
             password=instance.credential.password
         )

@@ -102,7 +102,7 @@ class DatabaseSizeService:
                 return psycopg.connect(
                     host=instance.host,
                     port=instance.port,
-                    database=instance.database_name or "postgres",
+                    dbname=instance.database_name or "postgres",
                     user=instance.credential.username,
                     password=instance.credential.get_plain_password(),
                 )

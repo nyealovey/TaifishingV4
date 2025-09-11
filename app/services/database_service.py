@@ -871,7 +871,7 @@ class DatabaseService:
             conn = psycopg.connect(
                 host=instance.host,
                 port=instance.port,
-                database="postgres",  # PostgreSQL默认数据库
+                dbname="postgres",  # PostgreSQL默认数据库
                 user=instance.credential.username,
                 password=password,
                 connect_timeout=10,
@@ -1552,7 +1552,7 @@ class DatabaseService:
             conn = psycopg.connect(
                 host=instance.host,
                 port=instance.port,
-                database="postgres",  # PostgreSQL默认数据库
+                dbname="postgres",  # PostgreSQL默认数据库
                 user=instance.credential.username if instance.credential else "",
                 password=password,
                 connect_timeout=30,
