@@ -90,22 +90,22 @@ def index():
             query = query.filter(Log.module == module)
         
         # 按时间范围过滤
-        if start_date:
-            try:
+    if start_date:
+        try:
                 start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
                 query = query.filter(Log.created_at >= start_datetime)
-            except ValueError:
-                pass
-        
-        if end_date:
-            try:
+        except ValueError:
+            pass
+    
+    if end_date:
+        try:
                 end_datetime = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
                 query = query.filter(Log.created_at < end_datetime)
-            except ValueError:
-                pass
-        
+        except ValueError:
+            pass
+    
         # 按消息内容搜索
-        if search:
+    if search:
             query = query.filter(Log.message.like(f'%{search}%'))
         
         # 获取合并后的日志
@@ -117,10 +117,10 @@ def index():
                                  merged_logs=None, 
                                  level=level, 
                                  module=module, 
-                                 start_date=start_date, 
-                                 end_date=end_date, 
-                                 search=search)
-        
+                         start_date=start_date,
+                         end_date=end_date,
+                         search=search)
+
         # 获取统计信息
         total_logs = Log.query.count()
         error_logs = Log.query.filter(Log.level == 'ERROR').count()
@@ -165,33 +165,33 @@ def export_logs():
         start_date = request.args.get('start_date', '')
         end_date = request.args.get('end_date', '')
         search = request.args.get('search', '')
-        
-        # 构建查询
-        query = Log.query
-        
+    
+    # 构建查询
+    query = Log.query
+    
         # 按级别过滤
         if level:
             query = query.filter(Log.level == level)
-        
+    
         # 按模块过滤
         if module:
             query = query.filter(Log.module == module)
-        
+    
         # 按时间范围过滤
-        if start_date:
-            try:
+    if start_date:
+        try:
                 start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
                 query = query.filter(Log.created_at >= start_datetime)
-            except ValueError:
-                pass
-        
-        if end_date:
-            try:
+        except ValueError:
+            pass
+    
+    if end_date:
+        try:
                 end_datetime = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
                 query = query.filter(Log.created_at < end_datetime)
-            except ValueError:
-                pass
-        
+        except ValueError:
+            pass
+    
         # 按消息内容搜索
         if search:
             query = query.filter(Log.message.like(f'%{search}%'))
@@ -431,17 +431,12 @@ def get_merged_info(log_id):
 def get_log_stats():
     """获取日志统计信息"""
     try:
-        # 获取最近24小时的日志统计
-        now_time = now()
-        yesterday = now_time - timedelta(days=1)
+        # 统计所有日志（不限制时间范围）
         
         # 按级别统计
         level_stats = {}
         for level in ['ERROR', 'WARNING', 'INFO', 'DEBUG']:
-            count = Log.query.filter(
-                Log.level == level,
-                Log.created_at >= yesterday
-            ).count()
+            count = Log.query.filter(Log.level == level).count()
             level_stats[level] = count
         
         # 按模块统计
@@ -449,18 +444,16 @@ def get_log_stats():
         modules = db.session.query(Log.module).distinct().all()
         for module in modules:
             if module[0]:
-                count = Log.query.filter(
-                    Log.module == module[0],
-                    Log.created_at >= yesterday
-                ).count()
+                count = Log.query.filter(Log.module == module[0]).count()
                 module_stats[module[0]] = count
         
         return jsonify({
             'success': True,
             'stats': {
                 'level_stats': level_stats,
+                'level_distribution': level_stats,  # 添加前端期望的字段
                 'module_stats': module_stats,
-                'total_logs': Log.query.filter(Log.created_at >= yesterday).count()
+                'total_logs': Log.query.count()  # 统计所有日志
             }
         })
     except Exception as e:
@@ -496,7 +489,7 @@ def delete_log(log_id):
         if not current_user.is_admin:
             return jsonify({'success': False, 'message': '权限不足'})
         
-        log = Log.query.get_or_404(log_id)
+    log = Log.query.get_or_404(log_id)
         db.session.delete(log)
         db.session.commit()
         
