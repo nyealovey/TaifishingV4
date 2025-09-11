@@ -169,8 +169,8 @@
                                 </tr>
                             </thead>
                             <tbody id="logs-table-body">
-                                {% if pagination and pagination.items %}
-                                    {% for log in pagination.items %}
+                                {% if merged_logs and merged_logs.items %}
+                                    {% for log in merged_logs.items %}
                                     <tr>
                                         <td>
                                             <small class="text-muted">{{ log.created_at | china_time }}</small>
@@ -190,10 +190,13 @@
                                         <td>
                                             <div class="log-message" style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                                 {{ log.message }}
+                                                {% if log.is_merged %}
+                                                    <small class="text-muted d-block">(合并请求日志)</small>
+                                                {% endif %}
                                             </div>
                                         </td>
                                         <td>
-                                            <button class="btn btn-sm btn-outline-info" onclick="showLogDetail({{ log.id }})" title="查看详情">
+                                            <button class="btn btn-sm btn-outline-info" onclick="showLogDetail({{ log.id }}, {{ log.is_merged|lower }})" title="查看详情">
                                                 <i class="fas fa-eye"></i>
                                             </button>
                                         </td>
@@ -213,18 +216,18 @@
                 </div>
                 <div class="card-footer">
                     <!-- 服务器端分页 -->
-                    {% if pagination %}
+                    {% if merged_logs %}
                     <nav aria-label="日志分页">
                         <ul class="pagination pagination-sm mb-0 justify-content-center">
-                            {% if pagination.has_prev %}
+                            {% if merged_logs.has_prev %}
                                 <li class="page-item">
-                                    <a class="page-link" href="{{ url_for('logs.index', page=pagination.prev_num, level=level, module=module, start_date=start_date, end_date=end_date, search=search) }}">上一页</a>
+                                    <a class="page-link" href="{{ url_for('logs.index', page=merged_logs.prev_num, level=level, module=module, start_date=start_date, end_date=end_date, search=search) }}">上一页</a>
                                 </li>
                             {% endif %}
                             
-                            {% for page_num in pagination.iter_pages() %}
+                            {% for page_num in merged_logs.iter_pages() %}
                                 {% if page_num %}
-                                    {% if page_num != pagination.page %}
+                                    {% if page_num != merged_logs.page %}
                                         <li class="page-item">
                                             <a class="page-link" href="{{ url_for('logs.index', page=page_num, level=level, module=module, start_date=start_date, end_date=end_date, search=search) }}">{{ page_num }}</a>
                                         </li>
@@ -240,9 +243,9 @@
                                 {% endif %}
                             {% endfor %}
                             
-                            {% if pagination.has_next %}
+                            {% if merged_logs.has_next %}
                                 <li class="page-item">
-                                    <a class="page-link" href="{{ url_for('logs.index', page=pagination.next_num, level=level, module=module, start_date=start_date, end_date=end_date, search=search) }}">下一页</a>
+                                    <a class="page-link" href="{{ url_for('logs.index', page=merged_logs.next_num, level=level, module=module, start_date=start_date, end_date=end_date, search=search) }}">下一页</a>
                                 </li>
                             {% endif %}
                         </ul>
@@ -319,9 +322,16 @@ function updateLogStats(stats) {
 // 分页通过模板直接渲染
 
 // 显示日志详情
-async function showLogDetail(logId) {
+async function showLogDetail(logId, isMerged = false) {
     try {
-        console.log('正在获取日志详情，ID:', logId);
+        console.log('正在获取日志详情，ID:', logId, '是否合并:', isMerged);
+        
+        if (isMerged) {
+            // 对于合并的日志，显示合并后的信息
+            showMergedLogDetail(logId);
+            return;
+        }
+        
         const response = await fetch(`/logs/${logId}`, {
             method: 'GET',
             headers: {
@@ -406,6 +416,28 @@ async function showLogDetail(logId) {
         console.error('加载日志详情失败:', error);
         showNotification('加载日志详情失败: ' + error.message, 'error');
     }
+}
+
+// 显示合并日志详情
+function showMergedLogDetail(logId) {
+    // 从页面数据中查找合并日志的详细信息
+    // 这里需要从服务器端传递合并日志的详细信息
+    const detailContent = document.getElementById('log-detail-content');
+    detailContent.innerHTML = `
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            这是一个合并的请求日志，包含了请求开始和结束的信息。
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <strong>说明:</strong>
+                <p class="mt-2">合并日志将同一个请求的开始和结束日志合并显示，级别以最严重的为准。</p>
+                <p>合并后的日志显示请求路径、状态码和持续时间（如果有）。</p>
+            </div>
+        </div>
+    `;
+    
+    new bootstrap.Modal(document.getElementById('logDetailModal')).show();
 }
 
 // 获取日志级别样式

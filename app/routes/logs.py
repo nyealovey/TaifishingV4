@@ -20,6 +20,180 @@ import pytz
 logs_bp = Blueprint("logs", __name__)
 
 
+def get_merged_request_logs(query, page=1, per_page=20):
+    """
+    获取合并后的请求日志数据
+    
+    Args:
+        query: SQLAlchemy查询对象
+        page: 页码
+        per_page: 每页数量
+        
+    Returns:
+        dict: 包含合并后日志和分页信息的字典
+    """
+    try:
+        from app.models.log import Log
+        import re
+        from collections import defaultdict
+        
+        # 获取所有日志
+        all_logs = query.order_by(Log.created_at.desc()).all()
+        
+        # 分离请求日志和其他日志
+        request_logs = []
+        other_logs = []
+        
+        for log in all_logs:
+            if "请求开始:" in log.message or "请求结束:" in log.message:
+                request_logs.append(log)
+            else:
+                other_logs.append(log)
+        
+        # 合并请求日志
+        merged_requests = {}
+        
+        for log in request_logs:
+            # 提取请求路径
+            if "请求开始:" in log.message:
+                # 提取路径，如 "请求开始: GET /dashboard/api/status" -> "/dashboard/api/status"
+                match = re.search(r'请求开始:\s+\w+\s+(.+)', log.message)
+                if match:
+                    path = match.group(1)
+                    if path not in merged_requests:
+                        merged_requests[path] = {
+                            'start_log': log,
+                            'end_log': None,
+                            'start_time': log.created_at,
+                            'end_time': None,
+                            'status_code': None,
+                            'duration': None
+                        }
+            elif "请求结束:" in log.message:
+                # 提取路径和状态码，如 "请求结束: GET /dashboard/api/status - 200" -> ("/dashboard/api/status", "200")
+                match = re.search(r'请求结束:\s+\w+\s+(.+?)\s+-\s+(\d+)', log.message)
+                if match:
+                    path = match.group(1)
+                    status_code = match.group(2)
+                    if path in merged_requests:
+                        merged_requests[path]['end_log'] = log
+                        merged_requests[path]['end_time'] = log.created_at
+                        merged_requests[path]['status_code'] = status_code
+                        # 计算持续时间
+                        if merged_requests[path]['start_time']:
+                            duration = (log.created_at - merged_requests[path]['start_time']).total_seconds() * 1000
+                            merged_requests[path]['duration'] = round(duration, 2)
+                    else:
+                        # 如果没有找到对应的开始日志，创建一个
+                        merged_requests[path] = {
+                            'start_log': None,
+                            'end_log': log,
+                            'start_time': None,
+                            'end_time': log.created_at,
+                            'status_code': status_code,
+                            'duration': None
+                        }
+        
+        # 创建合并后的日志列表
+        merged_logs_list = []
+        
+        # 添加合并的请求日志
+        for path, request_data in merged_requests.items():
+            # 确定最严重的级别
+            levels = []
+            if request_data['start_log']:
+                levels.append(request_data['start_log'].level)
+            if request_data['end_log']:
+                levels.append(request_data['end_log'].level)
+            
+            # 级别优先级：CRITICAL > ERROR > WARNING > INFO > DEBUG
+            level_priority = {'CRITICAL': 5, 'ERROR': 4, 'WARNING': 3, 'INFO': 2, 'DEBUG': 1}
+            max_level = max(levels, key=lambda x: level_priority.get(x, 0)) if levels else 'INFO'
+            
+            # 确定显示的消息
+            if request_data['end_log']:
+                message = f"请求: {path} - {request_data['status_code']}"
+                if request_data['duration']:
+                    message += f" ({request_data['duration']}ms)"
+            else:
+                message = f"请求: {path} (进行中)"
+            
+            # 创建合并后的日志对象
+            merged_log = {
+                'id': request_data['end_log'].id if request_data['end_log'] else request_data['start_log'].id,
+                'level': max_level,
+                'log_type': 'request',
+                'module': 'request_handler',
+                'message': message,
+                'details': f"开始时间: {request_data['start_time'] if request_data['start_time'] else '未知'}, 结束时间: {request_data['end_time'] if request_data['end_time'] else '进行中'}",
+                'user_id': request_data['end_log'].user_id if request_data['end_log'] else (request_data['start_log'].user_id if request_data['start_log'] else None),
+                'ip_address': request_data['end_log'].ip_address if request_data['end_log'] else (request_data['start_log'].ip_address if request_data['start_log'] else None),
+                'user_agent': request_data['end_log'].user_agent if request_data['end_log'] else (request_data['start_log'].user_agent if request_data['start_log'] else None),
+                'created_at': request_data['end_time'] if request_data['end_time'] else request_data['start_time'],
+                'is_merged': True,
+                'original_logs': [request_data['start_log'], request_data['end_log']]
+            }
+            merged_logs_list.append(merged_log)
+        
+        # 添加其他日志
+        for log in other_logs:
+            merged_logs_list.append({
+                'id': log.id,
+                'level': log.level,
+                'log_type': log.log_type,
+                'module': log.module,
+                'message': log.message,
+                'details': log.details,
+                'user_id': log.user_id,
+                'ip_address': log.ip_address,
+                'user_agent': log.user_agent,
+                'created_at': log.created_at,
+                'is_merged': False,
+                'original_logs': [log]
+            })
+        
+        # 按时间排序（最新的在前）
+        merged_logs_list.sort(key=lambda x: x['created_at'], reverse=True)
+        
+        # 分页
+        total = len(merged_logs_list)
+        start = (page - 1) * per_page
+        end = start + per_page
+        items = merged_logs_list[start:end]
+        
+        # 创建分页对象
+        class Pagination:
+            def __init__(self, page, per_page, total, items):
+                self.page = page
+                self.per_page = per_page
+                self.total = total
+                self.items = items
+                self.pages = (total + per_page - 1) // per_page
+                self.has_prev = page > 1
+                self.has_next = page < self.pages
+                self.prev_num = page - 1 if self.has_prev else None
+                self.next_num = page + 1 if self.has_next else None
+                
+            def iter_pages(self, left_edge=2, right_edge=2, left_current=2, right_current=3):
+                last = self.pages
+                for num in range(1, last + 1):
+                    if num <= left_edge or \
+                       (num > self.page - left_current - 1 and num < self.page + right_current) or \
+                       num > last - right_edge:
+                        yield num
+        
+        pagination = Pagination(page, per_page, total, items)
+        
+        return pagination
+        
+    except Exception as e:
+        logging.error(f"获取合并日志失败: {e}")
+        # 如果合并失败，返回原始分页
+        return query.order_by(Log.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+
+
 @logs_bp.route("/")
 @login_required
 def index():
@@ -60,13 +234,11 @@ def index():
             end_datetime = end_datetime + timedelta(days=1)
             query = query.filter(Log.created_at < end_datetime)
         
-        # 分页查询
-        pagination = query.order_by(Log.created_at.desc()).paginate(
-            page=page, per_page=20, error_out=False
-        )
+        # 获取合并后的日志数据
+        merged_logs = get_merged_request_logs(query, page, 20)
         
         return render_template("logs/system_logs.html", 
-                             pagination=pagination,
+                             merged_logs=merged_logs,
                              level=level,
                              module=module,
                              start_date=start_date,
@@ -77,7 +249,7 @@ def index():
         logging.error(f"加载日志页面失败: {e}")
         flash("加载日志页面失败", "error")
         return render_template("logs/system_logs.html", 
-                             pagination=None,
+                             merged_logs=None,
                              level="",
                              module="",
                              start_date="",
