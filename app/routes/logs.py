@@ -299,6 +299,58 @@ def get_merged_info(log_id):
             import json
             from datetime import datetime
             
+            # 首先尝试解析响应内容中的JSON数据
+            response_body_match = re.search(r'响应内容:\s+({.*})', log.details, re.DOTALL)
+            if response_body_match:
+                try:
+                    response_json = response_body_match.group(1)
+                    # 尝试解析JSON响应
+                    response_data = json.loads(response_json)
+                    
+                    # 如果响应包含merged_info，直接使用它
+                    if 'merged_info' in response_data and isinstance(response_data['merged_info'], dict):
+                        nested_info = response_data['merged_info']
+                        
+                        # 提取嵌套的merged_info中的信息
+                        if 'path' in nested_info:
+                            merged_info['path'] = nested_info['path']
+                        if 'status_code' in nested_info:
+                            merged_info['status_code'] = nested_info['status_code']
+                        if 'duration' in nested_info:
+                            merged_info['duration'] = nested_info['duration']
+                        if 'start_time' in nested_info:
+                            merged_info['start_time'] = nested_info['start_time']
+                        if 'end_time' in nested_info:
+                            merged_info['end_time'] = nested_info['end_time']
+                        if 'request_method' in nested_info:
+                            merged_info['request_method'] = nested_info['request_method']
+                        if 'user_info' in nested_info:
+                            merged_info['user_info'] = nested_info['user_info']
+                        if 'ip_info' in nested_info:
+                            merged_info['ip_info'] = nested_info['ip_info']
+                        if 'response_size' in nested_info:
+                            merged_info['response_size'] = nested_info['response_size']
+                        if 'response_headers' in nested_info:
+                            merged_info['response_headers'] = nested_info['response_headers']
+                        if 'response_body' in nested_info:
+                            merged_info['response_body'] = nested_info['response_body']
+                        if 'request_headers' in nested_info:
+                            merged_info['request_headers'] = nested_info['request_headers']
+                        if 'request_body' in nested_info:
+                            merged_info['request_body'] = nested_info['request_body']
+                        
+                        # 添加调试信息
+                        if 'debug' in nested_info:
+                            merged_info['debug'] = nested_info['debug']
+                        
+                        # 如果成功解析了嵌套信息，跳过后续的字符串解析
+                        return jsonify({'success': True, 'merged_info': merged_info})
+                    
+                except (json.JSONDecodeError, KeyError) as e:
+                    # JSON解析失败，继续使用字符串解析
+                    pass
+            
+            # 如果JSON解析失败，使用原来的字符串解析方法
             # 解析时间信息
             start_match = re.search(r'开始时间:\s+([^,]+)', log.details)
             end_match = re.search(r'结束时间:\s+([^,]+)', log.details)
