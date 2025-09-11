@@ -181,9 +181,22 @@ def get_account_statistics():
             })
         
         # 最近账户活动 - 获取最近创建的10个账户
-        recent_accounts = Account.query.join(Instance).order_by(
+        recent_accounts_query = Account.query.join(Instance).order_by(
             Account.created_at.desc()
         ).limit(10).all()
+        
+        # 转换为字典格式
+        recent_accounts = []
+        for account in recent_accounts_query:
+            recent_accounts.append({
+                'id': account.id,
+                'username': account.username,
+                'instance_name': account.instance.name if account.instance else 'Unknown',
+                'db_type': account.instance.db_type if account.instance else 'Unknown',
+                'is_locked': account.is_locked,
+                'created_at': account.created_at.isoformat() if account.created_at else None,
+                'last_login': account.last_login.isoformat() if account.last_login else None
+            })
         
         # 按权限类型统计
         permission_stats = defaultdict(int)
