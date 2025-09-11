@@ -890,16 +890,12 @@ def sync_records():
         # 使用最新记录的时间作为显示时间
         latest_time = max(record.sync_time for record in data["sync_records"])
 
-        # 确定同步类型显示文本
+        # 确定同步类型显示文本 - 直接显示原始值
         sync_types = data["sync_types"]
-        if "task" in sync_types and "batch" in sync_types:
-            sync_type_display = "定时任务 + 手动批量"
-        elif "task" in sync_types:
-            sync_type_display = "定时任务"
-        elif "batch" in sync_types:
-            sync_type_display = "手动批量"
+        if len(sync_types) == 1:
+            sync_type_display = sync_types[0]  # 直接显示原始值
         else:
-            sync_type_display = "未知"
+            sync_type_display = " + ".join(sync_types)  # 多个类型用+连接
 
         # 创建聚合记录对象
         class AggregatedRecord:
@@ -923,10 +919,8 @@ def sync_records():
             AggregatedRecord(data, latest_time, sync_type_display)
         )
 
-    # 处理手动记录，添加显示名称
-    for record in manual_records:
-        if record.sync_type == "manual":
-            record.sync_type = "手动单台"
+    # 处理手动记录，直接显示原始值
+    # 不再修改sync_type，直接使用数据库中的原始值
 
     # 合并聚合记录和手动记录
     all_display_records = aggregated_records + manual_records
