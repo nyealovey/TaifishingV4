@@ -186,7 +186,6 @@
                                                 {% if log.log_category == 'http_request' %}
                                                     <span class="badge bg-success me-1">HTTP</span>
                                                     {{ log.message }}
-                                                    <small class="text-muted d-block">(合并请求日志)</small>
                                                 {% else %}
                                                     {{ log.message }}
                                                     {% if log.log_type == 'operation' %}
