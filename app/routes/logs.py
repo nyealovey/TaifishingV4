@@ -48,12 +48,12 @@ def get_merged_request_logs(query, page=1, per_page=20):
                 log.is_merged = True  # HTTP请求日志（已合并）
                 log.log_category = 'http_request'
                 
-                # 提取状态码
-                status_match = re.search(r'-\s+(\d+)\s+\(', log.message)
-                if status_match:
-                    log.status_code = int(status_match.group(1))
-                else:
-                    log.status_code = None
+                # 提取状态码（从详情信息中获取）
+                log.status_code = None
+                if log.details:
+                    status_match = re.search(r'状态码:\s+(\d+)', log.details)
+                    if status_match:
+                        log.status_code = int(status_match.group(1))
             else:
                 log.is_merged = False  # 其他类型日志
                 log.log_category = 'other'
@@ -283,16 +283,14 @@ def get_merged_info(log_id):
             'request_body': None
         }
         
-        # 如果是请求日志，解析消息
-        if log.log_type == 'request' and '请求:' in log.message:
-            # 解析路径和状态码
-            import re
-            match = re.search(r'请求:\s+(\w+)\s+(.+?)\s+-\s+(\d+)\s+\((.+?)\)', log.message)
-            if match:
-                merged_info['request_method'] = match.group(1)
-                merged_info['path'] = match.group(2)
-                merged_info['status_code'] = int(match.group(3))
-                merged_info['duration'] = float(match.group(4).replace('ms', ''))
+            # 如果是请求日志，解析消息
+            if log.log_type == 'request' and '请求:' in log.message:
+                # 解析路径（新格式：请求: GET /path）
+                import re
+                match = re.search(r'请求:\s+(\w+)\s+(.+)', log.message)
+                if match:
+                    merged_info['request_method'] = match.group(1)
+                    merged_info['path'] = match.group(2)
         
         # 解析详情信息
         if log.details:
@@ -337,6 +335,11 @@ def get_merged_info(log_id):
                     
             if duration_match:
                 merged_info['duration'] = float(duration_match.group(1).replace('ms', ''))
+            
+            # 解析状态码
+            status_code_match = re.search(r'状态码:\s+(\d+)', log.details)
+            if status_code_match:
+                merged_info['status_code'] = int(status_code_match.group(1))
             
             # 解析响应信息
             response_size_match = re.search(r'响应大小:\s+([^,]+)', log.details)

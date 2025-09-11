@@ -72,7 +72,7 @@ def register_error_logging_middleware(app):
                     duration = (end_time - start_log.created_at).total_seconds() * 1000
                     
                     # 创建合并后的日志
-                    merged_message = f"请求: {request.method} {request.path} - {status_code} ({duration:.2f}ms)"
+                    merged_message = f"请求: {request.method} {request.path}"
                     
                     # 确定最严重的级别
                     log_level = "warning" if status_code >= 400 else "info"
@@ -89,6 +89,7 @@ def register_error_logging_middleware(app):
                         f"开始时间: {start_log.created_at}",
                         f"结束时间: {end_time}",
                         f"持续时间: {duration:.2f}ms",
+                        f"状态码: {status_code}",
                         f"响应大小: {response_size} bytes",
                         f"请求头: {dict(request.headers)}",
                         f"响应头: {response_headers}"

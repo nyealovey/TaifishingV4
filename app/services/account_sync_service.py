@@ -32,20 +32,20 @@ from app.utils.enhanced_logger import sync_logger, log_sync_error, log_exception
 
 class AccountSyncService:
     """账户同步服务 - 统一处理所有账户同步逻辑"""
-
+    
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-
+    
     def sync_accounts(
         self, instance: Instance, sync_type: str = "batch"
     ) -> Dict[str, Any]:
         """
         同步账户信息 - 统一入口
-
+        
         Args:
             instance: 数据库实例
             sync_type: 同步类型 ('batch' 或 'task')
-
+            
         Returns:
             Dict: 同步结果
         """
@@ -59,20 +59,20 @@ class AccountSyncService:
                 sync_logger.error(error_msg, "account_sync_service", 
                                 f"实例: {instance.name}, 类型: {instance.db_type}")
                 return {"success": False, "error": error_msg}
-
+            
             # 记录同步前的账户数量
             before_count = Account.query.filter_by(instance_id=instance.id).count()
             sync_logger.info(f"同步前账户数量: {before_count}", "account_sync_service", 
                            f"实例: {instance.name}")
-
+            
             # 获取同步前的账户快照
             before_accounts = self._get_account_snapshot(instance)
-
+            
             synced_count = 0
             added_count = 0
             removed_count = 0
             modified_count = 0
-
+            
             # 根据数据库类型执行同步
             sync_logger.info(f"开始同步 {instance.db_type} 数据库账户 - 实例: {instance.name}", "account_sync_service")
             
@@ -99,7 +99,7 @@ class AccountSyncService:
             added_count = result["added_count"]
             removed_count = result["removed_count"]
             modified_count = result["modified_count"]
-
+            
             # 计算变化
             after_count = Account.query.filter_by(instance_id=instance.id).count()
             net_change = after_count - before_count
@@ -129,7 +129,7 @@ class AccountSyncService:
             )
             db.session.add(sync_record)
             db.session.commit()
-
+            
             return {
                 "success": True,
                 "message": f"成功同步 {synced_count} 个{instance.db_type.upper()}账户",
@@ -139,7 +139,7 @@ class AccountSyncService:
                 "modified_count": modified_count,
                 "net_change": net_change,
             }
-
+            
         except Exception as e:
             # 记录详细的错误日志
             log_sync_error("账户同步", e, "account_sync_service", 
@@ -175,7 +175,7 @@ class AccountSyncService:
                 "error": f"{instance.db_type.upper()}账户同步失败: {str(e)}",
                 "synced_count": 0,
             }
-
+    
     def _get_connection(self, instance: Instance):
         """获取数据库连接"""
         try:
@@ -213,14 +213,14 @@ class AccountSyncService:
                     # 如果pymssql不可用，尝试pyodbc
                     if pyodbc is None:
                         raise ImportError("SQL Server驱动未安装，请安装pymssql或pyodbc")
-
+                    
                     # 尝试pyodbc连接
                     conn_str = self._get_sqlserver_pyodbc_connection(instance)
                     if conn_str:
                         return pyodbc.connect(conn_str)
                     else:
                         raise ImportError("SQL Server驱动配置错误")
-
+                
             elif instance.db_type == "oracle":
                 if oracledb is None:
                     raise ImportError("oracledb模块未安装，无法连接Oracle")
@@ -254,20 +254,20 @@ class AccountSyncService:
         except Exception as e:
             self.logger.error(f"数据库连接失败: {str(e)}")
             return None
-
+    
     def _get_sqlserver_pyodbc_connection(self, instance: Instance):
         """获取SQL Server pyodbc连接字符串"""
         if pyodbc is None:
             return None
-
+        
         # 尝试不同的ODBC驱动
         drivers = [
             "ODBC Driver 17 for SQL Server",
-            "ODBC Driver 13 for SQL Server",
+            "ODBC Driver 13 for SQL Server", 
             "SQL Server",
             "SQL Server Native Client 11.0",
         ]
-
+        
         for driver in drivers:
             try:
                 # 检查驱动是否可用
@@ -281,9 +281,9 @@ class AccountSyncService:
                     )
             except:
                 continue
-
+        
         return None
-
+    
     def _get_sqlserver_pymssql_connection(self, instance: Instance):
         """获取SQL Server pymssql连接参数"""
         try:
@@ -298,7 +298,7 @@ class AccountSyncService:
             }
         except ImportError:
             return None
-
+    
     def _get_account_snapshot(self, instance: Instance) -> Dict[str, Dict]:
         """获取同步前的账户快照"""
         before_accounts = {}
@@ -325,11 +325,11 @@ class AccountSyncService:
                 ),
             }
         return before_accounts
-
+    
     def _sync_mysql_accounts(self, instance: Instance, conn) -> Dict[str, int]:
         """同步MySQL账户"""
         cursor = conn.cursor()
-
+        
         # 查询用户信息 - 包含完整的账户信息
         cursor.execute(
             """
@@ -355,13 +355,13 @@ class AccountSyncService:
             ORDER BY User, Host
         """
         )
-
+        
         accounts = cursor.fetchall()
         synced_count = 0
         added_count = 0
         removed_count = 0
         modified_count = 0
-
+        
         for account_data in accounts:
             (
                 username,
@@ -381,21 +381,21 @@ class AccountSyncService:
                 can_drop,
                 is_superuser,
             ) = account_data
-
+            
             # 查找或创建账户记录
             account = Account.query.filter_by(
                 instance_id=instance.id, username=username, host=host
             ).first()
-
+            
             # 处理插件信息
             plugin_name = plugin if plugin else "mysql_native_password"
-
+            
             # 处理密码过期状态
             is_password_expired = password_expired == "Y" if password_expired else False
-
+            
             # 处理锁定状态
             is_locked = account_locked == "Y" if account_locked else False
-
+            
             # 处理密码最后修改时间
             password_changed = None
             if password_last_changed:
@@ -403,7 +403,7 @@ class AccountSyncService:
                     password_changed = password_last_changed
                 except:
                     password_changed = None
-
+            
             # 获取完整权限信息
             permissions_info = self._get_mysql_account_permissions(conn, username, host)
 
@@ -449,7 +449,7 @@ class AccountSyncService:
                 if account.is_active != (not is_locked):
                     account.is_active = not is_locked
                     has_changes = True
-
+                
                 # 更新权限信息
                 if account.permissions != permissions_info["permissions_json"]:
                     account.permissions = permissions_info["permissions_json"]
@@ -464,9 +464,9 @@ class AccountSyncService:
                 if has_changes:
                     account.updated_at = now()
                     modified_count += 1
-
+            
             synced_count += 1
-
+        
         # 删除服务器端不存在的本地账户
         server_accounts = set()
         for account_data in accounts:
@@ -489,10 +489,10 @@ class AccountSyncService:
                 is_superuser,
             ) = account_data
             server_accounts.add((username, host))
-
+        
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
         removed_accounts = []
-
+        
         for local_account in local_accounts:
             if (local_account.username, local_account.host) not in server_accounts:
                 removed_accounts.append(
@@ -514,10 +514,10 @@ class AccountSyncService:
                 )
                 db.session.delete(local_account)
                 removed_count += 1
-
+        
         db.session.commit()
         cursor.close()
-
+        
         return {
             "synced_count": synced_count,
             "added_count": added_count,
@@ -525,15 +525,15 @@ class AccountSyncService:
             "modified_count": modified_count,
             "removed_accounts": removed_accounts,
         }
-
+    
     def _sync_postgresql_accounts(self, instance: Instance, conn) -> Dict[str, int]:
         """同步PostgreSQL账户"""
         cursor = conn.cursor()
-
+        
         # 查询角色信息（PostgreSQL中用户和角色是同一个概念）
         cursor.execute(
                 """
-                SELECT 
+            SELECT 
                     rolname as username,
                     rolsuper as is_superuser,
                     rolinherit as can_inherit,
@@ -553,7 +553,7 @@ class AccountSyncService:
                 ORDER BY rolname
             """
             )
-
+        
         accounts = cursor.fetchall()
         synced_count = 0
         added_count = 0
@@ -562,7 +562,7 @@ class AccountSyncService:
 
         # 记录服务器端的账户
         server_accounts = set()
-
+        
         for account_data in accounts:
             (
                 username,
@@ -602,14 +602,14 @@ class AccountSyncService:
 
             # 检查账户是否活跃
             is_active = can_login and not password_expired
-
+            
             # 查找或创建账户记录
             account = Account.query.filter_by(
                 instance_id=instance.id,
                 username=username,
                 host="",  # PostgreSQL没有主机概念
             ).first()
-
+            
             if not account:
                 account = Account(
                     instance_id=instance.id,
@@ -648,9 +648,9 @@ class AccountSyncService:
                 if changes:
                     account.updated_at = now()
                     modified_count += 1
-
+            
             synced_count += 1
-
+        
             # 获取账户权限
             try:
                 permissions = self._get_postgresql_account_permissions(
@@ -680,7 +680,7 @@ class AccountSyncService:
 
         db.session.commit()
         cursor.close()
-
+        
         return {
             "synced_count": synced_count,
             "added_count": added_count,
@@ -855,7 +855,7 @@ class AccountSyncService:
     def _sync_sqlserver_accounts(self, instance: Instance, conn) -> Dict[str, int]:
         """同步SQL Server账户"""
         cursor = conn.cursor()
-
+        
         # 查询用户信息 - 只同步sa和用户创建的账户，排除内置账户
         cursor.execute(
             """
@@ -877,13 +877,13 @@ class AccountSyncService:
             ORDER BY name
         """
         )
-
+        
         accounts = cursor.fetchall()
         synced_count = 0
         added_count = 0
         removed_count = 0
         modified_count = 0
-
+        
         for account_data in accounts:
             (
                 username,
@@ -899,12 +899,12 @@ class AccountSyncService:
 
             # 获取权限信息
             permissions_info = self._get_sqlserver_account_permissions(conn, username)
-
+            
             # 查找或创建账户记录
             account = Account.query.filter_by(
                 instance_id=instance.id, username=username
             ).first()
-
+            
             if not account:
                 account = Account(
                     instance_id=instance.id,
@@ -953,9 +953,9 @@ class AccountSyncService:
                 if has_changes:
                     account.updated_at = now()
                     modified_count += 1
-
+            
             synced_count += 1
-
+        
         # 删除服务器端不存在的本地账户
         server_accounts = set()
         for account_data in accounts:
@@ -968,10 +968,10 @@ class AccountSyncService:
                 modified_date,
             ) = account_data
             server_accounts.add(username)
-
+        
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
         removed_accounts = []
-
+        
         for local_account in local_accounts:
             if local_account.username not in server_accounts:
                 removed_accounts.append(
@@ -993,10 +993,10 @@ class AccountSyncService:
                 )
                 db.session.delete(local_account)
                 removed_count += 1
-
+        
         db.session.commit()
         cursor.close()
-
+        
         return {
             "synced_count": synced_count,
             "added_count": added_count,
@@ -1004,12 +1004,12 @@ class AccountSyncService:
             "modified_count": modified_count,
             "removed_accounts": removed_accounts,
         }
-
+    
     def _sync_oracle_accounts(self, instance: Instance, conn) -> Dict[str, int]:
         """同步Oracle账户"""
         print("DEBUG: 开始Oracle账户同步 - 函数被调用")
         cursor = conn.cursor()
-
+        
         # 查询用户信息
         cursor.execute(
             """
@@ -1046,7 +1046,7 @@ class AccountSyncService:
             ORDER BY username
         """
         )
-
+        
         accounts = cursor.fetchall()
         synced_count = 0
         added_count = 0
@@ -1055,7 +1055,7 @@ class AccountSyncService:
 
         # 记录服务器端的账户
         server_accounts = set()
-
+        
         for account_data in accounts:
             (
                 username,
@@ -1072,12 +1072,12 @@ class AccountSyncService:
 
             # 获取权限信息
             permissions_info = self._get_oracle_account_permissions(conn, username)
-
+            
             # 查找或创建账户记录
             account = Account.query.filter_by(
                 instance_id=instance.id, username=username
             ).first()
-
+            
             if not account:
                 account = Account(
                     instance_id=instance.id,
@@ -1120,9 +1120,9 @@ class AccountSyncService:
                 if has_changes:
                     account.updated_at = now()
                     modified_count += 1
-
+            
             synced_count += 1
-
+        
         # 删除服务器端不存在的本地账户
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
         removed_accounts = []
@@ -1158,7 +1158,7 @@ class AccountSyncService:
 
         db.session.commit()
         cursor.close()
-
+        
         return {
             "synced_count": synced_count,
             "added_count": added_count,
@@ -1249,13 +1249,13 @@ class AccountSyncService:
                 "global": global_permissions,
                 "database": database_permissions,
             }
-
+            
             return {
                 "permissions_json": json.dumps(permissions_data),
                 "is_superuser": is_superuser,
                 "can_grant": can_grant,
             }
-
+            
         except Exception as e:
             self.logger.error(f"获取MySQL权限失败: {e}")
             return {
@@ -1271,7 +1271,7 @@ class AccountSyncService:
         import json
 
         cursor = conn.cursor()
-
+        
         try:
             # 获取服务器角色
             cursor.execute(
@@ -1287,7 +1287,7 @@ class AccountSyncService:
 
             server_roles = []
             is_sysadmin = False
-            for row in cursor.fetchall():
+        for row in cursor.fetchall():
                 role_name = row[0]
                 server_roles.append({"role": role_name, "granted": True})
                 if role_name == "sysadmin":
@@ -1353,8 +1353,8 @@ class AccountSyncService:
                 "database_roles": database_roles,
                 "database": database_permissions,
             }
-
-            return {
+        
+        return {
                 "permissions_json": json.dumps(permissions_data),
                 "is_superuser": is_sysadmin,
                 "can_grant": is_sysadmin,  # sysadmin角色可以授权
@@ -1403,7 +1403,7 @@ class AccountSyncService:
                     {"username": username.upper()},
                 )
 
-                for row in cursor.fetchall():
+        for row in cursor.fetchall():
                     role, admin_option = row
                     permissions["roles"].append(role)
             except Exception as e:
@@ -1463,7 +1463,7 @@ class AccountSyncService:
                     {"username": username.upper()},
                 )
 
-                for row in cursor.fetchall():
+        for row in cursor.fetchall():
                     quota_type = row[0]
                     permissions["tablespace_quotas"].append(quota_type)
             except Exception as e:
@@ -1489,7 +1489,7 @@ class AccountSyncService:
 
         except Exception as e:
             self.logger.error(f"获取Oracle权限失败: {e}")
-            return {
+        return {
                 "permissions_json": json.dumps(
                     {
                         "roles": [],
