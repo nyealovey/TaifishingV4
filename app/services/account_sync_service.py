@@ -564,7 +564,18 @@ class AccountSyncService:
             account_type = "scram-sha-256"
 
             # 检查密码是否过期
-            password_expired = valid_until is not None and valid_until < now()
+            # 处理PostgreSQL的'infinity'时间戳值
+            password_expired = False
+            if valid_until is not None:
+                try:
+                    # 检查是否为'infinity'字符串
+                    if str(valid_until).lower() == 'infinity':
+                        password_expired = False
+                    else:
+                        password_expired = valid_until < now()
+                except (ValueError, TypeError, OverflowError):
+                    # 如果时间戳无法解析或超出范围，认为密码未过期
+                    password_expired = False
 
             # 检查账户是否被锁定
             is_locked = not can_login
