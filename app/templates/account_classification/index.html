@@ -1615,15 +1615,15 @@ function displayMatchedAccounts(accounts, ruleName) {
     if (!accounts || accounts.length === 0) {
         container.innerHTML = '<div class="text-muted text-center py-3">没有匹配的账户</div>';
     } else {
-        let html = '<div class="table-responsive"><table class="table table-sm table-hover" style="color: white; font-size: 0.8rem;">';
-        html += '<thead class="table-dark"><tr><th style="color: white; font-size: 0.8rem;">实例名称</th><th style="color: white; font-size: 0.8rem;">实例IP</th><th style="color: white; font-size: 0.8rem;">账户名称</th></tr></thead>';
+        let html = '<div class="table-responsive"><table class="table table-sm table-hover">';
+        html += '<thead class="table-dark"><tr><th>实例名称</th><th>实例IP</th><th>账户名称</th></tr></thead>';
         html += '<tbody>';
         
         accounts.forEach(account => {
-            html += `<tr style="color: white; font-size: 0.8rem;">
-                <td style="color: white; font-size: 0.8rem;">${account.instance_name || '-'}</td>
-                <td style="color: white; font-size: 0.8rem;">${account.instance_host || '-'}</td>
-                <td style="color: white; font-size: 0.8rem;">${account.username || '-'}</td>
+            html += `<tr>
+                <td>${account.instance_name || '-'}</td>
+                <td>${account.instance_host || '-'}</td>
+                <td>${account.username || '-'}</td>
             </tr>`;
         });
         
