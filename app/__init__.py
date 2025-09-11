@@ -376,7 +376,6 @@ def register_blueprints(app):
     from app.routes.auth import auth_bp
     from app.routes.instances import instances_bp
     from app.routes.credentials import credentials_bp
-    from app.routes.accounts import accounts_bp  # 保留旧文件，等测试通过后删除
     from app.routes.account_list import account_list_bp
     from app.routes.account_sync import account_sync_bp
     from app.routes.account_static import account_static_bp
