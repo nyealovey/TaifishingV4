@@ -338,7 +338,7 @@ class AccountSyncService:
                 Drop_priv as can_drop,
                 Super_priv as is_superuser
             FROM mysql.user
-            WHERE User NOT LIKE 'mysql.%'
+            WHERE User != 'root' AND User != 'mysql.sys'
             ORDER BY User, Host
         """
         )
@@ -536,12 +536,12 @@ class AccountSyncService:
                     rolreplication as can_replicate
                 FROM pg_roles
                 WHERE rolname NOT LIKE 'pg_%' 
-                AND rolname NOT IN ('rdsadmin', 'rds_superuser')
+                AND rolname NOT IN ('postgres', 'rdsadmin', 'rds_superuser')
                 ORDER BY rolname
             """
             )
 
-            accounts = cursor.fetchall()
+        accounts = cursor.fetchall()
         synced_count = 0
         added_count = 0
         modified_count = 0

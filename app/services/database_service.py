@@ -110,7 +110,7 @@ class DatabaseService:
                 removed_count = result["removed_count"]
                 modified_count = result["modified_count"]
             elif instance.db_type == "postgresql":
-        result = self._sync_postgresql_accounts(instance, conn)
+                result = self._sync_postgresql_accounts(instance, conn)
                 synced_count = result["synced_count"]
                 added_count = result["added_count"]
                 removed_count = result["removed_count"]
