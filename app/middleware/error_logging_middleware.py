@@ -47,6 +47,8 @@ def register_error_logging_middleware(app):
         try:
             if request.endpoint and not request.endpoint.startswith('static'):
                 print(f"DEBUG: 处理非静态请求")
+                status_code = response.status_code
+                request_id = getattr(g, 'request_id', 'unknown')
                 print(f"DEBUG: 处理请求结束: {request.method} {request.path} - {status_code} [request_id: {request_id}]")
                 
                 # 查找对应的开始日志
