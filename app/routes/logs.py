@@ -176,8 +176,8 @@ def get_merged_request_logs(query, page=1, per_page=20):
                 'original_logs': [log]
             })
         
-        # 按时间排序（最新的在前）
-        merged_logs_list.sort(key=lambda x: x['created_at'], reverse=True)
+        # 按ID排序（最新的在前，因为ID是自增的）
+        merged_logs_list.sort(key=lambda x: x['id'], reverse=True)
         
         # 分页
         total = len(merged_logs_list)
