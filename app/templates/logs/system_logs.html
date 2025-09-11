@@ -380,7 +380,7 @@ async function showLogDetail(logId, isMerged = false, event = null) {
             return;
         }
         
-        const response = await fetch(`/logs/${logId}`, {
+        const response = await fetch(`/logs/api/log/${logId}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
