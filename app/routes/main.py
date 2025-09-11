@@ -27,6 +27,12 @@ def favicon():
     # 返回一个空的响应，避免404错误
     return '', 204
 
+@main_bp.route("/.well-known/appspecific/com.chrome.devtools.json")
+def chrome_devtools():
+    """处理Chrome开发者工具的请求"""
+    # 返回一个空的响应，避免404错误
+    return '', 204
+
 
 @main_bp.route("/admin")
 @login_required
