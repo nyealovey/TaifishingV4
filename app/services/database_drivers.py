@@ -36,7 +36,7 @@ class DatabaseDriverManager:
 
         # PostgreSQL驱动
         try:
-            import psycopg2
+            import psycopg
 
             drivers["postgresql"] = True
         except ImportError:
@@ -138,9 +138,9 @@ class DatabaseDriverManager:
 
         elif db_type.lower() == "postgresql":
             if self.available_drivers["postgresql"]:
-                return "psycopg2 (推荐)"
+                return "psycopg (推荐)"
             else:
-                return "需要安装: pip install psycopg2-binary"
+                return "需要安装: pip install psycopg[binary]"
 
         elif db_type.lower() == "sql server":
             if self.available_drivers["sqlserver"]:
@@ -162,7 +162,7 @@ class DatabaseDriverManager:
         """获取安装指南"""
         guide = {
             "mysql": "pip install PyMySQL",
-            "postgresql": "pip install psycopg2-binary",
+            "postgresql": "pip install psycopg[binary]",
             "sqlserver": "pip install pymssql (或 pip install pyodbc)",
             "oracle": "pip install python-oracledb",
             "odbc": "pip install pyodbc + 系统ODBC驱动",

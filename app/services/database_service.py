@@ -851,7 +851,7 @@ class DatabaseService:
     def _test_postgresql_connection(self, instance: Instance) -> Dict[str, Any]:
         """测试PostgreSQL连接"""
         try:
-            import psycopg2
+            import psycopg
 
             # 验证必需参数
             if not instance.host:
@@ -868,7 +868,7 @@ class DatabaseService:
 
             # 尝试连接PostgreSQL
             password = instance.credential.get_plain_password()
-            conn = psycopg2.connect(
+            conn = psycop.connect(
                 host=instance.host,
                 port=instance.port,
                 database="postgres",  # PostgreSQL默认数据库
@@ -923,11 +923,11 @@ class DatabaseService:
             return {
                 "success": False,
                 "error": "PostgreSQL驱动未安装",
-                "details": "系统缺少psycopg2-binary驱动包",
-                "solution": "请运行命令安装: pip install psycopg2-binary",
+                "details": "系统缺少psycopg驱动包",
+                "solution": "请运行命令安装: pip install psycopg[binary]",
                 "error_type": "missing_driver",
             }
-        except psycopg2.OperationalError as e:
+        except psycopg.OperationalError as e:
             error_msg = str(e)
             if "Connection refused" in error_msg:
                 return {
@@ -964,7 +964,7 @@ class DatabaseService:
                     "solution": "请检查网络连接、服务器状态和连接参数",
                     "error_type": "operational_error",
                 }
-        except psycopg2.Error as e:
+        except psycopg.Error as e:
             return {
                 "success": False,
                 "error": "PostgreSQL错误",
@@ -1544,12 +1544,12 @@ class DatabaseService:
     def _get_postgresql_connection(self, instance: Instance) -> Optional[Any]:
         """获取PostgreSQL连接"""
         try:
-            import psycopg2
+            import psycopg
 
             password = (
                 instance.credential.get_plain_password() if instance.credential else ""
             )
-            conn = psycopg2.connect(
+            conn = psycop.connect(
                 host=instance.host,
                 port=instance.port,
                 database="postgres",  # PostgreSQL默认数据库

@@ -143,14 +143,14 @@ def sync_mysql_accounts(instance, config):
     'sync_version': {
         'postgresql': `def sync_postgresql_version(instance, config):
     """同步PostgreSQL数据库版本信息"""
-    import psycopg2
+    import psycopg
     from app.models.instance import Instance
     from app import db
     from datetime import datetime
     
     try:
         # 连接数据库
-        conn = psycopg2.connect(
+        conn = psycop.connect(
             host=instance.host,
             port=instance.port,
             database=instance.database_name or 'postgres',
@@ -243,14 +243,14 @@ def sync_mysql_accounts(instance, config):
     'sync_size': {
         'postgresql': `def sync_postgresql_size(instance, config):
     """同步PostgreSQL数据库大小信息"""
-    import psycopg2
+    import psycopg
     from app.models.instance import Instance
     from app import db
     from datetime import datetime
     
     try:
         # 连接数据库
-        conn = psycopg2.connect(
+        conn = psycop.connect(
             host=instance.host,
             port=instance.port,
             database=instance.database_name or 'postgres',

@@ -9,9 +9,9 @@ from typing import Dict, Any, Optional
 
 # 可选导入数据库驱动
 try:
-    import psycopg2
+    import psycopg
 except ImportError:
-    psycopg2 = None
+    psycopg = None
 
 try:
     import pyodbc
@@ -97,9 +97,9 @@ class DatabaseSizeService:
                     password=instance.credential.get_plain_password(),
                 )
             elif instance.db_type == "postgresql":
-                if psycopg2 is None:
-                    raise ImportError("psycopg2模块未安装，无法连接PostgreSQL")
-                return psycopg2.connect(
+                if psycopg is None:
+                    raise ImportError("psycopg模块未安装，无法连接PostgreSQL")
+                return psycop.connect(
                     host=instance.host,
                     port=instance.port,
                     database=instance.database_name or "postgres",

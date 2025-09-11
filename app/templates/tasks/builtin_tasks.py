@@ -20,14 +20,14 @@ def sync_postgresql_accounts(instance, config):
     Returns:
         dict: 同步结果
     \"\"\"
-    import psycopg2
+    import psycopg
     from app.models.account import Account
     from app import db
     from datetime import datetime
     
     try:
         # 连接数据库
-        conn = psycopg2.connect(
+        conn = psycop.connect(
             host=instance.host,
             port=instance.port,
             database=instance.database_name or 'postgres',
@@ -207,14 +207,14 @@ def sync_postgresql_version(instance, config):
     Returns:
         dict: 同步结果
     \"\"\"
-    import psycopg2
+    import psycopg
     from app.models.instance import Instance
     from app import db
     from datetime import datetime
     
     try:
         # 连接数据库
-        conn = psycopg2.connect(
+        conn = psycop.connect(
             host=instance.host,
             port=instance.port,
             database=instance.database_name or 'postgres',
@@ -331,14 +331,14 @@ def sync_postgresql_size(instance, config):
     Returns:
         dict: 同步结果
     \"\"\"
-    import psycopg2
+    import psycopg
     from app.models.instance import Instance
     from app import db
     from datetime import datetime
     
     try:
         # 连接数据库
-        conn = psycopg2.connect(
+        conn = psycop.connect(
             host=instance.host,
             port=instance.port,
             database=instance.database_name or 'postgres',
