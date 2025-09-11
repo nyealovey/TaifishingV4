@@ -65,7 +65,7 @@ def register_error_logging_middleware(app):
                     print(f"DEBUG: 开始合并日志")
                     # 计算持续时间
                     from datetime import datetime
-                    end_time = datetime.now()
+                    end_time = datetime.utcnow()
                     duration = (end_time - start_log.created_at).total_seconds() * 1000
                     
                     # 创建合并后的日志
