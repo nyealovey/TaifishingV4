@@ -515,14 +515,10 @@ class AccountSyncService:
 
     def _sync_postgresql_accounts(self, instance: Instance, conn) -> Dict[str, int]:
         """同步PostgreSQL账户"""
-        self.logger.info(f"开始PostgreSQL账户同步 - 实例: {instance.name}")
-        
-        try:
-            cursor = conn.cursor()
+        cursor = conn.cursor()
 
-            # 查询角色信息（PostgreSQL中用户和角色是同一个概念）
-            self.logger.info("执行PostgreSQL角色查询...")
-            cursor.execute(
+        # 查询角色信息（PostgreSQL中用户和角色是同一个概念）
+        cursor.execute(
                 """
                 SELECT 
                     rolname as username,
@@ -532,7 +528,10 @@ class AccountSyncService:
                     rolcreatedb as can_create_db,
                     rolcanlogin as can_login,
                     rolconnlimit as conn_limit,
-                    rolvaliduntil as valid_until,
+                    CASE 
+                        WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
+                        ELSE rolvaliduntil 
+                    END as valid_until,
                     rolbypassrls as can_bypass_rls,
                     rolreplication as can_replicate
                 FROM pg_roles
@@ -543,15 +542,6 @@ class AccountSyncService:
             )
 
             accounts = cursor.fetchall()
-            self.logger.info(f"PostgreSQL查询到 {len(accounts)} 个角色")
-            
-            # 调试：打印前几个角色的信息
-            for i, account_data in enumerate(accounts[:3]):
-                self.logger.info(f"角色 {i+1}: {account_data}")
-                
-        except Exception as e:
-            self.logger.error(f"PostgreSQL查询失败: {e}")
-            raise
         synced_count = 0
         added_count = 0
         modified_count = 0
@@ -560,29 +550,19 @@ class AccountSyncService:
         # 记录服务器端的账户
         server_accounts = set()
 
-        self.logger.info(f"开始处理 {len(accounts)} 个PostgreSQL角色...")
-        
-        for i, account_data in enumerate(accounts):
-            self.logger.info(f"处理角色 {i+1}/{len(accounts)}: {account_data[0] if account_data else 'None'}")
-            
-            try:
-                (
-                    username,
-                    is_superuser,
-                    can_inherit,
-                    can_create_role,
-                    can_create_db,
-                    can_login,
-                    conn_limit,
-                    valid_until,
-                    can_bypass_rls,
-                    can_replicate,
-                ) = account_data
-                
-                self.logger.info(f"角色 {username}: superuser={is_superuser}, can_login={can_login}, valid_until={valid_until}")
-            except Exception as e:
-                self.logger.error(f"解析角色数据失败: {e}, 数据: {account_data}")
-                continue
+        for account_data in accounts:
+            (
+                username,
+                is_superuser,
+                can_inherit,
+                can_create_role,
+                can_create_db,
+                can_login,
+                conn_limit,
+                valid_until,
+                can_bypass_rls,
+                can_replicate,
+            ) = account_data
 
             # 记录服务器端的账户（PostgreSQL没有主机概念）
             server_accounts.add((username, ""))
@@ -611,7 +591,6 @@ class AccountSyncService:
             is_active = can_login and not password_expired
 
             # 查找或创建账户记录
-            self.logger.info(f"查找账户: {username} (实例: {instance.id})")
             account = Account.query.filter_by(
                 instance_id=instance.id,
                 username=username,
@@ -619,7 +598,6 @@ class AccountSyncService:
             ).first()
 
             if not account:
-                self.logger.info(f"创建新账户: {username}")
                 account = Account(
                     instance_id=instance.id,
                     username=username,
@@ -635,7 +613,6 @@ class AccountSyncService:
                 )
                 db.session.add(account)
                 added_count += 1
-                self.logger.info(f"账户 {username} 已添加到数据库")
             else:
                 # 检查是否有变化
                 changes = False
@@ -682,28 +659,14 @@ class AccountSyncService:
                 self.logger.warning(f"获取PostgreSQL账户 {username} 权限失败: {e}")
 
         # 删除服务器端不存在的账户
-        self.logger.info("开始清理本地不存在的账户...")
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
-        self.logger.info(f"本地账户数量: {len(local_accounts)}")
-        self.logger.info(f"服务器端账户: {server_accounts}")
-        
         for account in local_accounts:
             if (account.username, account.host) not in server_accounts:
-                self.logger.info(f"删除本地账户: {account.username}")
                 db.session.delete(account)
                 removed_count += 1
 
-        self.logger.info(f"PostgreSQL同步完成 - 同步: {synced_count}, 新增: {added_count}, 修改: {modified_count}, 删除: {removed_count}")
-        
-        try:
-            db.session.commit()
-            self.logger.info("PostgreSQL账户同步数据库提交成功")
-        except Exception as e:
-            self.logger.error(f"PostgreSQL账户同步数据库提交失败: {e}")
-            db.session.rollback()
-            raise
-        finally:
-            cursor.close()
+        db.session.commit()
+        cursor.close()
 
         return {
             "synced_count": synced_count,

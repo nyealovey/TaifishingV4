@@ -110,7 +110,7 @@ class DatabaseService:
                 removed_count = result["removed_count"]
                 modified_count = result["modified_count"]
             elif instance.db_type == "postgresql":
-                result = self._sync_postgresql_accounts(instance, conn)
+        result = self._sync_postgresql_accounts(instance, conn)
                 synced_count = result["synced_count"]
                 added_count = result["added_count"]
                 removed_count = result["removed_count"]
@@ -369,7 +369,12 @@ class DatabaseService:
             """
             SELECT 
                 rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, 
-                rolcanlogin, rolconnlimit, rolvaliduntil, rolbypassrls, rolreplication
+                rolcanlogin, rolconnlimit, 
+                CASE 
+                    WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
+                    ELSE rolvaliduntil 
+                END as rolvaliduntil,
+                rolbypassrls, rolreplication
             FROM pg_roles
             WHERE rolname NOT LIKE 'pg_%' 
             AND rolname NOT IN ('postgres', 'rdsadmin', 'rds_superuser')
