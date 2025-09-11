@@ -7,64 +7,15 @@
         </div>
         <div class="card-body p-0">
             <nav class="nav nav-pills flex-column">
-                <!-- 系统概览 -->
-                <a class="nav-link" href="/admin/dashboard">
-                    <i class="fas fa-tachometer-alt me-2"></i>系统概览
+                <!-- 系统配置 -->
+                <a class="nav-link" href="{{ url_for('admin.system_config_page') }}">
+                    <i class="fas fa-sliders-h me-2"></i>系统配置
                 </a>
                 
-                
-                <!-- 错误管理 -->
-                <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                        <i class="fas fa-exclamation-triangle me-2"></i>错误管理
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="/admin/error-management">
-                            <i class="fas fa-bug me-2"></i>错误控制台
-                        </a></li>
-                        <li><a class="dropdown-item" href="/admin/error-metrics">
-                            <i class="fas fa-chart-pie me-2"></i>错误统计
-                        </a></li>
-                        <li><a class="dropdown-item" href="/admin/error-details">
-                            <i class="fas fa-list me-2"></i>错误详情
-                        </a></li>
-                    </ul>
-                </div>
-                
-                <!-- 配置管理 -->
-                <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                        <i class="fas fa-sliders-h me-2"></i>配置管理
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="/admin/constants">
-                            <i class="fas fa-list me-2"></i>常量管理
-                        </a></li>
-                        <li><a class="dropdown-item" href="/admin/system-config">
-                            <i class="fas fa-cog me-2"></i>系统配置
-                        </a></li>
-                    </ul>
-                </div>
-                
-                <!-- 用户管理 -->
-                <div class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                        <i class="fas fa-users me-2"></i>用户管理
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="/admin/users/page">
-                            <i class="fas fa-user me-2"></i>用户列表
-                        </a></li>
-                        <li><a class="dropdown-item" href="/admin/user-roles">
-                            <i class="fas fa-user-tag me-2"></i>角色管理
-                        </a></li>
-                        <li><a class="dropdown-item" href="/admin/user-permissions">
-                            <i class="fas fa-key me-2"></i>权限管理
-                        </a></li>
-                    </ul>
-                </div>
-                
-                
+                <!-- 常量管理 -->
+                <a class="nav-link" href="{{ url_for('admin.constants_management') }}">
+                    <i class="fas fa-list me-2"></i>常量管理
+                </a>
                 
                 <!-- 分隔线 -->
                 <hr class="my-2">
