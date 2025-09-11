@@ -84,15 +84,10 @@ def get_merged_request_logs(query, page=1, per_page=20):
                             duration = (log.created_at - merged_requests[path]['start_time']).total_seconds() * 1000
                             merged_requests[path]['duration'] = round(duration, 2)
                     else:
-                        # 如果没有找到对应的开始日志，创建一个
-                        merged_requests[path] = {
-                            'start_log': None,
-                            'end_log': log,
-                            'start_time': None,
-                            'end_time': log.created_at,
-                            'status_code': status_code,
-                            'duration': None
-                        }
+                        # 如果没有找到对应的开始日志，记录警告但不创建合并记录
+                        # 这种情况通常不应该发生，可能是日志查询范围问题
+                        logging.warning(f"发现孤立的请求结束日志: {path} - {status_code}, 日志ID: {log.id}")
+                        # 不创建合并记录，让这个日志作为普通日志显示
         
         # 创建合并后的日志列表
         merged_logs_list = []
@@ -100,6 +95,16 @@ def get_merged_request_logs(query, page=1, per_page=20):
         # 添加合并的请求日志
         merged_id_counter = 1  # 合并日志ID计数器
         for path, request_data in merged_requests.items():
+            # 确保至少有一个日志（开始或结束）
+            if not request_data['start_log'] and not request_data['end_log']:
+                logging.warning(f"发现空的请求数据: {path}")
+                continue
+            
+            # 如果只有结束日志，记录警告并跳过合并
+            if not request_data['start_log'] and request_data['end_log']:
+                logging.warning(f"发现只有结束日志的请求: {path}, 结束日志ID: {request_data['end_log'].id}")
+                continue
+                
             # 确定最严重的级别
             levels = []
             if request_data['start_log']:
