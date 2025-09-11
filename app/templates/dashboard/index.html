@@ -356,10 +356,16 @@ function initLogTrendChart() {
             data: {
                 labels: logTrend.map(item => item.date),
                 datasets: [{
-                    label: '错误和告警日志数量',
-                    data: logTrend.map(item => item.count),
+                    label: '错误日志',
+                    data: logTrend.map(item => item.error_count),
                     borderColor: 'rgb(220, 53, 69)',
                     backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                    tension: 0.1
+                }, {
+                    label: '告警日志',
+                    data: logTrend.map(item => item.warning_count),
+                    borderColor: 'rgb(255, 193, 7)',
+                    backgroundColor: 'rgba(255, 193, 7, 0.2)',
                     tension: 0.1
                 }]
             },
