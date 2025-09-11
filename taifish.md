@@ -135,7 +135,6 @@
 - `app/templates/accounts/list.html` - 账户列表页面
 - `app/templates/accounts/sync_records.html` - 同步记录页面
 - `app/templates/accounts/history.html` - 账户历史页面
-- `app/templates/accounts/sync_report.html` - 同步报告页面
 - `app/templates/accounts/sync_details.html` - 同步详情页面
 
 #### 其他功能模板
