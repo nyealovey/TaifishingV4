@@ -183,9 +183,21 @@
                                         </td>
                                         <td>
                                             <div class="log-message" style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                                {{ log.message }}
-                                                {% if log.is_merged %}
+                                                {% if log.log_category == 'http_request' %}
+                                                    <span class="badge bg-success me-1">HTTP</span>
+                                                    {{ log.message }}
                                                     <small class="text-muted d-block">(合并请求日志)</small>
+                                                {% else %}
+                                                    {{ log.message }}
+                                                    {% if log.log_type == 'operation' %}
+                                                        <small class="text-muted d-block">(操作日志)</small>
+                                                    {% elif log.log_type == 'system' %}
+                                                        <small class="text-muted d-block">(系统日志)</small>
+                                                    {% elif log.log_type == 'error' %}
+                                                        <small class="text-muted d-block">(错误日志)</small>
+                                                    {% elif log.log_type == 'security' %}
+                                                        <small class="text-muted d-block">(安全日志)</small>
+                                                    {% endif %}
                                                 {% endif %}
                                             </div>
                                         </td>
@@ -416,6 +428,18 @@ async function showLogDetail(logId, isMerged = false, event = null) {
             new Date(log.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}) : 
             log.timestamp;
         
+        // 根据日志类型添加标识
+        let logTypeBadge = '';
+        if (log.log_type === 'operation') {
+            logTypeBadge = '<span class="badge bg-primary me-2">操作日志</span>';
+        } else if (log.log_type === 'system') {
+            logTypeBadge = '<span class="badge bg-info me-2">系统日志</span>';
+        } else if (log.log_type === 'error') {
+            logTypeBadge = '<span class="badge bg-danger me-2">错误日志</span>';
+        } else if (log.log_type === 'security') {
+            logTypeBadge = '<span class="badge bg-warning me-2">安全日志</span>';
+        }
+
         detailContent.innerHTML = `
                 <div class="row">
                     <div class="col-md-6">
@@ -423,6 +447,7 @@ async function showLogDetail(logId, isMerged = false, event = null) {
                     </div>
                     <div class="col-md-6">
                         <strong>级别:</strong> <span class="badge ${getLevelClass(log.level)}"><i class="${getLevelIcon(log.level)}"></i> ${log.level}</span>
+                        ${logTypeBadge}
                     </div>
                 </div>
                 <hr>
@@ -489,7 +514,7 @@ function showMergedLogDetail(logId, mergedInfo) {
         detailContent.innerHTML = `
             <div class="alert alert-info">
                 <i class="fas fa-info-circle me-2"></i>
-                这是一个合并的请求日志，包含了请求开始和结束的信息。
+                这是一个合并的HTTP请求日志，包含了请求开始和结束的信息。
             </div>
             <div class="row">
                 <div class="col-md-6">

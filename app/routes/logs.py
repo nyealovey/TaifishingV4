@@ -22,7 +22,7 @@ logs_bp = Blueprint("logs", __name__)
 
 def get_merged_request_logs(query, page=1, per_page=20):
     """
-    获取日志列表（显示原始日志）
+    获取日志列表（区分HTTP请求和其他日志）
     
     Args:
         query: SQLAlchemy查询对象
@@ -38,9 +38,17 @@ def get_merged_request_logs(query, page=1, per_page=20):
             page=page, per_page=per_page, error_out=False
         )
         
-        # 为每个日志添加is_merged属性（现在所有日志都是合并后的）
+        # 为每个日志添加类型标识
         for log in logs.items:
-            log.is_merged = True
+            # 判断是否为HTTP请求日志
+            if (log.log_type == 'request' and 
+                '请求:' in log.message and 
+                log.module == 'request_handler'):
+                log.is_merged = True  # HTTP请求日志（已合并）
+                log.log_category = 'http_request'
+            else:
+                log.is_merged = False  # 其他类型日志
+                log.log_category = 'other'
         
         return logs
     except Exception as e:

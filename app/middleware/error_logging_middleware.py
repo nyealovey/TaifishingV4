@@ -45,8 +45,11 @@ def register_error_logging_middleware(app):
         print(f"DEBUG: request.endpoint: {request.endpoint}")
         
         try:
-            if request.endpoint and not request.endpoint.startswith('static'):
-                print(f"DEBUG: 处理非静态请求")
+            # 只处理HTTP请求，不处理静态文件和其他类型的日志
+            if (request.endpoint and 
+                not request.endpoint.startswith('static') and 
+                request.method in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']):
+                print(f"DEBUG: 处理HTTP请求")
                 status_code = response.status_code
                 request_id = getattr(g, 'request_id', 'unknown')
                 print(f"DEBUG: 处理请求结束: {request.method} {request.path} - {status_code} [request_id: {request_id}]")
