@@ -50,9 +50,12 @@ def register_error_logging_middleware(app):
                 # 查找对应的开始日志
                 start_log = None
                 if request_id != 'unknown':
+                    search_pattern = f'%请求开始: {request.method} {request.path} [request_id: {request_id}]%'
+                    print(f"DEBUG: 查找开始日志，模式: {search_pattern}")
                     start_log = Log.query.filter(
-                        Log.message.like(f'%请求开始: {request.method} {request.path} [request_id: {request_id}]%')
+                        Log.message.like(search_pattern)
                     ).order_by(Log.created_at.desc()).first()
+                    print(f"DEBUG: 找到开始日志: {start_log.id if start_log else 'None'}")
                 
                 if start_log:
                     # 计算持续时间
