@@ -95,79 +95,47 @@ def register_error_logging_middleware(app):
                     end_time = datetime.utcnow()
                     duration = (end_time - start_log.created_at).total_seconds() * 1000
                     
-                    # 创建合并后的日志
-                    merged_message = f"请求: {request.method} {request.path}"
+                    # 检查是否是批量同步操作
+                    is_batch_sync = (request.path == "/account-sync/sync-all" and 
+                                   request.method == "POST")
                     
-                    # 确定最严重的级别
-                    log_level = "warning" if status_code >= 400 else "info"
-                    levels = [start_log.level, log_level.upper()]
-                    level_priority = {'CRITICAL': 5, 'ERROR': 4, 'WARNING': 3, 'INFO': 2, 'DEBUG': 1}
-                    max_level = max(levels, key=lambda x: level_priority.get(x, 0))
-                    
-                    # 构建详细的响应信息
-                    response_size = response.content_length or 0
-                    response_headers = dict(response.headers)
-                    
-                    # 构建详细信息
-                    details_parts = [
-                        f"开始时间: {start_log.created_at}",
-                        f"结束时间: {end_time}",
-                        f"持续时间: {duration:.2f}ms",
-                        f"状态码: {status_code}",
-                        f"响应大小: {response_size} bytes",
-                        f"请求头: {dict(request.headers)}",
-                        f"响应头: {response_headers}"
-                    ]
-                    
-                    # 如果有响应体，尝试记录（限制长度）
-                    try:
-                        if hasattr(response, 'get_data'):
-                            response_data = response.get_data(as_text=True)
-                            if response_data and len(response_data) > 0:
-                                # 限制长度并确保内容可读
-                                if len(response_data) < 1000:
-                                    details_parts.append(f"响应内容: {response_data}")
-                                else:
-                                    details_parts.append(f"响应内容: {response_data[:1000]}...")
-                            else:
-                                details_parts.append(f"响应内容: (空)")
-                    except Exception as e:
-                        print(f"DEBUG: 获取响应内容失败: {e}")
-                        details_parts.append(f"响应内容: (获取失败: {str(e)})")
-                    
-                    details = ", ".join(details_parts)
-                    
-                    # 确定日志来源
-                    log_source = determine_log_source()
-                    
-                    # 保存合并后的日志
-                    merged_log = Log(
-                        level=max_level,
-                        log_type='request',
-                        module='request_handler',
-                        message=merged_message,
-                        details=details,
-                        user_id=current_user.id if current_user and hasattr(current_user, 'id') else None,
-                        ip_address=request.remote_addr,
-                        user_agent=request.headers.get('User-Agent'),
-                        source=log_source
-                    )
-                    
-                    db.session.add(merged_log)
-                    db.session.flush()  # 获取ID
-                    
-                    # 手动设置创建时间为开始日志的时间
-                    merged_log.created_at = start_log.created_at
-                    
-                    # 删除原始的开始和结束日志
-                    db.session.delete(start_log)
-                    
-                    # 提交事务
-                    db.session.commit()
-                    print(f"DEBUG: 合并日志完成，新日志ID: {merged_log.id}")
+                    if is_batch_sync:
+                        print(f"DEBUG: 检测到批量同步操作，进行特殊合并处理")
+                        # 查找所有相关的同步日志
+                        sync_logs = _find_related_sync_logs(start_log.created_at, end_time)
+                        print(f"DEBUG: 找到 {len(sync_logs)} 条相关同步日志")
+                        
+                        # 合并所有相关日志
+                        merged_log = _merge_batch_sync_logs(
+                            start_log, sync_logs, end_time, duration, status_code, response
+                        )
+                        
+                        if merged_log:
+                            # 删除所有相关的原始日志
+                            for log in sync_logs:
+                                db.session.delete(log)
+                            db.session.delete(start_log)
+                            
+                            # 提交事务
+                            db.session.commit()
+                            print(f"DEBUG: 批量同步日志合并完成，新日志ID: {merged_log.id}")
+                    else:
+                        # 普通请求的合并逻辑
+                        merged_log = _merge_regular_request_logs(
+                            start_log, end_time, duration, status_code, response
+                        )
+                        
+                        if merged_log:
+                            # 删除原始的开始日志
+                            db.session.delete(start_log)
+                            
+                            # 提交事务
+                            db.session.commit()
+                            print(f"DEBUG: 合并日志完成，新日志ID: {merged_log.id}")
                 else:
                     print(f"DEBUG: 没有找到开始日志，记录结束日志")
                     # 如果没有找到开始日志，记录结束日志
+                    log_level = "warning" if status_code >= 400 else "info"
                     getattr(enhanced_logger, log_level)(
                         f"请求结束: {request.method} {request.path} - {status_code} [request_id: {request_id}]",
                         "request_handler",
@@ -312,3 +280,189 @@ def log_sync_operation_error(operation: str, error: Exception,
         )
     except Exception as log_error:
         enhanced_logger.critical(f"记录同步错误日志失败: {log_error}", "sync")
+
+
+def _find_related_sync_logs(start_time, end_time):
+    """查找与批量同步相关的所有日志"""
+    try:
+        # 查找在时间范围内的所有同步相关日志
+        sync_logs = Log.query.filter(
+            Log.created_at >= start_time,
+            Log.created_at <= end_time,
+            Log.module.in_(['account_sync_service', 'enhanced_logger']),
+            Log.message.like('%同步%')
+        ).order_by(Log.created_at.asc()).all()
+        
+        return sync_logs
+    except Exception as e:
+        print(f"DEBUG: 查找相关同步日志失败: {e}")
+        return []
+
+
+def _merge_batch_sync_logs(start_log, sync_logs, end_time, duration, status_code, response):
+    """合并批量同步日志"""
+    try:
+        # 统计信息
+        total_instances = 0
+        success_count = 0
+        failed_count = 0
+        total_accounts = 0
+        instance_results = []
+        
+        # 解析同步日志
+        for log in sync_logs:
+            if '开始账户同步:' in log.message:
+                total_instances += 1
+            elif '成功同步' in log.message and '个' in log.message:
+                success_count += 1
+                # 提取同步的账户数量
+                import re
+                match = re.search(r'成功同步 (\d+) 个', log.message)
+                if match:
+                    total_accounts += int(match.group(1))
+            elif '同步失败' in log.message or '失败' in log.message:
+                failed_count += 1
+        
+        # 构建合并后的消息
+        merged_message = f"批量同步所有账户: 成功 {success_count} 个实例，失败 {failed_count} 个实例，共同步 {total_accounts} 个账户"
+        
+        # 构建详细信息
+        details_parts = [
+            f"开始时间: {start_log.created_at}",
+            f"结束时间: {end_time}",
+            f"持续时间: {duration:.2f}ms",
+            f"状态码: {status_code}",
+            f"总实例数: {total_instances}",
+            f"成功实例数: {success_count}",
+            f"失败实例数: {failed_count}",
+            f"同步账户总数: {total_accounts}",
+            f"原始日志数量: {len(sync_logs)}"
+        ]
+        
+        # 添加响应信息
+        if hasattr(response, 'get_data'):
+            try:
+                response_data = response.get_data(as_text=True)
+                if response_data and len(response_data) > 0:
+                    if len(response_data) < 1000:
+                        details_parts.append(f"响应内容: {response_data}")
+                    else:
+                        details_parts.append(f"响应内容: {response_data[:1000]}...")
+                else:
+                    details_parts.append(f"响应内容: (空)")
+            except Exception as e:
+                details_parts.append(f"响应内容: (获取失败: {str(e)})")
+        
+        details = ", ".join(details_parts)
+        
+        # 确定日志级别
+        log_level = "warning" if status_code >= 400 or failed_count > 0 else "info"
+        levels = [start_log.level, log_level.upper()]
+        level_priority = {'CRITICAL': 5, 'ERROR': 4, 'WARNING': 3, 'INFO': 2, 'DEBUG': 1}
+        max_level = max(levels, key=lambda x: level_priority.get(x, 0))
+        
+        # 确定日志来源
+        log_source = determine_log_source()
+        
+        # 创建合并后的日志
+        merged_log = Log(
+            level=max_level,
+            log_type='batch_sync',
+            module='batch_sync_handler',
+            message=merged_message,
+            details=details,
+            user_id=current_user.id if current_user and hasattr(current_user, 'id') else None,
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent'),
+            source=log_source
+        )
+        
+        db.session.add(merged_log)
+        db.session.flush()  # 获取ID
+        
+        # 手动设置创建时间为开始日志的时间
+        merged_log.created_at = start_log.created_at
+        
+        return merged_log
+        
+    except Exception as e:
+        print(f"DEBUG: 合并批量同步日志失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def _merge_regular_request_logs(start_log, end_time, duration, status_code, response):
+    """合并普通请求日志"""
+    try:
+        # 创建合并后的日志
+        merged_message = f"请求: {request.method} {request.path}"
+        
+        # 确定最严重的级别
+        log_level = "warning" if status_code >= 400 else "info"
+        levels = [start_log.level, log_level.upper()]
+        level_priority = {'CRITICAL': 5, 'ERROR': 4, 'WARNING': 3, 'INFO': 2, 'DEBUG': 1}
+        max_level = max(levels, key=lambda x: level_priority.get(x, 0))
+        
+        # 构建详细的响应信息
+        response_size = response.content_length or 0
+        response_headers = dict(response.headers)
+        
+        # 构建详细信息
+        details_parts = [
+            f"开始时间: {start_log.created_at}",
+            f"结束时间: {end_time}",
+            f"持续时间: {duration:.2f}ms",
+            f"状态码: {status_code}",
+            f"响应大小: {response_size} bytes",
+            f"请求头: {dict(request.headers)}",
+            f"响应头: {response_headers}"
+        ]
+        
+        # 如果有响应体，尝试记录（限制长度）
+        try:
+            if hasattr(response, 'get_data'):
+                response_data = response.get_data(as_text=True)
+                if response_data and len(response_data) > 0:
+                    # 限制长度并确保内容可读
+                    if len(response_data) < 1000:
+                        details_parts.append(f"响应内容: {response_data}")
+                    else:
+                        details_parts.append(f"响应内容: {response_data[:1000]}...")
+                else:
+                    details_parts.append(f"响应内容: (空)")
+        except Exception as e:
+            print(f"DEBUG: 获取响应内容失败: {e}")
+            details_parts.append(f"响应内容: (获取失败: {str(e)})")
+        
+        details = ", ".join(details_parts)
+        
+        # 确定日志来源
+        log_source = determine_log_source()
+        
+        # 保存合并后的日志
+        merged_log = Log(
+            level=max_level,
+            log_type='request',
+            module='request_handler',
+            message=merged_message,
+            details=details,
+            user_id=current_user.id if current_user and hasattr(current_user, 'id') else None,
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get('User-Agent'),
+            source=log_source
+        )
+        
+        db.session.add(merged_log)
+        db.session.flush()  # 获取ID
+        
+        # 手动设置创建时间为开始日志的时间
+        merged_log.created_at = start_log.created_at
+        
+        return merged_log
+        
+    except Exception as e:
+        print(f"DEBUG: 合并普通请求日志失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
