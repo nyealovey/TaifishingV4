@@ -185,7 +185,10 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <button class="btn btn-sm btn-outline-info" onclick="showLogDetail({{ log.id }}, {{ log.is_merged|lower }}, {{ log.merged_info|tojson|safe if log.is_merged else 'null' }})" title="查看详情">
+                                            <button class="btn btn-sm btn-outline-info" 
+                                                    onclick="showLogDetail({{ log.id }}, {{ log.is_merged|lower }})" 
+                                                    data-merged-info="{{ log.merged_info|tojson|safe if log.is_merged and log.merged_info else '' }}"
+                                                    title="查看详情">
                                                 <i class="fas fa-eye"></i>
                                             </button>
                                         </td>
@@ -311,12 +314,21 @@ function updateLogStats(stats) {
 // 分页通过模板直接渲染
 
 // 显示日志详情
-async function showLogDetail(logId, isMerged = false, mergedInfo = null) {
+async function showLogDetail(logId, isMerged = false) {
     try {
-        console.log('正在获取日志详情，ID:', logId, '是否合并:', isMerged, '合并信息:', mergedInfo);
+        console.log('正在获取日志详情，ID:', logId, '是否合并:', isMerged);
         
         if (isMerged) {
-            // 对于合并的日志，显示合并后的信息
+            // 从按钮的数据属性中获取合并信息
+            const button = document.querySelector(`button[onclick*="showLogDetail(${logId}"]`);
+            let mergedInfo = null;
+            if (button && button.dataset.mergedInfo) {
+                try {
+                    mergedInfo = JSON.parse(button.dataset.mergedInfo);
+                } catch (e) {
+                    console.error('解析合并信息失败:', e);
+                }
+            }
             showMergedLogDetail(logId, mergedInfo);
             return;
         }
