@@ -38,9 +38,9 @@ def get_merged_request_logs(query, page=1, per_page=20):
             page=page, per_page=per_page, error_out=False
         )
         
-        # 为每个日志添加is_merged属性（现在显示原始日志，不合并）
+        # 为每个日志添加is_merged属性（现在所有日志都是合并后的）
         for log in logs.items:
-            log.is_merged = False
+            log.is_merged = True
         
         return logs
     except Exception as e:
