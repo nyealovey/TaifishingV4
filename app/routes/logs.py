@@ -134,15 +134,15 @@ def get_merged_request_logs(query, page=1, per_page=20):
                 'original_logs': [request_data['start_log'], request_data['end_log']],
                 # 添加合并日志的详细信息
                 'merged_info': {
-                    'path': path,
-                    'status_code': request_data['status_code'],
-                    'duration': request_data['duration'],
+                    'path': str(path) if path else None,
+                    'status_code': int(request_data['status_code']) if request_data['status_code'] else None,
+                    'duration': float(request_data['duration']) if request_data['duration'] is not None else None,
                     'start_time': request_data['start_time'].isoformat() if request_data['start_time'] else None,
                     'end_time': request_data['end_time'].isoformat() if request_data['end_time'] else None,
-                    'start_log_id': request_data['start_log'].id if request_data['start_log'] else None,
-                    'end_log_id': request_data['end_log'].id if request_data['end_log'] else None,
-                    'start_level': request_data['start_log'].level if request_data['start_log'] else None,
-                    'end_level': request_data['end_log'].level if request_data['end_log'] else None
+                    'start_log_id': int(request_data['start_log'].id) if request_data['start_log'] else None,
+                    'end_log_id': int(request_data['end_log'].id) if request_data['end_log'] else None,
+                    'start_level': str(request_data['start_log'].level) if request_data['start_log'] else None,
+                    'end_level': str(request_data['end_log'].level) if request_data['end_log'] else None
                 }
             }
             merged_logs_list.append(merged_log)
