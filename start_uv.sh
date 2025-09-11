@@ -9,8 +9,26 @@ echo "=================================="
 # 检查 uv 是否安装
 if ! command -v uv &> /dev/null; then
     echo "❌ 错误: uv 未安装"
-    echo "请先安装 uv: curl -LsSf https://astral.sh/uv/install.sh | sh"
-    exit 1
+    echo "正在尝试安装 uv..."
+    
+    # 尝试使用 Homebrew 安装
+    if command -v brew &> /dev/null; then
+        echo "📦 使用 Homebrew 安装 uv..."
+        brew install uv
+    else
+        echo "📦 使用官方安装脚本安装 uv..."
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        # 添加到 PATH
+        export PATH="$HOME/.local/bin:$PATH"
+    fi
+    
+    # 再次检查
+    if ! command -v uv &> /dev/null; then
+        echo "❌ 安装失败，请手动安装 uv"
+        echo "方法1: brew install uv"
+        echo "方法2: curl -LsSf https://astral.sh/uv/install.sh | sh"
+        exit 1
+    fi
 fi
 
 # 检查 Python 版本
