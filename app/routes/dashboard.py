@@ -53,8 +53,6 @@ def index():
     # 获取图表数据
     chart_data = get_chart_data()
 
-    # 获取最近活动
-    recent_activities = get_recent_activities()
 
     # 获取系统状态
     system_status = get_system_status()
@@ -76,7 +74,6 @@ def index():
             {
                 "overview": overview_data,
                 "charts": chart_data,
-                "activities": recent_activities,
                 "status": system_status,
             }
         )
@@ -85,7 +82,6 @@ def index():
         "dashboard/index.html",
         overview=overview_data,
         charts=chart_data,
-        activities=recent_activities,
         status=system_status,
     )
 
@@ -139,29 +135,6 @@ def api_charts():
     return jsonify(charts)
 
 
-@dashboard_bp.route("/api/activities")
-@login_required
-def api_activities():
-    """获取最近活动API"""
-    import time
-
-    start_time = time.time()
-
-    limit = request.args.get("limit", 10, type=int)
-    activities = get_recent_activities(limit)
-
-    # 记录API调用
-    duration = (time.time() - start_time) * 1000
-    log_api_request(
-        "GET",
-        "/dashboard/api/activities",
-        200,
-        duration,
-        current_user.id,
-        request.remote_addr,
-    )
-
-    return jsonify(activities)
 
 
 @dashboard_bp.route("/api/status")
@@ -386,55 +359,8 @@ def get_sync_trend_data():
         return []
 
 
-def get_recent_activities(limit=10):
-    """获取最近活动（优化版本）"""
-    try:
-        # 使用join查询避免N+1问题
-        recent_logs = (
-            db.session.query(Log)
-            .join(User, Log.user_id == User.id, isouter=True)
-            .order_by(Log.created_at.desc())
-            .limit(limit)
-            .all()
-        )
-
-        activities = []
-        for log in recent_logs:
-            activities.append(
-                {
-                    "id": log.id,
-                    "type": "log",
-                    "level": log.level,
-                    "message": log.message,
-                    "module": log.module,
-                    "user": log.user.username if log.user else "系统",
-                    "time": log.created_at.isoformat() if log.created_at else None,
-                    "icon": get_activity_icon(log.level, log.log_type),
-                }
-            )
-
-        return activities
-    except Exception as e:
-        logging.error(f"获取最近活动失败: {e}")
-        return []
 
 
-def get_activity_icon(level, log_type):
-    """获取活动图标"""
-    if log_type == "security":
-        return "fas fa-shield-alt"
-    elif log_type == "error":
-        return "fas fa-exclamation-triangle"
-    elif log_type == "system":
-        return "fas fa-cog"
-    elif level == "ERROR":
-        return "fas fa-times-circle"
-    elif level == "WARNING":
-        return "fas fa-exclamation-triangle"
-    elif level == "INFO":
-        return "fas fa-info-circle"
-    else:
-        return "fas fa-circle"
 
 
 def get_system_status():

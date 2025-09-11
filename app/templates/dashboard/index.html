@@ -14,23 +14,6 @@
     position: relative;
     height: 300px;
 }
-.activity-item {
-    border-left: 3px solid #dee2e6;
-    padding-left: 15px;
-    margin-bottom: 15px;
-}
-.activity-item.log-ERROR {
-    border-left-color: #dc3545;
-}
-.activity-item.log-WARNING {
-    border-left-color: #ffc107;
-}
-.activity-item.log-INFO {
-    border-left-color: #17a2b8;
-}
-.activity-item.log-DEBUG {
-    border-left-color: #6c757d;
-}
 .status-indicator {
     width: 12px;
     height: 12px;
@@ -286,38 +269,6 @@
             </div>
         </div>
         
-        <!-- 最近活动 -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-history me-2"></i>最近活动
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if activities %}
-                <div id="recentActivities">
-                    {% for activity in activities %}
-                    <div class="activity-item log-{{ activity.level }}">
-                        <div class="d-flex align-items-start">
-                            <i class="{{ activity.icon }} me-2 mt-1 text-{{ 'danger' if activity.level == 'ERROR' else 'warning' if activity.level == 'WARNING' else 'info' }}"></i>
-                            <div class="flex-grow-1">
-                                <div class="fw-bold">{{ activity.message }}</div>
-                                <small class="text-muted">
-                                    {{ activity.user }} • {{ activity.module }} • {{ activity.time | china_datetime if activity.time else '未知时间' }}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="text-center py-4">
-                    <i class="fas fa-history fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">暂无最近活动</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
     </div>
 </div>
 {% endblock %}
@@ -445,16 +396,6 @@ function toggleAutoRefresh() {
 
 function startAutoRefresh() {
     autoRefreshInterval = setInterval(() => {
-        // 刷新最近活动
-        fetch('/dashboard/api/activities')
-        .then(response => response.json())
-        .then(data => {
-            updateRecentActivities(data);
-        })
-        .catch(error => {
-            console.error('刷新活动数据失败:', error);
-        });
-        
         // 刷新系统状态
         fetch('/dashboard/api/status')
         .then(response => response.json())
@@ -467,34 +408,6 @@ function startAutoRefresh() {
     }, 30000); // 30秒刷新一次
 }
 
-function updateRecentActivities(activities) {
-    const container = document.getElementById('recentActivities');
-    if (!container) return;
-    
-    if (activities.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-4">
-                <i class="fas fa-history fa-3x text-muted mb-3"></i>
-                <p class="text-muted">暂无最近活动</p>
-            </div>
-        `;
-        return;
-    }
-    
-    container.innerHTML = activities.map(activity => `
-        <div class="activity-item log-${activity.level}">
-            <div class="d-flex align-items-start">
-                <i class="${activity.icon} me-2 mt-1 text-${activity.level === 'ERROR' ? 'danger' : activity.level === 'WARNING' ? 'warning' : 'info'}"></i>
-                <div class="flex-grow-1">
-                    <div class="fw-bold">${activity.message}</div>
-                    <small class="text-muted">
-                        ${activity.user} • ${activity.module} • ${activity.time ? activity.time.substring(0, 19) : '未知时间'}
-                    </small>
-                </div>
-            </div>
-        </div>
-    `).join('');
-}
 
 function updateSystemStatus(status) {
     // 更新CPU使用率
