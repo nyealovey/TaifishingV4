@@ -50,8 +50,12 @@ def get_merged_request_logs(query, page=1, per_page=20):
             )
         )
         
-        # 3. 只显示有完整信息的日志（包含状态码的日志）
-        query = query.filter(Log.details.like('%状态码:%'))
+        # 3. 对于HTTP请求日志，只显示有完整信息的日志（包含状态码）
+        # 对于其他日志（如错误日志），不要求包含状态码
+        query = query.filter(
+            (Log.details.like('%状态码:%')) |  # HTTP请求日志必须有状态码
+            (~Log.message.like('%请求:%'))     # 非HTTP请求日志不需要状态码
+        )
         
         # 查询过滤后的日志，按ID排序
         logs = query.order_by(Log.id.desc()).paginate(
