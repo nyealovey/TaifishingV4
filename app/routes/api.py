@@ -6,7 +6,7 @@ from app.utils.timezone import now
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.utils.logger import log_operation, log_api_request
+from app.utils.enhanced_logger import log_operation, log_api_request
 
 api_bp = Blueprint("api", __name__)
 

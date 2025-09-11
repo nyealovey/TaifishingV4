@@ -74,8 +74,7 @@
 #### 核心工具
 - `app/utils/api_response.py` - API响应标准化
 - `app/utils/timezone.py` - 时区处理工具
-- `app/utils/logger.py` - 基础日志工具
-- `app/utils/enhanced_logger.py` - 增强日志工具
+- `app/utils/enhanced_logger.py` - 增强日志工具（合并了基础日志功能）
 - `app/utils/error_handler.py` - 错误处理工具
 - `app/utils/advanced_error_handler.py` - 高级错误处理工具
 

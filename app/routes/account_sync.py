@@ -311,7 +311,7 @@ def sync_all_accounts():
         db.session.commit()
 
         # 记录操作日志
-        from app.utils.logger import log_operation
+        from app.utils.enhanced_logger import log_operation
         log_operation(
             operation_type="BATCH_SYNC_ACCOUNTS_COMPLETE",
             user_id=current_user.id,

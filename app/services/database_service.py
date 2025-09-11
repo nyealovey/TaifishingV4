@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional, List
 from app.models import Instance, Credential
 from app.models.account import Account
 from app import db
-from app.utils.logger import log_operation, log_error
+from app.utils.enhanced_logger import log_operation, log_error
 from app.utils.enhanced_logger import db_logger, log_database_error, log_database_operation
 
 

@@ -5,7 +5,7 @@
 from datetime import datetime
 from app.utils.timezone import now
 from app import db, bcrypt
-from app.utils.logger import log_operation
+from app.utils.enhanced_logger import log_operation
 from app.utils.password_manager import password_manager
 
 

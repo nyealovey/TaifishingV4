@@ -11,7 +11,7 @@ from app.models.instance import Instance
 from app.models.credential import Credential
 from app.models.account import Account
 from app import db
-from app.utils.logger import log_operation
+from app.utils.enhanced_logger import log_operation
 from app.utils.security import (
     sanitize_form_data,
     validate_required_fields,

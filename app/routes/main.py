@@ -6,7 +6,7 @@
 
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for
 from flask_login import login_required, current_user
-from app.utils.logger import log_operation, log_api_request
+from app.utils.enhanced_logger import log_operation, log_api_request
 import psutil
 from app.utils.timezone import get_china_time, format_china_time
 

@@ -5,7 +5,7 @@
 from datetime import datetime
 from app.utils.timezone import now
 from app import db
-from app.utils.logger import log_operation
+from app.utils.enhanced_logger import log_operation
 
 
 class Instance(db.Model):

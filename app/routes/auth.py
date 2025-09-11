@@ -15,7 +15,7 @@ from flask_jwt_extended import (
 from werkzeug.security import check_password_hash
 from app.models.user import User
 from app import db, bcrypt
-from app.utils.logger import log_operation
+from app.utils.enhanced_logger import log_operation
 from app.utils.rate_limiter import (
     login_rate_limit,
     password_reset_rate_limit,

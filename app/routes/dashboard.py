@@ -33,7 +33,7 @@ from app.utils.cache_manager import (
     get_cached_dashboard_data,
     invalidate_dashboard_cache,
 )
-from app.utils.logger import log_operation, log_api_request
+from app.utils.enhanced_logger import log_operation, log_api_request
 
 # 创建蓝图
 dashboard_bp = Blueprint("dashboard", __name__)

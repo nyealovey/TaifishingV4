@@ -17,7 +17,7 @@ from app.models.account_classification import (
 from app.models.account import Account
 from app.models.instance import Instance
 from app.models.user import User
-from app.utils.logger import log_operation
+from app.utils.enhanced_logger import log_operation
 
 
 class AccountClassificationService:

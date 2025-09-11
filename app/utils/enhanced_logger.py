@@ -10,8 +10,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any, Union
 from flask import current_app, request, has_request_context
 from flask_login import current_user
-from app.models.log import Log
-from app import db
+# 延迟导入以避免循环导入
 from app.utils.timezone import now
 
 
@@ -61,6 +60,7 @@ class EnhancedLogger:
                 details += f"堆栈跟踪:\n{traceback.format_exc()}"
             
             # 记录到数据库
+            from app.models.log import Log
             Log.log_operation(
                 level=level,
                 log_type=log_type,
@@ -185,6 +185,147 @@ def log_security_event(event: str, details: str = None,
         security_logger.error(f"安全事件: {event}", module, details)
     else:
         security_logger.security(f"安全事件: {event}", module, details)
+
+
+# 应用日志记录器
+def get_app_logger():
+    """
+    获取应用日志记录器
+
+    Returns:
+        logging.Logger: 应用日志记录器
+    """
+    if current_app:
+        return current_app.logger
+    else:
+        return logging.getLogger("taifish")
+
+
+# 操作日志函数
+def log_operation(operation_type, user_id=None, details=None):
+    """
+    记录操作日志（安全版本）
+
+    Args:
+        operation_type: 操作类型
+        user_id: 用户ID
+        details: 操作详情
+    """
+    logger = get_app_logger()
+
+    # 清理敏感信息
+    safe_details = _sanitize_log_details(details) if details else {}
+
+    log_data = {
+        "operation_type": operation_type,
+        "user_id": user_id,
+        "timestamp": now().isoformat(),
+        "details": safe_details,
+    }
+
+    logger.info(f"操作日志: {log_data}")
+
+    # 同时保存到数据库
+    try:
+        from app.models.log import Log
+        from app import db
+        from flask import request
+
+        log_entry = Log(
+            log_type="operation",
+            level="INFO",
+            module="system",
+            message=f"操作: {operation_type}",
+            details=str(safe_details) if safe_details else None,
+            user_id=user_id,
+            ip_address=request.remote_addr if request else None,
+            user_agent=request.headers.get("User-Agent") if request else None,
+        )
+
+        db.session.add(log_entry)
+        db.session.commit()
+    except Exception as e:
+        logger.error(f"保存操作日志到数据库失败: {e}")
+
+
+def _sanitize_log_details(details):
+    """
+    清理日志中的敏感信息
+    
+    Args:
+        details: 原始详情字典
+        
+    Returns:
+        dict: 清理后的详情字典
+    """
+    if not isinstance(details, dict):
+        return details
+        
+    sensitive_keys = ['password', 'token', 'secret', 'key', 'credential']
+    safe_details = {}
+    
+    for key, value in details.items():
+        if any(sensitive in key.lower() for sensitive in sensitive_keys):
+            safe_details[key] = '[REDACTED]'
+        else:
+            safe_details[key] = value
+            
+    return safe_details
+
+
+# 错误日志函数
+def log_error(error, user_id=None, context=None):
+    """
+    记录错误日志
+
+    Args:
+        error: 错误对象或错误信息
+        user_id: 用户ID
+        context: 错误上下文
+    """
+    logger = get_app_logger()
+
+    error_data = {
+        "error_type": (
+            type(error).__name__ if hasattr(error, "__class__") else "Unknown"
+        ),
+        "error_message": str(error),
+        "user_id": user_id,
+        "timestamp": now().isoformat(),
+        "context": context or {},
+    }
+
+    logger.error(f"错误日志: {error_data}")
+
+
+# API请求日志函数
+def log_api_request(
+    method, endpoint, status_code, duration, user_id=None, ip_address=None
+):
+    """
+    记录API请求日志
+
+    Args:
+        method: HTTP方法
+        endpoint: API端点
+        status_code: 状态码
+        duration: 请求处理时间
+        user_id: 用户ID
+        ip_address: IP地址
+    """
+    logger = get_app_logger()
+
+    api_data = {
+        "method": method,
+        "endpoint": endpoint,
+        "status_code": status_code,
+        "duration": duration,
+        "user_id": user_id,
+        "ip_address": ip_address,
+        "timestamp": now().isoformat(),
+    }
+
+    logger.info(f"API请求: {api_data}")
 
 
 # 装饰器函数
