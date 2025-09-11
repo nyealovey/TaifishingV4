@@ -505,8 +505,24 @@ function showMergedLogDetail(logId, mergedInfo) {
         const formatTime = (timeStr) => {
             if (!timeStr) return '未知';
             try {
-                return new Date(timeStr).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'});
+                // 处理ISO格式时间字符串
+                let date;
+                if (timeStr.includes('T')) {
+                    // ISO格式: 2025-09-11T06:36:19.390721
+                    date = new Date(timeStr);
+                } else {
+                    // 其他格式
+                    date = new Date(timeStr);
+                }
+                
+                // 检查日期是否有效
+                if (isNaN(date.getTime())) {
+                    return timeStr;
+                }
+                
+                return date.toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'});
             } catch (e) {
+                console.error('时间格式化错误:', e, '时间字符串:', timeStr);
                 return timeStr;
             }
         };
