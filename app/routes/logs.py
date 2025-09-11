@@ -76,6 +76,11 @@ def get_merged_request_logs(query, page=1, per_page=20):
                     path = match.group(1)
                     status_code = match.group(2)
                     if path in merged_requests:
+                        # 验证时间顺序：结束日志的时间应该晚于开始日志
+                        if merged_requests[path]['start_time'] and log.created_at < merged_requests[path]['start_time']:
+                            logging.warning(f"发现时间顺序错误的日志: 路径={path}, 开始时间={merged_requests[path]['start_time']}, 结束时间={log.created_at}")
+                            continue
+                        
                         merged_requests[path]['end_log'] = log
                         merged_requests[path]['end_time'] = log.created_at
                         merged_requests[path]['status_code'] = status_code
@@ -135,7 +140,7 @@ def get_merged_request_logs(query, page=1, per_page=20):
                 'user_id': request_data['end_log'].user_id if request_data['end_log'] else (request_data['start_log'].user_id if request_data['start_log'] else None),
                 'ip_address': request_data['end_log'].ip_address if request_data['end_log'] else (request_data['start_log'].ip_address if request_data['start_log'] else None),
                 'user_agent': request_data['end_log'].user_agent if request_data['end_log'] else (request_data['start_log'].user_agent if request_data['start_log'] else None),
-                'created_at': request_data['end_time'] if request_data['end_time'] else request_data['start_time'],
+                'created_at': request_data['start_time'] if request_data['start_time'] else request_data['end_time'],
                 'is_merged': True,
                 'original_logs': [request_data['start_log'], request_data['end_log']],
                 # 添加合并日志的详细信息
