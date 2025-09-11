@@ -5,7 +5,8 @@
 
 import traceback
 import logging
-from flask import request, current_app
+import uuid
+from flask import request, current_app, g
 from flask_login import current_user
 from app.utils.enhanced_logger import enhanced_logger, log_exception
 from app.models.log import Log
@@ -20,8 +21,12 @@ def register_error_logging_middleware(app):
         """记录请求开始"""
         try:
             if request.endpoint and not request.endpoint.startswith('static'):
+                # 为每个请求生成唯一ID
+                request_id = str(uuid.uuid4())[:8]  # 使用UUID的前8位
+                g.request_id = request_id
+                
                 enhanced_logger.info(
-                    f"请求开始: {request.method} {request.path}",
+                    f"请求开始: {request.method} {request.path} [request_id: {request_id}]",
                     "request_handler",
                     f"用户: {current_user.id if current_user and hasattr(current_user, 'id') else 'anonymous'}, "
                     f"IP: {request.remote_addr}, "
@@ -39,8 +44,11 @@ def register_error_logging_middleware(app):
                 status_code = response.status_code
                 log_level = "warning" if status_code >= 400 else "info"
                 
+                # 获取请求ID
+                request_id = getattr(g, 'request_id', 'unknown')
+                
                 getattr(enhanced_logger, log_level)(
-                    f"请求结束: {request.method} {request.path} - {status_code}",
+                    f"请求结束: {request.method} {request.path} - {status_code} [request_id: {request_id}]",
                     "request_handler",
                     f"用户: {current_user.id if current_user and hasattr(current_user, 'id') else 'anonymous'}, "
                     f"IP: {request.remote_addr}, "

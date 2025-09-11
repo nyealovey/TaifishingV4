@@ -54,59 +54,65 @@ def get_merged_request_logs(query, page=1, per_page=20):
         merged_requests = {}
         
         for log in request_logs:
-            # 提取请求路径
+            # 提取请求ID和路径
             if "请求开始:" in log.message:
-                # 提取路径，如 "请求开始: GET /dashboard/api/status" -> "/dashboard/api/status"
-                match = re.search(r'请求开始:\s+\w+\s+(.+)', log.message)
+                # 提取路径和请求ID，如 "请求开始: GET /dashboard/api/status [request_id: abc12345]" -> ("/dashboard/api/status", "abc12345")
+                match = re.search(r'请求开始:\s+\w+\s+(.+?)\s+\[request_id:\s+(\w+)\]', log.message)
                 if match:
                     path = match.group(1)
-                    if path not in merged_requests:
-                        merged_requests[path] = {
-                            'start_log': log,
-                            'end_log': None,
-                            'start_time': log.created_at,
-                            'end_time': None,
-                            'status_code': None,
-                            'duration': None
-                        }
+                    request_id = match.group(2)
+                    merged_requests[request_id] = {
+                        'path': path,
+                        'start_log': log,
+                        'end_log': None,
+                        'start_time': log.created_at,
+                        'end_time': None,
+                        'status_code': None,
+                        'duration': None
+                    }
             elif "请求结束:" in log.message:
-                # 提取路径和状态码，如 "请求结束: GET /dashboard/api/status - 200" -> ("/dashboard/api/status", "200")
-                match = re.search(r'请求结束:\s+\w+\s+(.+?)\s+-\s+(\d+)', log.message)
+                # 提取路径、状态码和请求ID，如 "请求结束: GET /dashboard/api/status - 200 [request_id: abc12345]" -> ("/dashboard/api/status", "200", "abc12345")
+                match = re.search(r'请求结束:\s+\w+\s+(.+?)\s+-\s+(\d+)\s+\[request_id:\s+(\w+)\]', log.message)
                 if match:
                     path = match.group(1)
                     status_code = match.group(2)
-                    if path in merged_requests:
-                        # 验证时间顺序：结束日志的时间应该晚于开始日志
-                        if merged_requests[path]['start_time'] and log.created_at < merged_requests[path]['start_time']:
-                            logging.warning(f"发现时间顺序错误的日志: 路径={path}, 开始时间={merged_requests[path]['start_time']}, 结束时间={log.created_at}")
+                    request_id = match.group(3)
+                    if request_id in merged_requests:
+                        # 验证路径是否一致
+                        if merged_requests[request_id]['path'] != path:
+                            logging.warning(f"发现路径不一致的日志: request_id={request_id}, 开始路径={merged_requests[request_id]['path']}, 结束路径={path}")
                             continue
                         
-                        merged_requests[path]['end_log'] = log
-                        merged_requests[path]['end_time'] = log.created_at
-                        merged_requests[path]['status_code'] = status_code
+                        # 验证时间顺序：结束日志的时间应该晚于开始日志
+                        if merged_requests[request_id]['start_time'] and log.created_at < merged_requests[request_id]['start_time']:
+                            logging.warning(f"发现时间顺序错误的日志: request_id={request_id}, 开始时间={merged_requests[request_id]['start_time']}, 结束时间={log.created_at}")
+                            continue
+                        
+                        merged_requests[request_id]['end_log'] = log
+                        merged_requests[request_id]['end_time'] = log.created_at
+                        merged_requests[request_id]['status_code'] = status_code
                         # 计算持续时间
-                        if merged_requests[path]['start_time']:
-                            duration = (log.created_at - merged_requests[path]['start_time']).total_seconds() * 1000
-                            merged_requests[path]['duration'] = round(duration, 2)
+                        if merged_requests[request_id]['start_time']:
+                            duration = (log.created_at - merged_requests[request_id]['start_time']).total_seconds() * 1000
+                            merged_requests[request_id]['duration'] = round(duration, 2)
                     else:
                         # 如果没有找到对应的开始日志，记录警告但不创建合并记录
-                        # 这种情况通常不应该发生，可能是日志查询范围问题
-                        logging.warning(f"发现孤立的请求结束日志: {path} - {status_code}, 日志ID: {log.id}")
+                        logging.warning(f"发现孤立的请求结束日志: request_id={request_id}, 路径={path}, 状态码={status_code}, 日志ID={log.id}")
                         # 不创建合并记录，让这个日志作为普通日志显示
         
         # 创建合并后的日志列表
         merged_logs_list = []
         
         # 添加合并的请求日志
-        for path, request_data in merged_requests.items():
+        for request_id, request_data in merged_requests.items():
             # 确保至少有一个日志（开始或结束）
             if not request_data['start_log'] and not request_data['end_log']:
-                logging.warning(f"发现空的请求数据: {path}")
+                logging.warning(f"发现空的请求数据: request_id={request_id}")
                 continue
             
             # 如果只有结束日志，记录警告并跳过合并
             if not request_data['start_log'] and request_data['end_log']:
-                logging.warning(f"发现只有结束日志的请求: {path}, 结束日志ID: {request_data['end_log'].id}")
+                logging.warning(f"发现只有结束日志的请求: request_id={request_id}, 结束日志ID: {request_data['end_log'].id}")
                 continue
                 
             # 确定最严重的级别
@@ -121,6 +127,7 @@ def get_merged_request_logs(query, page=1, per_page=20):
             max_level = max(levels, key=lambda x: level_priority.get(x, 0)) if levels else 'INFO'
             
             # 确定显示的消息
+            path = request_data['path']
             if request_data['end_log']:
                 message = f"请求: {path} - {request_data['status_code']}"
                 if request_data['duration']:
