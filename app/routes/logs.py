@@ -56,7 +56,7 @@ def get_merged_request_logs(query, page=1, per_page=20):
         for log in request_logs:
             # 提取请求ID和路径
             if "请求开始:" in log.message:
-                # 提取路径和请求ID，如 "请求开始: GET /dashboard/api/status [request_id: abc12345]" -> ("/dashboard/api/status", "abc12345")
+                # 尝试新格式：包含request_id
                 match = re.search(r'请求开始:\s+\w+\s+(.+?)\s+\[request_id:\s+(\w+)\]', log.message)
                 if match:
                     path = match.group(1)
@@ -70,8 +70,22 @@ def get_merged_request_logs(query, page=1, per_page=20):
                         'status_code': None,
                         'duration': None
                     }
+                else:
+                    # 尝试旧格式：不包含request_id，使用路径作为key
+                    match = re.search(r'请求开始:\s+\w+\s+(.+)', log.message)
+                    if match:
+                        path = match.group(1)
+                        merged_requests[path] = {
+                            'path': path,
+                            'start_log': log,
+                            'end_log': None,
+                            'start_time': log.created_at,
+                            'end_time': None,
+                            'status_code': None,
+                            'duration': None
+                        }
             elif "请求结束:" in log.message:
-                # 提取路径、状态码和请求ID，如 "请求结束: GET /dashboard/api/status - 200 [request_id: abc12345]" -> ("/dashboard/api/status", "200", "abc12345")
+                # 尝试新格式：包含request_id
                 match = re.search(r'请求结束:\s+\w+\s+(.+?)\s+-\s+(\d+)\s+\[request_id:\s+(\w+)\]', log.message)
                 if match:
                     path = match.group(1)
@@ -99,6 +113,29 @@ def get_merged_request_logs(query, page=1, per_page=20):
                         # 如果没有找到对应的开始日志，记录警告但不创建合并记录
                         logging.warning(f"发现孤立的请求结束日志: request_id={request_id}, 路径={path}, 状态码={status_code}, 日志ID={log.id}")
                         # 不创建合并记录，让这个日志作为普通日志显示
+                else:
+                    # 尝试旧格式：不包含request_id，使用路径作为key
+                    match = re.search(r'请求结束:\s+\w+\s+(.+?)\s+-\s+(\d+)', log.message)
+                    if match:
+                        path = match.group(1)
+                        status_code = match.group(2)
+                        if path in merged_requests:
+                            # 验证时间顺序：结束日志的时间应该晚于开始日志
+                            if merged_requests[path]['start_time'] and log.created_at < merged_requests[path]['start_time']:
+                                logging.warning(f"发现时间顺序错误的日志: 路径={path}, 开始时间={merged_requests[path]['start_time']}, 结束时间={log.created_at}")
+                                continue
+                            
+                            merged_requests[path]['end_log'] = log
+                            merged_requests[path]['end_time'] = log.created_at
+                            merged_requests[path]['status_code'] = status_code
+                            # 计算持续时间
+                            if merged_requests[path]['start_time']:
+                                duration = (log.created_at - merged_requests[path]['start_time']).total_seconds() * 1000
+                                merged_requests[path]['duration'] = round(duration, 2)
+                        else:
+                            # 如果没有找到对应的开始日志，记录警告但不创建合并记录
+                            logging.warning(f"发现孤立的请求结束日志: 路径={path}, 状态码={status_code}, 日志ID={log.id}")
+                            # 不创建合并记录，让这个日志作为普通日志显示
         
         # 创建合并后的日志列表
         merged_logs_list = []
