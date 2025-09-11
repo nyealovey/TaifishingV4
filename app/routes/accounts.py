@@ -374,6 +374,75 @@ def sync_all_accounts():
     return redirect(url_for("accounts.index"))
 
 
+@accounts_bp.route("/sync-details-batch", methods=["POST"])
+@login_required
+def sync_details_batch():
+    """获取同步详情API"""
+    try:
+        data = request.get_json()
+        record_ids = data.get("record_ids", [])
+        failed_only = data.get("failed_only", False)
+        
+        if not record_ids:
+            return jsonify({"success": False, "error": "缺少记录ID"}), 400
+        
+        # 查询同步记录
+        records = SyncData.query.filter(SyncData.id.in_(record_ids)).all()
+        
+        if not records:
+            return jsonify({"success": False, "error": "未找到相关记录"}), 404
+        
+        # 统计信息
+        success_count = sum(1 for r in records if r.status == "success")
+        failed_count = sum(1 for r in records if r.status == "failed")
+        total_accounts = sum(r.synced_count or 0 for r in records)
+        total_instances = len(records)
+        
+        # 构建结果
+        results = []
+        failed_results = []
+        
+        for record in records:
+            instance = Instance.query.get(record.instance_id) if record.instance_id else None
+            result = {
+                "instance_name": instance.name if instance else "未知实例",
+                "instance_id": record.instance_id,
+                "db_type": instance.db_type if instance else "未知",
+                "success": record.status == "success",
+                "message": record.message or record.error_message or "无消息",
+                "synced_count": record.synced_count or 0,
+            }
+            results.append(result)
+            
+            if record.status == "failed":
+                failed_results.append(result)
+        
+        # 根据请求类型返回不同的数据
+        if failed_only:
+            return jsonify({
+                "success": True,
+                "details": {
+                    "failed_count": failed_count,
+                    "failed_results": failed_results
+                }
+            })
+        else:
+            return jsonify({
+                "success": True,
+                "details": {
+                    "total_instances": total_instances,
+                    "success_count": success_count,
+                    "failed_count": failed_count,
+                    "total_accounts": total_accounts,
+                    "results": results
+                }
+            })
+            
+    except Exception as e:
+        logging.error(f"获取同步详情失败: {e}")
+        return jsonify({"success": False, "error": f"获取详情失败: {str(e)}"}), 500
+
+
 @accounts_bp.route("/sync-history")
 @login_required
 def sync_history():
@@ -845,7 +914,7 @@ def sync_records():
                 self.message = (
                     f"成功同步 {data['total_accounts']} 个账户"
                     if data["failed_count"] == 0
-                    else f"部分失败，成功 {data['success_count']} 个实例"
+                    else f"部分失败，成功 {data['success_count']} 个实例，失败 {data['failed_count']} 个实例"
                 )
                 self.instance = None  # 聚合记录没有单一实例
                 self.sync_records = data["sync_records"]  # 保存原始记录用于详情查看
