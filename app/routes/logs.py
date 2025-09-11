@@ -285,9 +285,9 @@ def get_merged_info(log_id):
             import re
             from datetime import datetime
             
-            start_match = re.search(r'开始时间:\s+(.+)', log.details)
-            end_match = re.search(r'结束时间:\s+(.+)', log.details)
-            duration_match = re.search(r'持续时间:\s+(.+)', log.details)
+            start_match = re.search(r'开始时间:\s+([^,]+)', log.details)
+            end_match = re.search(r'结束时间:\s+([^,]+)', log.details)
+            duration_match = re.search(r'持续时间:\s+([^,]+)', log.details)
             
             if start_match:
                 try:
