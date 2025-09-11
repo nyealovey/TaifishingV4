@@ -4,11 +4,12 @@
 泰摸鱼吧 - 主要路由
 """
 
-from flask import Blueprint, render_template, jsonify, request, redirect, url_for
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for, send_from_directory
 from flask_login import login_required, current_user
 from app.utils.enhanced_logger import log_operation, log_api_request
 import psutil
 from app.utils.timezone import get_china_time, format_china_time
+import os
 
 # 创建蓝图
 main_bp = Blueprint("main", __name__)
@@ -18,6 +19,13 @@ main_bp = Blueprint("main", __name__)
 def index():
     """首页 - 重定向到登录页面"""
     return redirect(url_for("auth.login"))
+
+
+@main_bp.route("/favicon.ico")
+def favicon():
+    """提供favicon.ico文件"""
+    # 返回一个空的响应，避免404错误
+    return '', 204
 
 
 @main_bp.route("/admin")
