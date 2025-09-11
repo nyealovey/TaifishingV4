@@ -188,7 +188,8 @@
                                         <td>
                                             <button class="btn btn-sm btn-outline-info" 
                                                     onclick="showLogDetailWithEvent({{ log.id }}, {{ log.is_merged|lower }}, this)" 
-                                                    data-merged-info="{{ log.merged_info|tojson|safe if log.is_merged and log.merged_info else '' }}"
+                                                    data-log-id="{{ log.id }}"
+                                                    data-is-merged="{{ log.is_merged|lower }}"
                                                     title="查看详情">
                                                 <i class="fas fa-eye"></i>
                                             </button>
@@ -322,29 +323,30 @@ function showLogDetailWithEvent(logId, isMerged, buttonElement) {
     const isMergedBool = isMerged === 'true' || isMerged === true;
     
     if (isMergedBool) {
-        // 从按钮的数据属性中获取合并信息
-        let mergedInfo = null;
-        if (buttonElement && buttonElement.dataset.mergedInfo) {
-            try {
-                const mergedInfoStr = buttonElement.dataset.mergedInfo;
-                console.log('原始合并信息字符串:', mergedInfoStr);
-                
-                if (mergedInfoStr && mergedInfoStr.trim() !== '') {
-                    mergedInfo = JSON.parse(mergedInfoStr);
-                    console.log('解析到的合并信息:', mergedInfo);
-                } else {
-                    console.log('合并信息为空字符串');
-                }
-            } catch (e) {
-                console.error('解析合并信息失败:', e);
-                console.error('原始数据:', buttonElement.dataset.mergedInfo);
-            }
-        } else {
-            console.log('没有找到合并信息，buttonElement:', buttonElement);
-        }
-        showMergedLogDetail(logId, mergedInfo);
+        // 通过AJAX获取合并信息
+        fetchMergedLogInfo(logId);
     } else {
         showLogDetail(logId, false);
+    }
+}
+
+// 获取合并日志信息
+async function fetchMergedLogInfo(logId) {
+    try {
+        console.log('正在获取合并日志信息，ID:', logId);
+        const response = await fetch(`/logs/api/merged-info/${logId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('获取到的合并信息:', data.merged_info);
+            showMergedLogDetail(logId, data.merged_info);
+        } else {
+            console.error('获取合并信息失败:', data.message);
+            showMergedLogDetail(logId, null);
+        }
+    } catch (error) {
+        console.error('获取合并信息失败:', error);
+        showMergedLogDetail(logId, null);
     }
 }
 

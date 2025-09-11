@@ -667,3 +667,32 @@ def api_statistics():
     """获取日志统计API"""
     stats = get_log_statistics()
     return jsonify(stats)
+
+
+@logs_bp.route("/api/merged-info/<int:log_id>")
+@login_required
+def get_merged_info(log_id):
+    """获取合并日志的详细信息"""
+    try:
+        # 重新生成合并日志信息
+        merged_logs = get_merged_request_logs(Log.query, 1, 1000)  # 获取所有合并日志
+        
+        # 查找指定ID的合并日志
+        for log in merged_logs.items:
+            if log['id'] == log_id and log.get('is_merged'):
+                return jsonify({
+                    'success': True,
+                    'merged_info': log.get('merged_info', {})
+                })
+        
+        return jsonify({
+            'success': False,
+            'message': '未找到合并日志信息'
+        })
+        
+    except Exception as e:
+        logging.error(f"获取合并日志信息失败: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'获取合并日志信息失败: {str(e)}'
+        })
