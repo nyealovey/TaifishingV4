@@ -49,7 +49,7 @@
             <div class="col-md-2">
                 <label class="form-label">&nbsp;</label>
                 <div class="d-grid">
-                    <a href="{{ url_for('account_sync.history') }}" class="btn btn-outline-secondary">
+                    <a href="{{ url_for('account_sync.sync_history') }}" class="btn btn-outline-secondary">
                         <i class="fas fa-times me-1"></i>清除
                     </a>
                 </div>
@@ -140,7 +140,7 @@
             <ul class="pagination justify-content-center">
                 {% if sync_records.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('account_sync.history', page=sync_records.prev_num, instance_id=instance_id, status=status) }}">
+                    <a class="page-link" href="{{ url_for('account_sync.sync_history', page=sync_records.prev_num, instance_id=instance_id, status=status) }}">
                         上一页
                     </a>
                 </li>
@@ -150,7 +150,7 @@
                     {% if page_num %}
                         {% if page_num != sync_records.page %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('account_sync.history', page=page_num, instance_id=instance_id, status=status) }}">
+                            <a class="page-link" href="{{ url_for('account_sync.sync_history', page=page_num, instance_id=instance_id, status=status) }}">
                                 {{ page_num }}
                             </a>
                         </li>
@@ -168,7 +168,7 @@
                 
                 {% if sync_records.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('account_sync.history', page=sync_records.next_num, instance_id=instance_id, status=status) }}">
+                    <a class="page-link" href="{{ url_for('account_sync.sync_history', page=sync_records.next_num, instance_id=instance_id, status=status) }}">
                         下一页
                     </a>
                 </li>
