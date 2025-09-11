@@ -85,7 +85,10 @@ def register_error_logging_middleware(app):
     @app.errorhandler(404)
     def handle_not_found(error):
         """处理404错误"""
-        log_exception(error, "资源未找到", "error_handler", "WARNING")
+        from flask import request
+        url = request.url if request else "未知URL"
+        method = request.method if request else "未知方法"
+        log_exception(error, f"资源未找到 - {method} {url}", "error_handler", "WARNING")
         return {
             "error": "资源未找到",
             "message": "请求的资源不存在",
