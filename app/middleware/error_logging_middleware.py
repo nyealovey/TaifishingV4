@@ -80,13 +80,38 @@ def register_error_logging_middleware(app):
                     level_priority = {'CRITICAL': 5, 'ERROR': 4, 'WARNING': 3, 'INFO': 2, 'DEBUG': 1}
                     max_level = max(levels, key=lambda x: level_priority.get(x, 0))
                     
+                    # 构建详细的响应信息
+                    response_size = response.content_length or 0
+                    response_headers = dict(response.headers)
+                    
+                    # 构建详细信息
+                    details_parts = [
+                        f"开始时间: {start_log.created_at}",
+                        f"结束时间: {end_time}",
+                        f"持续时间: {duration:.2f}ms",
+                        f"响应大小: {response_size} bytes",
+                        f"请求头: {dict(request.headers)}",
+                        f"响应头: {response_headers}"
+                    ]
+                    
+                    # 如果有响应体，尝试记录（限制长度）
+                    try:
+                        if hasattr(response, 'get_data'):
+                            response_data = response.get_data(as_text=True)
+                            if response_data and len(response_data) < 1000:  # 限制长度
+                                details_parts.append(f"响应内容: {response_data}")
+                    except:
+                        pass
+                    
+                    details = ", ".join(details_parts)
+                    
                     # 保存合并后的日志
                     merged_log = Log(
                         level=max_level,
                         log_type='request',
                         module='request_handler',
                         message=merged_message,
-                        details=f"开始时间: {start_log.created_at}, 结束时间: {end_time}, 持续时间: {duration:.2f}ms",
+                        details=details,
                         user_id=current_user.id if current_user and hasattr(current_user, 'id') else None,
                         ip_address=request.remote_addr,
                         user_agent=request.headers.get('User-Agent')

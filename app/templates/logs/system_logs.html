@@ -577,9 +577,35 @@ function showMergedLogDetail(logId, mergedInfo) {
             <hr>
             <div class="row">
                 <div class="col-12">
-                    <strong>说明:</strong>
-                    <p class="mt-2">合并日志将同一个请求的开始和结束日志合并显示，级别以最严重的为准。</p>
-                    <p>合并后的日志显示请求路径、状态码和持续时间（如果有）。</p>
+                    <strong>响应信息:</strong>
+                    <div class="mt-2">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>响应大小:</strong> ${mergedInfo.response_size || '未知'} bytes
+                            </div>
+                            <div class="col-md-6">
+                                <strong>响应时间:</strong> ${mergedInfo.duration || '未知'}ms
+                            </div>
+                        </div>
+                        ${mergedInfo.request_headers ? `
+                        <div class="mt-2">
+                            <strong>请求头:</strong>
+                            <pre class="mt-1 p-2 bg-light small">${JSON.stringify(mergedInfo.request_headers, null, 2)}</pre>
+                        </div>
+                        ` : ''}
+                        ${mergedInfo.response_headers ? `
+                        <div class="mt-2">
+                            <strong>响应头:</strong>
+                            <pre class="mt-1 p-2 bg-light small">${JSON.stringify(mergedInfo.response_headers, null, 2)}</pre>
+                        </div>
+                        ` : ''}
+                        ${mergedInfo.response_body ? `
+                        <div class="mt-2">
+                            <strong>响应内容:</strong>
+                            <pre class="mt-1 p-2 bg-light small">${mergedInfo.response_body}</pre>
+                        </div>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
         `;

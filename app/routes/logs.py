@@ -266,7 +266,12 @@ def get_merged_info(log_id):
             'request_method': None,
             'user_info': None,
             'ip_info': None,
-            'log_level': log.level  # 使用合并后的日志级别
+            'log_level': log.level,  # 使用合并后的日志级别
+            'response_size': None,
+            'response_headers': None,
+            'response_body': None,
+            'request_headers': None,
+            'request_body': None
         }
         
         # 如果是请求日志，解析消息
@@ -283,8 +288,10 @@ def get_merged_info(log_id):
         # 解析详情信息
         if log.details:
             import re
+            import json
             from datetime import datetime
             
+            # 解析时间信息
             start_match = re.search(r'开始时间:\s+([^,]+)', log.details)
             end_match = re.search(r'结束时间:\s+([^,]+)', log.details)
             duration_match = re.search(r'持续时间:\s+([^,]+)', log.details)
@@ -321,6 +328,37 @@ def get_merged_info(log_id):
                     
             if duration_match:
                 merged_info['duration'] = float(duration_match.group(1).replace('ms', ''))
+            
+            # 解析响应信息
+            response_size_match = re.search(r'响应大小:\s+([^,]+)', log.details)
+            if response_size_match:
+                try:
+                    merged_info['response_size'] = int(response_size_match.group(1).strip())
+                except:
+                    merged_info['response_size'] = response_size_match.group(1).strip()
+            
+            # 解析请求头
+            request_headers_match = re.search(r'请求头:\s+({[^}]+})', log.details)
+            if request_headers_match:
+                try:
+                    headers_str = request_headers_match.group(1)
+                    merged_info['request_headers'] = json.loads(headers_str)
+                except:
+                    merged_info['request_headers'] = request_headers_match.group(1)
+            
+            # 解析响应头
+            response_headers_match = re.search(r'响应头:\s+({[^}]+})', log.details)
+            if response_headers_match:
+                try:
+                    headers_str = response_headers_match.group(1)
+                    merged_info['response_headers'] = json.loads(headers_str)
+                except:
+                    merged_info['response_headers'] = response_headers_match.group(1)
+            
+            # 解析响应内容
+            response_body_match = re.search(r'响应内容:\s+(.+)', log.details)
+            if response_body_match:
+                merged_info['response_body'] = response_body_match.group(1).strip()
         
         # 用户信息
         if log.user_id:
