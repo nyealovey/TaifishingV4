@@ -478,15 +478,7 @@
                             </span>
                         </td>
                         <td>
-                            {% if account.instance.db_type == 'sqlserver' %}
-                                {% if account.account_type %}
-                                    <span class="badge bg-info" style="font-size: 0.7rem;">{{ account.account_type }}</span>
-                                {% else %}
-                                    <span class="text-muted" style="font-size: 0.8rem;">未知</span>
-                                {% endif %}
-                            {% else %}
-                                <span class="text-muted" style="font-size: 0.8rem;">-</span>
-                            {% endif %}
+                            <span class="text-muted" style="font-size: 0.8rem;">-</span>
                         </td>
                         <td>
                             {% if classifications.get(account.id) %}
