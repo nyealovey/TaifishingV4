@@ -443,7 +443,7 @@ def sync_history():
         })
 
     return render_template(
-        "accounts/sync_history.html",
+        "accounts/history.html",
         records=pagination.items,
         pagination=pagination,
         sync_type=sync_type,

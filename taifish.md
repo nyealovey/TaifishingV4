@@ -116,7 +116,7 @@
 - `app/templates/errors/error.html` - 错误页面模板
 
 #### 页面模板
-- `app/templates/main/index.html` - 主页面
+- ~~`app/templates/main/index.html` - 主页面~~ **已删除** - 未使用
 - `app/templates/dashboard/index.html` - 仪表盘
 - `app/templates/auth/login.html` - 登录页面
 - ~~`app/templates/auth/register.html` - 注册页面~~ **已删除** - 注册功能已移除
@@ -136,6 +136,7 @@
 - `app/templates/accounts/sync_records.html` - 同步记录页面
 - `app/templates/accounts/history.html` - 账户历史页面
 - `app/templates/accounts/sync_report.html` - 同步报告页面
+- `app/templates/accounts/sync_details.html` - 同步详情页面
 
 #### 其他功能模板
 - `app/templates/credentials/index.html` - 凭据列表
@@ -150,14 +151,16 @@
 - `app/templates/tasks/create_old.html` - 旧版创建任务模板（可删除）
 - `app/templates/logs/index.html` - 日志管理页面
 - `app/templates/logs/system_logs.html` - 系统日志页面
+- `app/templates/logs/detail.html` - 日志详情页面
+- `app/templates/logs/statistics.html` - 日志统计页面
 
 #### 账户分类模板
 - `app/templates/account_classification/index.html` - 分类管理页面
 - `app/templates/account_classification/rules.html` - 分类规则页面
 
 #### 管理后台模板
-- `app/templates/admin/layout.html` - 管理后台布局
-- `app/templates/admin/menu.html` - 管理菜单
+- ~~`app/templates/admin/layout.html` - 管理后台布局~~ **已删除** - 未使用
+- ~~`app/templates/admin/menu.html` - 管理菜单~~ **已删除** - 未使用
 - `app/templates/admin/system_config.html` - 系统配置
 - `app/templates/admin/constants.html` - 常量管理
 
