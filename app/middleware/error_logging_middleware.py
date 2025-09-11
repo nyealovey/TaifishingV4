@@ -98,10 +98,17 @@ def register_error_logging_middleware(app):
                     try:
                         if hasattr(response, 'get_data'):
                             response_data = response.get_data(as_text=True)
-                            if response_data and len(response_data) < 1000:  # 限制长度
-                                details_parts.append(f"响应内容: {response_data}")
-                    except:
-                        pass
+                            if response_data and len(response_data) > 0:
+                                # 限制长度并确保内容可读
+                                if len(response_data) < 1000:
+                                    details_parts.append(f"响应内容: {response_data}")
+                                else:
+                                    details_parts.append(f"响应内容: {response_data[:1000]}...")
+                            else:
+                                details_parts.append(f"响应内容: (空)")
+                    except Exception as e:
+                        print(f"DEBUG: 获取响应内容失败: {e}")
+                        details_parts.append(f"响应内容: (获取失败: {str(e)})")
                     
                     details = ", ".join(details_parts)
                     

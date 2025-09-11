@@ -598,7 +598,7 @@ function showMergedLogDetail(logId, mergedInfo) {
                             <pre class="mt-1 p-2 bg-light small">${JSON.stringify(mergedInfo.response_headers, null, 2)}</pre>
                         </div>
                         ` : ''}
-                        ${mergedInfo.response_body ? `
+                        ${mergedInfo.response_body && mergedInfo.response_body.trim() && mergedInfo.response_body !== '{' ? `
                         <div class="mt-2">
                             <strong>响应内容:</strong>
                             <pre class="mt-1 p-2 bg-light small">${mergedInfo.response_body}</pre>

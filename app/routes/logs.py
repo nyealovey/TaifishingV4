@@ -362,9 +362,14 @@ def get_merged_info(log_id):
                     merged_info['response_headers'] = response_headers_match.group(1)
             
             # 解析响应内容
-            response_body_match = re.search(r'响应内容:\s+(.+)', log.details)
+            response_body_match = re.search(r'响应内容:\s+([^,]+)', log.details)
             if response_body_match:
-                merged_info['response_body'] = response_body_match.group(1).strip()
+                response_body = response_body_match.group(1).strip()
+                # 如果响应内容为空或只有括号，显示为空
+                if response_body in ['(空)', '(获取失败:', '']:
+                    merged_info['response_body'] = None
+                else:
+                    merged_info['response_body'] = response_body
         
         # 用户信息
         if log.user_id:
