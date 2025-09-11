@@ -114,6 +114,11 @@ def get_merged_request_logs(query, page=1, per_page=20):
             if not request_data['start_log'] and request_data['end_log']:
                 logging.warning(f"发现只有结束日志的请求: request_id={request_id}, 结束日志ID: {request_data['end_log'].id}")
                 continue
+            
+            # 如果只有开始日志，记录警告并跳过合并
+            if request_data['start_log'] and not request_data['end_log']:
+                logging.warning(f"发现只有开始日志的请求: request_id={request_id}, 开始日志ID: {request_data['start_log'].id}")
+                continue
                 
             # 确定最严重的级别
             levels = []
