@@ -276,6 +276,8 @@ def get_merged_info(log_id):
                 merged_info['path'] = match.group(2)
                 merged_info['status_code'] = int(match.group(3))
                 merged_info['duration'] = float(match.group(4).replace('ms', ''))
+                merged_info['has_start_log'] = True
+                merged_info['has_end_log'] = True
         
         # 解析详情信息
         if log.details:
@@ -308,10 +310,30 @@ def get_merged_info(log_id):
                 'user_agent': log.user_agent
             }
         
+        # 添加调试信息
+        merged_info['debug'] = {
+            'log_id': log.id,
+            'log_type': log.log_type,
+            'message': log.message,
+            'details': log.details,
+            'parsed_successfully': any([
+                merged_info['path'],
+                merged_info['status_code'],
+                merged_info['duration']
+            ])
+        }
+        
         return jsonify({'success': True, 'merged_info': merged_info})
     except Exception as e:
         logging.error(f"获取合并日志信息失败: {e}")
-        return jsonify({'success': False, 'message': f'获取合并日志信息失败: {str(e)}'})
+        return jsonify({
+            'success': False, 
+            'message': f'获取合并日志信息失败: {str(e)}',
+            'debug': {
+                'log_id': log_id,
+                'error': str(e)
+            }
+        })
 
 
 @logs_bp.route("/api/stats")
