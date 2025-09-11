@@ -344,10 +344,11 @@ def _merge_batch_sync_logs(start_log, sync_logs, end_time, duration, status_code
             try:
                 response_data = response.get_data(as_text=True)
                 if response_data and len(response_data) > 0:
-                    if len(response_data) < 1000:
+                    if len(response_data) < 5000:  # 增加到5000字符
                         details_parts.append(f"响应内容: {response_data}")
                     else:
-                        details_parts.append(f"响应内容: {response_data[:1000]}...")
+                        # 显示前2000字符和后2000字符，中间用省略号
+                        details_parts.append(f"响应内容: {response_data[:2000]}...[省略{len(response_data)-4000}字符]...{response_data[-2000:]}")
                 else:
                     details_parts.append(f"响应内容: (空)")
             except Exception as e:
@@ -425,10 +426,11 @@ def _merge_regular_request_logs(start_log, end_time, duration, status_code, resp
                 response_data = response.get_data(as_text=True)
                 if response_data and len(response_data) > 0:
                     # 限制长度并确保内容可读
-                    if len(response_data) < 1000:
+                    if len(response_data) < 5000:  # 增加到5000字符
                         details_parts.append(f"响应内容: {response_data}")
                     else:
-                        details_parts.append(f"响应内容: {response_data[:1000]}...")
+                        # 显示前2000字符和后2000字符，中间用省略号
+                        details_parts.append(f"响应内容: {response_data[:2000]}...[省略{len(response_data)-4000}字符]...{response_data[-2000:]}")
                 else:
                     details_parts.append(f"响应内容: (空)")
         except Exception as e:
