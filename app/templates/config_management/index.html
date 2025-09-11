@@ -1,0 +1,853 @@
+{% extends "base.html" %}
+
+{% block title %}配置管理 - {{ super() }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.config-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid #007bff;
+}
+
+.config-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.config-item {
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 0;
+}
+
+.config-item:last-child {
+    border-bottom: none;
+}
+
+.config-value {
+    font-family: 'Courier New', monospace;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 0.375rem 0.75rem;
+}
+
+.config-description {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.category-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 0;
+}
+
+.restart-warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.restart-warning i {
+    color: #f39c12;
+}
+
+.config-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.validation-error {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.validation-success {
+    color: #28a745;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.config-tabs {
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 2rem;
+}
+
+.config-tabs .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.config-tabs .nav-link.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+    background-color: transparent;
+}
+
+.config-tabs .nav-link:hover {
+    color: #007bff;
+    border-bottom-color: #007bff;
+}
+
+.batch-actions {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    border: 1px solid #dee2e6;
+}
+
+.batch-actions .btn {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.config-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stat-card .stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card .stat-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+    .config-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .config-actions .btn {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+    
+    .config-stats {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-cogs me-2"></i>配置管理
+                </h1>
+                <div>
+                    <button class="btn btn-outline-primary" onclick="exportConfigs()">
+                        <i class="fas fa-download me-1"></i>导出配置
+                    </button>
+                    <button class="btn btn-outline-success" onclick="createBackup()">
+                        <i class="fas fa-save me-1"></i>创建备份
+                    </button>
+                    <button class="btn btn-primary" onclick="saveAllChanges()">
+                        <i class="fas fa-save me-1"></i>保存所有更改
+                    </button>
+                </div>
+            </div>
+
+            <!-- 配置统计 -->
+            <div class="config-stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalConfigs">0</div>
+                    <div class="stat-label">总配置项</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="editableConfigs">0</div>
+                    <div class="stat-label">可编辑项</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="restartRequired">0</div>
+                    <div class="stat-label">需重启项</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="modifiedConfigs">0</div>
+                    <div class="stat-label">已修改项</div>
+                </div>
+            </div>
+
+            <!-- 批量操作 -->
+            <div class="batch-actions">
+                <h5 class="mb-3">
+                    <i class="fas fa-tools me-2"></i>批量操作
+                </h5>
+                <button class="btn btn-outline-primary" onclick="selectAll()">
+                    <i class="fas fa-check-square me-1"></i>全选
+                </button>
+                <button class="btn btn-outline-secondary" onclick="deselectAll()">
+                    <i class="fas fa-square me-1"></i>取消全选
+                </button>
+                <button class="btn btn-outline-warning" onclick="resetSelected()">
+                    <i class="fas fa-undo me-1"></i>重置选中
+                </button>
+                <button class="btn btn-outline-info" onclick="validateSelected()">
+                    <i class="fas fa-check-circle me-1"></i>验证选中
+                </button>
+                <button class="btn btn-outline-danger" onclick="revertChanges()">
+                    <i class="fas fa-times me-1"></i>撤销更改
+                </button>
+            </div>
+
+            <!-- 重启警告 -->
+            <div id="restartWarning" class="restart-warning" style="display: none;">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>注意：</strong>以下配置项需要重启应用才能生效：
+                <span id="restartRequiredList"></span>
+            </div>
+
+            <!-- 配置分类标签 -->
+            <ul class="nav nav-tabs config-tabs" id="configTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab">
+                        <i class="fas fa-list me-1"></i>全部配置
+                    </button>
+                </li>
+                {% for category in categories %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="{{ category }}-tab" data-bs-toggle="tab" data-bs-target="#{{ category }}" type="button" role="tab">
+                        <i class="fas fa-tag me-1"></i>{{ category }}
+                    </button>
+                </li>
+                {% endfor %}
+            </ul>
+
+            <!-- 配置内容 -->
+            <div class="tab-content" id="configTabsContent">
+                <!-- 全部配置 -->
+                <div class="tab-pane fade show active" id="all" role="tabpanel">
+                    <div class="row">
+                        {% for category, configs in configs_by_category.items() %}
+                        <div class="col-lg-6 mb-4">
+                            <div class="card config-card">
+                                <div class="card-header category-header">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-tag me-2"></i>{{ category }}
+                                        <span class="badge bg-light text-dark ms-2">{{ configs|length }}</span>
+                                    </h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    {% for key, config in configs.items() %}
+                                    <div class="config-item px-3">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold">{{ key }}</label>
+                                                <div class="config-description">{{ config.metadata.description }}</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-group">
+                                                    {% if config.metadata.type == 'boolean' %}
+                                                    <select class="form-select config-value" data-key="{{ key }}" data-original="{{ config.value }}">
+                                                        <option value="true" {% if config.value %}selected{% endif %}>是</option>
+                                                        <option value="false" {% if not config.value %}selected{% endif %}>否</option>
+                                                    </select>
+                                                    {% elif config.metadata.type == 'select' %}
+                                                    <select class="form-select config-value" data-key="{{ key }}" data-original="{{ config.value }}">
+                                                        {% for option in config.metadata.options %}
+                                                        <option value="{{ option }}" {% if config.value == option %}selected{% endif %}>{{ option }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    {% else %}
+                                                    <input type="text" class="form-control config-value" 
+                                                           value="{{ config.value }}" 
+                                                           data-key="{{ key }}" 
+                                                           data-original="{{ config.value }}"
+                                                           data-type="{{ config.metadata.type }}"
+                                                           data-min="{{ config.metadata.get('min', '') }}"
+                                                           data-max="{{ config.metadata.get('max', '') }}"
+                                                           data-pattern="{{ config.metadata.get('pattern', '') }}">
+                                                    {% endif %}
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-{{ 'database' if config.source == '.env' else 'code' }}"></i>
+                                                    </span>
+                                                </div>
+                                                <div class="validation-error" id="error-{{ key }}" style="display: none;"></div>
+                                                <div class="validation-success" id="success-{{ key }}" style="display: none;"></div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="config-actions">
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="validateConfig('{{ key }}')" title="验证">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-secondary" onclick="resetConfig('{{ key }}')" title="重置">
+                                                        <i class="fas fa-undo"></i>
+                                                    </button>
+                                                    {% if config.metadata.requires_restart %}
+                                                    <i class="fas fa-exclamation-triangle text-warning" title="需要重启"></i>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- 分类配置 -->
+                {% for category in categories %}
+                <div class="tab-pane fade" id="{{ category }}" role="tabpanel">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card config-card">
+                                <div class="card-header category-header">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-tag me-2"></i>{{ category }}
+                                        <span class="badge bg-light text-dark ms-2">{{ configs_by_category[category]|length }}</span>
+                                    </h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    {% for key, config in configs_by_category[category].items() %}
+                                    <div class="config-item px-3">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold">{{ key }}</label>
+                                                <div class="config-description">{{ config.metadata.description }}</div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-group">
+                                                    {% if config.metadata.type == 'boolean' %}
+                                                    <select class="form-select config-value" data-key="{{ key }}" data-original="{{ config.value }}">
+                                                        <option value="true" {% if config.value %}selected{% endif %}>是</option>
+                                                        <option value="false" {% if not config.value %}selected{% endif %}>否</option>
+                                                    </select>
+                                                    {% elif config.metadata.type == 'select' %}
+                                                    <select class="form-select config-value" data-key="{{ key }}" data-original="{{ config.value }}">
+                                                        {% for option in config.metadata.options %}
+                                                        <option value="{{ option }}" {% if config.value == option %}selected{% endif %}>{{ option }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    {% else %}
+                                                    <input type="text" class="form-control config-value" 
+                                                           value="{{ config.value }}" 
+                                                           data-key="{{ key }}" 
+                                                           data-original="{{ config.value }}"
+                                                           data-type="{{ config.metadata.type }}"
+                                                           data-min="{{ config.metadata.get('min', '') }}"
+                                                           data-max="{{ config.metadata.get('max', '') }}"
+                                                           data-pattern="{{ config.metadata.get('pattern', '') }}">
+                                                    {% endif %}
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-{{ 'database' if config.source == '.env' else 'code' }}"></i>
+                                                    </span>
+                                                </div>
+                                                <div class="validation-error" id="error-{{ key }}" style="display: none;"></div>
+                                                <div class="validation-success" id="success-{{ key }}" style="display: none;"></div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="config-actions">
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="validateConfig('{{ key }}')" title="验证">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-secondary" onclick="resetConfig('{{ key }}')" title="重置">
+                                                        <i class="fas fa-undo"></i>
+                                                    </button>
+                                                    {% if config.metadata.requires_restart %}
+                                                    <i class="fas fa-exclamation-triangle text-warning" title="需要重启"></i>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 导入配置模态框 -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">导入配置</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="configFile" class="form-label">选择配置文件</label>
+                    <input type="file" class="form-control" id="configFile" accept=".json">
+                </div>
+                <div class="mb-3">
+                    <label for="configText" class="form-label">或粘贴配置JSON</label>
+                    <textarea class="form-control" id="configText" rows="10" placeholder='{"configs": {"KEY": "value"}}'></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="importConfigs()">导入</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let modifiedConfigs = new Set();
+let originalConfigs = {};
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeConfigs();
+    updateStats();
+    setupEventListeners();
+});
+
+// 初始化配置
+function initializeConfigs() {
+    // 保存原始配置值
+    document.querySelectorAll('.config-value').forEach(input => {
+        const key = input.dataset.key;
+        const value = input.value;
+        originalConfigs[key] = value;
+    });
+}
+
+// 设置事件监听器
+function setupEventListeners() {
+    // 监听配置值变化
+    document.querySelectorAll('.config-value').forEach(input => {
+        input.addEventListener('change', function() {
+            const key = this.dataset.key;
+            const originalValue = this.dataset.original;
+            const currentValue = this.value;
+            
+            if (currentValue !== originalValue) {
+                modifiedConfigs.add(key);
+                this.classList.add('is-modified');
+            } else {
+                modifiedConfigs.delete(key);
+                this.classList.remove('is-modified');
+            }
+            
+            updateStats();
+            updateRestartWarning();
+        });
+        
+        input.addEventListener('input', function() {
+            const key = this.dataset.key;
+            const originalValue = this.dataset.original;
+            const currentValue = this.value;
+            
+            if (currentValue !== originalValue) {
+                modifiedConfigs.add(key);
+                this.classList.add('is-modified');
+            } else {
+                modifiedConfigs.delete(key);
+                this.classList.remove('is-modified');
+            }
+            
+            updateStats();
+        });
+    });
+}
+
+// 更新统计信息
+function updateStats() {
+    const totalConfigs = document.querySelectorAll('.config-value').length;
+    const editableConfigs = document.querySelectorAll('.config-value').length;
+    const restartRequired = document.querySelectorAll('.fa-exclamation-triangle').length;
+    const modifiedCount = modifiedConfigs.size;
+    
+    document.getElementById('totalConfigs').textContent = totalConfigs;
+    document.getElementById('editableConfigs').textContent = editableConfigs;
+    document.getElementById('restartRequired').textContent = restartRequired;
+    document.getElementById('modifiedConfigs').textContent = modifiedCount;
+}
+
+// 更新重启警告
+function updateRestartWarning() {
+    const restartWarning = document.getElementById('restartWarning');
+    const restartRequiredList = document.getElementById('restartRequiredList');
+    
+    const modifiedRestartConfigs = Array.from(modifiedConfigs).filter(key => {
+        const input = document.querySelector(`[data-key="${key}"]`);
+        return input && input.closest('.config-item').querySelector('.fa-exclamation-triangle');
+    });
+    
+    if (modifiedRestartConfigs.length > 0) {
+        restartRequiredList.textContent = modifiedRestartConfigs.join(', ');
+        restartWarning.style.display = 'block';
+    } else {
+        restartWarning.style.display = 'none';
+    }
+}
+
+// 验证单个配置
+function validateConfig(key) {
+    const input = document.querySelector(`[data-key="${key}"]`);
+    const value = input.value;
+    const errorDiv = document.getElementById(`error-${key}`);
+    const successDiv = document.getElementById(`success-${key}`);
+    
+    // 清除之前的验证结果
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+    
+    // 客户端验证
+    const validation = validateValue(key, value, input);
+    if (!validation.valid) {
+        errorDiv.textContent = validation.message;
+        errorDiv.style.display = 'block';
+        return;
+    }
+    
+    // 服务器端验证
+    fetch(`/config-management/api/configs/validate`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ key: key, value: value })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            successDiv.textContent = '配置值有效';
+            successDiv.style.display = 'block';
+        } else {
+            errorDiv.textContent = data.message;
+            errorDiv.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        errorDiv.textContent = '验证失败: ' + error.message;
+        errorDiv.style.display = 'block';
+    });
+}
+
+// 客户端验证
+function validateValue(key, value, input) {
+    const type = input.dataset.type;
+    const min = input.dataset.min;
+    const max = input.dataset.max;
+    const pattern = input.dataset.pattern;
+    
+    // 类型验证
+    if (type === 'int') {
+        if (isNaN(value) || !Number.isInteger(parseFloat(value))) {
+            return { valid: false, message: '值必须是整数' };
+        }
+        const numValue = parseInt(value);
+        if (min && numValue < parseInt(min)) {
+            return { valid: false, message: `值不能小于 ${min}` };
+        }
+        if (max && numValue > parseInt(max)) {
+            return { valid: false, message: `值不能大于 ${max}` };
+        }
+    } else if (type === 'float') {
+        if (isNaN(value)) {
+            return { valid: false, message: '值必须是数字' };
+        }
+        const numValue = parseFloat(value);
+        if (min && numValue < parseFloat(min)) {
+            return { valid: false, message: `值不能小于 ${min}` };
+        }
+        if (max && numValue > parseFloat(max)) {
+            return { valid: false, message: `值不能大于 ${max}` };
+        }
+    } else if (type === 'boolean') {
+        if (!['true', 'false', '1', '0', 'yes', 'no'].includes(value.toLowerCase())) {
+            return { valid: false, message: '值必须是布尔值' };
+        }
+    }
+    
+    // 正则表达式验证
+    if (pattern && !new RegExp(pattern).test(value)) {
+        return { valid: false, message: '值格式不正确' };
+    }
+    
+    return { valid: true };
+}
+
+// 重置单个配置
+function resetConfig(key) {
+    const input = document.querySelector(`[data-key="${key}"]`);
+    const originalValue = input.dataset.original;
+    
+    input.value = originalValue;
+    modifiedConfigs.delete(key);
+    input.classList.remove('is-modified');
+    
+    // 清除验证结果
+    document.getElementById(`error-${key}`).style.display = 'none';
+    document.getElementById(`success-${key}`).style.display = 'none';
+    
+    updateStats();
+    updateRestartWarning();
+}
+
+// 保存所有更改
+function saveAllChanges() {
+    if (modifiedConfigs.size === 0) {
+        showNotification('没有需要保存的更改', 'info');
+        return;
+    }
+    
+    const configs = {};
+    modifiedConfigs.forEach(key => {
+        const input = document.querySelector(`[data-key="${key}"]`);
+        configs[key] = input.value;
+    });
+    
+    // 显示加载状态
+    document.body.classList.add('loading');
+    
+    fetch('/config-management/api/configs/batch', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ configs: configs })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            
+            // 更新原始值
+            modifiedConfigs.forEach(key => {
+                const input = document.querySelector(`[data-key="${key}"]`);
+                input.dataset.original = input.value;
+                input.classList.remove('is-modified');
+            });
+            
+            modifiedConfigs.clear();
+            updateStats();
+            updateRestartWarning();
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('保存失败: ' + error.message, 'error');
+    })
+    .finally(() => {
+        document.body.classList.remove('loading');
+    });
+}
+
+// 导出配置
+function exportConfigs() {
+    fetch('/config-management/api/configs/export')
+    .then(response => response.json())
+    .then(data => {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `config_export_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showNotification('配置导出成功', 'success');
+    })
+    .catch(error => {
+        showNotification('导出失败: ' + error.message, 'error');
+    });
+}
+
+// 导入配置
+function importConfigs() {
+    const fileInput = document.getElementById('configFile');
+    const textArea = document.getElementById('configText');
+    
+    let configData;
+    
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                configData = JSON.parse(e.target.result);
+                performImport(configData);
+            } catch (error) {
+                showNotification('配置文件格式错误: ' + error.message, 'error');
+            }
+        };
+        reader.readAsText(file);
+    } else if (textArea.value.trim()) {
+        try {
+            configData = JSON.parse(textArea.value);
+            performImport(configData);
+        } catch (error) {
+            showNotification('配置JSON格式错误: ' + error.message, 'error');
+        }
+    } else {
+        showNotification('请选择配置文件或输入配置JSON', 'warning');
+    }
+}
+
+// 执行导入
+function performImport(configData) {
+    fetch('/config-management/api/configs/import', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(configData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            // 重新加载页面
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('导入失败: ' + error.message, 'error');
+    });
+}
+
+// 创建备份
+function createBackup() {
+    fetch('/config-management/api/configs/backup', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('创建备份失败: ' + error.message, 'error');
+    });
+}
+
+// 全选
+function selectAll() {
+    document.querySelectorAll('.config-value').forEach(input => {
+        input.checked = true;
+    });
+}
+
+// 取消全选
+function deselectAll() {
+    document.querySelectorAll('.config-value').forEach(input => {
+        input.checked = false;
+    });
+}
+
+// 重置选中
+function resetSelected() {
+    document.querySelectorAll('.config-value:checked').forEach(input => {
+        resetConfig(input.dataset.key);
+    });
+}
+
+// 验证选中
+function validateSelected() {
+    document.querySelectorAll('.config-value:checked').forEach(input => {
+        validateConfig(input.dataset.key);
+    });
+}
+
+// 撤销更改
+function revertChanges() {
+    if (confirm('确定要撤销所有更改吗？')) {
+        modifiedConfigs.forEach(key => {
+            resetConfig(key);
+        });
+        showNotification('已撤销所有更改', 'info');
+    }
+}
+
+// 显示通知
+function showNotification(message, type) {
+    const alertClass = {
+        'success': 'alert-success',
+        'error': 'alert-danger',
+        'warning': 'alert-warning',
+        'info': 'alert-info'
+    }[type] || 'alert-info';
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// 添加修改样式
+const style = document.createElement('style');
+style.textContent = `
+    .config-value.is-modified {
+        border-color: #ffc107 !important;
+        background-color: #fff3cd !important;
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}
