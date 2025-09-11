@@ -155,6 +155,7 @@
                                     <th>时间</th>
                                     <th>级别</th>
                                     <th>模块</th>
+                                    <th>来源</th>
                                     <th>状态码</th>
                                     <th>消息</th>
                                     <th>操作</th>
@@ -181,6 +182,27 @@
                                         </td>
                                         <td>
                                             <span class="badge bg-primary">{{ log.module or 'system' }}</span>
+                                        </td>
+                                        <td>
+                                            {% if log.source %}
+                                                <span class="badge 
+                                                    {% if log.source == 'web_request' %}bg-success
+                                                    {% elif log.source == 'api_call' %}bg-info
+                                                    {% elif log.source == 'background_task' %}bg-warning
+                                                    {% elif log.source == 'scheduled_job' %}bg-secondary
+                                                    {% elif log.source == 'manual_operation' %}bg-primary
+                                                    {% else %}bg-light text-dark{% endif %}">
+                                                    {% if log.source == 'web_request' %}网页请求
+                                                    {% elif log.source == 'api_call' %}API调用
+                                                    {% elif log.source == 'background_task' %}后台任务
+                                                    {% elif log.source == 'scheduled_job' %}定时任务
+                                                    {% elif log.source == 'manual_operation' %}手动操作
+                                                    {% elif log.source == 'system_operation' %}系统操作
+                                                    {% else %}{{ log.source }}{% endif %}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">--</span>
+                                            {% endif %}
                                         </td>
                                         <td>
                                             {% if log.log_category == 'http_request' and log.status_code %}
@@ -227,7 +249,7 @@
                                     {% endfor %}
                                 {% else %}
                                     <tr>
-                                        <td colspan="7" class="text-center text-muted py-4">
+                                        <td colspan="8" class="text-center text-muted py-4">
                                             <i class="fas fa-inbox fa-2x mb-2"></i><br>
                                             暂无日志记录
                                         </td>

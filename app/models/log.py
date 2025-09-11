@@ -26,6 +26,7 @@ class Log(db.Model):
     )  # 操作用户
     ip_address = db.Column(db.String(45), nullable=True)  # IP地址
     user_agent = db.Column(db.Text, nullable=True)  # 用户代理
+    source = db.Column(db.String(50), nullable=True, index=True, comment='日志来源')  # 日志来源
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
     # 关系
@@ -41,6 +42,7 @@ class Log(db.Model):
         user_id=None,
         ip_address=None,
         user_agent=None,
+        source=None,
     ):
         """
         初始化日志
@@ -54,6 +56,7 @@ class Log(db.Model):
             user_id: 用户ID
             ip_address: IP地址
             user_agent: 用户代理
+            source: 日志来源
         """
         self.level = level
         self.log_type = log_type
@@ -63,6 +66,7 @@ class Log(db.Model):
         self.user_id = user_id
         self.ip_address = ip_address
         self.user_agent = user_agent
+        self.source = source
 
     def to_dict(self):
         """
@@ -82,6 +86,7 @@ class Log(db.Model):
             "username": self.user.username if self.user else None,
             "ip_address": self.ip_address,
             "user_agent": self.user_agent,
+            "source": self.source,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
@@ -95,6 +100,7 @@ class Log(db.Model):
         user_id=None,
         ip_address=None,
         user_agent=None,
+        source=None,
     ):
         """
         记录操作日志
@@ -108,6 +114,7 @@ class Log(db.Model):
             user_id: 用户ID
             ip_address: IP地址
             user_agent: 用户代理
+            source: 日志来源
         """
         try:
             log = Log(
@@ -119,6 +126,7 @@ class Log(db.Model):
                 user_id=user_id,
                 ip_address=ip_address,
                 user_agent=user_agent,
+                source=source,
             )
             db.session.add(log)
             db.session.commit()
@@ -137,6 +145,7 @@ class Log(db.Model):
         user_id=None,
         ip_address=None,
         user_agent=None,
+        source=None,
     ):
         """记录INFO级别日志"""
         Log.log_operation(
@@ -148,6 +157,7 @@ class Log(db.Model):
             user_id,
             ip_address,
             user_agent,
+            source,
         )
 
     @staticmethod
@@ -158,6 +168,7 @@ class Log(db.Model):
         user_id=None,
         ip_address=None,
         user_agent=None,
+        source=None,
     ):
         """记录WARNING级别日志"""
         Log.log_operation(
@@ -169,6 +180,7 @@ class Log(db.Model):
             user_id,
             ip_address,
             user_agent,
+            source,
         )
 
     @staticmethod
@@ -179,10 +191,11 @@ class Log(db.Model):
         user_id=None,
         ip_address=None,
         user_agent=None,
+        source=None,
     ):
         """记录ERROR级别日志"""
         Log.log_operation(
-            "ERROR", "error", message, module, details, user_id, ip_address, user_agent
+            "ERROR", "error", message, module, details, user_id, ip_address, user_agent, source
         )
 
     @staticmethod
@@ -193,6 +206,7 @@ class Log(db.Model):
         user_id=None,
         ip_address=None,
         user_agent=None,
+        source=None,
     ):
         """记录安全相关日志"""
         Log.log_operation(
@@ -204,6 +218,7 @@ class Log(db.Model):
             user_id,
             ip_address,
             user_agent,
+            source,
         )
 
     @staticmethod

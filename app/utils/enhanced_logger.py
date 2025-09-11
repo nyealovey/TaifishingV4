@@ -41,7 +41,7 @@ class EnhancedLogger:
     
     def _log_to_database(self, level: str, log_type: str, message: str, 
                         module: str = None, details: str = None, 
-                        exception: Exception = None) -> None:
+                        exception: Exception = None, source: str = None) -> None:
         """记录日志到数据库"""
         try:
             # 检查是否在应用上下文中
@@ -69,7 +69,8 @@ class EnhancedLogger:
                 details=details,
                 user_id=context.get('user_id'),
                 ip_address=context.get('ip_address'),
-                user_agent=context.get('user_agent')
+                user_agent=context.get('user_agent'),
+                source=source
             )
             
         except Exception as e:
@@ -77,58 +78,58 @@ class EnhancedLogger:
             self.logger.error(f"记录日志到数据库失败: {e}")
     
     def debug(self, message: str, module: str = None, details: str = None, 
-              exception: Exception = None) -> None:
+              exception: Exception = None, source: str = None) -> None:
         """记录DEBUG级别日志"""
         self.logger.debug(message)
-        self._log_to_database("DEBUG", "system", message, module, details, exception)
+        self._log_to_database("DEBUG", "system", message, module, details, exception, source)
     
     def info(self, message: str, module: str = None, details: str = None, 
-             exception: Exception = None) -> None:
+             exception: Exception = None, source: str = None) -> None:
         """记录INFO级别日志"""
         self.logger.info(message)
-        self._log_to_database("INFO", "operation", message, module, details, exception)
+        self._log_to_database("INFO", "operation", message, module, details, exception, source)
     
     def warning(self, message: str, module: str = None, details: str = None, 
-                exception: Exception = None) -> None:
+                exception: Exception = None, source: str = None) -> None:
         """记录WARNING级别日志"""
         self.logger.warning(message)
-        self._log_to_database("WARNING", "operation", message, module, details, exception)
+        self._log_to_database("WARNING", "operation", message, module, details, exception, source)
     
     def error(self, message: str, module: str = None, details: str = None, 
-              exception: Exception = None) -> None:
+              exception: Exception = None, source: str = None) -> None:
         """记录ERROR级别日志"""
         self.logger.error(message)
-        self._log_to_database("ERROR", "error", message, module, details, exception)
+        self._log_to_database("ERROR", "error", message, module, details, exception, source)
     
     def critical(self, message: str, module: str = None, details: str = None, 
-                 exception: Exception = None) -> None:
+                 exception: Exception = None, source: str = None) -> None:
         """记录CRITICAL级别日志"""
         self.logger.critical(message)
-        self._log_to_database("CRITICAL", "error", message, module, details, exception)
+        self._log_to_database("CRITICAL", "error", message, module, details, exception, source)
     
     def security(self, message: str, module: str = None, details: str = None, 
-                 exception: Exception = None) -> None:
+                 exception: Exception = None, source: str = None) -> None:
         """记录安全相关日志"""
         self.logger.warning(f"SECURITY: {message}")
-        self._log_to_database("WARNING", "security", message, module, details, exception)
+        self._log_to_database("WARNING", "security", message, module, details, exception, source)
     
     def database(self, message: str, module: str = None, details: str = None, 
-                 exception: Exception = None) -> None:
+                 exception: Exception = None, source: str = None) -> None:
         """记录数据库相关日志"""
         self.logger.error(f"DATABASE: {message}")
-        self._log_to_database("ERROR", "database", message, module, details, exception)
+        self._log_to_database("ERROR", "database", message, module, details, exception, source)
     
     def sync(self, message: str, module: str = None, details: str = None, 
-             exception: Exception = None) -> None:
+             exception: Exception = None, source: str = None) -> None:
         """记录同步相关日志"""
         self.logger.info(f"SYNC: {message}")
-        self._log_to_database("INFO", "sync", message, module, details, exception)
+        self._log_to_database("INFO", "sync", message, module, details, exception, source)
     
     def api(self, message: str, module: str = None, details: str = None, 
-            exception: Exception = None) -> None:
+            exception: Exception = None, source: str = None) -> None:
         """记录API相关日志"""
         self.logger.info(f"API: {message}")
-        self._log_to_database("INFO", "api", message, module, details, exception)
+        self._log_to_database("INFO", "api", message, module, details, exception, source)
 
 
 # 创建全局日志记录器实例

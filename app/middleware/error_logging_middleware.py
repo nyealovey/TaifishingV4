@@ -13,6 +13,26 @@ from app.models.log import Log
 from app import db
 
 
+def determine_log_source():
+    """确定日志来源"""
+    try:
+        # 检查是否有用户认证
+        if current_user and hasattr(current_user, 'id') and current_user.is_authenticated:
+            # 有用户认证的请求
+            if request.path.startswith('/api/'):
+                return 'api_call'  # API调用
+            else:
+                return 'web_request'  # 网页请求
+        else:
+            # 无用户认证的请求
+            if request.path.startswith('/api/'):
+                return 'api_call'  # API调用
+            else:
+                return 'system_operation'  # 系统操作
+    except Exception:
+        return 'system_operation'  # 默认系统操作
+
+
 def register_error_logging_middleware(app):
     """注册错误日志中间件"""
     print("DEBUG: 注册错误日志中间件")
@@ -27,12 +47,16 @@ def register_error_logging_middleware(app):
                 request_id = str(uuid.uuid4())[:8]  # 使用UUID的前8位
                 g.request_id = request_id
                 
+                # 确定日志来源
+                log_source = determine_log_source()
+                
                 enhanced_logger.info(
                     f"请求开始: {request.method} {request.path} [request_id: {request_id}]",
                     "request_handler",
                     f"用户: {current_user.id if current_user and hasattr(current_user, 'id') else 'anonymous'}, "
                     f"IP: {request.remote_addr}, "
-                    f"User-Agent: {request.headers.get('User-Agent', 'Unknown')}"
+                    f"User-Agent: {request.headers.get('User-Agent', 'Unknown')}",
+                    source=log_source
                 )
         except Exception as e:
             # 避免在日志记录过程中出错
@@ -113,6 +137,9 @@ def register_error_logging_middleware(app):
                     
                     details = ", ".join(details_parts)
                     
+                    # 确定日志来源
+                    log_source = determine_log_source()
+                    
                     # 保存合并后的日志
                     merged_log = Log(
                         level=max_level,
@@ -122,7 +149,8 @@ def register_error_logging_middleware(app):
                         details=details,
                         user_id=current_user.id if current_user and hasattr(current_user, 'id') else None,
                         ip_address=request.remote_addr,
-                        user_agent=request.headers.get('User-Agent')
+                        user_agent=request.headers.get('User-Agent'),
+                        source=log_source
                     )
                     
                     db.session.add(merged_log)
