@@ -403,8 +403,12 @@ async function showLogDetail(logId, isMerged = false, event = null) {
         const data = await response.json();
         console.log('响应数据:', data);
         
-        // logs路由直接返回log对象，不需要检查success字段
-        const log = data;
+        // 检查响应是否成功
+        if (!data.success) {
+            throw new Error(data.message || '获取日志详情失败');
+        }
+        
+        const log = data.log;
         const detailContent = document.getElementById('log-detail-content');
         
         // 格式化时间显示
