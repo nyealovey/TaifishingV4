@@ -137,6 +137,12 @@ def api_charts():
 
 
 
+@dashboard_bp.route("/api/activities")
+@login_required
+def api_activities():
+    """获取最近活动API - 已废弃，返回空数据"""
+    return jsonify([])
+
 @dashboard_bp.route("/api/status")
 @login_required
 def api_status():
