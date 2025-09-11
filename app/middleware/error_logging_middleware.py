@@ -72,6 +72,7 @@ def register_error_logging_middleware(app):
                     merged_message = f"请求: {request.method} {request.path} - {status_code} ({duration:.2f}ms)"
                     
                     # 确定最严重的级别
+                    log_level = "warning" if status_code >= 400 else "info"
                     levels = [start_log.level, log_level.upper()]
                     level_priority = {'CRITICAL': 5, 'ERROR': 4, 'WARNING': 3, 'INFO': 2, 'DEBUG': 1}
                     max_level = max(levels, key=lambda x: level_priority.get(x, 0))
