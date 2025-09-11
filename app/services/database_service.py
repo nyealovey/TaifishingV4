@@ -215,7 +215,7 @@ class DatabaseService:
             """
             SELECT User, Host, authentication_string, plugin, account_locked, password_expired, password_last_changed
             FROM mysql.user
-            WHERE User != 'root' AND User != 'mysql.sys'
+            WHERE User != 'mysql.sys'
         """
         )
 

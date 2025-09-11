@@ -338,7 +338,7 @@ class AccountSyncService:
                 Drop_priv as can_drop,
                 Super_priv as is_superuser
             FROM mysql.user
-            WHERE User != 'root' AND User != 'mysql.sys'
+            WHERE User != 'mysql.sys'
             ORDER BY User, Host
         """
         )
