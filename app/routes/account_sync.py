@@ -391,65 +391,6 @@ def sync_details_batch():
         }), 500
 
 
-@account_sync_bp.route("/sync-history")
-@login_required
-def sync_history():
-    """同步历史页面"""
-    # 获取查询参数
-    page = request.args.get("page", 1, type=int)
-    per_page = request.args.get("per_page", 20, type=int)
-    sync_type = request.args.get("sync_type", "all")
-    status = request.args.get("status", "all")
-    instance_id = request.args.get("instance_id", type=int)
-
-    # 构建查询
-    query = SyncData.query
-
-    # 同步类型过滤
-    if sync_type and sync_type != "all":
-        query = query.filter(SyncData.sync_type == sync_type)
-
-    # 状态过滤
-    if status and status != "all":
-        query = query.filter(SyncData.status == status)
-
-    # 实例过滤
-    if instance_id:
-        query = query.filter(SyncData.instance_id == instance_id)
-
-    # 排序
-    query = query.order_by(SyncData.sync_time.desc())
-
-    # 分页
-    pagination = query.paginate(
-        page=page, per_page=per_page, error_out=False
-    )
-
-    # 获取实例列表用于过滤
-    instances = Instance.query.filter_by(is_active=True).all()
-
-    if request.is_json:
-        return jsonify({
-            "records": [record.to_dict() for record in pagination.items],
-            "pagination": {
-                "page": pagination.page,
-                "pages": pagination.pages,
-                "per_page": pagination.per_page,
-                "total": pagination.total,
-                "has_next": pagination.has_next,
-                "has_prev": pagination.has_prev,
-            },
-            "instances": [instance.to_dict() for instance in instances],
-        })
-
-    return render_template(
-        "accounts/history.html",
-        sync_records=pagination,
-        sync_type=sync_type,
-        status=status,
-        instance_id=instance_id,
-        instances=instances,
-    )
 
 
 @account_sync_bp.route("/sync-details/<sync_id>")
@@ -481,7 +422,7 @@ def sync_details(sync_id):
             }), 500
         
         flash(f"获取同步详情失败: {str(e)}", "error")
-        return redirect(url_for("account_sync.sync_history"))
+        return redirect(url_for("account_sync.sync_records"))
 
 
 
@@ -559,13 +500,8 @@ def sync_statistics():
             }), 500
         
         flash(f"获取同步统计失败: {str(e)}", "error")
-        return redirect(url_for("account_sync.sync_history"))
+        return redirect(url_for("account_sync.sync_records"))
 
 
 
 
-@account_sync_bp.route("/history")
-@login_required
-def history():
-    """历史记录页面 - 重定向到统一页面"""
-    return redirect(url_for("account_sync.sync_records"))

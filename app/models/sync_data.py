@@ -115,23 +115,6 @@ class SyncData(db.Model):
             query = query.filter_by(sync_type=sync_type)
         return query.order_by(SyncData.sync_time.desc()).first()
 
-    @staticmethod
-    def get_sync_history(instance_id, sync_type=None, limit=100):
-        """
-        获取同步历史
-
-        Args:
-            instance_id: 实例ID
-            sync_type: 同步类型
-            limit: 限制数量
-
-        Returns:
-            list: 同步历史列表
-        """
-        query = SyncData.query.filter_by(instance_id=instance_id)
-        if sync_type:
-            query = query.filter_by(sync_type=sync_type)
-        return query.order_by(SyncData.sync_time.desc()).limit(limit).all()
 
     def __repr__(self):
         return f"<SyncData {self.sync_type} for instance {self.instance_id}>"
