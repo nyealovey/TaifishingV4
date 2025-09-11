@@ -445,9 +445,57 @@
 
 {% block extra_js %}
 <script>
+// 加载应用信息
+async function loadAppInfo() {
+    console.log('开始加载应用信息...');
+    try {
+        const response = await fetch('/admin/app-info');
+        console.log('API响应状态:', response.status);
+        const data = await response.json();
+        console.log('API返回数据:', data);
+        
+        if (data.success && data.data) {
+            const appName = data.data.app_name;
+            console.log('获取到应用名称:', appName);
+            
+            // 更新左上角logo中的应用名称
+            const appNameElement = document.getElementById('app-name');
+            if (appNameElement) {
+                console.log('更新左上角logo:', appNameElement.textContent, '->', appName);
+                appNameElement.textContent = appName;
+            } else {
+                console.log('未找到左上角logo元素');
+            }
+            
+            // 更新底部版权信息中的应用名称
+            const footerAppNameElement = document.getElementById('footer-app-name');
+            if (footerAppNameElement) {
+                console.log('更新底部版权:', footerAppNameElement.textContent, '->', appName);
+                footerAppNameElement.textContent = appName;
+            } else {
+                console.log('未找到底部版权元素');
+            }
+            
+            // 更新页面标题中的应用名称
+            const pageTitleElement = document.getElementById('page-title');
+            if (pageTitleElement) {
+                console.log('更新页面标题:', pageTitleElement.textContent, '->', appName + ' - 数据同步管理平台');
+                pageTitleElement.textContent = appName + ' - 数据同步管理平台';
+            } else {
+                console.log('未找到页面标题元素');
+            }
+        } else {
+            console.log('API返回数据格式不正确:', data);
+        }
+    } catch (error) {
+        console.error('加载应用信息失败:', error);
+    }
+}
+
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
     loadConfigs();
+    loadAppInfo(); // 加载应用信息，更新应用名称
 });
 
 // 显示配置分类
@@ -608,12 +656,12 @@ async function saveConfig(configType) {
         if (data.success) {
             showNotification('配置保存成功', 'success');
             
-            // 如果是基础配置，刷新应用名称
+            // 如果是基础配置，更新应用名称
             if (configType === 'basic') {
-                // 刷新页面以更新右上角的应用名称
+                // 直接调用更新应用名称的函数
                 setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                    loadAppInfo();
+                }, 500);
             }
         } else {
             showNotification('配置保存失败: ' + data.message, 'error');
