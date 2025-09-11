@@ -142,7 +142,13 @@ def get_merged_request_logs(query, page=1, per_page=20):
                     'start_log_id': int(request_data['start_log'].id) if request_data['start_log'] else None,
                     'end_log_id': int(request_data['end_log'].id) if request_data['end_log'] else None,
                     'start_level': str(request_data['start_log'].level) if request_data['start_log'] else None,
-                    'end_level': str(request_data['end_log'].level) if request_data['end_log'] else None
+                    'end_level': str(request_data['end_log'].level) if request_data['end_log'] else None,
+                    # 添加更多有用信息
+                    'has_start_log': request_data['start_log'] is not None,
+                    'has_end_log': request_data['end_log'] is not None,
+                    'request_method': _extract_request_method(request_data['start_log']) if request_data['start_log'] else _extract_request_method(request_data['end_log']),
+                    'user_info': _get_user_info(request_data['end_log'] if request_data['end_log'] else request_data['start_log']),
+                    'ip_info': _get_ip_info(request_data['end_log'] if request_data['end_log'] else request_data['start_log'])
                 }
             }
             merged_logs_list.append(merged_log)
@@ -696,3 +702,38 @@ def get_merged_info(log_id):
             'success': False,
             'message': f'获取合并日志信息失败: {str(e)}'
         })
+
+
+def _extract_request_method(log):
+    """从日志消息中提取请求方法"""
+    if not log or not log.message:
+        return None
+    
+    # 匹配 "请求开始: GET /path" 或 "请求结束: POST /path"
+    import re
+    match = re.search(r'请求(?:开始|结束):\s+(\w+)', log.message)
+    return match.group(1) if match else None
+
+
+def _get_user_info(log):
+    """获取用户信息"""
+    if not log:
+        return None
+    
+    return {
+        'user_id': log.user_id,
+        'username': log.user.username if log.user else '系统',
+        'ip_address': log.ip_address,
+        'user_agent': log.user_agent
+    }
+
+
+def _get_ip_info(log):
+    """获取IP信息"""
+    if not log:
+        return None
+    
+    return {
+        'ip_address': log.ip_address,
+        'user_agent': log.user_agent
+    }
