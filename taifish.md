@@ -61,12 +61,13 @@
 - `app/routes/admin.py` - 系统管理路由
 - `app/routes/api.py` - API接口路由
 
-#### 重复/废弃路由文件（可删除）
-- `app/routes/account_classification_new.py` - 新版本账户分类（未使用）
-- `app/routes/account_classification_old.py` - 旧版本账户分类（未使用）
-- `app/routes/account-list.py` - 重复文件（可删除）
-- `app/routes/account-static.py` - 重复文件（可删除）
-- `app/routes/account-sync.py` - 重复文件（可删除）
+#### 已删除的废弃路由文件
+- ~~`app/routes/account_classification_new.py`~~ - 新版本账户分类（已删除）
+- ~~`app/routes/account_classification_old.py`~~ - 旧版本账户分类（已删除）
+- ~~`app/routes/account-list.py`~~ - 重复文件（已删除）
+- ~~`app/routes/account-static.py`~~ - 重复文件（已删除）
+- ~~`app/routes/account-sync.py`~~ - 重复文件（已删除）
+- ~~`app/routes/accounts.py`~~ - 原始账户管理路由（已拆分并删除）
 
 ### 业务服务层 (app/services/)
 - `app/services/database_service.py` - 数据库连接和操作服务
@@ -187,7 +188,7 @@
 
 ### 权限配置脚本
 - `scripts/init_permission_config.py` - 权限配置初始化
-- `scripts/init_permission_configs.py` - 权限配置初始化（重复）
+- ~~`scripts/init_permission_configs.py`~~ - 权限配置初始化（重复，已删除）
 - `scripts/setup_mysql_monitor_user.sql` - MySQL监控用户设置
 - `scripts/setup_postgresql_monitor_user.sql` - PostgreSQL监控用户设置
 - `scripts/setup_sqlserver_monitor_user.sql` - SQL Server监控用户设置
@@ -215,11 +216,11 @@
 
 ### 部署脚本
 - `scripts/automated_deployment.py` - 自动化部署
-- `scripts/install_deps_progressive.sh` - 渐进式依赖安装
-- `scripts/install_full_deps.sh` - 完整依赖安装
-- `scripts/start_dev.sh` - 开发环境启动
-- `scripts/start_local_dev.sh` - 本地开发启动
-- `scripts/start_redis.sh` - Redis启动
+- ~~`scripts/install_deps_progressive.sh`~~ - 渐进式依赖安装（已删除）
+- ~~`scripts/install_full_deps.sh`~~ - 完整依赖安装（已删除）
+- ~~`scripts/start_dev.sh`~~ - 开发环境启动（已删除）
+- ~~`scripts/start_local_dev.sh`~~ - 本地开发启动（已删除）
+- ~~`scripts/start_redis.sh`~~ - Redis启动（已删除）
 
 ### 日志和监控脚本
 - `scripts/init_sample_logs.py` - 初始化示例日志
@@ -314,29 +315,137 @@
 - `TaifishingV4.code-workspace` - VS Code工作区配置
 - `TaifishV4.code-workspace` - 重复工作区配置（可删除）
 
-## 启动脚本
+## 启动脚本详细分析
 
-### 应用启动
-- `start_app.sh` - 应用启动脚本
-- `start_dev.sh` - 开发环境启动脚本
-- `start_dev_with_redis.sh` - 带Redis的开发环境启动
-- `start_uv.sh` - UV环境启动脚本
-- `start_uv_port.sh` - UV端口启动脚本
-- `start_with_oracle.sh` - 带Oracle的启动脚本
+### 核心启动脚本（保留）
+- `start_app.sh` - **核心应用启动脚本**
+  - 功能：激活虚拟环境，检查依赖，启动Flask应用
+  - 状态：✅ 保留（简单可靠）
+  - 用途：生产环境和简单开发环境
 
-### Celery相关
-- `start_celery.sh` - Celery启动脚本
-- `start_celery_worker.py` - Celery Worker启动
-- `start_celery_beat.py` - Celery Beat启动
-- `start_celery_beat_fixed.py` - 修复版Celery Beat启动
-- `start_celery_beat_stable.py` - 稳定版Celery Beat启动（可删除）
-- `stop_celery.sh` - Celery停止脚本
-- `manage_celery.sh` - Celery管理脚本
+- `start_uv.sh` - **UV环境启动脚本**
+  - 功能：使用uv管理Python环境和依赖，启动应用
+  - 状态：✅ 保留（现代化包管理）
+  - 用途：推荐的新开发方式
 
-### 其他启动脚本
-- `start_scheduled_tasks.sh` - 定时任务启动脚本
-- `start_redis.sh` - Redis启动脚本
-- `redis_manager.sh` - Redis管理脚本
+### 开发环境启动脚本（需要清理）
+- `start_dev.sh` - **开发环境启动脚本**
+  - 功能：创建虚拟环境，安装依赖，配置环境，启动Redis，初始化数据库
+  - 状态：⚠️ 可删除（功能重复，过于复杂）
+  - 问题：依赖不存在的 `requirements-local.txt` 和 `scripts/start_redis.sh`
+
+- `start_dev_with_redis.sh` - **带Redis的开发环境启动**
+  - 功能：启动Redis + Flask应用
+  - 状态：⚠️ 可删除（功能重复）
+  - 问题：与 `start_uv.sh` 功能重叠
+
+- `start_uv_port.sh` - **UV端口启动脚本**
+  - 功能：指定端口启动UV环境
+  - 状态：⚠️ 可删除（功能重复）
+  - 问题：与 `start_uv.sh` 功能重叠
+
+- `start_with_oracle.sh` - **带Oracle的启动脚本**
+  - 功能：设置Oracle环境变量后启动应用
+  - 状态：⚠️ 可删除（功能重复）
+  - 问题：Oracle环境变量可在 `.env` 文件中配置
+
+### Celery相关脚本（需要整理）
+- `start_celery.sh` - **Celery主启动脚本**
+  - 功能：启动Celery Beat和Worker进程
+  - 状态：✅ 保留（核心功能）
+  - 用途：生产环境定时任务
+
+- `start_celery_worker.py` - **Celery Worker启动**
+  - 功能：仅启动Worker进程
+  - 状态：✅ 保留（灵活控制）
+  - 用途：单独启动Worker
+
+- `start_celery_beat.py` - **Celery Beat启动**
+  - 功能：仅启动Beat调度器
+  - 状态：✅ 保留（灵活控制）
+  - 用途：单独启动调度器
+
+- `start_celery_beat_fixed.py` - **修复版Celery Beat启动**
+  - 功能：修复版Beat启动脚本
+  - 状态：⚠️ 可删除（临时修复）
+  - 问题：如果原版已修复，此文件不再需要
+
+- `start_celery_beat_stable.py` - **稳定版Celery Beat启动**
+  - 功能：稳定版Beat启动脚本
+  - 状态：⚠️ 可删除（版本冗余）
+  - 问题：与 `start_celery_beat.py` 功能重复
+
+- `stop_celery.sh` - **Celery停止脚本**
+  - 功能：停止所有Celery进程
+  - 状态：✅ 保留（管理功能）
+  - 用途：停止定时任务服务
+
+- `manage_celery.sh` - **Celery管理脚本**
+  - 功能：Celery进程管理
+  - 状态：✅ 保留（管理功能）
+  - 用途：管理Celery服务
+
+### 其他启动脚本（需要清理）
+- `start_scheduled_tasks.sh` - **定时任务启动脚本**
+  - 功能：启动定时任务
+  - 状态：⚠️ 可删除（功能重复）
+  - 问题：与 `start_celery.sh` 功能重叠
+
+- `redis_manager.sh` - **Redis管理脚本**
+  - 功能：Redis服务管理
+  - 状态：⚠️ 可删除（功能重复）
+  - 问题：Redis管理可通过系统服务或Docker
+
+### 监控和检查脚本
+- `celery_monitor.py` - **Celery监控脚本**
+  - 功能：监控Celery进程状态
+  - 状态：✅ 保留（监控功能）
+  - 用途：监控定时任务状态
+
+- `check_celery.sh` - **Celery检查脚本**
+  - 功能：检查Celery进程状态
+  - 状态：✅ 保留（检查功能）
+  - 用途：检查服务状态
+
+## 启动脚本清理建议
+
+### 立即删除（功能重复或过时）
+1. `start_dev.sh` - 功能重复，依赖不存在的文件
+2. `start_dev_with_redis.sh` - 功能重复
+3. `start_uv_port.sh` - 功能重复
+4. `start_with_oracle.sh` - 功能重复
+5. `start_scheduled_tasks.sh` - 功能重复
+6. `redis_manager.sh` - 功能重复
+7. `start_celery_beat_fixed.py` - 临时修复文件
+8. `start_celery_beat_stable.py` - 版本冗余
+
+### 保留的核心脚本
+1. `start_app.sh` - 核心应用启动
+2. `start_uv.sh` - UV环境启动（推荐）
+3. `start_celery.sh` - Celery主启动
+4. `start_celery_worker.py` - Worker启动
+5. `start_celery_beat.py` - Beat启动
+6. `stop_celery.sh` - Celery停止
+7. `manage_celery.sh` - Celery管理
+8. `celery_monitor.py` - Celery监控
+9. `check_celery.sh` - Celery检查
+
+### 清理后的启动脚本结构
+```
+启动脚本/
+├── 应用启动/
+│   ├── start_app.sh          # 传统方式启动
+│   └── start_uv.sh           # UV方式启动（推荐）
+├── Celery服务/
+│   ├── start_celery.sh       # 启动所有Celery服务
+│   ├── start_celery_worker.py # 仅启动Worker
+│   ├── start_celery_beat.py  # 仅启动Beat
+│   ├── stop_celery.sh        # 停止所有Celery服务
+│   └── manage_celery.sh      # Celery管理
+└── 监控检查/
+    ├── celery_monitor.py     # Celery监控
+    └── check_celery.sh       # 状态检查
+```
 
 ## 测试和调试文件
 
@@ -381,25 +490,43 @@
 
 ## 可删除的文件
 
-### 重复文件
+### 已删除的文件 ✅
+- ~~`app/routes/accounts.py`~~ - 原始账户管理路由（已拆分并删除）
+- ~~`app/routes/account_classification_new.py`~~ - 新版本账户分类（已删除）
+- ~~`app/routes/account_classification_old.py`~~ - 旧版本账户分类（已删除）
+- ~~`app/routes/account-list.py`~~ - 重复文件（已删除）
+- ~~`app/routes/account-static.py`~~ - 重复文件（已删除）
+- ~~`app/routes/account-sync.py`~~ - 重复文件（已删除）
+- ~~`scripts/init_permission_configs.py`~~ - 重复权限配置脚本（已删除）
+- ~~`scripts/install_deps_progressive.sh`~~ - 渐进式依赖安装（已删除）
+- ~~`scripts/install_full_deps.sh`~~ - 完整依赖安装（已删除）
+- ~~`scripts/start_dev.sh`~~ - 开发环境启动（已删除）
+- ~~`scripts/start_local_dev.sh`~~ - 本地开发启动（已删除）
+- ~~`scripts/start_redis.sh`~~ - Redis启动（已删除）
+
+### 重复文件（待删除）
 - `main.py` - 重复的主入口文件
 - `requirements.txt` - 传统依赖文件（已使用uv）
-- `app/routes/account_classification_new.py` - 未使用的新版本
-- `app/routes/account_classification_old.py` - 未使用的旧版本
-- `app/routes/account-list.py` - 重复文件
-- `app/routes/account-static.py` - 重复文件
-- `app/routes/account-sync.py` - 重复文件
 - `app/templates/tasks/create_old.html` - 旧版模板
 - `app/templates/admin/admin_layout.html` - 重复布局文件
-- `scripts/init_permission_configs.py` - 重复权限配置脚本
 - `TaifishV4.code-workspace` - 重复工作区配置
 
-### 临时文件
+### 启动脚本（待删除）
+- `start_dev.sh` - 功能重复，依赖不存在的文件
+- `start_dev_with_redis.sh` - 功能重复
+- `start_uv_port.sh` - 功能重复
+- `start_with_oracle.sh` - 功能重复
+- `start_scheduled_tasks.sh` - 功能重复
+- `redis_manager.sh` - 功能重复
+- `start_celery_beat_fixed.py` - 临时修复文件
+- `start_celery_beat_stable.py` - 版本冗余
+
+### 临时文件（待删除）
 - `cookies.txt` - Cookie文件
 - `doc/index_temp.css` - 临时CSS文件
 - `tests/integration/test_db.py` - 重复数据库测试
 
-### 开发过程中的测试文件
+### 开发过程中的测试文件（待删除）
 - 各种 `test_*.py` 文件（如果不再需要）
 - 各种调试脚本（如果问题已解决）
 
@@ -414,14 +541,26 @@
 
 ## 文件统计
 
-- **总文件数**：约200+个文件
+### 当前状态
+- **总文件数**：约190+个文件（已删除12个文件）
 - **核心应用文件**：约50个
 - **模板文件**：约40个
-- **脚本文件**：约30个
+- **脚本文件**：约25个（已删除7个）
 - **测试文件**：约20个
 - **文档文件**：约30个
 - **配置文件**：约20个
-- **可删除文件**：约15个
+- **启动脚本**：17个（需清理8个）
+
+### 清理进度
+- **已删除文件**：12个 ✅
+- **待删除文件**：约20个
+- **清理完成度**：约40%
+
+### 启动脚本统计
+- **总启动脚本**：17个
+- **保留脚本**：9个
+- **待删除脚本**：8个
+- **清理率**：47%
 
 ## 注意事项
 
