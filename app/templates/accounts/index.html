@@ -9,9 +9,6 @@
         <a href="{{ url_for('accounts.list') }}" class="btn btn-outline-primary me-2">
             <i class="fas fa-list me-2"></i>账户列表
         </a>
-        <button type="button" class="btn btn-success me-2" onclick="syncAllAccounts()">
-            <i class="fas fa-sync me-2"></i>同步所有账户
-        </button>
         <a href="{{ url_for('accounts.sync_records') }}" class="btn btn-outline-info">
             <i class="fas fa-history me-2"></i>同步记录
         </a>
@@ -310,75 +307,14 @@
         <div class="text-center py-4">
             <i class="fas fa-users fa-3x text-muted mb-3"></i>
             <h5 class="text-muted">暂无账户数据</h5>
-            <p class="text-muted">开始同步账户数据以查看统计信息</p>
-            <button type="button" class="btn btn-primary" onclick="syncAllAccounts()">
-                <i class="fas fa-sync me-2"></i>开始同步
-            </button>
+            <p class="text-muted">请前往账户列表页面进行同步操作</p>
+            <a href="{{ url_for('accounts.list') }}" class="btn btn-primary">
+                <i class="fas fa-list me-2"></i>前往账户列表
+            </a>
         </div>
         {% endif %}
     </div>
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-function syncAllAccounts() {
-    const btn = event.target;
-    const originalText = btn.innerHTML;
-    
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>同步中...';
-    btn.disabled = true;
-    
-    fetch('/accounts/sync-all', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
-                         document.querySelector('input[name="csrf_token"]')?.value
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('success', data.message);
-            // 同步完成后刷新页面显示最新数据
-            setTimeout(() => {
-                window.location.reload();
-            }, 2000);
-        } else {
-            showAlert('error', data.message || '同步失败');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('error', '同步过程中发生错误');
-    })
-    .finally(() => {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    });
-}
-
-function showAlert(type, message) {
-    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-    const alertHtml = `
-        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    `;
-    
-    // 在页面顶部显示提示
-    const container = document.querySelector('.container-fluid');
-    container.insertAdjacentHTML('afterbegin', alertHtml);
-    
-    // 3秒后自动隐藏
-    setTimeout(() => {
-        const alert = container.querySelector('.alert');
-        if (alert) {
-            alert.remove();
-        }
-    }, 3000);
-}
-</script>
 {% endblock %}
