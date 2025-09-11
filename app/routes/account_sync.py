@@ -366,18 +366,36 @@ def sync_details_batch():
                 "error": "没有找到同步记录"
             }), 404
 
-        # 构建详情数据
+        # 构建详情数据，按实例去重，只保留最新的记录
         details = []
+        instance_records = {}
+        
         for record in records:
             instance = Instance.query.get(record.instance_id)
-            details.append({
-                "id": record.id,
-                "instance_name": instance.name if instance else "未知实例",
-                "status": record.status,
-                "message": record.message,
-                "synced_count": record.synced_count,
-                "sync_time": record.sync_time.isoformat() if record.sync_time else None,
-            })
+            instance_name = instance.name if instance else "未知实例"
+            
+            # 如果这个实例还没有记录，或者当前记录更新，则保存
+            if (instance_name not in instance_records or 
+                record.sync_time > instance_records[instance_name]['sync_time']):
+                instance_records[instance_name] = {
+                    "id": record.id,
+                    "instance_name": instance_name,
+                    "status": record.status,
+                    "message": record.message,
+                    "synced_count": record.synced_count,
+                    "sync_time": record.sync_time
+                }
+        
+        # 转换为列表并按实例名称排序
+        details = list(instance_records.values())
+        details.sort(key=lambda x: x['instance_name'])
+        
+        # 转换时间格式
+        for detail in details:
+            if detail['sync_time']:
+                detail['sync_time'] = detail['sync_time'].isoformat()
+            else:
+                detail['sync_time'] = None
 
         return jsonify({
             "success": True,
