@@ -98,6 +98,7 @@ def get_merged_request_logs(query, page=1, per_page=20):
         merged_logs_list = []
         
         # 添加合并的请求日志
+        merged_id_counter = 1  # 合并日志ID计数器
         for path, request_data in merged_requests.items():
             # 确定最严重的级别
             levels = []
@@ -119,8 +120,9 @@ def get_merged_request_logs(query, page=1, per_page=20):
                 message = f"请求: {path} (进行中)"
             
             # 创建合并后的日志对象
+            # 为合并日志生成一个连续的ID
             merged_log = {
-                'id': request_data['end_log'].id if request_data['end_log'] else request_data['start_log'].id,
+                'id': merged_id_counter,
                 'level': max_level,
                 'log_type': 'request',
                 'module': 'request_handler',
@@ -152,6 +154,7 @@ def get_merged_request_logs(query, page=1, per_page=20):
                 }
             }
             merged_logs_list.append(merged_log)
+            merged_id_counter += 1  # 递增合并日志ID计数器
         
         # 添加其他日志
         for log in other_logs:
