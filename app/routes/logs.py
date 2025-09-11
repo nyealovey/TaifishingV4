@@ -22,7 +22,7 @@ logs_bp = Blueprint("logs", __name__)
 
 def get_merged_request_logs(query, page=1, per_page=20):
     """
-    获取日志列表（区分HTTP请求和其他日志）
+    获取日志列表（过滤中间状态日志，只显示合并后的完整日志）
     
     Args:
         query: SQLAlchemy查询对象
@@ -33,13 +33,32 @@ def get_merged_request_logs(query, page=1, per_page=20):
         Pagination: 分页对象
     """
     try:
-        # 直接查询所有日志，按ID排序
+        import re
+        
+        # 过滤掉中间状态的日志
+        # 1. 过滤掉"请求开始"和"请求结束"的中间日志
+        query = query.filter(
+            ~Log.message.like('%请求开始%'),
+            ~Log.message.like('%请求结束%')
+        )
+        
+        # 2. 过滤掉只有开始时间没有结束时间的日志（未完成的请求）
+        query = query.filter(
+            ~(
+                Log.details.like('%开始时间:%') & 
+                ~Log.details.like('%结束时间:%')
+            )
+        )
+        
+        # 3. 只显示有完整信息的日志（包含状态码的日志）
+        query = query.filter(Log.details.like('%状态码:%'))
+        
+        # 查询过滤后的日志，按ID排序
         logs = query.order_by(Log.id.desc()).paginate(
             page=page, per_page=per_page, error_out=False
         )
         
         # 为每个日志添加类型标识和状态码
-        import re
         for log in logs.items:
             # 判断是否为HTTP请求日志
             if (log.log_type == 'request' and 
