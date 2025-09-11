@@ -132,19 +132,34 @@ def index():
         
         if not merged_logs:
             flash("获取日志列表失败", "error")
+            # 获取所有可用的模块列表
+            from sqlalchemy import distinct
+            available_modules = Log.query.with_entities(distinct(Log.module)).filter(
+                Log.module.isnot(None)
+            ).order_by(Log.module).all()
+            module_list = [m[0] for m in available_modules if m[0]]
+            
             return render_template("logs/system_logs.html", 
                                  merged_logs=None, 
                                  level=level, 
                                  module=module, 
-                         start_date=start_date,
-                         end_date=end_date,
-                         search=search)
+                                 start_date=start_date,
+                                 end_date=end_date,
+                                 search=search,
+                                 module_list=module_list)
 
         # 获取统计信息
         total_logs = Log.query.count()
         error_logs = Log.query.filter(Log.level == 'ERROR').count()
         warning_logs = Log.query.filter(Log.level == 'WARNING').count()
         info_logs = Log.query.filter(Log.level == 'INFO').count()
+        
+        # 获取所有可用的模块列表
+        from sqlalchemy import distinct
+        available_modules = Log.query.with_entities(distinct(Log.module)).filter(
+            Log.module.isnot(None)
+        ).order_by(Log.module).all()
+        module_list = [m[0] for m in available_modules if m[0]]
         
         return render_template("logs/system_logs.html", 
                              merged_logs=merged_logs, 
@@ -156,17 +171,29 @@ def index():
                              total_logs=total_logs,
                              error_logs=error_logs,
                              warning_logs=warning_logs,
-                             info_logs=info_logs)
+                             info_logs=info_logs,
+                             module_list=module_list)
     except Exception as e:
         logging.error(f"日志管理首页加载失败: {e}")
         flash("页面加载失败", "error")
+        # 获取所有可用的模块列表
+        from sqlalchemy import distinct
+        try:
+            available_modules = Log.query.with_entities(distinct(Log.module)).filter(
+                Log.module.isnot(None)
+            ).order_by(Log.module).all()
+            module_list = [m[0] for m in available_modules if m[0]]
+        except:
+            module_list = []
+        
         return render_template("logs/system_logs.html", 
                              merged_logs=None, 
                              level='', 
                              module='', 
                              start_date='', 
                              end_date='', 
-                             search='')
+                             search='',
+                             module_list=module_list)
 
 
 @logs_bp.route("/api/export")
