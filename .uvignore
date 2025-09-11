@@ -1,0 +1,62 @@
+# 虚拟环境
+venv/
+.venv/
+
+# 用户数据
+userdata/
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 日志文件
+*.log
+logs/
+
+# 缓存文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# 开发工具
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# 测试覆盖率
+.coverage
+htmlcov/
+.pytest_cache/
+
+# 文档构建
+docs/_build/
+site/
+
+# 部署相关
+docker/
+*.pid
+*.sock
+
+# Redis数据
+dump.rdb
+appendonlydir/
+
+# 其他
+node_modules/
+.celerybeat-schedule*

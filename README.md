@@ -37,12 +37,49 @@
 
 ### 环境要求
 
-- Python 3.11+
+- Python 3.13+ (推荐使用 uv 管理)
 - Redis 6.0+
 - SQLite 3.0+ (开发环境)
 - PostgreSQL 12+ (生产环境)
 
 ### 安装步骤
+
+#### 方法一：使用 UV (推荐)
+
+1. **安装 UV**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source $HOME/.local/bin/env
+```
+
+2. **克隆项目**
+```bash
+git clone https://github.com/nyealovey/TaifishingV4.git
+cd TaifishingV4
+```
+
+3. **安装依赖并启动**
+```bash
+# 安装所有依赖并启动应用
+./start_uv.sh
+
+# 或者手动安装
+uv sync
+uv run python app.py
+```
+
+4. **开发环境工具**
+```bash
+# 运行开发环境检查（格式化、检查、测试）
+./dev_uv.sh
+
+# 管理依赖
+./manage_deps_uv.sh help
+./manage_deps_uv.sh add requests
+./manage_deps_uv.sh add-dev pytest
+```
+
+#### 方法二：传统方式
 
 1. **克隆项目**
 ```bash

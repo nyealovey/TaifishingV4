@@ -1,4 +1,5 @@
 from app.utils.timezone import now
+
 # -*- coding: utf-8 -*-
 
 """
@@ -474,72 +475,57 @@ def sync_mysql_size(instance, config):
 # 内置任务配置
 BUILTIN_TASKS = [
     {
-        'name': 'PostgreSQL账户同步',
-        'task_type': 'sync_accounts',
-        'db_type': 'postgresql',
-        'description': '同步PostgreSQL数据库用户账户信息',
-        'python_code': POSTGRESQL_SYNC_ACCOUNTS,
-        'config': {
-            'enabled': True,
-            'sync_roles': True,
-            'sync_permissions': True
-        },
-        'schedule': '0 */6 * * *'  # 每6小时执行一次
+        "name": "PostgreSQL账户同步",
+        "task_type": "sync_accounts",
+        "db_type": "postgresql",
+        "description": "同步PostgreSQL数据库用户账户信息",
+        "python_code": POSTGRESQL_SYNC_ACCOUNTS,
+        "config": {"enabled": True, "sync_roles": True, "sync_permissions": True},
+        "schedule": "0 */6 * * *",  # 每6小时执行一次
     },
     {
-        'name': 'MySQL账户同步',
-        'task_type': 'sync_accounts',
-        'db_type': 'mysql',
-        'description': '同步MySQL数据库用户账户信息',
-        'python_code': MYSQL_SYNC_ACCOUNTS,
-        'config': {
-            'enabled': True,
-            'sync_privileges': True
-        },
-        'schedule': '0 */6 * * *'  # 每6小时执行一次
+        "name": "MySQL账户同步",
+        "task_type": "sync_accounts",
+        "db_type": "mysql",
+        "description": "同步MySQL数据库用户账户信息",
+        "python_code": MYSQL_SYNC_ACCOUNTS,
+        "config": {"enabled": True, "sync_privileges": True},
+        "schedule": "0 */6 * * *",  # 每6小时执行一次
     },
     {
-        'name': 'PostgreSQL版本同步',
-        'task_type': 'sync_version',
-        'db_type': 'postgresql',
-        'description': '同步PostgreSQL数据库版本信息',
-        'python_code': POSTGRESQL_SYNC_VERSION,
-        'config': {
-            'enabled': True
-        },
-        'schedule': '0 0 * * *'  # 每天执行一次
+        "name": "PostgreSQL版本同步",
+        "task_type": "sync_version",
+        "db_type": "postgresql",
+        "description": "同步PostgreSQL数据库版本信息",
+        "python_code": POSTGRESQL_SYNC_VERSION,
+        "config": {"enabled": True},
+        "schedule": "0 0 * * *",  # 每天执行一次
     },
     {
-        'name': 'MySQL版本同步',
-        'task_type': 'sync_version',
-        'db_type': 'mysql',
-        'description': '同步MySQL数据库版本信息',
-        'python_code': MYSQL_SYNC_VERSION,
-        'config': {
-            'enabled': True
-        },
-        'schedule': '0 0 * * *'  # 每天执行一次
+        "name": "MySQL版本同步",
+        "task_type": "sync_version",
+        "db_type": "mysql",
+        "description": "同步MySQL数据库版本信息",
+        "python_code": MYSQL_SYNC_VERSION,
+        "config": {"enabled": True},
+        "schedule": "0 0 * * *",  # 每天执行一次
     },
     {
-        'name': 'PostgreSQL数据库大小同步',
-        'task_type': 'sync_size',
-        'db_type': 'postgresql',
-        'description': '同步PostgreSQL数据库大小信息',
-        'python_code': POSTGRESQL_SYNC_SIZE,
-        'config': {
-            'enabled': True
-        },
-        'schedule': '0 2 * * *'  # 每天凌晨2点执行
+        "name": "PostgreSQL数据库大小同步",
+        "task_type": "sync_size",
+        "db_type": "postgresql",
+        "description": "同步PostgreSQL数据库大小信息",
+        "python_code": POSTGRESQL_SYNC_SIZE,
+        "config": {"enabled": True},
+        "schedule": "0 2 * * *",  # 每天凌晨2点执行
     },
     {
-        'name': 'MySQL数据库大小同步',
-        'task_type': 'sync_size',
-        'db_type': 'mysql',
-        'description': '同步MySQL数据库大小信息',
-        'python_code': MYSQL_SYNC_SIZE,
-        'config': {
-            'enabled': True
-        },
-        'schedule': '0 2 * * *'  # 每天凌晨2点执行
-    }
+        "name": "MySQL数据库大小同步",
+        "task_type": "sync_size",
+        "db_type": "mysql",
+        "description": "同步MySQL数据库大小信息",
+        "python_code": MYSQL_SYNC_SIZE,
+        "config": {"enabled": True},
+        "schedule": "0 2 * * *",  # 每天凌晨2点执行
+    },
 ]

@@ -5,18 +5,21 @@
 from datetime import datetime
 from app import db
 
+
 class SyncData(db.Model):
     """同步数据模型"""
-    
-    __tablename__ = 'sync_data'
-    
+
+    __tablename__ = "sync_data"
+
     id = db.Column(db.Integer, primary_key=True)
     sync_type = db.Column(db.String(50), nullable=False, index=True)
-    instance_id = db.Column(db.Integer, db.ForeignKey('instances.id'), nullable=False)
-    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True, index=True)  # 关联任务ID
+    instance_id = db.Column(db.Integer, db.ForeignKey("instances.id"), nullable=False)
+    task_id = db.Column(
+        db.Integer, db.ForeignKey("tasks.id"), nullable=True, index=True
+    )  # 关联任务ID
     data = db.Column(db.JSON, nullable=True)
     sync_time = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-    status = db.Column(db.String(20), default='success', index=True)
+    status = db.Column(db.String(20), default="success", index=True)
     message = db.Column(db.Text, nullable=True)
     synced_count = db.Column(db.Integer, default=0)
     added_count = db.Column(db.Integer, default=0)  # 新增账户数量
@@ -24,11 +27,25 @@ class SyncData(db.Model):
     modified_count = db.Column(db.Integer, default=0)  # 修改账户数量
     error_message = db.Column(db.Text, nullable=True)
     records_count = db.Column(db.Integer, default=0)
-    
-    def __init__(self, sync_type, instance_id, task_id=None, data=None, status='success', message=None, synced_count=0, added_count=0, removed_count=0, modified_count=0, error_message=None, records_count=0):
+
+    def __init__(
+        self,
+        sync_type,
+        instance_id,
+        task_id=None,
+        data=None,
+        status="success",
+        message=None,
+        synced_count=0,
+        added_count=0,
+        removed_count=0,
+        modified_count=0,
+        error_message=None,
+        records_count=0,
+    ):
         """
         初始化同步数据
-        
+
         Args:
             sync_type: 同步类型
             instance_id: 实例ID
@@ -55,41 +72,41 @@ class SyncData(db.Model):
         self.modified_count = modified_count
         self.error_message = error_message
         self.records_count = records_count
-    
+
     def to_dict(self):
         """
         转换为字典
-        
+
         Returns:
             dict: 同步数据字典
         """
         return {
-            'id': self.id,
-            'sync_type': self.sync_type,
-            'instance_id': self.instance_id,
-            'task_id': self.task_id,
-            'data': self.data,
-            'sync_time': self.sync_time.isoformat() if self.sync_time else None,
-            'status': self.status,
-            'message': self.message,
-            'synced_count': self.synced_count,
-            'added_count': self.added_count,
-            'removed_count': self.removed_count,
-            'modified_count': self.modified_count,
-            'error_message': self.error_message,
-            'records_count': self.records_count,
-            'instance_name': self.instance.name if self.instance else '未知实例'
+            "id": self.id,
+            "sync_type": self.sync_type,
+            "instance_id": self.instance_id,
+            "task_id": self.task_id,
+            "data": self.data,
+            "sync_time": self.sync_time.isoformat() if self.sync_time else None,
+            "status": self.status,
+            "message": self.message,
+            "synced_count": self.synced_count,
+            "added_count": self.added_count,
+            "removed_count": self.removed_count,
+            "modified_count": self.modified_count,
+            "error_message": self.error_message,
+            "records_count": self.records_count,
+            "instance_name": self.instance.name if self.instance else "未知实例",
         }
-    
+
     @staticmethod
     def get_latest_sync(instance_id, sync_type=None):
         """
         获取最新同步数据
-        
+
         Args:
             instance_id: 实例ID
             sync_type: 同步类型
-            
+
         Returns:
             SyncData: 最新同步数据
         """
@@ -97,17 +114,17 @@ class SyncData(db.Model):
         if sync_type:
             query = query.filter_by(sync_type=sync_type)
         return query.order_by(SyncData.sync_time.desc()).first()
-    
+
     @staticmethod
     def get_sync_history(instance_id, sync_type=None, limit=100):
         """
         获取同步历史
-        
+
         Args:
             instance_id: 实例ID
             sync_type: 同步类型
             limit: 限制数量
-            
+
         Returns:
             list: 同步历史列表
         """
@@ -115,6 +132,6 @@ class SyncData(db.Model):
         if sync_type:
             query = query.filter_by(sync_type=sync_type)
         return query.order_by(SyncData.sync_time.desc()).limit(limit).all()
-    
+
     def __repr__(self):
-        return f'<SyncData {self.sync_type} for instance {self.instance_id}>'
+        return f"<SyncData {self.sync_type} for instance {self.instance_id}>"

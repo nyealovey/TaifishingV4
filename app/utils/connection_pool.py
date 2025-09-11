@@ -13,9 +13,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class ConnectionPool:
     """数据库连接池"""
-    
+
     def __init__(self, max_connections=20, timeout=30, min_connections=2):
         self.max_connections = max_connections
         self.min_connections = min_connections
@@ -26,7 +27,7 @@ class ConnectionPool:
         self._lock = threading.Lock()
         self._cleanup_thread = None
         self._stop_cleanup = False
-    
+
     def get_connection(self, instance_id: int, connection_factory):
         """获取数据库连接"""
         with self._lock:
@@ -34,10 +35,10 @@ class ConnectionPool:
                 self.pools[instance_id] = Queue(maxsize=self.max_connections)
                 self.locks[instance_id] = threading.Lock()
                 self.connection_counts[instance_id] = 0
-        
+
         pool = self.pools[instance_id]
         lock = self.locks[instance_id]
-        
+
         try:
             # 尝试从池中获取连接
             connection = pool.get(timeout=self.timeout)
@@ -50,14 +51,18 @@ class ConnectionPool:
                     try:
                         connection = connection_factory()
                         self.connection_counts[instance_id] += 1
-                        logger.debug(f"创建新连接: instance_id={instance_id}, count={self.connection_counts[instance_id]}")
+                        logger.debug(
+                            f"创建新连接: instance_id={instance_id}, count={self.connection_counts[instance_id]}"
+                        )
                         return connection
                     except Exception as e:
                         logger.error(f"创建连接失败: {e}")
                         raise
                 else:
-                    raise Exception(f"连接池已满，无法创建新连接: instance_id={instance_id}")
-    
+                    raise Exception(
+                        f"连接池已满，无法创建新连接: instance_id={instance_id}"
+                    )
+
     def return_connection(self, instance_id: int, connection):
         """归还数据库连接"""
         if instance_id in self.pools:
@@ -74,7 +79,7 @@ class ConnectionPool:
                 with self._lock:
                     if instance_id in self.connection_counts:
                         self.connection_counts[instance_id] -= 1
-    
+
     def close_connection(self, instance_id: int, connection):
         """关闭数据库连接"""
         try:
@@ -86,7 +91,7 @@ class ConnectionPool:
             with self._lock:
                 if instance_id in self.connection_counts:
                     self.connection_counts[instance_id] -= 1
-    
+
     def close_all_connections(self, instance_id: int = None):
         """关闭所有连接"""
         if instance_id:
@@ -105,7 +110,7 @@ class ConnectionPool:
             # 关闭所有连接
             for instance_id in list(self.pools.keys()):
                 self.close_all_connections(instance_id)
-    
+
     @contextmanager
     def get_connection_context(self, instance_id: int, connection_factory):
         """连接上下文管理器"""
@@ -116,19 +121,22 @@ class ConnectionPool:
         finally:
             if connection:
                 self.return_connection(instance_id, connection)
-    
+
     def get_pool_status(self) -> Dict[str, Any]:
         """获取连接池状态"""
         status = {}
         with self._lock:
             for instance_id, pool in self.pools.items():
                 status[instance_id] = {
-                    'max_connections': self.max_connections,
-                    'current_connections': self.connection_counts.get(instance_id, 0),
-                    'available_connections': pool.qsize(),
-                    'utilization': self.connection_counts.get(instance_id, 0) / self.max_connections * 100
+                    "max_connections": self.max_connections,
+                    "current_connections": self.connection_counts.get(instance_id, 0),
+                    "available_connections": pool.qsize(),
+                    "utilization": self.connection_counts.get(instance_id, 0)
+                    / self.max_connections
+                    * 100,
                 }
         return status
+
 
 # 全局连接池实例
 connection_pool = ConnectionPool()

@@ -28,20 +28,23 @@ from app import db
 from datetime import datetime
 from app.utils.timezone import now
 
+
 class DatabaseSizeService:
     """数据库大小同步服务"""
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-    
-    def sync_database_size(self, instance: Instance, sync_type: str = 'batch') -> Dict[str, Any]:
+
+    def sync_database_size(
+        self, instance: Instance, sync_type: str = "batch"
+    ) -> Dict[str, Any]:
         """
         同步数据库大小信息 - 统一入口
-        
+
         Args:
             instance: 数据库实例
             sync_type: 同步类型 ('batch' 或 'task')
-            
+
         Returns:
             Dict: 同步结果
         """
@@ -49,64 +52,61 @@ class DatabaseSizeService:
             # 获取数据库连接
             conn = self._get_connection(instance)
             if not conn:
-                return {
-                    'success': False,
-                    'error': '无法获取数据库连接'
-                }
-            
+                return {"success": False, "error": "无法获取数据库连接"}
+
             # 根据数据库类型获取大小信息
-            if instance.db_type == 'mysql':
+            if instance.db_type == "mysql":
                 result = self._get_mysql_size(instance, conn)
-            elif instance.db_type == 'postgresql':
+            elif instance.db_type == "postgresql":
                 result = self._get_postgresql_size(instance, conn)
-            elif instance.db_type == 'sqlserver':
+            elif instance.db_type == "sqlserver":
                 result = self._get_sqlserver_size(instance, conn)
-            elif instance.db_type == 'oracle':
+            elif instance.db_type == "oracle":
                 result = self._get_oracle_size(instance, conn)
             else:
                 return {
-                    'success': False,
-                    'error': f'不支持的数据库类型: {instance.db_type}'
+                    "success": False,
+                    "error": f"不支持的数据库类型: {instance.db_type}",
                 }
-            
-            if result['success']:
+
+            if result["success"]:
                 # 更新实例的大小信息
-                instance.database_size = result['database_size']
+                instance.database_size = result["database_size"]
                 instance.updated_at = now()
                 db.session.commit()
-            
+
             return result
-            
+
         except Exception as e:
             self.logger.error(f"数据库大小同步失败: {str(e)}")
             return {
-                'success': False,
-                'error': f'{instance.db_type.upper()}数据库大小同步失败: {str(e)}',
-                'database_size': 0
+                "success": False,
+                "error": f"{instance.db_type.upper()}数据库大小同步失败: {str(e)}",
+                "database_size": 0,
             }
-    
+
     def _get_connection(self, instance: Instance):
         """获取数据库连接"""
         try:
-            if instance.db_type == 'mysql':
+            if instance.db_type == "mysql":
                 return pymysql.connect(
                     host=instance.host,
                     port=instance.port,
-                    database=instance.database_name or 'mysql',
+                    database=instance.database_name or "mysql",
                     user=instance.credential.username,
-                    password=instance.credential.get_plain_password()
+                    password=instance.credential.get_plain_password(),
                 )
-            elif instance.db_type == 'postgresql':
+            elif instance.db_type == "postgresql":
                 if psycopg2 is None:
                     raise ImportError("psycopg2模块未安装，无法连接PostgreSQL")
                 return psycopg2.connect(
                     host=instance.host,
                     port=instance.port,
-                    database=instance.database_name or 'postgres',
+                    database=instance.database_name or "postgres",
                     user=instance.credential.username,
-                    password=instance.credential.get_plain_password()
+                    password=instance.credential.get_plain_password(),
                 )
-            elif instance.db_type == 'sqlserver':
+            elif instance.db_type == "sqlserver":
                 if pyodbc is None:
                     raise ImportError("pyodbc模块未安装，无法连接SQL Server")
                 return pyodbc.connect(
@@ -116,10 +116,10 @@ class DatabaseSizeService:
                     f"UID={instance.credential.username};"
                     f"PWD={instance.credential.get_plain_password()}"
                 )
-            elif instance.db_type == 'oracle':
+            elif instance.db_type == "oracle":
                 if oracledb is None:
                     raise ImportError("oracledb模块未安装，无法连接Oracle")
-                
+
                 # 优先使用Thick模式连接（适用于所有Oracle版本，包括11g）
                 try:
                     # 初始化Thick模式（需要Oracle Instant Client）
@@ -127,7 +127,7 @@ class DatabaseSizeService:
                     return oracledb.connect(
                         user=instance.credential.username,
                         password=instance.credential.get_plain_password(),
-                        dsn=f"{instance.host}:{instance.port}/{instance.database_name or 'ORCL'}"
+                        dsn=f"{instance.host}:{instance.port}/{instance.database_name or 'ORCL'}",
                     )
                 except oracledb.DatabaseError as e:
                     # 如果Thick模式失败，尝试Thin模式（适用于Oracle 12c+）
@@ -137,7 +137,7 @@ class DatabaseSizeService:
                             return oracledb.connect(
                                 user=instance.credential.username,
                                 password=instance.credential.get_plain_password(),
-                                dsn=f"{instance.host}:{instance.port}/{instance.database_name or 'ORCL'}"
+                                dsn=f"{instance.host}:{instance.port}/{instance.database_name or 'ORCL'}",
                             )
                         except oracledb.DatabaseError as thin_error:
                             # 如果Thin模式也失败，抛出原始错误
@@ -149,102 +149,112 @@ class DatabaseSizeService:
         except Exception as e:
             self.logger.error(f"数据库连接失败: {str(e)}")
             return None
-    
+
     def _get_mysql_size(self, instance: Instance, conn) -> Dict[str, Any]:
         """获取MySQL数据库大小"""
         cursor = conn.cursor()
-        
+
         try:
             # 查询数据库大小
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT 
                     ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS size_mb
                 FROM information_schema.tables 
                 WHERE table_schema = %s
-            """, (instance.database_name or 'mysql',))
-            
+            """,
+                (instance.database_name or "mysql",),
+            )
+
             result = cursor.fetchone()
             size_mb = result[0] if result and result[0] else 0
-            
+
             cursor.close()
             conn.close()
-            
+
             return {
-                'success': True,
-                'message': f'成功获取MySQL数据库大小: {size_mb} MB',
-                'database_size': size_mb
+                "success": True,
+                "message": f"成功获取MySQL数据库大小: {size_mb} MB",
+                "database_size": size_mb,
             }
-            
+
         except Exception as e:
             cursor.close()
             conn.close()
             raise e
-    
+
     def _get_postgresql_size(self, instance: Instance, conn) -> Dict[str, Any]:
         """获取PostgreSQL数据库大小"""
         cursor = conn.cursor()
-        
+
         try:
             # 查询数据库大小
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT pg_size_pretty(pg_database_size(%s)) as size,
                        pg_database_size(%s) / 1024 / 1024 as size_mb
-            """, ('postgres', 'postgres'))  # PostgreSQL默认数据库
-            
+            """,
+                ("postgres", "postgres"),
+            )  # PostgreSQL默认数据库
+
             result = cursor.fetchone()
             size_mb = result[1] if result and result[1] else 0
-            
+
             cursor.close()
             conn.close()
-            
+
             return {
-                'success': True,
-                'message': f'成功获取PostgreSQL数据库大小: {size_mb:.2f} MB',
-                'database_size': round(size_mb, 2)
+                "success": True,
+                "message": f"成功获取PostgreSQL数据库大小: {size_mb:.2f} MB",
+                "database_size": round(size_mb, 2),
             }
-            
+
         except Exception as e:
             cursor.close()
             conn.close()
             raise e
-    
+
     def _get_sqlserver_size(self, instance: Instance, conn) -> Dict[str, Any]:
         """获取SQL Server数据库大小"""
         cursor = conn.cursor()
-        
+
         try:
             # 查询数据库大小
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT 
                     SUM(size * 8.0 / 1024) AS size_mb
                 FROM sys.master_files
                 WHERE database_id = DB_ID(?)
-            """, (instance.database_name or 'master',))
-            
+            """,
+                (instance.database_name or "master",),
+            )
+
             result = cursor.fetchone()
             size_mb = result[0] if result and result[0] else 0
-            
+
             cursor.close()
             conn.close()
-            
+
             return {
-                'success': True,
-                'message': f'成功获取SQL Server数据库大小: {size_mb:.2f} MB',
-                'database_size': round(size_mb, 2)
+                "success": True,
+                "message": f"成功获取SQL Server数据库大小: {size_mb:.2f} MB",
+                "database_size": round(size_mb, 2),
             }
-            
+
         except Exception as e:
             cursor.close()
             conn.close()
             raise e
-    
+
     def _get_oracle_size(self, instance: Instance, conn) -> Dict[str, Any]:
         """获取Oracle数据库大小"""
         cursor = conn.cursor()
-        
+
         try:
             # 查询数据库大小
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT 
                     ROUND(SUM(bytes) / 1024 / 1024, 2) AS size_mb
                 FROM dba_data_files
@@ -256,24 +266,26 @@ class DatabaseSizeService:
                 SELECT 
                     ROUND(SUM(bytes) / 1024 / 1024, 2) AS size_mb
                 FROM v$log
-            """)
-            
+            """
+            )
+
             results = cursor.fetchall()
             total_size_mb = sum(result[0] for result in results if result[0])
-            
+
             cursor.close()
             conn.close()
-            
+
             return {
-                'success': True,
-                'message': f'成功获取Oracle数据库大小: {total_size_mb:.2f} MB',
-                'database_size': round(total_size_mb, 2)
+                "success": True,
+                "message": f"成功获取Oracle数据库大小: {total_size_mb:.2f} MB",
+                "database_size": round(total_size_mb, 2),
             }
-            
+
         except Exception as e:
             cursor.close()
             conn.close()
             raise e
+
 
 # 全局实例
 database_size_service = DatabaseSizeService()
