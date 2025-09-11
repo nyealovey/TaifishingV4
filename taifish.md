@@ -61,13 +61,6 @@
 - `app/routes/admin.py` - 系统管理路由
 - `app/routes/api.py` - API接口路由
 
-#### 已删除的废弃路由文件
-- ~~`app/routes/account_classification_new.py`~~ - 新版本账户分类（已删除）
-- ~~`app/routes/account_classification_old.py`~~ - 旧版本账户分类（已删除）
-- ~~`app/routes/account-list.py`~~ - 重复文件（已删除）
-- ~~`app/routes/account-static.py`~~ - 重复文件（已删除）
-- ~~`app/routes/account-sync.py`~~ - 重复文件（已删除）
-- ~~`app/routes/accounts.py`~~ - 原始账户管理路由（已拆分并删除）
 
 ### 业务服务层 (app/services/)
 - `app/services/database_service.py` - 数据库连接和操作服务
@@ -164,18 +157,9 @@
 - `app/templates/account_classification/rules.html` - 分类规则页面
 
 #### 管理后台模板
-- `app/templates/admin/index.html` - 管理后台首页
-- `app/templates/admin/dashboard.html` - 管理仪表盘
 - `app/templates/admin/layout.html` - 管理后台布局
-- `app/templates/admin/admin_layout.html` - 管理后台布局（重复）
 - `app/templates/admin/menu.html` - 管理菜单
-- `app/templates/admin/users.html` - 用户管理
-- `app/templates/admin/user_roles.html` - 用户角色管理
-- `app/templates/admin/user_permissions.html` - 用户权限管理
 - `app/templates/admin/system_config.html` - 系统配置
-- `app/templates/admin/system_logs.html` - 系统日志
-- `app/templates/admin/error_management.html` - 错误管理
-- `app/templates/admin/development_tools.html` - 开发工具
 - `app/templates/admin/constants.html` - 常量管理
 
 ## 脚本文件 (scripts/)
@@ -188,7 +172,6 @@
 
 ### 权限配置脚本
 - `scripts/init_permission_config.py` - 权限配置初始化
-- ~~`scripts/init_permission_configs.py`~~ - 权限配置初始化（重复，已删除）
 - `scripts/setup_mysql_monitor_user.sql` - MySQL监控用户设置
 - `scripts/setup_postgresql_monitor_user.sql` - PostgreSQL监控用户设置
 - `scripts/setup_sqlserver_monitor_user.sql` - SQL Server监控用户设置
@@ -216,11 +199,6 @@
 
 ### 部署脚本
 - `scripts/automated_deployment.py` - 自动化部署
-- ~~`scripts/install_deps_progressive.sh`~~ - 渐进式依赖安装（已删除）
-- ~~`scripts/install_full_deps.sh`~~ - 完整依赖安装（已删除）
-- ~~`scripts/start_dev.sh`~~ - 开发环境启动（已删除）
-- ~~`scripts/start_local_dev.sh`~~ - 本地开发启动（已删除）
-- ~~`scripts/start_redis.sh`~~ - Redis启动（已删除）
 
 ### 日志和监控脚本
 - `scripts/init_sample_logs.py` - 初始化示例日志
@@ -312,8 +290,6 @@
 
 ### 开发配置
 - `Makefile` - Make构建配置
-- `TaifishingV4.code-workspace` - VS Code工作区配置
-- `TaifishV4.code-workspace` - 重复工作区配置（可删除）
 
 ## 启动脚本详细分析
 
@@ -328,26 +304,6 @@
   - 状态：✅ 保留（现代化包管理）
   - 用途：推荐的新开发方式
 
-### 开发环境启动脚本（需要清理）
-- `start_dev.sh` - **开发环境启动脚本**
-  - 功能：创建虚拟环境，安装依赖，配置环境，启动Redis，初始化数据库
-  - 状态：⚠️ 可删除（功能重复，过于复杂）
-  - 问题：依赖不存在的 `requirements-local.txt` 和 `scripts/start_redis.sh`
-
-- `start_dev_with_redis.sh` - **带Redis的开发环境启动**
-  - 功能：启动Redis + Flask应用
-  - 状态：⚠️ 可删除（功能重复）
-  - 问题：与 `start_uv.sh` 功能重叠
-
-- `start_uv_port.sh` - **UV端口启动脚本**
-  - 功能：指定端口启动UV环境
-  - 状态：⚠️ 可删除（功能重复）
-  - 问题：与 `start_uv.sh` 功能重叠
-
-- `start_with_oracle.sh` - **带Oracle的启动脚本**
-  - 功能：设置Oracle环境变量后启动应用
-  - 状态：⚠️ 可删除（功能重复）
-  - 问题：Oracle环境变量可在 `.env` 文件中配置
 
 ### Celery相关脚本（需要整理）
 - `start_celery.sh` - **Celery主启动脚本**
@@ -365,15 +321,6 @@
   - 状态：✅ 保留（灵活控制）
   - 用途：单独启动调度器
 
-- `start_celery_beat_fixed.py` - **修复版Celery Beat启动**
-  - 功能：修复版Beat启动脚本
-  - 状态：⚠️ 可删除（临时修复）
-  - 问题：如果原版已修复，此文件不再需要
-
-- `start_celery_beat_stable.py` - **稳定版Celery Beat启动**
-  - 功能：稳定版Beat启动脚本
-  - 状态：⚠️ 可删除（版本冗余）
-  - 问题：与 `start_celery_beat.py` 功能重复
 
 - `stop_celery.sh` - **Celery停止脚本**
   - 功能：停止所有Celery进程
@@ -385,16 +332,6 @@
   - 状态：✅ 保留（管理功能）
   - 用途：管理Celery服务
 
-### 其他启动脚本（需要清理）
-- `start_scheduled_tasks.sh` - **定时任务启动脚本**
-  - 功能：启动定时任务
-  - 状态：⚠️ 可删除（功能重复）
-  - 问题：与 `start_celery.sh` 功能重叠
-
-- `redis_manager.sh` - **Redis管理脚本**
-  - 功能：Redis服务管理
-  - 状态：⚠️ 可删除（功能重复）
-  - 问题：Redis管理可通过系统服务或Docker
 
 ### 监控和检查脚本
 - `celery_monitor.py` - **Celery监控脚本**
@@ -409,15 +346,8 @@
 
 ## 启动脚本清理建议
 
-### 立即删除（功能重复或过时）
-1. `start_dev.sh` - 功能重复，依赖不存在的文件
-2. `start_dev_with_redis.sh` - 功能重复
-3. `start_uv_port.sh` - 功能重复
-4. `start_with_oracle.sh` - 功能重复
-5. `start_scheduled_tasks.sh` - 功能重复
-6. `redis_manager.sh` - 功能重复
-7. `start_celery_beat_fixed.py` - 临时修复文件
-8. `start_celery_beat_stable.py` - 版本冗余
+### 已清理的脚本
+所有功能重复和过时的启动脚本已删除，保留核心功能脚本。
 
 ### 保留的核心脚本
 1. `start_app.sh` - 核心应用启动
@@ -430,7 +360,7 @@
 8. `celery_monitor.py` - Celery监控
 9. `check_celery.sh` - Celery检查
 
-### 清理后的启动脚本结构
+### 当前启动脚本结构
 ```
 启动脚本/
 ├── 应用启动/
@@ -488,79 +418,39 @@
 ### 其他数据文件
 - `instance/` - 实例数据目录
 
-## 可删除的文件
+## 待清理的文件
 
-### 已删除的文件 ✅
-- ~~`app/routes/accounts.py`~~ - 原始账户管理路由（已拆分并删除）
-- ~~`app/routes/account_classification_new.py`~~ - 新版本账户分类（已删除）
-- ~~`app/routes/account_classification_old.py`~~ - 旧版本账户分类（已删除）
-- ~~`app/routes/account-list.py`~~ - 重复文件（已删除）
-- ~~`app/routes/account-static.py`~~ - 重复文件（已删除）
-- ~~`app/routes/account-sync.py`~~ - 重复文件（已删除）
-- ~~`scripts/init_permission_configs.py`~~ - 重复权限配置脚本（已删除）
-- ~~`scripts/install_deps_progressive.sh`~~ - 渐进式依赖安装（已删除）
-- ~~`scripts/install_full_deps.sh`~~ - 完整依赖安装（已删除）
-- ~~`scripts/start_dev.sh`~~ - 开发环境启动（已删除）
-- ~~`scripts/start_local_dev.sh`~~ - 本地开发启动（已删除）
-- ~~`scripts/start_redis.sh`~~ - Redis启动（已删除）
-
-### 重复文件（待删除）
+### 重复文件
 - `main.py` - 重复的主入口文件
 - `requirements.txt` - 传统依赖文件（已使用uv）
 - `app/templates/tasks/create_old.html` - 旧版模板
-- `app/templates/admin/admin_layout.html` - 重复布局文件
 - `TaifishV4.code-workspace` - 重复工作区配置
 
-### 启动脚本（待删除）
-- `start_dev.sh` - 功能重复，依赖不存在的文件
-- `start_dev_with_redis.sh` - 功能重复
-- `start_uv_port.sh` - 功能重复
-- `start_with_oracle.sh` - 功能重复
-- `start_scheduled_tasks.sh` - 功能重复
-- `redis_manager.sh` - 功能重复
-- `start_celery_beat_fixed.py` - 临时修复文件
-- `start_celery_beat_stable.py` - 版本冗余
-
-### 临时文件（待删除）
+### 临时文件
 - `cookies.txt` - Cookie文件
 - `doc/index_temp.css` - 临时CSS文件
 - `tests/integration/test_db.py` - 重复数据库测试
 
-### 开发过程中的测试文件（待删除）
+### 开发过程中的测试文件
 - 各种 `test_*.py` 文件（如果不再需要）
 - 各种调试脚本（如果问题已解决）
-
-## 建议的清理步骤
-
-1. **删除重复文件**：删除所有标记为"可删除"的重复文件
-2. **清理测试文件**：删除不再需要的测试和调试文件
-3. **整理文档**：删除临时文档和重复文档
-4. **清理缓存**：删除 `__pycache__` 目录和 `.pyc` 文件
-5. **整理脚本**：删除不再使用的启动和配置脚本
-6. **清理数据文件**：删除临时数据文件和缓存文件
 
 ## 文件统计
 
 ### 当前状态
-- **总文件数**：约190+个文件（已删除12个文件）
+- **总文件数**：约180+个文件
 - **核心应用文件**：约50个
-- **模板文件**：约40个
-- **脚本文件**：约25个（已删除7个）
+- **模板文件**：约35个
+- **脚本文件**：约20个
 - **测试文件**：约20个
 - **文档文件**：约30个
 - **配置文件**：约20个
-- **启动脚本**：17个（需清理8个）
+- **启动脚本**：9个
 
 ### 清理进度
-- **已删除文件**：12个 ✅
-- **待删除文件**：约20个
-- **清理完成度**：约40%
-
-### 启动脚本统计
-- **总启动脚本**：17个
-- **保留脚本**：9个
-- **待删除脚本**：8个
-- **清理率**：47%
+- **已删除文件**：20+个 ✅
+- **待删除文件**：约10个
+- **清理完成度**：约70%
 
 ## 注意事项
 
