@@ -348,6 +348,22 @@ class DatabaseService:
 
     def _sync_postgresql_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
         """同步PostgreSQL账户"""
+        
+        def is_password_expired(valid_until):
+            """检查PostgreSQL密码是否过期，处理infinity值"""
+            if valid_until is None:
+                return False
+            try:
+                # 检查是否为'infinity'字符串
+                if str(valid_until).lower() == 'infinity':
+                    return False
+                else:
+                    from app.utils.timezone import now
+                    return valid_until < now()
+            except (ValueError, TypeError, OverflowError):
+                # 如果时间戳无法解析或超出范围，认为密码未过期
+                return False
+        
         cursor = conn.cursor()
         cursor.execute(
             """
@@ -397,10 +413,7 @@ class DatabaseService:
                 account_type = "user"  # 普通用户
 
             # 检查密码是否过期
-            from datetime import datetime
-            from app.utils.timezone import now
-
-            password_expired = valid_until is not None and valid_until < now()
+            password_expired = is_password_expired(valid_until)
 
             # 检查账户是否被锁定
             is_locked = not can_login
@@ -442,11 +455,11 @@ class DatabaseService:
                         "superuser" if is_super else "user"
                     ),  # PostgreSQL有明确的角色概念
                     plugin="postgresql",
-                    password_expired=valid_until is not None and valid_until < now(),
+                    password_expired=is_password_expired(valid_until),
                     password_last_changed=None,  # PostgreSQL不直接提供此信息
                     is_locked=not can_login,  # PostgreSQL的rolcanlogin字段，False表示被禁用
                     is_active=can_login
-                    and (valid_until is None or valid_until > now()),
+                    and not is_password_expired(valid_until),
                 )
                 db.session.add(account)
                 added_count += 1
@@ -456,24 +469,20 @@ class DatabaseService:
                 has_changes = (
                     existing.account_type != ("superuser" if is_super else "user")
                     or existing.password_expired
-                    != (valid_until is not None and valid_until < now())
+                    != is_password_expired(valid_until)
                     or existing.is_locked != (not can_login)
                     or existing.is_active
-                    != (can_login and (valid_until is None or valid_until > now()))
+                    != (can_login and not is_password_expired(valid_until))
                 )
 
                 if has_changes:
                     # 更新现有账户信息
                     existing.account_type = "superuser" if is_super else "user"
-                    existing.password_expired = (
-                        valid_until is not None and valid_until < now()
-                    )
+                    existing.password_expired = is_password_expired(valid_until)
                     existing.is_locked = (
                         not can_login
                     )  # PostgreSQL的rolcanlogin字段，False表示被禁用
-                    existing.is_active = can_login and (
-                        valid_until is None or valid_until > now()
-                    )
+                    existing.is_active = can_login and not is_password_expired(valid_until)
                     updated_count += 1
                     modified_accounts.append(account_data)
 
