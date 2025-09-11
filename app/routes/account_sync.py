@@ -89,23 +89,38 @@ def sync_records():
     for record in batch_task_records:
         # 使用分钟级精度作为分组键，相同分钟的同步记录为一组
         time_key = record.sync_time.strftime("%Y-%m-%d %H:%M")
-        grouped[time_key]["total_instances"] += 1
-        if record.status == "success":
-            grouped[time_key]["success_count"] += 1
-        else:
-            grouped[time_key]["failed_count"] += 1
-        grouped[time_key]["total_accounts"] += record.synced_count or 0
-        grouped[time_key]["added_count"] += record.added_count or 0
-        grouped[time_key]["removed_count"] += record.removed_count or 0
-        grouped[time_key]["modified_count"] += record.modified_count or 0
+        
+        # 按实例去重，只计算每个实例的最新记录
+        instance_key = f"{time_key}_{record.instance_id}"
+        if instance_key not in grouped[time_key].get("instance_tracker", {}):
+            if "instance_tracker" not in grouped[time_key]:
+                grouped[time_key]["instance_tracker"] = {}
+            
+            grouped[time_key]["instance_tracker"][instance_key] = record
+            grouped[time_key]["total_instances"] += 1
+            
+            if record.status == "success":
+                grouped[time_key]["success_count"] += 1
+            else:
+                grouped[time_key]["failed_count"] += 1
+                
+            # 只累加一次每个实例的数量
+            grouped[time_key]["total_accounts"] += record.synced_count or 0
+            grouped[time_key]["added_count"] += record.added_count or 0
+            grouped[time_key]["removed_count"] += record.removed_count or 0
+            grouped[time_key]["modified_count"] += record.modified_count or 0
+            
+            if record.sync_type not in grouped[time_key]["sync_types"]:
+                grouped[time_key]["sync_types"].append(record.sync_type)
+                
+            if (
+                not grouped[time_key]["created_at"]
+                or record.sync_time > grouped[time_key]["created_at"]
+            ):
+                grouped[time_key]["created_at"] = record.sync_time
+        
+        # 始终添加记录到sync_records，用于详情显示
         grouped[time_key]["sync_records"].append(record)
-        if record.sync_type not in grouped[time_key]["sync_types"]:
-            grouped[time_key]["sync_types"].append(record.sync_type)
-        if (
-            not grouped[time_key]["created_at"]
-            or record.sync_time > grouped[time_key]["created_at"]
-        ):
-            grouped[time_key]["created_at"] = record.sync_time
     
     # 转换为聚合记录列表
     aggregated_records = []
