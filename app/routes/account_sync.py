@@ -444,8 +444,7 @@ def sync_history():
 
     return render_template(
         "accounts/history.html",
-        records=pagination.items,
-        pagination=pagination,
+        sync_records=pagination,
         sync_type=sync_type,
         status=status,
         instance_id=instance_id,
