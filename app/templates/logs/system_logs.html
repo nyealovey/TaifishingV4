@@ -473,6 +473,20 @@ async function showLogDetail(logId, isMerged = false, event = null) {
             logTypeBadge = '<span class="badge bg-warning me-2">安全日志</span>';
         }
 
+        // 来源字段显示
+        let sourceDisplay = '--';
+        if (log.source) {
+            const sourceMap = {
+                'web_request': '网页请求',
+                'api_call': 'API调用', 
+                'background_task': '后台任务',
+                'scheduled_job': '定时任务',
+                'manual_operation': '手动操作',
+                'system_operation': '系统操作'
+            };
+            sourceDisplay = sourceMap[log.source] || log.source;
+        }
+
         detailContent.innerHTML = `
                 <div class="row">
                     <div class="col-md-6">
@@ -480,7 +494,6 @@ async function showLogDetail(logId, isMerged = false, event = null) {
                     </div>
                     <div class="col-md-6">
                         <strong>级别:</strong> <span class="badge ${getLevelClass(log.level)}"><i class="${getLevelIcon(log.level)}"></i> ${log.level}</span>
-                        ${logTypeBadge}
                     </div>
                 </div>
                 <hr>
@@ -490,6 +503,15 @@ async function showLogDetail(logId, isMerged = false, event = null) {
                     </div>
                     <div class="col-md-6">
                         <strong>用户ID:</strong> ${log.user_id || '--'}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>来源:</strong> ${sourceDisplay}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>类型:</strong> ${logTypeBadge}
                     </div>
                 </div>
                 <hr>
@@ -583,6 +605,25 @@ function showMergedLogDetail(logId, mergedInfo) {
                 </div>
                 <div class="col-md-6">
                     <strong>用户:</strong> ${mergedInfo.user_info ? mergedInfo.user_info.username : '未知'}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>来源:</strong> 
+                    ${mergedInfo.source ? (() => {
+                        const sourceMap = {
+                            'web_request': '网页请求',
+                            'api_call': 'API调用', 
+                            'background_task': '后台任务',
+                            'scheduled_job': '定时任务',
+                            'manual_operation': '手动操作',
+                            'system_operation': '系统操作'
+                        };
+                        return sourceMap[mergedInfo.source] || mergedInfo.source;
+                    })() : '未知'}
+                </div>
+                <div class="col-md-6">
+                    <strong>模块:</strong> ${mergedInfo.module || '未知'}
                 </div>
             </div>
             <hr>
