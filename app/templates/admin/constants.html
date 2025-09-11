@@ -1,11 +1,30 @@
-{% extends "admin/layout.html" %}
+{% extends "base.html" %}
 
-{% set title = "常量管理" %}
-{% set subtitle = "系统常量和配置管理" %}
-{% set show_refresh = true %}
+{% block title %}常量管理 - 泰摸鱼吧{% endblock %}
 
-{% block admin_content %}
-<div class="row">
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- 页面标题 -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">常量管理</h2>
+                    <p class="text-muted mb-0">系统常量和配置管理</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-home me-1"></i>返回主页
+                    </a>
+                    <button class="btn btn-primary" onclick="location.reload()">
+                        <i class="fas fa-sync-alt me-1"></i>刷新
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
@@ -388,6 +407,7 @@
                     </div>
             </div>
         </div>
+    </div>
     </div>
 </div>
 {% endblock %}
