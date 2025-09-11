@@ -86,6 +86,10 @@ def create_app(config_name=None):
 
     app.advanced_error_handler = advanced_error_handler
 
+    # 注册错误日志中间件
+    from app.middleware.error_logging_middleware import register_error_logging_middleware
+    register_error_logging_middleware(app)
+
     # 注册高级错误处理器到Flask应用
     @app.errorhandler(Exception)
     def handle_advanced_exception(error):
@@ -372,7 +376,10 @@ def register_blueprints(app):
     from app.routes.auth import auth_bp
     from app.routes.instances import instances_bp
     from app.routes.credentials import credentials_bp
-    from app.routes.accounts import accounts_bp
+    from app.routes.accounts import accounts_bp  # 保留旧文件，等测试通过后删除
+    from app.routes.account_list import account_list_bp
+    from app.routes.account_sync import account_sync_bp
+    from app.routes.account_static import account_static_bp
     from app.routes.tasks import tasks_bp
     from app.routes.logs import logs_bp
     from app.routes.dashboard import dashboard_bp
@@ -385,7 +392,15 @@ def register_blueprints(app):
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(instances_bp, url_prefix="/instances")
     app.register_blueprint(credentials_bp, url_prefix="/credentials")
-    app.register_blueprint(accounts_bp, url_prefix="/accounts")
+    
+    # 新的账户相关蓝图
+    app.register_blueprint(account_list_bp, url_prefix="/account-list")
+    app.register_blueprint(account_sync_bp, url_prefix="/account-sync")
+    app.register_blueprint(account_static_bp, url_prefix="/account-static")
+    
+    # 保留旧的accounts_bp，等测试通过后删除
+    # app.register_blueprint(accounts_bp, url_prefix="/accounts")
+    
     app.register_blueprint(tasks_bp, url_prefix="/tasks")
     app.register_blueprint(logs_bp, url_prefix="/logs")
     app.register_blueprint(dashboard_bp, url_prefix="/dashboard")

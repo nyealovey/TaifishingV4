@@ -9,6 +9,7 @@ from app.models import Instance, Credential
 from app.models.account import Account
 from app import db
 from app.utils.logger import log_operation, log_error
+from app.utils.enhanced_logger import db_logger, log_database_error, log_database_operation
 
 
 class DatabaseService:
@@ -28,21 +29,36 @@ class DatabaseService:
             Dict: 测试结果
         """
         try:
+            db_logger.info(f"开始测试数据库连接: {instance.name} ({instance.db_type})", "database_service")
+            
             if instance.db_type == "postgresql":
-                return self._test_postgresql_connection(instance)
+                result = self._test_postgresql_connection(instance)
             elif instance.db_type == "mysql":
-                return self._test_mysql_connection(instance)
+                result = self._test_mysql_connection(instance)
             elif instance.db_type == "sqlserver":
-                return self._test_sqlserver_connection(instance)
+                result = self._test_sqlserver_connection(instance)
             elif instance.db_type == "oracle":
-                return self._test_oracle_connection(instance)
+                result = self._test_oracle_connection(instance)
             else:
+                error_msg = f"不支持的数据库类型: {instance.db_type}"
+                db_logger.warning(error_msg, "database_service")
                 return {
                     "success": False,
-                    "error": f"不支持的数据库类型: {instance.db_type}",
+                    "error": error_msg,
                 }
+            
+            if result.get("success"):
+                db_logger.info(f"数据库连接测试成功: {instance.name}", "database_service")
+            else:
+                db_logger.warning(f"数据库连接测试失败: {instance.name} - {result.get('error')}", "database_service")
+            
+            return result
+            
         except Exception as e:
-            return {"success": False, "error": f"连接测试失败: {str(e)}"}
+            error_msg = f"连接测试失败: {str(e)}"
+            log_database_error("test_connection", e, "database_service", 
+                             f"实例: {instance.name}, 类型: {instance.db_type}")
+            return {"success": False, "error": error_msg}
 
     def sync_accounts(self, instance: Instance) -> Dict[str, Any]:
         """
@@ -869,18 +885,23 @@ class DatabaseService:
 
             # 验证必需参数
             if not instance.host:
+                db_logger.warning("PostgreSQL连接测试失败: 主机地址不能为空", "database_service")
                 return {"success": False, "error": "主机地址不能为空"}
 
             if not instance.port or instance.port <= 0:
+                db_logger.warning("PostgreSQL连接测试失败: 端口号必须大于0", "database_service")
                 return {"success": False, "error": "端口号必须大于0"}
 
             if not instance.credential:
+                db_logger.warning("PostgreSQL连接测试失败: 数据库凭据不能为空", "database_service")
                 return {"success": False, "error": "数据库凭据不能为空"}
 
             if not instance.credential.username:
+                db_logger.warning("PostgreSQL连接测试失败: 数据库用户名不能为空", "database_service")
                 return {"success": False, "error": "数据库用户名不能为空"}
 
             # 尝试连接PostgreSQL
+            db_logger.info(f"尝试连接PostgreSQL: {instance.host}:{instance.port}", "database_service")
             password = instance.credential.get_plain_password()
             conn = psycopg.connect(
                 host=instance.host,
@@ -933,7 +954,9 @@ class DatabaseService:
                 "database_version": database_version,
             }
 
-        except ImportError:
+        except ImportError as e:
+            log_database_error("PostgreSQL连接测试", e, "database_service", 
+                             f"实例: {instance.name}, 错误: 驱动未安装")
             return {
                 "success": False,
                 "error": "PostgreSQL驱动未安装",
@@ -943,6 +966,9 @@ class DatabaseService:
             }
         except psycopg.OperationalError as e:
             error_msg = str(e)
+            log_database_error("PostgreSQL连接测试", e, "database_service", 
+                             f"实例: {instance.name}, 错误类型: OperationalError")
+            
             if "Connection refused" in error_msg:
                 return {
                     "success": False,

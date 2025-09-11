@@ -6,10 +6,10 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="fas fa-chart-bar me-2"></i>账户统计</h2>
     <div>
-        <a href="{{ url_for('accounts.list') }}" class="btn btn-outline-primary me-2">
+        <a href="{{ url_for('account_list.list_accounts') }}" class="btn btn-outline-primary me-2">
             <i class="fas fa-list me-2"></i>账户列表
         </a>
-        <a href="{{ url_for('accounts.sync_records') }}" class="btn btn-outline-info">
+        <a href="{{ url_for('account_sync.sync_records') }}" class="btn btn-outline-info">
             <i class="fas fa-history me-2"></i>同步记录
         </a>
     </div>
@@ -155,7 +155,7 @@
                             <div class="card-body text-center">
                                 <i class="fas fa-tag fa-2x mb-2" style="color: {{ class_stats.color or '#6c757d' }};"></i>
                                 <h5 class="mb-1">{{ classification }}</h5>
-                                <h4 class="mb-0" style="color: {{ class_stats.color or '#6c757d' }};">{{ class_stats.total }}</h4>
+                                <h4 class="mb-0" style="color: {{ class_stats.color or '#6c757d' }};">{{ class_stats.account_count }}</h4>
                                 <small class="text-muted">账户数量</small>
                             </div>
                         </div>
@@ -226,7 +226,7 @@
                             <span class="badge bg-danger">{{ stat.locked_accounts }}</span>
                         </td>
                         <td>
-                            <a href="{{ url_for('accounts.list', db_type=stat.db_type) }}" class="btn btn-sm btn-outline-primary">
+                            <a href="{{ url_for('account_list.list_accounts', db_type=stat.db_type) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-list me-1"></i>查看账户
                             </a>
                         </td>
@@ -294,7 +294,7 @@
                             <small class="text-muted">{{ account.created_at | china_time('%m-%d %H:%M') if account.created_at else '未知' }}</small>
                         </td>
                         <td>
-                            <a href="{{ url_for('accounts.list', search=account.username) }}" class="btn btn-sm btn-outline-primary">
+                            <a href="{{ url_for('account_list.list_accounts', search=account.username) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-search me-1"></i>查看
                             </a>
                         </td>
@@ -308,7 +308,7 @@
             <i class="fas fa-users fa-3x text-muted mb-3"></i>
             <h5 class="text-muted">暂无账户数据</h5>
             <p class="text-muted">请前往账户列表页面进行同步操作</p>
-            <a href="{{ url_for('accounts.list') }}" class="btn btn-primary">
+            <a href="{{ url_for('account_list.list_accounts') }}" class="btn btn-primary">
                 <i class="fas fa-list me-2"></i>前往账户列表
             </a>
         </div>

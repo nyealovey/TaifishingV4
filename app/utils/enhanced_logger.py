@@ -1,0 +1,224 @@
+"""
+泰摸鱼吧 - 增强日志系统
+提供统一的日志记录接口，确保所有错误、警告和信息都被正确记录
+"""
+
+import logging
+import traceback
+import sys
+from datetime import datetime
+from typing import Optional, Dict, Any, Union
+from flask import current_app, request, has_request_context
+from flask_login import current_user
+from app.models.log import Log
+from app import db
+from app.utils.timezone import now
+
+
+class EnhancedLogger:
+    """增强的日志记录器"""
+    
+    def __init__(self, name: str = "taifish"):
+        self.logger = logging.getLogger(name)
+        self.name = name
+        
+    def _get_request_context(self) -> Dict[str, Any]:
+        """获取请求上下文信息"""
+        context = {}
+        
+        if has_request_context():
+            context.update({
+                'ip_address': request.remote_addr,
+                'user_agent': request.headers.get('User-Agent'),
+                'url': request.url,
+                'method': request.method,
+                'endpoint': request.endpoint,
+            })
+            
+            if current_user and hasattr(current_user, 'id'):
+                context['user_id'] = current_user.id
+                
+        return context
+    
+    def _log_to_database(self, level: str, log_type: str, message: str, 
+                        module: str = None, details: str = None, 
+                        exception: Exception = None) -> None:
+        """记录日志到数据库"""
+        try:
+            # 检查是否在应用上下文中
+            from flask import has_app_context
+            if not has_app_context():
+                # 如果不在应用上下文中，只记录到文件
+                return
+            
+            context = self._get_request_context()
+            
+            # 如果有异常，添加堆栈跟踪信息
+            if exception:
+                details = details or ""
+                details += f"\n异常类型: {type(exception).__name__}\n"
+                details += f"异常信息: {str(exception)}\n"
+                details += f"堆栈跟踪:\n{traceback.format_exc()}"
+            
+            # 记录到数据库
+            Log.log_operation(
+                level=level,
+                log_type=log_type,
+                message=message,
+                module=module or self.name,
+                details=details,
+                user_id=context.get('user_id'),
+                ip_address=context.get('ip_address'),
+                user_agent=context.get('user_agent')
+            )
+            
+        except Exception as e:
+            # 如果数据库记录失败，至少记录到文件
+            self.logger.error(f"记录日志到数据库失败: {e}")
+    
+    def debug(self, message: str, module: str = None, details: str = None, 
+              exception: Exception = None) -> None:
+        """记录DEBUG级别日志"""
+        self.logger.debug(message)
+        self._log_to_database("DEBUG", "system", message, module, details, exception)
+    
+    def info(self, message: str, module: str = None, details: str = None, 
+             exception: Exception = None) -> None:
+        """记录INFO级别日志"""
+        self.logger.info(message)
+        self._log_to_database("INFO", "operation", message, module, details, exception)
+    
+    def warning(self, message: str, module: str = None, details: str = None, 
+                exception: Exception = None) -> None:
+        """记录WARNING级别日志"""
+        self.logger.warning(message)
+        self._log_to_database("WARNING", "operation", message, module, details, exception)
+    
+    def error(self, message: str, module: str = None, details: str = None, 
+              exception: Exception = None) -> None:
+        """记录ERROR级别日志"""
+        self.logger.error(message)
+        self._log_to_database("ERROR", "error", message, module, details, exception)
+    
+    def critical(self, message: str, module: str = None, details: str = None, 
+                 exception: Exception = None) -> None:
+        """记录CRITICAL级别日志"""
+        self.logger.critical(message)
+        self._log_to_database("CRITICAL", "error", message, module, details, exception)
+    
+    def security(self, message: str, module: str = None, details: str = None, 
+                 exception: Exception = None) -> None:
+        """记录安全相关日志"""
+        self.logger.warning(f"SECURITY: {message}")
+        self._log_to_database("WARNING", "security", message, module, details, exception)
+    
+    def database(self, message: str, module: str = None, details: str = None, 
+                 exception: Exception = None) -> None:
+        """记录数据库相关日志"""
+        self.logger.error(f"DATABASE: {message}")
+        self._log_to_database("ERROR", "database", message, module, details, exception)
+    
+    def sync(self, message: str, module: str = None, details: str = None, 
+             exception: Exception = None) -> None:
+        """记录同步相关日志"""
+        self.logger.info(f"SYNC: {message}")
+        self._log_to_database("INFO", "sync", message, module, details, exception)
+    
+    def api(self, message: str, module: str = None, details: str = None, 
+            exception: Exception = None) -> None:
+        """记录API相关日志"""
+        self.logger.info(f"API: {message}")
+        self._log_to_database("INFO", "api", message, module, details, exception)
+
+
+# 创建全局日志记录器实例
+enhanced_logger = EnhancedLogger()
+
+# 创建专用日志记录器
+auth_logger = EnhancedLogger("taifish.auth")
+db_logger = EnhancedLogger("taifish.database")
+sync_logger = EnhancedLogger("taifish.sync")
+api_logger = EnhancedLogger("taifish.api")
+security_logger = EnhancedLogger("taifish.security")
+system_logger = EnhancedLogger("taifish.system")
+
+
+def log_exception(exception: Exception, message: str = None, 
+                  module: str = None, level: str = "ERROR") -> None:
+    """记录异常的便捷函数"""
+    if message is None:
+        message = f"未处理的异常: {type(exception).__name__}"
+    
+    if level == "CRITICAL":
+        enhanced_logger.critical(message, module, exception=exception)
+    elif level == "WARNING":
+        enhanced_logger.warning(message, module, exception=exception)
+    else:
+        enhanced_logger.error(message, module, exception=exception)
+
+
+def log_database_error(operation: str, error: Exception, 
+                      module: str = None, details: str = None) -> None:
+    """记录数据库错误的便捷函数"""
+    message = f"数据库操作失败: {operation}"
+    db_logger.database(message, module, details, error)
+
+
+def log_sync_error(operation: str, error: Exception, 
+                  module: str = None, details: str = None) -> None:
+    """记录同步错误的便捷函数"""
+    message = f"同步操作失败: {operation}"
+    sync_logger.error(message, module, details, error)
+
+
+def log_api_error(endpoint: str, error: Exception, 
+                 module: str = None, details: str = None) -> None:
+    """记录API错误的便捷函数"""
+    message = f"API调用失败: {endpoint}"
+    api_logger.error(message, module, details, error)
+
+
+def log_security_event(event: str, details: str = None, 
+                      module: str = None, level: str = "WARNING") -> None:
+    """记录安全事件的便捷函数"""
+    if level == "ERROR":
+        security_logger.error(f"安全事件: {event}", module, details)
+    else:
+        security_logger.security(f"安全事件: {event}", module, details)
+
+
+# 装饰器函数
+def log_function_call(module: str = None, log_args: bool = False):
+    """记录函数调用的装饰器"""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            func_name = func.__name__
+            enhanced_logger.info(f"调用函数: {func_name}", module)
+            
+            if log_args:
+                enhanced_logger.debug(f"函数参数: args={args}, kwargs={kwargs}", module)
+            
+            try:
+                result = func(*args, **kwargs)
+                enhanced_logger.info(f"函数执行成功: {func_name}", module)
+                return result
+            except Exception as e:
+                enhanced_logger.error(f"函数执行失败: {func_name}", module, exception=e)
+                raise
+        return wrapper
+    return decorator
+
+
+def log_database_operation(operation: str, module: str = None):
+    """记录数据库操作的装饰器"""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                result = func(*args, **kwargs)
+                db_logger.info(f"数据库操作成功: {operation}", module)
+                return result
+            except Exception as e:
+                db_logger.database(f"数据库操作失败: {operation}", module, exception=e)
+                raise
+        return wrapper
+    return decorator

@@ -89,38 +89,57 @@
             <!-- 日志筛选 -->
             <div class="card mb-4">
                 <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label for="log-level-filter" class="form-label">日志级别</label>
-                            <select class="form-select" id="log-level-filter">
-                                <option value="">全部级别</option>
-                                <option value="ERROR">错误</option>
-                                <option value="WARNING">警告</option>
-                                <option value="INFO">信息</option>
-                                <option value="DEBUG">调试</option>
-                            </select>
+                    <form method="GET" action="{{ url_for('logs.index') }}">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label for="level" class="form-label">日志级别</label>
+                                <select class="form-select" id="level" name="level">
+                                    <option value="">全部级别</option>
+                                    <option value="ERROR" {% if level == 'ERROR' %}selected{% endif %}>错误</option>
+                                    <option value="WARNING" {% if level == 'WARNING' %}selected{% endif %}>警告</option>
+                                    <option value="INFO" {% if level == 'INFO' %}selected{% endif %}>信息</option>
+                                    <option value="DEBUG" {% if level == 'DEBUG' %}selected{% endif %}>调试</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="module" class="form-label">模块</label>
+                                <select class="form-select" id="module" name="module">
+                                    <option value="">全部模块</option>
+                                    <option value="api" {% if module == 'api' %}selected{% endif %}>API</option>
+                                    <option value="auth" {% if module == 'auth' %}selected{% endif %}>认证</option>
+                                    <option value="database" {% if module == 'database' %}selected{% endif %}>数据库</option>
+                                    <option value="sync" {% if module == 'sync' %}selected{% endif %}>同步</option>
+                                    <option value="system" {% if module == 'system' %}selected{% endif %}>系统</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="start_date" class="form-label">开始日期</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date or '' }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="end_date" class="form-label">结束日期</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date or '' }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search me-1"></i>搜索
+                                </button>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label for="time-range-filter" class="form-label">时间范围</label>
-                            <select class="form-select" id="time-range-filter">
-                                <option value="">全部时间</option>
-                                <option value="1h">最近1小时</option>
-                                <option value="today">今天</option>
-                                <option value="week">最近一周</option>
-                                <option value="month">最近一月</option>
-                            </select>
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-8">
+                                <label for="search" class="form-label">关键词</label>
+                                <input type="text" class="form-control" id="search" name="search" placeholder="搜索日志内容..." value="{{ search or '' }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">&nbsp;</label>
+                                <a href="{{ url_for('logs.index') }}" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-times me-1"></i>清除筛选
+                                </a>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label for="keyword-filter" class="form-label">关键词</label>
-                            <input type="text" class="form-control" id="keyword-filter" placeholder="搜索关键词">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">&nbsp;</label>
-                            <button class="btn btn-primary w-100" onclick="loadLogs()">
-                                <i class="fas fa-search me-1"></i>搜索
-                            </button>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
 
@@ -129,7 +148,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">日志列表</h5>
                     <div>
-                        <button class="btn btn-sm btn-outline-primary me-2" onclick="loadLogs()">
+                        <button class="btn btn-sm btn-outline-primary me-2" onclick="location.reload()">
                             <i class="fas fa-sync-alt me-1"></i>刷新
                         </button>
                         <button class="btn btn-sm btn-outline-success me-2" onclick="exportLogs()">
@@ -153,21 +172,85 @@
                                 </tr>
                             </thead>
                             <tbody id="logs-table-body">
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">
-                                        <i class="fas fa-spinner fa-spin me-2"></i>加载中...
-                                    </td>
-                                </tr>
+                                {% if pagination and pagination.items %}
+                                    {% for log in pagination.items %}
+                                    <tr>
+                                        <td>
+                                            <small class="text-muted">{{ log.created_at | china_time }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if log.level == 'ERROR' or log.level == 'CRITICAL' %}bg-danger
+                                                {% elif log.level == 'WARNING' %}bg-warning
+                                                {% elif log.level == 'INFO' %}bg-info
+                                                {% else %}bg-secondary{% endif %}">
+                                                {{ log.level }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ log.module or 'system' }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="log-message" style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                {{ log.message }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info" onclick="showLogDetail({{ log.id }})" title="查看详情">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">
+                                            <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                                            暂无日志记录
+                                        </td>
+                                    </tr>
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>
                 </div>
                 <div class="card-footer">
+                    <!-- 服务器端分页 -->
+                    {% if pagination %}
                     <nav aria-label="日志分页">
-                        <ul class="pagination pagination-sm mb-0 justify-content-center" id="logs-pagination">
-                            <!-- 分页内容将通过JavaScript动态生成 -->
+                        <ul class="pagination pagination-sm mb-0 justify-content-center">
+                            {% if pagination.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('logs.index', page=pagination.prev_num, level=level, module=module, start_date=start_date, end_date=end_date, search=search) }}">上一页</a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for page_num in pagination.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != pagination.page %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ url_for('logs.index', page=page_num, level=level, module=module, start_date=start_date, end_date=end_date, search=search) }}">{{ page_num }}</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ page_num }}</span>
+                                        </li>
+                                    {% endif %}
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if pagination.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('logs.index', page=pagination.next_num, level=level, module=module, start_date=start_date, end_date=end_date, search=search) }}">下一页</a>
+                                </li>
+                            {% endif %}
                         </ul>
                     </nav>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -201,22 +284,10 @@ let totalPages = 1;
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
     loadLogStats();
-    loadLogs();
     
-    // 添加筛选器变化事件监听器
-    document.getElementById('log-level-filter').addEventListener('change', function() {
-        loadLogs(1); // 重置到第一页
-    });
-    
-    document.getElementById('time-range-filter').addEventListener('change', function() {
-        loadLogs(1); // 重置到第一页
-    });
-    
-    document.getElementById('keyword-filter').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            loadLogs(1); // 重置到第一页
-        }
-    });
+    // 注意：数据已通过服务器端渲染，不需要调用 loadLogs()
+    // 筛选功能已改为表单提交方式
+    // 移除所有对 loadLogs() 的调用以避免错误
 });
 
 // 加载日志统计
@@ -241,104 +312,14 @@ function updateLogStats(stats) {
     document.getElementById('info-logs').textContent = stats.level_distribution?.INFO || 0;
 }
 
-// 加载日志列表
-async function loadLogs(page = 1) {
-    try {
-        const level = document.getElementById('log-level-filter').value;
-        const timeRange = document.getElementById('time-range-filter').value;
-        const keyword = document.getElementById('keyword-filter').value;
-        
-        const params = new URLSearchParams({
-            page: page,
-            size: 20,
-            level: level,
-            time_range: timeRange,
-            keyword: keyword
-        });
-        
-        const response = await fetch(`/logs/api?${params}`);
-        const data = await response.json();
-        
-        if (data.success) {
-            updateLogsTable(data.data.logs);
-            updatePagination(data.data.pagination);
-            currentPage = page;
-        } else {
-            showNotification('加载日志失败: ' + data.message, 'error');
-        }
-    } catch (error) {
-        console.error('加载日志失败:', error);
-        showNotification('加载日志失败', 'error');
-    }
-}
+// 注意：loadLogs 函数已移除，因为现在使用服务器端渲染
+// 数据通过模板直接渲染，不需要JavaScript加载
 
-// 更新日志表格
-function updateLogsTable(logs) {
-    const tbody = document.getElementById('logs-table-body');
-    
-    if (logs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">暂无日志数据</td></tr>';
-        return;
-    }
-    
-    let html = '';
-    logs.forEach(log => {
-        const levelClass = getLevelClass(log.level);
-        const levelIcon = getLevelIcon(log.level);
-        
-        html += `
-            <tr>
-                <td>${log.timestamp}</td>
-                <td><span class="badge ${levelClass}"><i class="${levelIcon}"></i> ${log.level}</span></td>
-                <td>${log.module || '--'}</td>
-                <td class="text-truncate" style="max-width: 300px;" title="${log.message}">${log.message}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="showLogDetail(${log.id})">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-    });
-    
-    tbody.innerHTML = html;
-}
+// 注意：updateLogsTable 函数已移除，因为现在使用服务器端渲染
+// 表格内容通过模板直接渲染
 
-// 更新分页
-function updatePagination(pagination) {
-    const paginationContainer = document.getElementById('logs-pagination');
-    totalPages = pagination.total_pages || 1;
-    
-    let html = '';
-    
-    // 上一页
-    html += `
-        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="loadLogs(${currentPage - 1})">上一页</a>
-        </li>
-    `;
-    
-    // 页码
-    const startPage = Math.max(1, currentPage - 2);
-    const endPage = Math.min(totalPages, currentPage + 2);
-    
-    for (let i = startPage; i <= endPage; i++) {
-        html += `
-            <li class="page-item ${i === currentPage ? 'active' : ''}">
-                <a class="page-link" href="#" onclick="loadLogs(${i})">${i}</a>
-            </li>
-        `;
-    }
-    
-    // 下一页
-    html += `
-        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="loadLogs(${currentPage + 1})">下一页</a>
-        </li>
-    `;
-    
-    paginationContainer.innerHTML = html;
-}
+// 注意：updatePagination 函数已移除，因为现在使用服务器端分页
+// 分页通过模板直接渲染
 
 // 显示日志详情
 async function showLogDetail(logId) {

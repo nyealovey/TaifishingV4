@@ -50,7 +50,7 @@
                 <i class="fas fa-users fa-3x text-info mb-3"></i>
                 <h5 class="card-title">账户统计</h5>
                 <p class="card-text">统计和分析数据库账户信息</p>
-                <a href="{{ url_for('accounts.index') }}" class="btn btn-outline-info">进入管理</a>
+                <a href="{{ url_for('account_static.index') }}" class="btn btn-outline-info">进入管理</a>
             </div>
         </div>
     </div>
@@ -58,10 +58,56 @@
     <div class="col-md-3">
         <div class="card">
             <div class="card-body text-center">
+                <i class="fas fa-list fa-3x text-secondary mb-3"></i>
+                <h5 class="card-title">账户管理</h5>
+                <p class="card-text">查看和管理数据库账户列表</p>
+                <a href="{{ url_for('account_list.list_accounts') }}" class="btn btn-outline-secondary">进入管理</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
                 <i class="fas fa-tasks fa-3x text-warning mb-3"></i>
                 <h5 class="card-title">定时任务</h5>
                 <p class="card-text">配置和管理数据同步任务</p>
                 <a href="{{ url_for('tasks.index') }}" class="btn btn-outline-warning">进入管理</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-sync fa-3x text-dark mb-3"></i>
+                <h5 class="card-title">同步记录</h5>
+                <p class="card-text">查看账户同步历史记录</p>
+                <a href="{{ url_for('account_sync.sync_records') }}" class="btn btn-outline-dark">进入管理</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-tags fa-3x text-purple mb-3"></i>
+                <h5 class="card-title">账户分类</h5>
+                <p class="card-text">管理账户分类和权限规则</p>
+                <a href="{{ url_for('account_classification.index') }}" class="btn btn-outline-purple">进入管理</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-bar fa-3x text-indigo mb-3"></i>
+                <h5 class="card-title">数据库大小</h5>
+                <p class="card-text">监控数据库大小和增长趋势</p>
+                <a href="{{ url_for('database_size.index') }}" class="btn btn-outline-indigo">进入管理</a>
             </div>
         </div>
     </div>

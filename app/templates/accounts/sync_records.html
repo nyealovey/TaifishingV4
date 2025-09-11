@@ -7,10 +7,16 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="fas fa-history me-2"></i>同步记录</h2>
         <div>
-            <a href="{{ url_for('accounts.export', format='csv') }}" class="btn btn-outline-success">
+            <a href="{{ url_for('account_list.list_accounts') }}" class="btn btn-outline-primary me-2">
+                <i class="fas fa-list me-2"></i>账户列表
+            </a>
+            <a href="{{ url_for('account_static.index') }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-chart-bar me-2"></i>账户统计
+            </a>
+            <a href="{{ url_for('account_list.export_accounts', format='csv') }}" class="btn btn-outline-success me-2">
                 <i class="fas fa-download me-2"></i>导出CSV
             </a>
-            <a href="{{ url_for('accounts.export', format='json') }}" class="btn btn-outline-info">
+            <a href="{{ url_for('account_list.export_accounts', format='json') }}" class="btn btn-outline-info">
                 <i class="fas fa-download me-2"></i>导出JSON
             </a>
         </div>
@@ -148,7 +154,7 @@
                 <div class="col-md-1">
                     <label class="form-label">&nbsp;</label>
                     <div class="d-grid">
-                        <a href="{{ url_for('accounts.sync_records') }}" class="btn btn-outline-secondary">
+                        <a href="{{ url_for('account_sync.sync_records') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-times me-1"></i>清除
                         </a>
                     </div>
@@ -272,13 +278,13 @@
                                     {% else %}
                                     <!-- 聚合记录 -->
                                     <button type="button" class="btn btn-outline-info" 
-                                            onclick="viewBatchDetails({{ record.sync_records|map(attribute='id')|list|tojson }})" 
+                                            onclick="viewBatchDetails({{ record.get_record_ids()|tojson }})" 
                                             title="查看批量同步详情">
                                         <i class="fas fa-list"></i>
                                     </button>
                                     {% if record.status == 'failed' %}
                                     <button type="button" class="btn btn-outline-warning" 
-                                            onclick="viewFailedDetails({{ record.sync_records|map(attribute='id')|list|tojson }})" 
+                                            onclick="viewFailedDetails({{ record.get_record_ids()|tojson }})" 
                                             title="查看失败详情">
                                         <i class="fas fa-exclamation-triangle"></i>
                                     </button>
@@ -298,7 +304,7 @@
                 <ul class="pagination justify-content-center">
                     {% if sync_records.has_prev %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('accounts.sync_records', page=sync_records.prev_num, instance_id=instance_id, sync_type=sync_type, status=status, date_range=date_range) }}">
+                        <a class="page-link" href="{{ url_for('account_sync.sync_records', page=sync_records.prev_num, instance_id=instance_id, sync_type=sync_type, status=status, date_range=date_range) }}">
                             上一页
                         </a>
                     </li>
@@ -308,7 +314,7 @@
                         {% if page_num %}
                             {% if page_num != sync_records.page %}
                             <li class="page-item">
-                                <a class="page-link" href="{{ url_for('accounts.sync_records', page=page_num, instance_id=instance_id, sync_type=sync_type, status=status, date_range=date_range) }}">
+                                <a class="page-link" href="{{ url_for('account_sync.sync_records', page=page_num, instance_id=instance_id, sync_type=sync_type, status=status, date_range=date_range) }}">
                                     {{ page_num }}
                                 </a>
                             </li>
@@ -326,7 +332,7 @@
                     
                     {% if sync_records.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('accounts.sync_records', page=sync_records.next_num, instance_id=instance_id, sync_type=sync_type, status=status, date_range=date_range) }}">
+                        <a class="page-link" href="{{ url_for('account_sync.sync_records', page=sync_records.next_num, instance_id=instance_id, sync_type=sync_type, status=status, date_range=date_range) }}">
                             下一页
                         </a>
                     </li>
@@ -340,7 +346,7 @@
                 <i class="fas fa-history fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">暂无同步记录</h5>
                 <p class="text-muted">开始同步账户数据以查看历史记录</p>
-                <a href="{{ url_for('accounts.list') }}" class="btn btn-primary">
+                <a href="{{ url_for('account_list.list_accounts') }}" class="btn btn-primary">
                     <i class="fas fa-sync me-2"></i>开始同步
                 </a>
             </div>
@@ -446,7 +452,7 @@ function showAlert(type, message) {
 // 查看批量同步详情
 function viewBatchDetails(recordIds) {
     const recordIdsStr = recordIds.join(',');
-    const url = `/accounts/sync-details-batch?record_ids=${encodeURIComponent(recordIdsStr)}`;
+    const url = `/account-sync/sync-details-batch?record_ids=${encodeURIComponent(recordIdsStr)}`;
     
     fetch(url, {
         method: 'GET',
@@ -471,7 +477,7 @@ function viewBatchDetails(recordIds) {
 // 查看失败详情
 function viewFailedDetails(recordIds) {
     const recordIdsStr = recordIds.join(',');
-    const url = `/accounts/sync-details-batch?record_ids=${encodeURIComponent(recordIdsStr)}&failed_only=true`;
+    const url = `/account-sync/sync-details-batch?record_ids=${encodeURIComponent(recordIdsStr)}&failed_only=true`;
     
     fetch(url, {
         method: 'GET',
@@ -495,6 +501,12 @@ function viewFailedDetails(recordIds) {
 
 // 显示批量同步详情模态框
 function showBatchDetailsModal(details) {
+    // 计算统计信息
+    const successCount = details.filter(d => d.status === 'success').length;
+    const failedCount = details.filter(d => d.status === 'failed').length;
+    const totalAccounts = details.reduce((sum, d) => sum + (d.synced_count || 0), 0);
+    const totalInstances = details.length;
+    
     const modalHtml = `
         <div class="modal fade" id="batchDetailsModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
@@ -510,7 +522,7 @@ function showBatchDetailsModal(details) {
                             <div class="col-md-3">
                                 <div class="card bg-success text-white">
                                     <div class="card-body text-center">
-                                        <h4>${details.success_count}</h4>
+                                        <h4>${successCount}</h4>
                                         <small>成功实例</small>
                                     </div>
                                 </div>
@@ -518,7 +530,7 @@ function showBatchDetailsModal(details) {
                             <div class="col-md-3">
                                 <div class="card bg-danger text-white">
                                     <div class="card-body text-center">
-                                        <h4>${details.failed_count}</h4>
+                                        <h4>${failedCount}</h4>
                                         <small>失败实例</small>
                                     </div>
                                 </div>
@@ -526,7 +538,7 @@ function showBatchDetailsModal(details) {
                             <div class="col-md-3">
                                 <div class="card bg-info text-white">
                                     <div class="card-body text-center">
-                                        <h4>${details.total_accounts}</h4>
+                                        <h4>${totalAccounts}</h4>
                                         <small>同步账户</small>
                                     </div>
                                 </div>
@@ -534,7 +546,7 @@ function showBatchDetailsModal(details) {
                             <div class="col-md-3">
                                 <div class="card bg-warning text-white">
                                     <div class="card-body text-center">
-                                        <h4>${details.total_instances}</h4>
+                                        <h4>${totalInstances}</h4>
                                         <small>总实例</small>
                                     </div>
                                 </div>
@@ -551,12 +563,12 @@ function showBatchDetailsModal(details) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${details.results.map(result => `
+                                    ${details.map(result => `
                                         <tr>
                                             <td>${result.instance_name}</td>
                                             <td>
-                                                <span class="badge bg-${result.success ? 'success' : 'danger'}">
-                                                    ${result.success ? '成功' : '失败'}
+                                                <span class="badge bg-${result.status === 'success' ? 'success' : 'danger'}">
+                                                    ${result.status === 'success' ? '成功' : '失败'}
                                                 </span>
                                             </td>
                                             <td>${result.synced_count || 0}</td>
@@ -591,6 +603,10 @@ function showBatchDetailsModal(details) {
 
 // 显示失败详情模态框
 function showFailedDetailsModal(details) {
+    // 过滤出失败的记录
+    const failedDetails = details.filter(d => d.status === 'failed');
+    const failedCount = failedDetails.length;
+    
     const modalHtml = `
         <div class="modal fade" id="failedDetailsModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
@@ -604,34 +620,30 @@ function showFailedDetailsModal(details) {
                     <div class="modal-body">
                         <div class="alert alert-warning">
                             <i class="fas fa-info-circle me-2"></i>
-                            共 ${details.failed_count} 个实例同步失败，以下是详细信息：
+                            共 ${failedCount} 个实例同步失败，以下是详细信息：
                         </div>
                         <div class="table-responsive">
                             <table class="table table-sm">
                                 <thead>
                                     <tr>
                                         <th>实例名称</th>
-                                        <th>数据库类型</th>
+                                        <th>状态</th>
                                         <th>失败原因</th>
-                                        <th>操作</th>
+                                        <th>同步时间</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${details.failed_results.map(result => `
+                                    ${failedDetails.map(result => `
                                         <tr>
                                             <td>${result.instance_name}</td>
                                             <td>
-                                                <span class="badge bg-secondary">${result.db_type || '未知'}</span>
+                                                <span class="badge bg-danger">失败</span>
                                             </td>
                                             <td>
                                                 <small class="text-danger">${result.message || '未知错误'}</small>
                                             </td>
                                             <td>
-                                                <button class="btn btn-sm btn-outline-warning" 
-                                                        onclick="retrySync(${result.instance_id})" 
-                                                        title="重试同步">
-                                                    <i class="fas fa-redo"></i>
-                                                </button>
+                                                <small class="text-muted">${result.sync_time ? new Date(result.sync_time).toLocaleString() : '-'}</small>
                                             </td>
                                         </tr>
                                     `).join('')}
@@ -663,7 +675,7 @@ function showFailedDetailsModal(details) {
 
 // 加载统计信息
 function loadStatistics() {
-    fetch('/accounts/sync-statistics')
+    fetch('/account-sync/sync-statistics')
     .then(response => response.json())
     .then(data => {
         if (data.success) {

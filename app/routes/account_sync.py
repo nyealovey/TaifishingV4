@@ -1,0 +1,632 @@
+# -*- coding: utf-8 -*-
+
+"""
+泰摸鱼吧 - 账户同步记录路由
+"""
+
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
+from flask_login import login_required, current_user
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.models.instance import Instance
+from app.models.credential import Credential
+from app.models.sync_data import SyncData
+from app.models.account import Account
+from app import db
+from app.services.database_service import DatabaseService
+from app.services.account_sync_service import account_sync_service
+import logging
+from datetime import datetime, timedelta
+from app.utils.timezone import now
+from collections import defaultdict
+from app.utils.enhanced_logger import api_logger, log_api_error, log_exception, sync_logger
+
+# 创建蓝图
+account_sync_bp = Blueprint("account_sync", __name__)
+
+
+@account_sync_bp.route("/")
+@login_required
+def sync_records():
+    """统一的同步记录页面"""
+    # 获取查询参数
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    sync_type = request.args.get("sync_type", "all")
+    status = request.args.get("status", "all")
+    instance_id = request.args.get("instance_id", type=int)
+
+    # 构建查询
+    query = SyncData.query
+
+    # 同步类型过滤
+    if sync_type and sync_type != "all":
+        query = query.filter(SyncData.sync_type == sync_type)
+
+    # 状态过滤
+    if status and status != "all":
+        query = query.filter(SyncData.status == status)
+
+    # 实例过滤
+    if instance_id:
+        query = query.filter(SyncData.instance_id == instance_id)
+
+    # 排序
+    query = query.order_by(SyncData.sync_time.desc())
+
+    # 分页
+    pagination = query.paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+
+    # 获取实例列表用于过滤
+    instances = Instance.query.filter_by(is_active=True).all()
+
+    # 聚合显示逻辑 - 当同步类型是手动批量或定时任务时，需要聚合显示
+    # 获取所有记录进行聚合处理，然后手动分页
+    all_records = query.order_by(SyncData.sync_time.desc()).all()
+    
+    # 分离需要聚合的记录和单独显示的记录
+    batch_task_records = [r for r in all_records if r.sync_type in ["batch", "task"]]
+    manual_records = [r for r in all_records if r.sync_type == "manual"]
+    
+    # 聚合batch和task类型的记录
+    grouped = defaultdict(
+        lambda: {
+            "total_instances": 0,
+            "success_count": 0,
+            "failed_count": 0,
+            "total_accounts": 0,
+            "added_count": 0,
+            "removed_count": 0,
+            "modified_count": 0,
+            "created_at": None,
+            "sync_records": [],
+            "sync_types": [],
+            "sync_type_display": "",
+        }
+    )
+    
+    for record in batch_task_records:
+        # 使用分钟级精度作为分组键，相同分钟的同步记录为一组
+        time_key = record.sync_time.strftime("%Y-%m-%d %H:%M")
+        grouped[time_key]["total_instances"] += 1
+        if record.status == "success":
+            grouped[time_key]["success_count"] += 1
+        else:
+            grouped[time_key]["failed_count"] += 1
+        grouped[time_key]["total_accounts"] += record.synced_count or 0
+        grouped[time_key]["added_count"] += record.added_count or 0
+        grouped[time_key]["removed_count"] += record.removed_count or 0
+        grouped[time_key]["modified_count"] += record.modified_count or 0
+        grouped[time_key]["sync_records"].append(record)
+        if record.sync_type not in grouped[time_key]["sync_types"]:
+            grouped[time_key]["sync_types"].append(record.sync_type)
+        if (
+            not grouped[time_key]["created_at"]
+            or record.sync_time > grouped[time_key]["created_at"]
+        ):
+            grouped[time_key]["created_at"] = record.sync_time
+    
+    # 转换为聚合记录列表
+    aggregated_records = []
+    for time_key, data in sorted(
+        grouped.items(), key=lambda x: x[1]["created_at"], reverse=True
+    ):
+        # 使用最新记录的时间作为显示时间
+        latest_time = max(record.sync_time for record in data["sync_records"])
+        
+        # 确定同步类型显示文本 - 直接显示原始值
+        sync_types = data["sync_types"]
+        if len(sync_types) == 1:
+            sync_type_display = sync_types[0]  # 直接显示原始值
+        else:
+            sync_type_display = " + ".join(sync_types)  # 多个类型用+连接
+        
+        # 创建聚合记录对象
+        class AggregatedRecord:
+            def __init__(self, data, latest_time, sync_type_display):
+                self.sync_time = latest_time
+                self.sync_type = sync_type_display
+                self.status = "success" if data["failed_count"] == 0 else "failed"
+                self.synced_count = data["total_accounts"]
+                self.added_count = data["added_count"]
+                self.removed_count = data["removed_count"]
+                self.modified_count = data["modified_count"]
+                self.message = (
+                    f"成功同步 {data['total_accounts']} 个账户"
+                    if data["failed_count"] == 0
+                    else f"部分失败，成功 {data['success_count']} 个实例，失败 {data['failed_count']} 个实例"
+                )
+                self.instance = None  # 聚合记录没有单一实例
+                self.sync_records = data["sync_records"]  # 保存原始记录用于详情查看
+                self.is_aggregated = True
+                
+            def get_record_ids(self):
+                """获取记录ID列表"""
+                return [record.id for record in self.sync_records]
+        
+        aggregated_records.append(
+            AggregatedRecord(data, latest_time, sync_type_display)
+        )
+    
+    # 处理手动记录，直接显示原始值
+    for record in manual_records:
+        record.is_aggregated = False
+    
+    # 合并聚合记录和手动记录
+    all_display_records = aggregated_records + manual_records
+    
+    # 按时间排序
+    all_display_records.sort(key=lambda x: x.sync_time, reverse=True)
+    
+    # 手动分页
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    paginated_records = all_display_records[start_idx:end_idx]
+    
+    # 创建分页对象
+    class Pagination:
+        def __init__(self, items, page, per_page, total):
+            self.items = items
+            self.page = page
+            self.per_page = per_page
+            self.total = total
+            self.pages = (total + per_page - 1) // per_page
+            self.has_prev = page > 1
+            self.has_next = page < self.pages
+            self.prev_num = page - 1 if page > 1 else None
+            self.next_num = page + 1 if page < self.pages else None
+
+        def iter_pages(
+            self, left_edge=2, right_edge=2, left_current=2, right_current=3
+        ):
+            """生成分页页码迭代器，与Flask-SQLAlchemy的Pagination兼容"""
+            last = self.pages
+            for num in range(1, last + 1):
+                if (
+                    num <= left_edge
+                    or (
+                        num > self.page - left_current - 1
+                        and num < self.page + right_current
+                    )
+                    or num > last - right_edge
+                ):
+                    yield num
+
+    sync_records = Pagination(
+        paginated_records, page, per_page, len(all_display_records)
+    )
+
+    if request.is_json:
+        return jsonify({
+            "records": [record.to_dict() if hasattr(record, 'to_dict') else {
+                'id': getattr(record, 'id', f"batch_{hash(str(record.sync_time))}"),
+                'sync_time': record.sync_time.isoformat() if record.sync_time else None,
+                'sync_type': record.sync_type,
+                'status': record.status,
+                'message': record.message,
+                'synced_count': record.synced_count,
+                'instance_name': getattr(record, 'instance_name', '批量同步'),
+                'is_aggregated': getattr(record, 'is_aggregated', False),
+                'record_ids': getattr(record, 'sync_records', []),
+            } for record in sync_records.items],
+            "pagination": {
+                "page": sync_records.page,
+                "pages": sync_records.pages,
+                "per_page": sync_records.per_page,
+                "total": sync_records.total,
+                "has_next": sync_records.has_next,
+                "has_prev": sync_records.has_prev,
+            },
+            "instances": [instance.to_dict() for instance in instances],
+        })
+
+    return render_template(
+        "accounts/sync_records.html",
+        sync_records=sync_records,
+        pagination=sync_records,
+        sync_type=sync_type,
+        status=status,
+        instance_id=instance_id,
+        instances=instances,
+    )
+
+
+@account_sync_bp.route("/sync-all", methods=["POST"])
+@login_required
+def sync_all_accounts():
+    """同步所有实例的账户"""
+    try:
+        # 获取所有活跃实例
+        instances = Instance.query.filter_by(is_active=True).all()
+        
+        if not instances:
+            return jsonify({
+                "success": False,
+                "error": "没有找到活跃的数据库实例"
+            }), 400
+
+        success_count = 0
+        failed_count = 0
+        results = []
+
+        for instance in instances:
+            try:
+                # 使用统一的账户同步服务
+                result = account_sync_service.sync_accounts(instance, sync_type="batch")
+
+                if result["success"]:
+                    success_count += 1
+                    # 记录同步成功
+                    sync_record = SyncData(
+                        instance_id=instance.id,
+                        sync_type="batch",
+                        status="success",
+                        message=result.get("message", "同步成功"),
+                        synced_count=result.get("synced_count", 0),
+                        added_count=result.get("added_count", 0),
+                        removed_count=result.get("removed_count", 0),
+                        modified_count=result.get("modified_count", 0),
+                    )
+                    db.session.add(sync_record)
+                else:
+                    failed_count += 1
+                    # 记录同步失败
+                    sync_record = SyncData(
+                        instance_id=instance.id,
+                        sync_type="batch",
+                        status="failed",
+                        message=result.get("error", "同步失败"),
+                        synced_count=0,
+                    )
+                    db.session.add(sync_record)
+
+                results.append({
+                    "instance_name": instance.name,
+                    "success": result["success"],
+                    "message": result.get("message", result.get("error", "未知错误")),
+                    "synced_count": result.get("synced_count", 0),
+                })
+
+            except Exception as e:
+                failed_count += 1
+                # 记录同步失败
+                sync_record = SyncData(
+                    instance_id=instance.id,
+                    sync_type="batch",
+                    status="failed",
+                    message=f"同步失败: {str(e)}",
+                    synced_count=0,
+                )
+                db.session.add(sync_record)
+                
+                results.append({
+                    "instance_name": instance.name,
+                    "success": False,
+                    "message": f"同步失败: {str(e)}",
+                    "synced_count": 0,
+                })
+
+        # 提交所有同步记录
+        db.session.commit()
+
+        # 记录操作日志
+        from app.utils.logger import log_operation
+        log_operation(
+            operation_type="BATCH_SYNC_ACCOUNTS_COMPLETE",
+            user_id=current_user.id,
+            details={
+                "total_instances": len(instances),
+                "success_count": success_count,
+                "failed_count": failed_count,
+                "results": results,
+            },
+        )
+
+        return jsonify({
+            "success": True,
+            "message": f"批量同步完成，成功 {success_count} 个实例，失败 {failed_count} 个实例",
+            "total_instances": len(instances),
+            "success_count": success_count,
+            "failed_count": failed_count,
+            "results": results,
+        })
+
+    except Exception as e:
+        # 记录详细的错误日志
+        log_api_error("sync_all_accounts", e, "account_sync", 
+                     f"用户: {current_user.id if current_user else 'unknown'}")
+        
+        return jsonify({
+            "success": False,
+            "error": f"批量同步失败: {str(e)}",
+        }), 500
+
+
+@account_sync_bp.route("/sync-details-batch", methods=["GET"])
+@login_required
+def sync_details_batch():
+    """获取批量同步详情"""
+    try:
+        record_ids = request.args.get("record_ids", "").split(",")
+        record_ids = [int(rid) for rid in record_ids if rid.strip()]
+        
+        if not record_ids:
+            return jsonify({
+                "success": False,
+                "error": "没有提供记录ID"
+            }), 400
+
+        # 获取同步记录
+        records = SyncData.query.filter(SyncData.id.in_(record_ids)).all()
+        
+        if not records:
+            return jsonify({
+                "success": False,
+                "error": "没有找到同步记录"
+            }), 404
+
+        # 构建详情数据
+        details = []
+        for record in records:
+            instance = Instance.query.get(record.instance_id)
+            details.append({
+                "id": record.id,
+                "instance_name": instance.name if instance else "未知实例",
+                "status": record.status,
+                "message": record.message,
+                "synced_count": record.synced_count,
+                "sync_time": record.sync_time.isoformat() if record.sync_time else None,
+            })
+
+        return jsonify({
+            "success": True,
+            "details": details,
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"获取同步详情失败: {str(e)}"
+        }), 500
+
+
+@account_sync_bp.route("/sync-history")
+@login_required
+def sync_history():
+    """同步历史页面"""
+    # 获取查询参数
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    sync_type = request.args.get("sync_type", "all")
+    status = request.args.get("status", "all")
+    instance_id = request.args.get("instance_id", type=int)
+
+    # 构建查询
+    query = SyncData.query
+
+    # 同步类型过滤
+    if sync_type and sync_type != "all":
+        query = query.filter(SyncData.sync_type == sync_type)
+
+    # 状态过滤
+    if status and status != "all":
+        query = query.filter(SyncData.status == status)
+
+    # 实例过滤
+    if instance_id:
+        query = query.filter(SyncData.instance_id == instance_id)
+
+    # 排序
+    query = query.order_by(SyncData.sync_time.desc())
+
+    # 分页
+    pagination = query.paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+
+    # 获取实例列表用于过滤
+    instances = Instance.query.filter_by(is_active=True).all()
+
+    if request.is_json:
+        return jsonify({
+            "records": [record.to_dict() for record in pagination.items],
+            "pagination": {
+                "page": pagination.page,
+                "pages": pagination.pages,
+                "per_page": pagination.per_page,
+                "total": pagination.total,
+                "has_next": pagination.has_next,
+                "has_prev": pagination.has_prev,
+            },
+            "instances": [instance.to_dict() for instance in instances],
+        })
+
+    return render_template(
+        "accounts/sync_history.html",
+        records=pagination.items,
+        pagination=pagination,
+        sync_type=sync_type,
+        status=status,
+        instance_id=instance_id,
+        instances=instances,
+    )
+
+
+@account_sync_bp.route("/sync-details/<sync_id>")
+@login_required
+def sync_details(sync_id):
+    """同步详情页面"""
+    try:
+        record = SyncData.query.get_or_404(sync_id)
+        instance = Instance.query.get(record.instance_id)
+        
+        if request.is_json:
+            return jsonify({
+                "success": True,
+                "record": record.to_dict(),
+                "instance": instance.to_dict() if instance else None,
+            })
+
+        return render_template(
+            "accounts/sync_details.html",
+            record=record,
+            instance=instance,
+        )
+
+    except Exception as e:
+        if request.is_json:
+            return jsonify({
+                "success": False,
+                "error": f"获取同步详情失败: {str(e)}"
+            }), 500
+        
+        flash(f"获取同步详情失败: {str(e)}", "error")
+        return redirect(url_for("account_sync.sync_history"))
+
+
+@account_sync_bp.route("/sync-report")
+@login_required
+def sync_report():
+    """同步报告页面"""
+    # 获取查询参数
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 20, type=int)
+    sync_type = request.args.get("sync_type", "all")
+    status = request.args.get("status", "all")
+    instance_id = request.args.get("instance_id", type=int)
+
+    # 构建查询
+    query = SyncData.query
+
+    # 同步类型过滤
+    if sync_type and sync_type != "all":
+        query = query.filter(SyncData.sync_type == sync_type)
+
+    # 状态过滤
+    if status and status != "all":
+        query = query.filter(SyncData.status == status)
+
+    # 实例过滤
+    if instance_id:
+        query = query.filter(SyncData.instance_id == instance_id)
+
+    # 排序
+    query = query.order_by(SyncData.sync_time.desc())
+
+    # 分页
+    pagination = query.paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+
+    # 获取实例列表用于过滤
+    instances = Instance.query.filter_by(is_active=True).all()
+
+    if request.is_json:
+        return jsonify({
+            "records": [record.to_dict() for record in pagination.items],
+            "pagination": {
+                "page": pagination.page,
+                "pages": pagination.pages,
+                "per_page": pagination.per_page,
+                "total": pagination.total,
+                "has_next": pagination.has_next,
+                "has_prev": pagination.has_prev,
+            },
+            "instances": [instance.to_dict() for instance in instances],
+        })
+
+    return render_template(
+        "accounts/sync_report.html",
+        records=pagination.items,
+        pagination=pagination,
+        sync_type=sync_type,
+        status=status,
+        instance_id=instance_id,
+        instances=instances,
+    )
+
+
+@account_sync_bp.route("/sync-statistics")
+@login_required
+def sync_statistics():
+    """同步统计页面"""
+    try:
+        # 获取统计信息
+        stats = {
+            "total_syncs": SyncData.query.count(),
+            "success_syncs": SyncData.query.filter_by(status="success").count(),
+            "failed_syncs": SyncData.query.filter_by(status="failed").count(),
+            "manual_syncs": SyncData.query.filter_by(sync_type="manual").count(),
+            "batch_syncs": SyncData.query.filter_by(sync_type="batch").count(),
+            "task_syncs": SyncData.query.filter_by(sync_type="task").count(),
+        }
+
+        # 获取最近7天的同步趋势（包含今天）
+        end_date = now()
+        start_date = end_date - timedelta(days=6)  # 改为6天前，这样包含今天共7天
+        
+        trend_data = []
+        for i in range(7):
+            date = start_date + timedelta(days=i)
+            next_date = date + timedelta(days=1)
+            
+            # 如果是最后一天（今天），使用当前时间作为结束时间
+            if i == 6:
+                next_date = end_date
+            
+            count = SyncData.query.filter(
+                SyncData.sync_time >= date,
+                SyncData.sync_time < next_date
+            ).count()
+            
+            trend_data.append({
+                "date": date.strftime("%Y-%m-%d"),
+                "count": count
+            })
+
+        # 计算成功率
+        success_rate = 0
+        if stats["total_syncs"] > 0:
+            success_rate = round((stats["success_syncs"] / stats["total_syncs"]) * 100, 2)
+        
+        # 获取总同步账户数
+        total_accounts = sum(record.synced_count or 0 for record in SyncData.query.all())
+        
+        # 获取最近同步时间
+        last_sync = SyncData.query.order_by(SyncData.sync_time.desc()).first()
+        last_sync_time = last_sync.sync_time.strftime("%Y-%m-%d %H:%M:%S") if last_sync and last_sync.sync_time else None
+        
+        # 构建完整的统计信息
+        statistics = {
+            "total_syncs": stats["total_syncs"],
+            "success_rate": success_rate,
+            "total_accounts": total_accounts,
+            "last_sync_time": last_sync_time,
+        }
+        
+        return jsonify({
+            "success": True,
+            "statistics": statistics,
+            "trend_data": trend_data,
+            "db_type_distribution": {}  # 可以后续添加数据库类型分布
+        })
+
+    except Exception as e:
+        if request.is_json:
+            return jsonify({
+                "success": False,
+                "error": f"获取同步统计失败: {str(e)}"
+            }), 500
+        
+        flash(f"获取同步统计失败: {str(e)}", "error")
+        return redirect(url_for("account_sync.sync_history"))
+
+
+
+
+@account_sync_bp.route("/history")
+@login_required
+def history():
+    """历史记录页面 - 重定向到统一页面"""
+    return redirect(url_for("account_sync.sync_records"))

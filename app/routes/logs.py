@@ -24,7 +24,65 @@ logs_bp = Blueprint("logs", __name__)
 @login_required
 def index():
     """系统日志页面"""
-    return render_template("logs/system_logs.html")
+    try:
+        from app.models.log import Log
+        
+        # 获取查询参数
+        page = request.args.get("page", 1, type=int)
+        level = request.args.get("level", "", type=str)
+        module = request.args.get("module", "", type=str)
+        start_date = request.args.get("start_date", "", type=str)
+        end_date = request.args.get("end_date", "", type=str)
+        search = request.args.get("search", "", type=str)
+        
+        # 构建查询
+        query = Log.query
+        
+        if level and level != "all":
+            query = query.filter(Log.level == level)
+            
+        if module and module != "all":
+            query = query.filter(Log.module == module)
+            
+        if search:
+            query = query.filter(Log.message.contains(search))
+            
+        if start_date:
+            from datetime import datetime
+            start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(Log.created_at >= start_datetime)
+            
+        if end_date:
+            from datetime import datetime
+            end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+            # 添加一天到结束日期，使其包含整天
+            from datetime import timedelta
+            end_datetime = end_datetime + timedelta(days=1)
+            query = query.filter(Log.created_at < end_datetime)
+        
+        # 分页查询
+        pagination = query.order_by(Log.created_at.desc()).paginate(
+            page=page, per_page=20, error_out=False
+        )
+        
+        return render_template("logs/system_logs.html", 
+                             pagination=pagination,
+                             level=level,
+                             module=module,
+                             start_date=start_date,
+                             end_date=end_date,
+                             search=search)
+                             
+    except Exception as e:
+        logging.error(f"加载日志页面失败: {e}")
+        flash("加载日志页面失败", "error")
+        return render_template("logs/system_logs.html", 
+                             pagination=None,
+                             level="",
+                             module="",
+                             start_date="",
+                             end_date="",
+                             search="")
 
 
 @logs_bp.route("/api", methods=["GET"])
