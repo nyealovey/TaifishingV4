@@ -437,94 +437,77 @@ def detail(log_id):
 @logs_bp.route("/export")
 @login_required
 def export():
-    """导出日志"""
-    format_type = request.args.get("format", "json", type=str)
-    log_level = request.args.get("log_level", "", type=str)
-    log_type = request.args.get("log_type", "", type=str)
-    start_date = request.args.get("start_date", "", type=str)
-    end_date = request.args.get("end_date", "", type=str)
-
-    # 构建查询
-    query = Log.query
-
-    if log_level:
-        query = query.filter(Log.level == log_level)
-
-    if log_type:
-        query = query.filter(Log.log_type == log_type)
-
-    if start_date:
-        try:
-            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-            query = query.filter(Log.created_at >= start_dt)
-        except ValueError:
-            pass
-
-    if end_date:
-        try:
-            end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
-            query = query.filter(Log.created_at < end_dt)
-        except ValueError:
-            pass
-
-    logs = query.order_by(Log.created_at.desc()).all()
-
-    if format_type == "csv":
-        # 生成CSV格式
+    """导出日志CSV"""
+    try:
+        # 获取查询参数（与index函数保持一致）
+        level = request.args.get("level", "", type=str)
+        module = request.args.get("module", "", type=str)
+        start_date = request.args.get("start_date", "", type=str)
+        end_date = request.args.get("end_date", "", type=str)
+        search = request.args.get("search", "", type=str)
+        
+        # 构建查询（与index函数保持一致）
+        query = Log.query
+        
+        if level and level != "all":
+            query = query.filter(Log.level == level)
+            
+        if module and module != "all":
+            query = query.filter(Log.module == module)
+            
+        if search:
+            query = query.filter(Log.message.contains(search))
+            
+        if start_date:
+            start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(Log.created_at >= start_datetime)
+            
+        if end_date:
+            end_datetime = datetime.strptime(end_date, "%Y-%m-%d")
+            end_datetime = end_datetime + timedelta(days=1)
+            query = query.filter(Log.created_at < end_datetime)
+        
+        # 获取所有日志（不分页）
+        logs = query.order_by(Log.created_at.desc()).all()
+        
+        # 构建CSV数据
         import csv
         import io
-
+        from flask import make_response
+        from app.utils.timezone import format_china_time
+        
         output = io.StringIO()
         writer = csv.writer(output)
-
+        
         # 写入表头
-        writer.writerow(["时间", "级别", "类型", "模块", "用户", "消息", "详情"])
-
+        writer.writerow([
+            "时间", "级别", "类型", "模块", "用户", "IP地址", "消息", "详情"
+        ])
+        
         # 写入数据
-        from app.utils.timezone import format_china_time
-
         for log in logs:
-            writer.writerow(
-                [
-                    (
-                        format_china_time(log.created_at, "%Y-%m-%d %H:%M:%S")
-                        if log.created_at
-                        else ""
-                    ),
-                    log.level,
-                    log.log_type,
-                    log.module,
-                    log.user.username if log.user else "系统",
-                    log.message,
-                    log.details or "",
-                ]
-            )
-
-        output.seek(0)
-
-        from flask import Response
-
-        return Response(
-            output.getvalue(),
-            mimetype="text/csv",
-            headers={"Content-Disposition": "attachment; filename=operation_logs.csv"},
-        )
-
-    else:
-        # 默认JSON格式
-        data = {
-            "export_time": now().isoformat(),
-            "total_logs": len(logs),
-            "filters": {
-                "log_level": log_level,
-                "log_type": log_type,
-                "start_date": start_date,
-                "end_date": end_date,
-            },
-            "logs": [log.to_dict() for log in logs],
-        }
-
-        return jsonify(data)
+            writer.writerow([
+                format_china_time(log.created_at, "%Y-%m-%d %H:%M:%S") if log.created_at else "",
+                log.level or "",
+                log.log_type or "",
+                log.module or "",
+                log.user.username if log.user else "系统",
+                log.ip_address or "",
+                log.message or "",
+                log.details or "",
+            ])
+        
+        # 返回CSV文件
+        response = make_response(output.getvalue())
+        response.headers["Content-Type"] = "text/csv; charset=utf-8"
+        response.headers["Content-Disposition"] = f"attachment; filename=logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        
+        return response
+        
+    except Exception as e:
+        logging.error(f"导出日志失败: {e}")
+        flash(f"导出失败: {str(e)}", "error")
+        return redirect(url_for("logs.index"))
 
 
 @logs_bp.route("/cleanup", methods=["POST"])
