@@ -119,7 +119,7 @@
 - `app/templates/main/index.html` - 主页面
 - `app/templates/dashboard/index.html` - 仪表盘
 - `app/templates/auth/login.html` - 登录页面
-- `app/templates/auth/register.html` - 注册页面
+- ~~`app/templates/auth/register.html` - 注册页面~~ **已删除** - 注册功能已移除
 - `app/templates/auth/profile.html` - 用户资料页面
 - `app/templates/auth/change_password.html` - 修改密码页面
 
