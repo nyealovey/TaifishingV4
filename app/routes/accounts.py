@@ -374,14 +374,19 @@ def sync_all_accounts():
     return redirect(url_for("accounts.index"))
 
 
-@accounts_bp.route("/sync-details-batch", methods=["POST"])
+@accounts_bp.route("/sync-details-batch", methods=["GET"])
 @login_required
 def sync_details_batch():
     """获取同步详情API"""
     try:
-        data = request.get_json()
-        record_ids = data.get("record_ids", [])
-        failed_only = data.get("failed_only", False)
+        record_ids_str = request.args.get("record_ids", "")
+        failed_only = request.args.get("failed_only", "false").lower() == "true"
+        
+        # 解析record_ids字符串为列表
+        if record_ids_str:
+            record_ids = [int(id.strip()) for id in record_ids_str.split(",") if id.strip().isdigit()]
+        else:
+            record_ids = []
         
         if not record_ids:
             return jsonify({"success": False, "error": "缺少记录ID"}), 400

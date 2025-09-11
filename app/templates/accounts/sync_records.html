@@ -445,12 +445,14 @@ function showAlert(type, message) {
 
 // 查看批量同步详情
 function viewBatchDetails(recordIds) {
-    fetch('/accounts/sync-details-batch', {
-        method: 'POST',
+    const recordIdsStr = recordIds.join(',');
+    const url = `/accounts/sync-details-batch?record_ids=${encodeURIComponent(recordIdsStr)}`;
+    
+    fetch(url, {
+        method: 'GET',
         headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ record_ids: recordIds })
+            'Content-Type': 'application/json'
+        }
     })
     .then(response => response.json())
     .then(data => {
@@ -468,12 +470,14 @@ function viewBatchDetails(recordIds) {
 
 // 查看失败详情
 function viewFailedDetails(recordIds) {
-    fetch('/accounts/sync-details-batch', {
-        method: 'POST',
+    const recordIdsStr = recordIds.join(',');
+    const url = `/accounts/sync-details-batch?record_ids=${encodeURIComponent(recordIdsStr)}&failed_only=true`;
+    
+    fetch(url, {
+        method: 'GET',
         headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ record_ids: recordIds, failed_only: true })
+            'Content-Type': 'application/json'
+        }
     })
     .then(response => response.json())
     .then(data => {
