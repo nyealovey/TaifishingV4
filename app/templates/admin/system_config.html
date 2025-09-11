@@ -473,14 +473,29 @@ function showConfigSection(sectionId) {
 async function loadConfigs() {
     try {
         const response = await fetch('/admin/config');
+        
+        // 检查是否是重定向到登录页面
+        if (response.redirected || response.url.includes('/auth/login')) {
+            console.log('需要登录，重定向到登录页面');
+            window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
+            return;
+        }
+        
+        // 检查响应状态
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
         
         if (data.success) {
             updateConfigForms(data.data);
+        } else {
+            showNotification('加载配置失败: ' + data.message, 'error');
         }
     } catch (error) {
         console.error('加载配置失败:', error);
-        showNotification('加载配置失败', 'error');
+        showNotification('加载配置失败: ' + error.message, 'error');
     }
 }
 
@@ -573,6 +588,20 @@ async function saveConfig(configType) {
                 config: config
             })
         });
+        
+        // 检查是否是重定向到登录页面
+        if (response.redirected || response.url.includes('/auth/login')) {
+            showNotification('会话已过期，请重新登录', 'error');
+            setTimeout(() => {
+                window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
+            }, 2000);
+            return;
+        }
+        
+        // 检查响应状态
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
         
         const data = await response.json();
         
