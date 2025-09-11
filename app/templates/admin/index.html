@@ -141,26 +141,6 @@
     </div>
 </div>
 
-<!-- 最近活动 -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-history me-2"></i>最近活动
-                </h5>
-            </div>
-            <div class="card-body">
-                <div id="recent-activities">
-                    <div class="text-center">
-                        <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
-                        <p class="text-muted mt-2">加载中...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_css %}
@@ -190,7 +170,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     loadSystemOverview();
     checkSystemStatus();
-    loadRecentActivities();
 });
 
 function loadSystemOverview() {
@@ -231,43 +210,6 @@ function checkSystemStatus() {
     });
 }
 
-function loadRecentActivities() {
-    fetch('/dashboard/api/activities?limit=10')
-    .then(response => response.json())
-    .then(data => {
-        const container = document.getElementById('recent-activities');
-        if (data.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-4">
-                    <i class="fas fa-history fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">暂无最近活动</p>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = data.map(activity => `
-            <div class="d-flex align-items-start mb-3">
-                <i class="${activity.icon} me-3 mt-1 text-${activity.level === 'ERROR' ? 'danger' : activity.level === 'WARNING' ? 'warning' : 'info'}"></i>
-                <div class="flex-grow-1">
-                    <div class="fw-bold">${activity.message}</div>
-                    <small class="text-muted">
-                        ${activity.user} • ${activity.module} • ${activity.time ? new Date(activity.time).toLocaleString() : '未知时间'}
-                    </small>
-                </div>
-            </div>
-        `).join('');
-    })
-    .catch(error => {
-        console.error('加载最近活动失败:', error);
-        document.getElementById('recent-activities').innerHTML = `
-            <div class="text-center py-4">
-                <i class="fas fa-exclamation-triangle fa-3x text-muted mb-3"></i>
-                <p class="text-muted">加载失败</p>
-            </div>
-        `;
-    });
-}
 
 function updateStatusIndicator(elementId, status) {
     const element = document.getElementById(elementId);
@@ -281,7 +223,6 @@ function updateStatusText(elementId, text) {
 function refreshData() {
     loadSystemOverview();
     checkSystemStatus();
-    loadRecentActivities();
     
     // 显示刷新提示
     const button = event.target;
