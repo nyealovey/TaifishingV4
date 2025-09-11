@@ -27,7 +27,7 @@ def sync_postgresql_accounts(instance, config):
     
     try:
         # 连接数据库
-        conn = psycop.connect(
+        conn = psycopg.connect(
             host=instance.host,
             port=instance.port,
             database=instance.database_name or 'postgres',
@@ -214,7 +214,7 @@ def sync_postgresql_version(instance, config):
     
     try:
         # 连接数据库
-        conn = psycop.connect(
+        conn = psycopg.connect(
             host=instance.host,
             port=instance.port,
             database=instance.database_name or 'postgres',
@@ -338,7 +338,7 @@ def sync_postgresql_size(instance, config):
     
     try:
         # 连接数据库
-        conn = psycop.connect(
+        conn = psycopg.connect(
             host=instance.host,
             port=instance.port,
             database=instance.database_name or 'postgres',

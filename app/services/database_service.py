@@ -868,7 +868,7 @@ class DatabaseService:
 
             # 尝试连接PostgreSQL
             password = instance.credential.get_plain_password()
-            conn = psycop.connect(
+            conn = psycopg.connect(
                 host=instance.host,
                 port=instance.port,
                 database="postgres",  # PostgreSQL默认数据库
@@ -1549,7 +1549,7 @@ class DatabaseService:
             password = (
                 instance.credential.get_plain_password() if instance.credential else ""
             )
-            conn = psycop.connect(
+            conn = psycopg.connect(
                 host=instance.host,
                 port=instance.port,
                 database="postgres",  # PostgreSQL默认数据库

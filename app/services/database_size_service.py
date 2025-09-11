@@ -99,7 +99,7 @@ class DatabaseSizeService:
             elif instance.db_type == "postgresql":
                 if psycopg is None:
                     raise ImportError("psycopg模块未安装，无法连接PostgreSQL")
-                return psycop.connect(
+                return psycopg.connect(
                     host=instance.host,
                     port=instance.port,
                     database=instance.database_name or "postgres",
