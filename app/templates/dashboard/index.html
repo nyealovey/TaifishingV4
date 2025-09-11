@@ -168,7 +168,7 @@
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-chart-line me-2"></i>日志趋势（最近7天）
+                    <i class="fas fa-chart-line me-2"></i>错误和告警日志趋势（最近7天）
                 </h5>
             </div>
             <div class="card-body">
@@ -356,10 +356,10 @@ function initLogTrendChart() {
             data: {
                 labels: logTrend.map(item => item.date),
                 datasets: [{
-                    label: '日志数量',
+                    label: '错误和告警日志数量',
                     data: logTrend.map(item => item.count),
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgb(220, 53, 69)',
+                    backgroundColor: 'rgba(220, 53, 69, 0.2)',
                     tension: 0.1
                 }]
             },

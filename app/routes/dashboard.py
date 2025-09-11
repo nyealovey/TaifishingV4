@@ -271,7 +271,7 @@ def get_chart_data(chart_type="all"):
 
 
 def get_log_trend_data():
-    """获取日志趋势数据"""
+    """获取日志趋势数据（只显示错误和告警日志）"""
     try:
         # 最近7天的日志数据（东八区）
         china_today = get_china_date()
@@ -289,8 +289,11 @@ def get_log_trend_data():
                 CHINA_TZ.localize(datetime.combine(date, datetime.max.time()))
             )
 
+            # 只统计错误和告警日志
             count = Log.query.filter(
-                Log.created_at >= start_utc, Log.created_at <= end_utc
+                Log.created_at >= start_utc, 
+                Log.created_at <= end_utc,
+                Log.level.in_(["ERROR", "WARNING", "CRITICAL"])
             ).count()
 
             trend_data.append({"date": date.strftime("%Y-%m-%d"), "count": count})
@@ -302,10 +305,11 @@ def get_log_trend_data():
 
 
 def get_log_level_distribution():
-    """获取日志级别分布"""
+    """获取日志级别分布（只显示错误和告警日志）"""
     try:
         level_stats = (
             db.session.query(Log.level, db.func.count(Log.id).label("count"))
+            .filter(Log.level.in_(["ERROR", "WARNING", "CRITICAL"]))
             .group_by(Log.level)
             .all()
         )
