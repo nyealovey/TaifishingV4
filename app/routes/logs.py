@@ -90,22 +90,22 @@ def index():
             query = query.filter(Log.module == module)
         
         # 按时间范围过滤
-    if start_date:
-        try:
+        if start_date:
+            try:
                 start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
                 query = query.filter(Log.created_at >= start_datetime)
-        except ValueError:
-            pass
-    
-    if end_date:
-        try:
+            except ValueError:
+                pass
+        
+        if end_date:
+            try:
                 end_datetime = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
                 query = query.filter(Log.created_at < end_datetime)
-        except ValueError:
-            pass
-    
+            except ValueError:
+                pass
+        
         # 按消息内容搜索
-    if search:
+        if search:
             query = query.filter(Log.message.like(f'%{search}%'))
         
         # 获取合并后的日志
@@ -165,33 +165,33 @@ def export_logs():
         start_date = request.args.get('start_date', '')
         end_date = request.args.get('end_date', '')
         search = request.args.get('search', '')
-    
-    # 构建查询
-    query = Log.query
-    
+        
+        # 构建查询
+        query = Log.query
+        
         # 按级别过滤
         if level:
             query = query.filter(Log.level == level)
-    
+        
         # 按模块过滤
         if module:
             query = query.filter(Log.module == module)
-    
+        
         # 按时间范围过滤
-    if start_date:
-        try:
+        if start_date:
+            try:
                 start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
                 query = query.filter(Log.created_at >= start_datetime)
-        except ValueError:
-            pass
-    
-    if end_date:
-        try:
+            except ValueError:
+                pass
+        
+        if end_date:
+            try:
                 end_datetime = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
                 query = query.filter(Log.created_at < end_datetime)
-        except ValueError:
-            pass
-    
+            except ValueError:
+                pass
+        
         # 按消息内容搜索
         if search:
             query = query.filter(Log.message.like(f'%{search}%'))
@@ -227,6 +227,7 @@ def export_logs():
         return response
     except Exception as e:
         logging.error(f"导出日志失败: {e}")
+        return jsonify({'success': False, 'message': '导出失败'}), 500
         flash("导出失败", "error")
         return redirect(url_for('logs.index'))
 
@@ -489,7 +490,7 @@ def delete_log(log_id):
         if not current_user.is_admin:
             return jsonify({'success': False, 'message': '权限不足'})
         
-    log = Log.query.get_or_404(log_id)
+        log = Log.query.get_or_404(log_id)
         db.session.delete(log)
         db.session.commit()
         
