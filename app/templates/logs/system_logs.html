@@ -155,6 +155,7 @@
                                     <th>时间</th>
                                     <th>级别</th>
                                     <th>模块</th>
+                                    <th>状态码</th>
                                     <th>消息</th>
                                     <th>操作</th>
                                 </tr>
@@ -180,6 +181,19 @@
                                         </td>
                                         <td>
                                             <span class="badge bg-primary">{{ log.module or 'system' }}</span>
+                                        </td>
+                                        <td>
+                                            {% if log.log_category == 'http_request' and log.status_code %}
+                                                <span class="badge 
+                                                    {% if log.status_code >= 500 %}bg-danger
+                                                    {% elif log.status_code >= 400 %}bg-warning
+                                                    {% elif log.status_code >= 300 %}bg-info
+                                                    {% else %}bg-success{% endif %}">
+                                                    {{ log.status_code }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">--</span>
+                                            {% endif %}
                                         </td>
                                         <td>
                                             <div class="log-message" style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
@@ -213,7 +227,7 @@
                                     {% endfor %}
                                 {% else %}
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">
+                                        <td colspan="7" class="text-center text-muted py-4">
                                             <i class="fas fa-inbox fa-2x mb-2"></i><br>
                                             暂无日志记录
                                         </td>

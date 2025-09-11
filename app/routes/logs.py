@@ -38,7 +38,8 @@ def get_merged_request_logs(query, page=1, per_page=20):
             page=page, per_page=per_page, error_out=False
         )
         
-        # 为每个日志添加类型标识
+        # 为每个日志添加类型标识和状态码
+        import re
         for log in logs.items:
             # 判断是否为HTTP请求日志
             if (log.log_type == 'request' and 
@@ -46,9 +47,17 @@ def get_merged_request_logs(query, page=1, per_page=20):
                 log.module == 'request_handler'):
                 log.is_merged = True  # HTTP请求日志（已合并）
                 log.log_category = 'http_request'
+                
+                # 提取状态码
+                status_match = re.search(r'-\s+(\d+)\s+\(', log.message)
+                if status_match:
+                    log.status_code = int(status_match.group(1))
+                else:
+                    log.status_code = None
             else:
                 log.is_merged = False  # 其他类型日志
                 log.log_category = 'other'
+                log.status_code = None
         
         return logs
     except Exception as e:
