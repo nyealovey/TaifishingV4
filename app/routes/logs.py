@@ -131,7 +131,19 @@ def get_merged_request_logs(query, page=1, per_page=20):
                 'user_agent': request_data['end_log'].user_agent if request_data['end_log'] else (request_data['start_log'].user_agent if request_data['start_log'] else None),
                 'created_at': request_data['end_time'] if request_data['end_time'] else request_data['start_time'],
                 'is_merged': True,
-                'original_logs': [request_data['start_log'], request_data['end_log']]
+                'original_logs': [request_data['start_log'], request_data['end_log']],
+                # 添加合并日志的详细信息
+                'merged_info': {
+                    'path': path,
+                    'status_code': request_data['status_code'],
+                    'duration': request_data['duration'],
+                    'start_time': request_data['start_time'],
+                    'end_time': request_data['end_time'],
+                    'start_log_id': request_data['start_log'].id if request_data['start_log'] else None,
+                    'end_log_id': request_data['end_log'].id if request_data['end_log'] else None,
+                    'start_level': request_data['start_log'].level if request_data['start_log'] else None,
+                    'end_level': request_data['end_log'].level if request_data['end_log'] else None
+                }
             }
             merged_logs_list.append(merged_log)
         

@@ -196,7 +196,7 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <button class="btn btn-sm btn-outline-info" onclick="showLogDetail({{ log.id }}, {{ log.is_merged|lower }})" title="查看详情">
+                                            <button class="btn btn-sm btn-outline-info" onclick="showLogDetail({{ log.id }}, {{ log.is_merged|lower }}, {{ log.merged_info|tojson|safe if log.is_merged else 'null' }})" title="查看详情">
                                                 <i class="fas fa-eye"></i>
                                             </button>
                                         </td>
@@ -322,13 +322,13 @@ function updateLogStats(stats) {
 // 分页通过模板直接渲染
 
 // 显示日志详情
-async function showLogDetail(logId, isMerged = false) {
+async function showLogDetail(logId, isMerged = false, mergedInfo = null) {
     try {
-        console.log('正在获取日志详情，ID:', logId, '是否合并:', isMerged);
+        console.log('正在获取日志详情，ID:', logId, '是否合并:', isMerged, '合并信息:', mergedInfo);
         
         if (isMerged) {
             // 对于合并的日志，显示合并后的信息
-            showMergedLogDetail(logId);
+            showMergedLogDetail(logId, mergedInfo);
             return;
         }
         
@@ -419,23 +419,90 @@ async function showLogDetail(logId, isMerged = false) {
 }
 
 // 显示合并日志详情
-function showMergedLogDetail(logId) {
-    // 从页面数据中查找合并日志的详细信息
-    // 这里需要从服务器端传递合并日志的详细信息
+function showMergedLogDetail(logId, mergedInfo) {
     const detailContent = document.getElementById('log-detail-content');
-    detailContent.innerHTML = `
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>
-            这是一个合并的请求日志，包含了请求开始和结束的信息。
-        </div>
-        <div class="row">
-            <div class="col-12">
-                <strong>说明:</strong>
-                <p class="mt-2">合并日志将同一个请求的开始和结束日志合并显示，级别以最严重的为准。</p>
-                <p>合并后的日志显示请求路径、状态码和持续时间（如果有）。</p>
+    
+    if (mergedInfo) {
+        // 格式化时间显示
+        const formatTime = (timeStr) => {
+            if (!timeStr) return '未知';
+            try {
+                return new Date(timeStr).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'});
+            } catch (e) {
+                return timeStr;
+            }
+        };
+        
+        detailContent.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                这是一个合并的请求日志，包含了请求开始和结束的信息。
             </div>
-        </div>
-    `;
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>请求路径:</strong> ${mergedInfo.path || '未知'}
+                </div>
+                <div class="col-md-6">
+                    <strong>状态码:</strong> 
+                    <span class="badge ${mergedInfo.status_code && mergedInfo.status_code >= 400 ? 'bg-danger' : 'bg-success'}">
+                        ${mergedInfo.status_code || '未知'}
+                    </span>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>开始时间:</strong> ${formatTime(mergedInfo.start_time)}
+                </div>
+                <div class="col-md-6">
+                    <strong>结束时间:</strong> ${formatTime(mergedInfo.end_time)}
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>持续时间:</strong> ${mergedInfo.duration ? mergedInfo.duration + 'ms' : '未知'}
+                </div>
+                <div class="col-md-6">
+                    <strong>日志级别:</strong> 
+                    <span class="badge ${getLevelClass(mergedInfo.start_level || 'INFO')}">${mergedInfo.start_level || 'INFO'}</span>
+                    ${mergedInfo.end_level && mergedInfo.end_level !== mergedInfo.start_level ? 
+                        ` → <span class="badge ${getLevelClass(mergedInfo.end_level)}">${mergedInfo.end_level}</span>` : ''}
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>开始日志ID:</strong> ${mergedInfo.start_log_id || '无'}
+                </div>
+                <div class="col-md-6">
+                    <strong>结束日志ID:</strong> ${mergedInfo.end_log_id || '无'}
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-12">
+                    <strong>说明:</strong>
+                    <p class="mt-2">合并日志将同一个请求的开始和结束日志合并显示，级别以最严重的为准。</p>
+                    <p>合并后的日志显示请求路径、状态码和持续时间（如果有）。</p>
+                </div>
+            </div>
+        `;
+    } else {
+        detailContent.innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                无法获取合并日志的详细信息。
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <strong>说明:</strong>
+                    <p class="mt-2">合并日志将同一个请求的开始和结束日志合并显示，级别以最严重的为准。</p>
+                    <p>合并后的日志显示请求路径、状态码和持续时间（如果有）。</p>
+                </div>
+            </div>
+        `;
+    }
     
     new bootstrap.Modal(document.getElementById('logDetailModal')).show();
 }
