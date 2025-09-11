@@ -429,21 +429,36 @@ def get_matched_accounts(rule_id):
         )
 
         matched_accounts = []
+        seen_accounts = set()  # 用于去重
+        
         for account in all_accounts:
             # 检查账户是否匹配规则
             if classification_service.evaluate_rule(rule, account):
-                matched_accounts.append(
-                    {
-                        "id": account.id,
-                        "username": account.username,
-                        "instance_name": (
-                            account.instance.name if account.instance else "未知实例"
-                        ),
-                        "instance_host": (
-                            account.instance.host if account.instance else "未知IP"
-                        ),
-                    }
-                )
+                # 对于MySQL，显示用户名@主机名
+                if rule.db_type == 'mysql' and account.host:
+                    display_name = f"{account.username}@{account.host}"
+                    # 使用用户名@主机名作为唯一标识
+                    unique_key = f"{account.username}@{account.host}"
+                else:
+                    display_name = account.username
+                    # 对于其他数据库类型，使用用户名作为唯一标识
+                    unique_key = account.username
+                
+                # 避免重复显示
+                if unique_key not in seen_accounts:
+                    seen_accounts.add(unique_key)
+                    matched_accounts.append(
+                        {
+                            "id": account.id,
+                            "username": display_name,
+                            "instance_name": (
+                                account.instance.name if account.instance else "未知实例"
+                            ),
+                            "instance_host": (
+                                account.instance.host if account.instance else "未知IP"
+                            ),
+                        }
+                    )
 
         return jsonify(
             {"success": True, "accounts": matched_accounts, "rule_name": rule.rule_name}
