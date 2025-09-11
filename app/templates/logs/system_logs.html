@@ -316,15 +316,23 @@ function updateLogStats(stats) {
 
 // 显示日志详情（带事件对象）
 function showLogDetailWithEvent(logId, isMerged, buttonElement) {
-    if (isMerged) {
+    console.log('showLogDetailWithEvent called:', {logId, isMerged, buttonElement});
+    
+    // 转换字符串为布尔值
+    const isMergedBool = isMerged === 'true' || isMerged === true;
+    
+    if (isMergedBool) {
         // 从按钮的数据属性中获取合并信息
         let mergedInfo = null;
         if (buttonElement && buttonElement.dataset.mergedInfo) {
             try {
                 mergedInfo = JSON.parse(buttonElement.dataset.mergedInfo);
+                console.log('解析到的合并信息:', mergedInfo);
             } catch (e) {
                 console.error('解析合并信息失败:', e);
             }
+        } else {
+            console.log('没有找到合并信息，buttonElement:', buttonElement);
         }
         showMergedLogDetail(logId, mergedInfo);
     } else {
@@ -446,9 +454,10 @@ async function showLogDetail(logId, isMerged = false, event = null) {
 
 // 显示合并日志详情
 function showMergedLogDetail(logId, mergedInfo) {
+    console.log('showMergedLogDetail called:', {logId, mergedInfo});
     const detailContent = document.getElementById('log-detail-content');
     
-    if (mergedInfo) {
+    if (mergedInfo && Object.keys(mergedInfo).length > 0) {
         // 格式化时间显示
         const formatTime = (timeStr) => {
             if (!timeStr) return '未知';
@@ -515,10 +524,11 @@ function showMergedLogDetail(logId, mergedInfo) {
             </div>
         `;
     } else {
+        console.log('mergedInfo为空或无效:', mergedInfo);
         detailContent.innerHTML = `
             <div class="alert alert-warning">
                 <i class="fas fa-exclamation-triangle me-2"></i>
-                无法获取合并日志的详细信息。
+                无法获取合并日志的详细信息。调试信息：${JSON.stringify(mergedInfo)}
             </div>
             <div class="row">
                 <div class="col-12">
