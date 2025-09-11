@@ -13,6 +13,7 @@ from app.utils.timezone import now
 from flask import Blueprint, request, jsonify, current_app, render_template
 from flask_login import login_required, current_user
 from functools import wraps
+from app import db
 from app.constants import UserRole, ErrorMessages, SuccessMessages
 from app.utils.api_response import APIResponse
 from app.utils.advanced_error_handler import advanced_error_handler
@@ -53,54 +54,104 @@ def system_config_page():
 def get_system_config():
     """获取系统配置"""
     try:
-        # 模拟配置数据
-        configs = {
-            "basic": {
-                "app_name": "泰摸鱼吧",
-                "app_version": "4.0.0",
-                "debug_mode": False,
-                "timezone": "Asia/Shanghai",
-                "secret_key": "****************",
-            },
-            "database": {
-                "db_type": "sqlite",
-                "db_host": "localhost",
-                "db_port": 3306,
-                "db_name": "taifish_dev",
-                "db_username": "root",
-                "db_pool_size": 10,
-            },
-            "security": {
-                "session_timeout": 30,
-                "max_login_attempts": 5,
-                "password_min_length": 8,
-                "require_strong_password": True,
-                "enable_2fa": False,
-                "enable_csrf": True,
-            },
-            "email": {
-                "smtp_host": "smtp.gmail.com",
-                "smtp_port": 587,
-                "smtp_username": "",
-                "smtp_use_tls": True,
-                "from_email": "",
-            },
-            "logging": {
-                "log_level": "INFO",
-                "log_format": "simple",
-                "log_file_size": 10,
-                "log_backup_count": 5,
-                "log_to_file": True,
-                "log_to_console": True,
-            },
-            "performance": {
-                "cache_ttl": 3600,
-                "max_workers": 4,
-                "request_timeout": 30,
-                "max_connections": 100,
-                "enable_compression": True,
-                "enable_caching": True,
-            },
+        from app.models.global_param import GlobalParam
+        
+        # 从数据库获取配置
+        configs = {}
+        
+        # 基础配置
+        basic_configs = GlobalParam.query.filter_by(param_type='system_config').all()
+        basic_data = {}
+        for config in basic_configs:
+            if config.config:
+                basic_data.update(config.config)
+        
+        # 设置默认值
+        configs["basic"] = {
+            "app_name": basic_data.get("app_name", "泰摸鱼吧"),
+            "app_version": basic_data.get("app_version", "4.0.0"),
+            "debug_mode": basic_data.get("debug_mode", False),
+            "timezone": basic_data.get("timezone", "Asia/Shanghai"),
+            "secret_key": "****************",
+        }
+        
+        # 数据库配置
+        db_configs = GlobalParam.query.filter_by(param_type='database_config').all()
+        db_data = {}
+        for config in db_configs:
+            if config.config:
+                db_data.update(config.config)
+        
+        configs["database"] = {
+            "db_type": db_data.get("db_type", "sqlite"),
+            "db_host": db_data.get("db_host", "localhost"),
+            "db_port": db_data.get("db_port", 3306),
+            "db_name": db_data.get("db_name", "taifish_dev"),
+            "db_username": db_data.get("db_username", "root"),
+            "db_pool_size": db_data.get("db_pool_size", 10),
+        }
+        
+        # 安全配置
+        security_configs = GlobalParam.query.filter_by(param_type='security_config').all()
+        security_data = {}
+        for config in security_configs:
+            if config.config:
+                security_data.update(config.config)
+        
+        configs["security"] = {
+            "session_timeout": security_data.get("session_timeout", 30),
+            "max_login_attempts": security_data.get("max_login_attempts", 5),
+            "password_min_length": security_data.get("password_min_length", 8),
+            "require_strong_password": security_data.get("require_strong_password", True),
+            "enable_2fa": security_data.get("enable_2fa", False),
+            "enable_csrf": security_data.get("enable_csrf", True),
+        }
+        
+        # 邮件配置
+        email_configs = GlobalParam.query.filter_by(param_type='email_config').all()
+        email_data = {}
+        for config in email_configs:
+            if config.config:
+                email_data.update(config.config)
+        
+        configs["email"] = {
+            "smtp_host": email_data.get("smtp_host", "smtp.gmail.com"),
+            "smtp_port": email_data.get("smtp_port", 587),
+            "smtp_username": email_data.get("smtp_username", ""),
+            "smtp_use_tls": email_data.get("smtp_use_tls", True),
+            "from_email": email_data.get("from_email", ""),
+        }
+        
+        # 日志配置
+        logging_configs = GlobalParam.query.filter_by(param_type='logging_config').all()
+        logging_data = {}
+        for config in logging_configs:
+            if config.config:
+                logging_data.update(config.config)
+        
+        configs["logging"] = {
+            "log_level": logging_data.get("log_level", "INFO"),
+            "log_format": logging_data.get("log_format", "simple"),
+            "log_file_size": logging_data.get("log_file_size", 10),
+            "log_backup_count": logging_data.get("log_backup_count", 5),
+            "log_to_file": logging_data.get("log_to_file", True),
+            "log_to_console": logging_data.get("log_to_console", True),
+        }
+        
+        # 性能配置
+        performance_configs = GlobalParam.query.filter_by(param_type='performance_config').all()
+        performance_data = {}
+        for config in performance_configs:
+            if config.config:
+                performance_data.update(config.config)
+        
+        configs["performance"] = {
+            "cache_ttl": performance_data.get("cache_ttl", 3600),
+            "max_workers": performance_data.get("max_workers", 4),
+            "request_timeout": performance_data.get("request_timeout", 30),
+            "max_connections": performance_data.get("max_connections", 100),
+            "enable_compression": performance_data.get("enable_compression", True),
+            "enable_caching": performance_data.get("enable_caching", True),
         }
 
         return APIResponse.success(data=configs)
@@ -116,6 +167,8 @@ def get_system_config():
 def save_system_config():
     """保存系统配置"""
     try:
+        from app.models.global_param import GlobalParam
+        
         data = request.get_json()
         config_type = data.get("type")
         config = data.get("config", {})
@@ -123,15 +176,82 @@ def save_system_config():
         if not config_type:
             return APIResponse.error("配置类型不能为空", code=400)
 
-        # 这里应该实际保存配置到数据库或配置文件
-        # 目前只是模拟保存
-        logger.info(f"保存{config_type}配置: {config}")
+        # 映射配置类型到数据库类型
+        type_mapping = {
+            "basic": "system_config",
+            "database": "database_config", 
+            "security": "security_config",
+            "email": "email_config",
+            "logging": "logging_config",
+            "performance": "performance_config"
+        }
+        
+        param_type = type_mapping.get(config_type)
+        if not param_type:
+            return APIResponse.error("无效的配置类型", code=400)
 
+        # 查找或创建配置记录
+        existing_config = GlobalParam.query.filter_by(
+            param_type=param_type,
+            name=f"{config_type}_config"
+        ).first()
+        
+        if existing_config:
+            # 更新现有配置
+            existing_config.config = config
+            existing_config.updated_at = datetime.utcnow()
+        else:
+            # 创建新配置
+            new_config = GlobalParam(
+                param_type=param_type,
+                name=f"{config_type}_config",
+                config=config
+            )
+            db.session.add(new_config)
+        
+        db.session.commit()
+        
+        # 如果是基础配置，更新应用名称到session或缓存
+        if config_type == "basic" and "app_name" in config:
+            # 这里可以更新全局配置或缓存
+            logger.info(f"应用名称已更新为: {config['app_name']}")
+
+        logger.info(f"保存{config_type}配置成功: {config}")
         return APIResponse.success(message=f"{config_type}配置保存成功")
 
     except Exception as e:
+        db.session.rollback()
         logger.error(f"保存系统配置失败: {e}")
         return APIResponse.server_error("保存系统配置失败")
+
+
+@admin_bp.route("/app-info", methods=["GET"])
+def get_app_info():
+    """获取应用信息（公开接口，用于右上角显示）"""
+    try:
+        from app.models.global_param import GlobalParam
+        
+        # 获取基础配置中的应用名称
+        basic_config = GlobalParam.query.filter_by(
+            param_type='system_config',
+            name='basic_config'
+        ).first()
+        
+        app_name = "泰摸鱼吧"  # 默认值
+        if basic_config and basic_config.config:
+            app_name = basic_config.config.get("app_name", "泰摸鱼吧")
+        
+        return APIResponse.success(data={
+            "app_name": app_name,
+            "app_version": "4.0.0"
+        })
+
+    except Exception as e:
+        logger.error(f"获取应用信息失败: {e}")
+        return APIResponse.success(data={
+            "app_name": "泰摸鱼吧",
+            "app_version": "4.0.0"
+        })
 
 
 @admin_bp.route("/config/test-db", methods=["POST"])

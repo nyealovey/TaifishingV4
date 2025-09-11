@@ -578,6 +578,14 @@ async function saveConfig(configType) {
         
         if (data.success) {
             showNotification('配置保存成功', 'success');
+            
+            // 如果是基础配置，刷新应用名称
+            if (configType === 'basic') {
+                // 刷新页面以更新右上角的应用名称
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
         } else {
             showNotification('配置保存失败: ' + data.message, 'error');
         }
