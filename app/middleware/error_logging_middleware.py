@@ -42,13 +42,11 @@ def register_error_logging_middleware(app):
     def log_request_end(response):
         """记录请求结束并合并日志"""
         print(f"DEBUG: after_request 被调用: {request.method} {request.path} - {response.status_code}")
+        print(f"DEBUG: request.endpoint: {request.endpoint}")
+        
         try:
             if request.endpoint and not request.endpoint.startswith('static'):
-                status_code = response.status_code
-                log_level = "warning" if status_code >= 400 else "info"
-                
-                # 获取请求ID
-                request_id = getattr(g, 'request_id', 'unknown')
+                print(f"DEBUG: 处理非静态请求")
                 print(f"DEBUG: 处理请求结束: {request.method} {request.path} - {status_code} [request_id: {request_id}]")
                 
                 # 查找对应的开始日志
@@ -85,11 +83,14 @@ def register_error_logging_middleware(app):
                         details=f"开始时间: {start_log.created_at}, 结束时间: {end_time}, 持续时间: {duration:.2f}ms",
                         user_id=current_user.id if current_user and hasattr(current_user, 'id') else None,
                         ip_address=request.remote_addr,
-                        user_agent=request.headers.get('User-Agent'),
-                        created_at=start_log.created_at  # 使用开始时间作为创建时间
+                        user_agent=request.headers.get('User-Agent')
                     )
                     
                     db.session.add(merged_log)
+                    db.session.flush()  # 获取ID
+                    
+                    # 手动设置创建时间为开始日志的时间
+                    merged_log.created_at = start_log.created_at
                     
                     # 删除原始的开始和结束日志
                     db.session.delete(start_log)
