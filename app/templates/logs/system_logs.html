@@ -295,7 +295,7 @@ async function loadLogStats() {
         const data = await response.json();
         
         if (data.success) {
-            updateLogStats(data.data);
+            updateLogStats(data.stats);
         }
     } catch (error) {
         console.error('加载日志统计失败:', error);

@@ -300,7 +300,7 @@ def get_merged_info(log_id):
                 merged_info['user_info'] = {
                     'id': user.id,
                     'username': user.username,
-                    'email': user.email
+                    'email': getattr(user, 'email', 'N/A')
                 }
         
         # IP信息
