@@ -333,7 +333,11 @@ def get_merged_info(log_id):
             response_size_match = re.search(r'响应大小:\s+([^,]+)', log.details)
             if response_size_match:
                 try:
-                    merged_info['response_size'] = int(response_size_match.group(1).strip())
+                    size_str = response_size_match.group(1).strip()
+                    # 去掉"bytes"后缀
+                    if size_str.endswith(' bytes'):
+                        size_str = size_str[:-6]
+                    merged_info['response_size'] = int(size_str)
                 except:
                     merged_info['response_size'] = response_size_match.group(1).strip()
             
@@ -341,8 +345,9 @@ def get_merged_info(log_id):
             request_headers_match = re.search(r'请求头:\s+({[^}]+})', log.details)
             if request_headers_match:
                 try:
+                    import ast
                     headers_str = request_headers_match.group(1)
-                    merged_info['request_headers'] = json.loads(headers_str)
+                    merged_info['request_headers'] = ast.literal_eval(headers_str)
                 except:
                     merged_info['request_headers'] = request_headers_match.group(1)
             
@@ -350,8 +355,9 @@ def get_merged_info(log_id):
             response_headers_match = re.search(r'响应头:\s+({[^}]+})', log.details)
             if response_headers_match:
                 try:
+                    import ast
                     headers_str = response_headers_match.group(1)
-                    merged_info['response_headers'] = json.loads(headers_str)
+                    merged_info['response_headers'] = ast.literal_eval(headers_str)
                 except:
                     merged_info['response_headers'] = response_headers_match.group(1)
             
