@@ -187,7 +187,7 @@
                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-outline-info" 
-                                                    onclick="showLogDetail({{ log.id }}, {{ log.is_merged|lower }})" 
+                                                    onclick="showLogDetailWithEvent({{ log.id }}, {{ log.is_merged|lower }}, this)" 
                                                     data-merged-info="{{ log.merged_info|tojson|safe if log.is_merged and log.merged_info else '' }}"
                                                     title="查看详情">
                                                 <i class="fas fa-eye"></i>
@@ -314,14 +314,38 @@ function updateLogStats(stats) {
 // 注意：updatePagination 函数已移除，因为现在使用服务器端分页
 // 分页通过模板直接渲染
 
+// 显示日志详情（带事件对象）
+function showLogDetailWithEvent(logId, isMerged, buttonElement) {
+    if (isMerged) {
+        // 从按钮的数据属性中获取合并信息
+        let mergedInfo = null;
+        if (buttonElement && buttonElement.dataset.mergedInfo) {
+            try {
+                mergedInfo = JSON.parse(buttonElement.dataset.mergedInfo);
+            } catch (e) {
+                console.error('解析合并信息失败:', e);
+            }
+        }
+        showMergedLogDetail(logId, mergedInfo);
+    } else {
+        showLogDetail(logId, false);
+    }
+}
+
 // 显示日志详情
-async function showLogDetail(logId, isMerged = false) {
+async function showLogDetail(logId, isMerged = false, event = null) {
     try {
         console.log('正在获取日志详情，ID:', logId, '是否合并:', isMerged);
         
         if (isMerged) {
             // 从按钮的数据属性中获取合并信息
-            const button = document.querySelector(`button[onclick*="showLogDetail(${logId}"]`);
+            let button = null;
+            if (event) {
+                button = event.target.closest('button');
+            } else {
+                button = document.querySelector(`button[onclick*="showLogDetail(${logId}"]`);
+            }
+            
             let mergedInfo = null;
             if (button && button.dataset.mergedInfo) {
                 try {
