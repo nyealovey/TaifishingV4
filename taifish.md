@@ -148,7 +148,7 @@
 - `app/templates/tasks/edit.html` - 编辑任务
 - `app/templates/tasks/detail.html` - 任务详情
 - `app/templates/tasks/builtin_tasks.py` - 内置任务定义
-- `app/templates/tasks/create_old.html` - 旧版创建任务模板（可删除）
+- ~~`app/templates/tasks/create_old.html` - 旧版创建任务模板~~ **已删除** - 文件不存在
 - `app/templates/logs/index.html` - 日志管理页面
 - `app/templates/logs/system_logs.html` - 系统日志页面
 - `app/templates/logs/detail.html` - 日志详情页面
@@ -425,7 +425,7 @@
 ### 重复文件
 - `main.py` - 重复的主入口文件
 - `requirements.txt` - 传统依赖文件（已使用uv）
-- `app/templates/tasks/create_old.html` - 旧版模板
+- ~~`app/templates/tasks/create_old.html` - 旧版模板~~ **已删除** - 文件不存在
 - `TaifishV4.code-workspace` - 重复工作区配置
 
 ### 临时文件
