@@ -263,15 +263,10 @@ def get_merged_info(log_id):
             'duration': None,
             'start_time': None,
             'end_time': None,
-            'start_log_id': None,
-            'end_log_id': None,
-            'start_level': None,
-            'end_level': None,
-            'has_start_log': False,
-            'has_end_log': False,
             'request_method': None,
             'user_info': None,
-            'ip_info': None
+            'ip_info': None,
+            'log_level': log.level  # 使用合并后的日志级别
         }
         
         # 如果是请求日志，解析消息
@@ -284,20 +279,46 @@ def get_merged_info(log_id):
                 merged_info['path'] = match.group(2)
                 merged_info['status_code'] = int(match.group(3))
                 merged_info['duration'] = float(match.group(4).replace('ms', ''))
-                merged_info['has_start_log'] = True
-                merged_info['has_end_log'] = True
         
         # 解析详情信息
         if log.details:
             import re
+            from datetime import datetime
+            
             start_match = re.search(r'开始时间:\s+(.+)', log.details)
             end_match = re.search(r'结束时间:\s+(.+)', log.details)
             duration_match = re.search(r'持续时间:\s+(.+)', log.details)
             
             if start_match:
-                merged_info['start_time'] = start_match.group(1)
+                try:
+                    # 解析开始时间
+                    start_time_str = start_match.group(1).strip()
+                    # 处理格式: 2025-09-11 06:32:19.401751
+                    start_time = datetime.strptime(start_time_str, '%Y-%m-%d %H:%M:%S.%f')
+                    merged_info['start_time'] = start_time.isoformat()
+                except:
+                    try:
+                        # 尝试不带微秒的格式
+                        start_time = datetime.strptime(start_time_str, '%Y-%m-%d %H:%M:%S')
+                        merged_info['start_time'] = start_time.isoformat()
+                    except:
+                        merged_info['start_time'] = start_time_str
+                    
             if end_match:
-                merged_info['end_time'] = end_match.group(1)
+                try:
+                    # 解析结束时间
+                    end_time_str = end_match.group(1).strip()
+                    # 处理格式: 2025-09-11 06:32:20.413840
+                    end_time = datetime.strptime(end_time_str, '%Y-%m-%d %H:%M:%S.%f')
+                    merged_info['end_time'] = end_time.isoformat()
+                except:
+                    try:
+                        # 尝试不带微秒的格式
+                        end_time = datetime.strptime(end_time_str, '%Y-%m-%d %H:%M:%S')
+                        merged_info['end_time'] = end_time.isoformat()
+                    except:
+                        merged_info['end_time'] = end_time_str
+                    
             if duration_match:
                 merged_info['duration'] = float(duration_match.group(1).replace('ms', ''))
         

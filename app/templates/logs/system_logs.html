@@ -540,42 +540,22 @@ function showMergedLogDetail(logId, mergedInfo) {
             <div class="row">
                 <div class="col-md-6">
                     <strong>开始时间:</strong> 
-                    ${mergedInfo.has_start_log ? formatTime(mergedInfo.start_time) : '<span class="text-muted">无开始日志</span>'}
+                    ${mergedInfo.start_time ? formatTime(mergedInfo.start_time) : '<span class="text-muted">未知</span>'}
                 </div>
                 <div class="col-md-6">
-                    <strong>结束时间:</strong> ${formatTime(mergedInfo.end_time)}
+                    <strong>结束时间:</strong> 
+                    ${mergedInfo.end_time ? formatTime(mergedInfo.end_time) : '<span class="text-muted">未知</span>'}
                 </div>
             </div>
             <hr>
             <div class="row">
                 <div class="col-md-6">
                     <strong>持续时间:</strong> 
-                    ${mergedInfo.duration ? mergedInfo.duration + 'ms' : (mergedInfo.has_start_log ? '未知' : '<span class="text-muted">无开始日志</span>')}
+                    ${mergedInfo.duration ? mergedInfo.duration + 'ms' : '<span class="text-muted">未知</span>'}
                 </div>
                 <div class="col-md-6">
                     <strong>日志级别:</strong> 
-                    ${mergedInfo.start_level ? 
-                        `<span class="badge ${getLevelClass(mergedInfo.start_level)}">${mergedInfo.start_level}</span>` : 
-                        '<span class="text-muted">无开始日志</span>'}
-                    ${mergedInfo.end_level && mergedInfo.start_level && mergedInfo.end_level !== mergedInfo.start_level ? 
-                        ` → <span class="badge ${getLevelClass(mergedInfo.end_level)}">${mergedInfo.end_level}</span>` : 
-                        (mergedInfo.end_level && !mergedInfo.start_level ? 
-                            `<span class="badge ${getLevelClass(mergedInfo.end_level)}">${mergedInfo.end_level}</span>` : '')}
-                </div>
-            </div>
-            <hr>
-            <div class="row">
-                <div class="col-md-6">
-                    <strong>开始日志ID:</strong> 
-                    ${mergedInfo.start_log_id ? 
-                        `<code>${mergedInfo.start_log_id}</code>` : 
-                        '<span class="text-muted">无开始日志</span>'}
-                </div>
-                <div class="col-md-6">
-                    <strong>结束日志ID:</strong> 
-                    ${mergedInfo.end_log_id ? 
-                        `<code>${mergedInfo.end_log_id}</code>` : 
-                        '<span class="text-muted">无结束日志</span>'}
+                    <span class="badge ${getLevelClass(mergedInfo.log_level)}">${mergedInfo.log_level}</span>
                 </div>
             </div>
             <hr>
