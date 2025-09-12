@@ -28,11 +28,17 @@
                                 <label for="db_type" class="form-label">数据库类型 <span class="text-danger">*</span></label>
                                 <select class="form-select" id="db_type" name="db_type" required>
                                     <option value="">请选择数据库类型</option>
-                                    <option value="postgresql" {% if instance.db_type == 'postgresql' %}selected{% endif %}>PostgreSQL</option>
-                                    <option value="mysql" {% if instance.db_type == 'mysql' %}selected{% endif %}>MySQL</option>
-                                    <option value="sqlserver" {% if instance.db_type == 'sqlserver' %}selected{% endif %}>SQL Server</option>
-                                    <option value="oracle" {% if instance.db_type == 'oracle' %}selected{% endif %}>Oracle</option>
+                                    {% for db_type in database_types %}
+                                    <option value="{{ db_type.name }}" 
+                                            data-port="{{ db_type.default_port }}"
+                                            data-icon="{{ db_type.icon }}"
+                                            data-color="{{ db_type.color }}"
+                                            {% if instance.db_type == db_type.name %}selected{% endif %}>
+                                        {{ db_type.display_name }}
+                                    </option>
+                                    {% endfor %}
                                 </select>
+                                <div class="form-text">从配置的数据库类型中选择</div>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -141,17 +147,12 @@
 document.getElementById('db_type').addEventListener('change', function() {
     const portInput = document.getElementById('port');
     const oracleSidRow = document.getElementById('oracle-sid-row');
+    const selectedOption = this.options[this.selectedIndex];
     const dbType = this.value;
     
-    const defaultPorts = {
-        'postgresql': 5432,
-        'mysql': 3306,
-        'sqlserver': 1433,
-        'oracle': 1521
-    };
-    
-    if (defaultPorts[dbType]) {
-        portInput.value = defaultPorts[dbType];
+    // 使用动态的默认端口
+    if (selectedOption && selectedOption.dataset.port) {
+        portInput.value = selectedOption.dataset.port;
     }
     
     // 控制Oracle SID字段的显示

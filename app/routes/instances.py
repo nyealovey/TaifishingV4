@@ -222,11 +222,20 @@ def create():
 
     # GET请求，显示创建表单
     credentials = Credential.query.filter_by(is_active=True).all()
+    
+    # 获取可用的数据库类型
+    from app.services.database_type_service import DatabaseTypeService
+    database_types = DatabaseTypeService.get_active_types()
 
     if request.is_json:
-        return jsonify({"credentials": [cred.to_dict() for cred in credentials]})
+        return jsonify({
+            "credentials": [cred.to_dict() for cred in credentials],
+            "database_types": [dt.to_dict() for dt in database_types]
+        })
 
-    return render_template("instances/create.html", credentials=credentials)
+    return render_template("instances/create.html", 
+                         credentials=credentials, 
+                         database_types=database_types)
 
 
 @instances_bp.route("/test-connection", methods=["POST"])
@@ -519,17 +528,25 @@ def edit(instance_id):
 
     # GET请求，显示编辑表单
     credentials = Credential.query.filter_by(is_active=True).all()
+    
+    # 获取可用的数据库类型
+    from app.services.database_type_service import DatabaseTypeService
+    database_types = DatabaseTypeService.get_active_types()
 
     if request.is_json:
         return jsonify(
             {
                 "instance": instance.to_dict(),
                 "credentials": [cred.to_dict() for cred in credentials],
+                "database_types": [dt.to_dict() for dt in database_types]
             }
         )
 
     return render_template(
-        "instances/edit.html", instance=instance, credentials=credentials
+        "instances/edit.html", 
+        instance=instance, 
+        credentials=credentials,
+        database_types=database_types
     )
 
 
