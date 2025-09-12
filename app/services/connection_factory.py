@@ -95,7 +95,7 @@ class MySQLConnection(DatabaseConnection):
             version = self.get_version()
             return {
                 "success": True,
-                "message": f'MySQL连接成功 (主机: {self.instance.host}:{self.instance.port}, 版本: {version or "未知"})',
+                "message": f"MySQL连接成功 (主机: {self.instance.host}:{self.instance.port}, 版本: {version or '未知'})",
                 "database_version": version,
             }
         except Exception as e:
@@ -174,7 +174,7 @@ class PostgreSQLConnection(DatabaseConnection):
             version = self.get_version()
             return {
                 "success": True,
-                "message": f'PostgreSQL连接成功 (主机: {self.instance.host}:{self.instance.port}, 版本: {version or "未知"})',
+                "message": f"PostgreSQL连接成功 (主机: {self.instance.host}:{self.instance.port}, 版本: {version or '未知'})",
                 "database_version": version,
             }
         except Exception as e:
@@ -257,7 +257,7 @@ class SQLServerConnection(DatabaseConnection):
             version = self.get_version()
             return {
                 "success": True,
-                "message": f'SQL Server连接成功 (主机: {self.instance.host}:{self.instance.port}, 版本: {version or "未知"})',
+                "message": f"SQL Server连接成功 (主机: {self.instance.host}:{self.instance.port}, 版本: {version or '未知'})",
                 "database_version": version,
             }
         except Exception as e:
@@ -370,7 +370,7 @@ class OracleConnection(DatabaseConnection):
             version = self.get_version()
             return {
                 "success": True,
-                "message": f'Oracle连接成功 (主机: {self.instance.host}:{self.instance.port}, 版本: {version or "未知"})',
+                "message": f"Oracle连接成功 (主机: {self.instance.host}:{self.instance.port}, 版本: {version or '未知'})",
                 "database_version": version,
             }
         except Exception as e:

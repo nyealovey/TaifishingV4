@@ -4,7 +4,7 @@
 
 import html
 import re
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import bleach
 from flask import request
@@ -44,8 +44,8 @@ class InputValidator:
         min_length: int = 0,
         max_length: int = 255,
         allow_empty: bool = True,
-        pattern: Optional[str] = None,
-    ) -> Optional[str]:
+        pattern: str | None = None,
+    ) -> str | None:
         """
         验证字符串输入
 
@@ -81,7 +81,7 @@ class InputValidator:
         return html.escape(str_value)
 
     @staticmethod
-    def validate_integer(value: Any, min_val: Optional[int] = None, max_val: Optional[int] = None) -> Optional[int]:
+    def validate_integer(value: Any, min_val: int | None = None, max_val: int | None = None) -> int | None:
         """
         验证整数输入
 
@@ -104,7 +104,7 @@ class InputValidator:
             return None
 
     @staticmethod
-    def validate_boolean(value: Any) -> Optional[bool]:
+    def validate_boolean(value: Any) -> bool | None:
         """
         验证布尔值输入
 
@@ -336,7 +336,7 @@ class InputValidator:
         return None
 
     @staticmethod
-    def validate_pagination(page: Any, per_page: Any, max_per_page: int = 100) -> Tuple[int, int]:
+    def validate_pagination(page: Any, per_page: Any, max_per_page: int = 100) -> tuple[int, int]:
         """
         验证分页参数
 
@@ -354,9 +354,7 @@ class InputValidator:
         return page, per_page
 
     @staticmethod
-    def validate_request_data(
-        required_fields: List[str], optional_fields: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+    def validate_request_data(required_fields: list[str], optional_fields: list[str] | None = None) -> dict[str, Any]:
         """
         验证请求数据
 

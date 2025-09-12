@@ -285,7 +285,7 @@ def test_instance_connection():
                 jsonify(
                     {
                         "success": False,
-                        "error": f'缺少必需参数: {", ".join(missing_fields)}',
+                        "error": f"缺少必需参数: {', '.join(missing_fields)}",
                     }
                 ),
                 400,
@@ -771,7 +771,7 @@ def _process_instances_data(instances_data):
             required_fields = ["name", "db_type", "host", "port"]
             for field in required_fields:
                 if not instance_data.get(field):
-                    errors.append(f"第 {i+1} 个实例缺少必填字段: {field}")
+                    errors.append(f"第 {i + 1} 个实例缺少必填字段: {field}")
                     continue
 
             if errors:
@@ -780,14 +780,14 @@ def _process_instances_data(instances_data):
             # 检查实例名称是否已存在
             existing_instance = Instance.query.filter_by(name=instance_data["name"]).first()
             if existing_instance:
-                errors.append(f"第 {i+1} 个实例名称已存在: {instance_data['name']}")
+                errors.append(f"第 {i + 1} 个实例名称已存在: {instance_data['name']}")
                 continue
 
             # 处理端口号
             try:
                 port = int(instance_data["port"])
             except (ValueError, TypeError):
-                errors.append(f"第 {i+1} 个实例端口号无效: {instance_data['port']}")
+                errors.append(f"第 {i + 1} 个实例端口号无效: {instance_data['port']}")
                 continue
 
             # 处理凭据ID
@@ -796,7 +796,7 @@ def _process_instances_data(instances_data):
                 try:
                     credential_id = int(instance_data["credential_id"])
                 except (ValueError, TypeError):
-                    errors.append(f"第 {i+1} 个实例凭据ID无效: {instance_data['credential_id']}")
+                    errors.append(f"第 {i + 1} 个实例凭据ID无效: {instance_data['credential_id']}")
                     continue
 
             # 创建实例
@@ -828,7 +828,7 @@ def _process_instances_data(instances_data):
             )
 
         except Exception as e:
-            errors.append(f"第 {i+1} 个实例创建失败: {str(e)}")
+            errors.append(f"第 {i + 1} 个实例创建失败: {str(e)}")
             continue
 
     if created_count > 0:
@@ -1050,7 +1050,7 @@ def test_connection(instance_id):
             if request.is_json:
                 return jsonify({"error": "连接测试失败", "result": result}), 400
 
-            flash(f'连接测试失败: {result.get("error", "未知错误")}', "error")
+            flash(f"连接测试失败: {result.get('error', '未知错误')}", "error")
 
     except Exception as e:
         logging.error(f"测试连接失败: {e}")
@@ -1127,7 +1127,7 @@ def sync_accounts(instance_id):
             if request.is_json:
                 return jsonify({"error": "账户同步失败", "result": result}), 400
 
-            flash(f'账户同步失败: {result.get("error", "未知错误")}', "error")
+            flash(f"账户同步失败: {result.get('error', '未知错误')}", "error")
 
     except Exception as e:
         logging.error(f"同步账户失败: {e}")
@@ -1228,7 +1228,7 @@ def api_test_instance_connection():
                 jsonify(
                     {
                         "success": False,
-                        "error": f'缺少必需参数: {", ".join(missing_fields)}',
+                        "error": f"缺少必需参数: {', '.join(missing_fields)}",
                     }
                 ),
                 400,

@@ -1,6 +1,6 @@
 {
   "errors": [],
-  "generated_at": "2025-09-12T22:57:36Z",
+  "generated_at": "2025-09-12T23:02:44Z",
   "metrics": {
     "_totals": {
       "CONFIDENCE.HIGH": 7,
@@ -11,7 +11,7 @@
       "SEVERITY.LOW": 12,
       "SEVERITY.MEDIUM": 9,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 18678,
+      "loc": 18706,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -24,7 +24,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 294,
+      "loc": 296,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -232,7 +232,7 @@
       "SEVERITY.LOW": 1,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 89,
+      "loc": 93,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -401,7 +401,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 1085,
+      "loc": 1089,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -505,7 +505,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 374,
+      "loc": 378,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -557,7 +557,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 231,
+      "loc": 234,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -869,7 +869,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 234,
+      "loc": 237,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -934,7 +934,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 376,
+      "loc": 384,
       "nosec": 0,
       "skipped_tests": 0
     }
@@ -1043,7 +1043,7 @@
       "test_name": "try_except_pass"
     },
     {
-      "code": "107         if not admin:\n108             admin = User(username=\"admin\", password=\"Admin123\", role=\"admin\")\n109             db.session.add(admin)\n",
+      "code": "111         if not admin:\n112             admin = User(username=\"admin\", password=\"Admin123\", role=\"admin\")\n113             db.session.add(admin)\n",
       "col_offset": 20,
       "end_col_offset": 77,
       "filename": "app/models/user.py",
@@ -1054,9 +1054,9 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Possible hardcoded password: 'Admin123'",
-      "line_number": 108,
+      "line_number": 112,
       "line_range": [
-        108
+        112
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b106_hardcoded_password_funcarg.html",
       "test_id": "B106",

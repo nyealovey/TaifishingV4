@@ -159,9 +159,9 @@ class DatabaseSizeService:
             # 查询数据库大小
             cursor.execute(
                 """
-                SELECT 
+                SELECT
                     ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS size_mb
-                FROM information_schema.tables 
+                FROM information_schema.tables
                 WHERE table_schema = %s
             """,
                 (instance.database_name or "mysql",),
@@ -223,7 +223,7 @@ class DatabaseSizeService:
             # 查询数据库大小
             cursor.execute(
                 """
-                SELECT 
+                SELECT
                     SUM(size * 8.0 / 1024) AS size_mb
                 FROM sys.master_files
                 WHERE database_id = DB_ID(?)
@@ -256,15 +256,15 @@ class DatabaseSizeService:
             # 查询数据库大小
             cursor.execute(
                 """
-                SELECT 
+                SELECT
                     ROUND(SUM(bytes) / 1024 / 1024, 2) AS size_mb
                 FROM dba_data_files
                 UNION ALL
-                SELECT 
+                SELECT
                     ROUND(SUM(bytes) / 1024 / 1024, 2) AS size_mb
                 FROM dba_temp_files
                 UNION ALL
-                SELECT 
+                SELECT
                     ROUND(SUM(bytes) / 1024 / 1024, 2) AS size_mb
                 FROM v$log
             """

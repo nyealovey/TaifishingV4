@@ -7,7 +7,7 @@ import time
 from collections.abc import Callable
 from enum import Enum
 from functools import wraps
-from typing import Any, Dict, Optional, ParamSpec, Tuple, TypeVar, Union
+from typing import Any, ParamSpec, TypeVar
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -42,9 +42,9 @@ class RetryManager:
         """计算重试延迟时间"""
         if self.strategy == RetryStrategy.FIXED:
             return self.base_delay
-        elif self.strategy == RetryStrategy.LINEAR:
+        if self.strategy == RetryStrategy.LINEAR:
             return min(self.base_delay * attempt, self.max_delay)
-        elif self.strategy == RetryStrategy.EXPONENTIAL:
+        if self.strategy == RetryStrategy.EXPONENTIAL:
             delay: float = self.base_delay * (2 ** (attempt - 1))
             return min(delay, self.max_delay)
         # 默认情况（理论上不会到达，但为了类型安全）
@@ -85,9 +85,8 @@ class RetryManager:
         # 所有重试都失败了
         if last_exception is not None:
             raise last_exception
-        else:
-            error_msg = "重试失败，但没有捕获到异常"
-            raise RuntimeError(error_msg)
+        error_msg = "重试失败，但没有捕获到异常"
+        raise RuntimeError(error_msg)
 
 
 def retry(
@@ -95,7 +94,7 @@ def retry(
     base_delay: float = 1.0,
     max_delay: float = 60.0,
     strategy: RetryStrategy = RetryStrategy.EXPONENTIAL,
-    exceptions: Tuple[type, ...] = (Exception,),
+    exceptions: tuple[type, ...] = (Exception,),
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     重试装饰器
@@ -140,8 +139,7 @@ def retry(
             # 所有重试都失败了
             if last_exception is not None:
                 raise last_exception
-            else:
-                error_msg = "重试失败，但没有捕获到异常"
+            error_msg = "重试失败，但没有捕获到异常"
             raise RuntimeError(error_msg)
 
         return wrapper
@@ -228,7 +226,7 @@ def smart_retry(max_attempts: int = 3) -> Callable[[Callable[..., Any]], Callabl
     def retry_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            last_exception: Optional[Exception] = None
+            last_exception: Exception | None = None
 
             for attempt in range(1, max_attempts + 1):
                 try:
@@ -259,8 +257,7 @@ def smart_retry(max_attempts: int = 3) -> Callable[[Callable[..., Any]], Callabl
 
             if last_exception is not None:
                 raise last_exception
-            else:
-                error_msg = "重试失败，但没有捕获到异常"
+            error_msg = "重试失败，但没有捕获到异常"
             raise RuntimeError(error_msg)
 
         return wrapper
@@ -273,9 +270,9 @@ class RetryStats:
     """重试统计"""
 
     def __init__(self) -> None:
-        self.stats: Dict[str, Dict[str, Any]] = {}
+        self.stats: dict[str, dict[str, Any]] = {}
 
-    def record_retry(self, func_name: str, attempt: int, success: bool, error: Optional[str] = None) -> None:
+    def record_retry(self, func_name: str, attempt: int, success: bool, error: str | None = None) -> None:
         """记录重试统计"""
         if func_name not in self.stats:
             self.stats[func_name] = {
@@ -298,7 +295,7 @@ class RetryStats:
             if error:
                 stats["errors"].append(error)
 
-    def get_stats(self, func_name: Optional[str] = None) -> Union[Dict[str, Any], Dict[str, Dict[str, Any]]]:
+    def get_stats(self, func_name: str | None = None) -> dict[str, Any] | dict[str, dict[str, Any]]:
         """获取重试统计"""
         if func_name:
             return self.stats.get(func_name, {})
