@@ -105,31 +105,32 @@ class AccountSyncService:
             after_count = Account.query.filter_by(instance_id=instance.id).count()
             net_change = after_count - before_count
 
-            # 创建同步报告记录
-            from app.models.sync_data import SyncData
-            from app import db
+            # 创建同步报告记录（定时任务跳过单个实例记录，只创建聚合记录）
+            if sync_type != "task":
+                from app.models.sync_data import SyncData
+                from app import db
 
-            sync_record = SyncData(
-                sync_type=sync_type,  # 手动同步或任务同步
-                instance_id=instance.id,
-                task_id=None,
-                data={
-                    "before_count": before_count,
-                    "after_count": after_count,
-                    "net_change": net_change,
-                    "db_type": instance.db_type,
-                    "instance_name": instance.name,
-                },
-                status="success",
-                message=f"成功同步 {synced_count} 个{instance.db_type.upper()}账户",
-                synced_count=synced_count,
-                added_count=added_count,
-                removed_count=removed_count,
-                modified_count=modified_count,
-                records_count=synced_count,
-            )
-            db.session.add(sync_record)
-            db.session.commit()
+                sync_record = SyncData(
+                    sync_type=sync_type,  # 手动同步或任务同步
+                    instance_id=instance.id,
+                    task_id=None,
+                    data={
+                        "before_count": before_count,
+                        "after_count": after_count,
+                        "net_change": net_change,
+                        "db_type": instance.db_type,
+                        "instance_name": instance.name,
+                    },
+                    status="success",
+                    message=f"成功同步 {synced_count} 个{instance.db_type.upper()}账户",
+                    synced_count=synced_count,
+                    added_count=added_count,
+                    removed_count=removed_count,
+                    modified_count=modified_count,
+                    records_count=synced_count,
+                )
+                db.session.add(sync_record)
+                db.session.commit()
             
             return {
                 "success": True,
@@ -146,30 +147,31 @@ class AccountSyncService:
             log_sync_error("账户同步", e, "account_sync_service", 
                           f"实例: {instance.name}, 类型: {instance.db_type}, 同步类型: {sync_type}")
 
-            # 创建失败的同步报告记录
-            from app.models.sync_data import SyncData
-            from app import db
+            # 创建失败的同步报告记录（定时任务跳过单个实例记录，只创建聚合记录）
+            if sync_type != "task":
+                from app.models.sync_data import SyncData
+                from app import db
 
-            sync_record = SyncData(
-                sync_type=sync_type,  # 手动同步或任务同步
-                instance_id=instance.id,
-                task_id=None,
-                data={
-                    "db_type": instance.db_type,
-                    "instance_name": instance.name,
-                    "error": str(e),
-                },
-                status="failed",
-                message=f"{instance.db_type.upper()}账户同步失败: {str(e)}",
-                synced_count=0,
-                added_count=0,
-                removed_count=0,
-                modified_count=0,
-                error_message=str(e),
-                records_count=0,
-            )
-            db.session.add(sync_record)
-            db.session.commit()
+                sync_record = SyncData(
+                    sync_type=sync_type,  # 手动同步或任务同步
+                    instance_id=instance.id,
+                    task_id=None,
+                    data={
+                        "db_type": instance.db_type,
+                        "instance_name": instance.name,
+                        "error": str(e),
+                    },
+                    status="failed",
+                    message=f"{instance.db_type.upper()}账户同步失败: {str(e)}",
+                    synced_count=0,
+                    added_count=0,
+                    removed_count=0,
+                    modified_count=0,
+                    error_message=str(e),
+                    records_count=0,
+                )
+                db.session.add(sync_record)
+                db.session.commit()
 
             return {
                 "success": False,
