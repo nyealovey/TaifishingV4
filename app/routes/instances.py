@@ -786,7 +786,7 @@ def _process_instances_data(instances_data):
                 db_type=instance_data["db_type"],
                 host=instance_data["host"],
                 port=port,
-                database_name=instance_data.get("database_name"),
+                database_name="",  # 使用默认空字符串
                 environment=instance_data.get("environment", "production"),
                 description=instance_data.get("description"),
                 credential_id=credential_id,
@@ -853,7 +853,6 @@ def download_template():
             "db_type",
             "host",
             "port",
-            "database_name",
             "environment",
             "description",
             "credential_id",
@@ -868,7 +867,6 @@ def download_template():
             "192.168.1.100",
             "3306",
             "production",
-            "production",
             "生产环境MySQL主库",
             "1",
         ]
@@ -880,7 +878,6 @@ def download_template():
             "192.168.1.101",
             "3306",
             "development",
-            "development",
             "开发环境MySQL",
             "2",
         ]
@@ -891,7 +888,6 @@ def download_template():
             "postgresql",
             "192.168.1.102",
             "5432",
-            "testing",
             "testing",
             "测试环境PostgreSQL",
             "3",

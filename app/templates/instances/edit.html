@@ -90,16 +90,7 @@
                     <!-- Oracle SID字段 -->
                     <div class="row" id="oracle-sid-row" style="display: {% if instance.db_type == 'oracle' %}block{% else %}none{% endif %};">
                         <div class="col-md-12">
-                            <div class="mb-3">
-                                <label for="database_name" class="form-label">Oracle SID/服务名</label>
-                                <input type="text" class="form-control" id="database_name" name="database_name" 
-                                       value="{{ instance.database_name or '' }}"
-                                       placeholder="例如: ORCL, XE, PROD, 或 service.domain.com">
-                                <div class="form-text">
-                                    <strong>SID格式</strong>: ORCL, XE (使用 host:port:sid)<br>
-                                    <strong>服务名格式</strong>: PROD, service.domain.com (使用 host:port/service_name)
-                                </div>
-                            </div>
+                            <!-- database_name 字段已移除 -->
                         </div>
                     </div>
                     
