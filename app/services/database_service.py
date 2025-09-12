@@ -12,6 +12,7 @@ from app.utils.enhanced_logger import log_operation, log_error
 from app.utils.enhanced_logger import db_logger, log_database_error, log_database_operation
 from app.services.database_filter_manager import database_filter_manager
 from app.utils.database_type_utils import DatabaseTypeUtils
+from app.services.connection_factory import ConnectionFactory
 
 
 class DatabaseService:
@@ -33,24 +34,15 @@ class DatabaseService:
         try:
             db_logger.info(f"开始测试数据库连接: {instance.name} ({instance.db_type})", "database_service")
             
-            if instance.db_type == "postgresql":
-                result = self._test_postgresql_connection(instance)
-            elif instance.db_type == "mysql":
-                result = self._test_mysql_connection(instance)
-            elif instance.db_type == "sqlserver":
-                result = self._test_sqlserver_connection(instance)
-            elif instance.db_type == "oracle":
-                result = self._test_oracle_connection(instance)
-            else:
-                error_msg = f"不支持的数据库类型: {instance.db_type}"
-                db_logger.warning(error_msg, "database_service")
-                return {
-                    "success": False,
-                    "error": error_msg,
-                }
+            # 使用连接工厂测试连接
+            result = ConnectionFactory.test_connection(instance)
             
             if result.get("success"):
                 db_logger.info(f"数据库连接测试成功: {instance.name}", "database_service")
+                # 更新最后连接时间
+                from app.utils.timezone import now
+                instance.last_connected = now()
+                db.session.commit()
             else:
                 db_logger.warning(f"数据库连接测试失败: {instance.name} - {result.get('error')}", "database_service")
             
