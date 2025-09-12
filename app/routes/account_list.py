@@ -221,19 +221,15 @@ def export_accounts():
     output = io.StringIO()
     writer = csv.writer(output)
 
-    # 写入表头
+    # 写入表头（与页面显示格式一致）
     writer.writerow([
-        "ID",
-        "用户名",
-        "主机",
+        "名称",
+        "实例名称", 
+        "IP地址",
+        "环境",
         "数据库类型",
-        "实例名称",
-        "插件",
-        "是否锁定",
-        "是否超级用户",
-        "账户分类",
-        "创建时间",
-        "更新时间"
+        "分类",
+        "锁定状态"
     ])
 
     # 写入账户数据
@@ -243,20 +239,43 @@ def export_accounts():
         
         # 获取分类信息
         account_classifications = classifications.get(account.id, [])
-        classification_str = ", ".join(account_classifications) if account_classifications else ""
+        classification_str = ", ".join(account_classifications) if account_classifications else "未分类"
+        
+        # 格式化用户名（与页面显示一致）
+        if instance and instance.db_type in ['sqlserver', 'oracle', 'postgresql']:
+            username_display = account.username
+        else:
+            username_display = f"{account.username}@{account.host or '%'}"
+        
+        # 格式化锁定状态（与页面显示一致）
+        if account.is_locked:
+            if instance and instance.db_type == 'sqlserver':
+                lock_status = "已禁用"
+            else:
+                lock_status = "已锁定"
+        else:
+            lock_status = "正常"
+        
+        # 格式化环境显示
+        environment_display = ""
+        if instance:
+            if instance.environment == "production":
+                environment_display = "生产"
+            elif instance.environment == "development":
+                environment_display = "开发"
+            elif instance.environment == "testing":
+                environment_display = "测试"
+            else:
+                environment_display = instance.environment
         
         writer.writerow([
-            account.id,
-            account.username,
-            account.host or "",
-            instance.db_type if instance else "",
+            username_display,
             instance.name if instance else "",
-            account.plugin or "",
-            "是" if account.is_locked else "否",
-            "是" if account.is_superuser else "否",
+            instance.host if instance else "",
+            environment_display,
+            instance.db_type.upper() if instance else "",
             classification_str,
-            account.created_at.strftime("%Y-%m-%d %H:%M:%S") if account.created_at else "",
-            account.updated_at.strftime("%Y-%m-%d %H:%M:%S") if account.updated_at else ""
+            lock_status
         ])
 
     # 创建响应
