@@ -423,7 +423,7 @@ function createJob() {
 function runJob(jobId) {
     if (confirm('确定要立即执行此任务吗？')) {
         $.ajax({
-            url: `{{ url_for("scheduler.run_job", job_id="") }}${jobId}/run`,
+            url: `{{ url_for("scheduler.run_job", job_id="PLACEHOLDER") }}`.replace('PLACEHOLDER', jobId),
             method: 'POST',
             headers: {
                 'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')

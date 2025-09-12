@@ -189,6 +189,13 @@ def update_job(job_id):
             if is_builtin:
                 # 内置任务：只能更新触发器
                 scheduler.modify_job(job_id, trigger=trigger)
+                
+                # 强制重新计算下次执行时间
+                job = scheduler.get_job(job_id)
+                if job:
+                    # 重新调度任务以立即生效
+                    scheduler.reschedule_job(job_id, trigger=trigger)
+                
                 logger.info(f"内置任务触发器更新成功: {job_id}")
                 return APIResponse.success("触发器更新成功")
             else:
@@ -200,6 +207,12 @@ def update_job(job_id):
                     args=data.get('args', job.args),
                     kwargs=data.get('kwargs', job.kwargs)
                 )
+                
+                # 强制重新计算下次执行时间
+                job = scheduler.get_job(job_id)
+                if job:
+                    # 重新调度任务以立即生效
+                    scheduler.reschedule_job(job_id, trigger=trigger)
         else:
             if is_builtin:
                 # 内置任务：不允许更新其他属性
