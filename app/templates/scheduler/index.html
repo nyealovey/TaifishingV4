@@ -305,17 +305,12 @@ function createJobCard(job) {
 }
 
 function createJob() {
-    console.log('createJob function called');
-    console.log('jQuery available:', typeof $ !== 'undefined');
-    
     const formData = {
         id: $('#jobId').val(),
         name: $('#jobName').val(),
         func: $('#jobFunc').val(),
         trigger_type: $('input[name="triggerType"]:checked').val()
     };
-    
-    console.log('Form data:', formData);
     
     // 根据触发器类型添加配置
     if (formData.trigger_type === 'cron') {
@@ -332,9 +327,6 @@ function createJob() {
         formData.run_date = $('#runDate').val();
     }
     
-    console.log('Sending AJAX request to:', '{{ url_for("scheduler.create_job") }}');
-    console.log('CSRF Token:', $('meta[name="csrf-token"]').attr('content'));
-    
     $.ajax({
         url: '{{ url_for("scheduler.create_job") }}',
         method: 'POST',
@@ -344,7 +336,6 @@ function createJob() {
             'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
         },
         success: function(response) {
-            console.log('AJAX success response:', response);
             if (response.status === 'success') {
                 showAlert('任务创建成功', 'success');
                 $('#addJobModal').modal('hide');
@@ -355,7 +346,6 @@ function createJob() {
             }
         },
         error: function(xhr) {
-            console.log('AJAX error:', xhr);
             const error = xhr.responseJSON;
             showAlert('创建任务失败: ' + (error ? error.message : '未知错误'), 'danger');
         }
