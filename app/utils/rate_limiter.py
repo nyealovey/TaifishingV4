@@ -48,9 +48,16 @@ class RateLimiter:
         window_start = current_time - window
 
         if self.redis_client:
-            return self._check_redis(
-                identifier, endpoint, limit, window, current_time, window_start
-            )
+            try:
+                return self._check_redis(
+                    identifier, endpoint, limit, window, current_time, window_start
+                )
+            except Exception as e:
+                logger.warning(f"Redis速率限制检查失败，降级到内存模式: {e}")
+                # 降级到内存模式
+                return self._check_memory(
+                    identifier, endpoint, limit, window, current_time, window_start
+                )
         else:
             return self._check_memory(
                 identifier, endpoint, limit, window, current_time, window_start
@@ -145,14 +152,25 @@ class RateLimiter:
         self, identifier: str, endpoint: str, limit: int, window: int
     ) -> int:
         """获取剩余请求次数"""
-        result = self.is_allowed(identifier, endpoint, limit, window)
-        return result["remaining"]
+        try:
+            result = self.is_allowed(identifier, endpoint, limit, window)
+            return result["remaining"]
+        except Exception as e:
+            logger.warning(f"获取剩余请求次数失败: {e}")
+            return limit  # 出错时返回最大限制
 
     def reset(self, identifier: str, endpoint: str):
         """重置速率限制"""
         if self.redis_client:
-            key = self._get_key(identifier, endpoint)
-            self.redis_client.delete(key)
+            try:
+                key = self._get_key(identifier, endpoint)
+                self.redis_client.delete(key)
+            except Exception as e:
+                logger.warning(f"Redis重置速率限制失败: {e}")
+                # 降级到内存模式
+                key = self._get_memory_key(identifier, endpoint)
+                if key in self.memory_store:
+                    del self.memory_store[key]
         else:
             key = self._get_memory_key(identifier, endpoint)
             if key in self.memory_store:
