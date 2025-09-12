@@ -310,11 +310,14 @@ def get_account_permissions(account_id):
         
         return jsonify({
             "success": True,
-            "permissions": permissions,
+            "permissions": {
+                "permissions": permissions  # 嵌套结构，与instances.py保持一致
+            },
             "account": {
                 "id": account.id,
                 "username": account.username,
-                "instance_name": account.instance.name if account.instance else "",
+                "host": account.host,
+                "plugin": account.plugin,
                 "db_type": account.instance.db_type if account.instance else "",
             }
         })

@@ -20,6 +20,9 @@ function viewAccountPermissions(accountId, options = {}) {
         onFinally
     } = options;
     
+    // 如果apiUrl包含模板字符串，则替换为实际的accountId
+    const finalApiUrl = apiUrl.replace('${accountId}', accountId);
+    
     // 获取CSRF token
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
                      document.querySelector('input[name="csrf_token"]')?.value;
@@ -33,7 +36,7 @@ function viewAccountPermissions(accountId, options = {}) {
         button.disabled = true;
     }
     
-    fetch(apiUrl, {
+    fetch(finalApiUrl, {
         method: 'GET',
         headers: {
             'X-CSRFToken': csrfToken
@@ -104,7 +107,10 @@ function fetchAccountPermissions(accountId, apiUrl = `/account-list/${accountId}
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
                      document.querySelector('input[name="csrf_token"]')?.value;
     
-    return fetch(apiUrl, {
+    // 如果apiUrl包含模板字符串，则替换为实际的accountId
+    const finalApiUrl = apiUrl.replace('${accountId}', accountId);
+    
+    return fetch(finalApiUrl, {
         method: 'GET',
         headers: {
             'X-CSRFToken': csrfToken
