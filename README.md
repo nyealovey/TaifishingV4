@@ -214,7 +214,17 @@ docker run -p 5001:5001 taifish
 - **日志统计和导出** - 详细的统计信息和CSV导出功能
 - **安全日志记录** - 完整的用户操作审计轨迹
 
-### 8. 实时监控仪表板
+### 8. 动态配置管理
+- **Web界面配置** - 通过Web界面动态修改系统配置参数
+- **多类型配置支持** - 系统配置、数据库配置、安全配置、日志配置、任务配置
+- **实时配置修改** - 在线编辑配置值，支持实时验证和格式检查
+- **配置历史管理** - 记录所有配置修改操作，支持历史版本恢复
+- **批量配置操作** - 支持批量修改、重置、导入导出配置
+- **安全权限控制** - 只有管理员可以访问配置管理功能
+- **配置备份机制** - 自动创建配置备份，支持配置恢复
+- **配置验证** - 严格的输入验证和类型检查，防止无效配置
+
+### 9. 实时监控仪表板
 - 系统概览和统计信息
 - 数据库实例状态监控
 - 任务执行状态监控
@@ -425,6 +435,9 @@ pytest --cov=app tests/
 - **问题反馈**: [GitHub Issues](https://github.com/nyealovey/TaifishingV4/issues)
 - **功能建议**: [GitHub Discussions](https://github.com/nyealovey/TaifishingV4/discussions)
 - **文档**: [项目文档](doc/)
+  - [配置管理功能](doc/CONFIG_MANAGEMENT_FEATURES.md)
+  - [日志管理功能](doc/LOG_MANAGEMENT_FEATURES.md)
+  - [项目结构说明](doc/PROJECT_STRUCTURE.md)
 
 ## 🗺️ 路线图
 

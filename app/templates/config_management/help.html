@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}配置管理帮助 - {{ super() }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.help-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.help-section h3 {
+    color: #495057;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.help-item {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.help-item h4 {
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.help-item p {
+    margin-bottom: 8px;
+    color: #6c757d;
+}
+
+.help-item ul {
+    margin-bottom: 0;
+    padding-left: 20px;
+}
+
+.help-item li {
+    margin-bottom: 5px;
+    color: #6c757d;
+}
+
+.code-block {
+    background: #f1f3f4;
+    border: 1px solid #e1e5e9;
+    border-radius: 4px;
+    padding: 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    margin: 10px 0;
+    overflow-x: auto;
+}
+
+.warning-box {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.warning-box h5 {
+    color: #856404;
+    margin-bottom: 10px;
+}
+
+.warning-box p {
+    color: #856404;
+    margin-bottom: 0;
+}
+
+.info-box {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.info-box h5 {
+    color: #0c5460;
+    margin-bottom: 10px;
+}
+
+.info-box p {
+    color: #0c5460;
+    margin-bottom: 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-question-circle"></i> 配置管理帮助</h2>
+                <a href="{{ url_for('config_management.index') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> 返回配置管理
+                </a>
+            </div>
+
+            <!-- 快速开始 -->
+            <div class="help-section">
+                <h3><i class="fas fa-rocket"></i> 快速开始</h3>
+                <div class="help-item">
+                    <h4>1. 查看配置</h4>
+                    <p>在配置管理页面，您可以查看所有可编辑的配置项，包括：</p>
+                    <ul>
+                        <li><strong>系统配置</strong>：应用名称、版本、描述等基本信息</li>
+                        <li><strong>数据库配置</strong>：数据库连接参数、连接池设置等</li>
+                        <li><strong>安全配置</strong>：JWT密钥、会话超时、密码策略等</li>
+                        <li><strong>日志配置</strong>：日志级别、文件路径、轮转设置等</li>
+                        <li><strong>任务配置</strong>：Celery任务设置、定时任务配置等</li>
+                    </ul>
+                </div>
+
+                <div class="help-item">
+                    <h4>2. 修改配置</h4>
+                    <p>点击配置项右侧的"编辑"按钮，在弹出的编辑框中修改配置值：</p>
+                    <ul>
+                        <li>输入新的配置值</li>
+                        <li>查看配置描述和默认值</li>
+                        <li>点击"保存"确认修改</li>
+                        <li>点击"取消"放弃修改</li>
+                    </ul>
+                </div>
+
+                <div class="help-item">
+                    <h4>3. 应用配置</h4>
+                    <p>修改配置后，系统会提示您重启应用以应用新配置：</p>
+                    <ul>
+                        <li>点击"重启应用"按钮立即重启</li>
+                        <li>或者稍后手动重启应用</li>
+                        <li>某些配置可能需要重启数据库连接</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 配置类型说明 -->
+            <div class="help-section">
+                <h3><i class="fas fa-cogs"></i> 配置类型说明</h3>
+                
+                <div class="help-item">
+                    <h4>系统配置 (SYSTEM)</h4>
+                    <p>系统基本配置，包括应用信息、运行环境等：</p>
+                    <ul>
+                        <li><strong>APP_NAME</strong>：应用名称，显示在页面标题和导航栏</li>
+                        <li><strong>APP_VERSION</strong>：应用版本号</li>
+                        <li><strong>APP_DESCRIPTION</strong>：应用描述</li>
+                        <li><strong>DEBUG</strong>：调试模式开关</li>
+                        <li><strong>HOST</strong>：服务器监听地址</li>
+                        <li><strong>PORT</strong>：服务器监听端口</li>
+                    </ul>
+                </div>
+
+                <div class="help-item">
+                    <h4>数据库配置 (DATABASE)</h4>
+                    <p>数据库连接和性能配置：</p>
+                    <ul>
+                        <li><strong>DATABASE_URL</strong>：数据库连接字符串</li>
+                        <li><strong>DB_POOL_SIZE</strong>：连接池大小</li>
+                        <li><strong>DB_POOL_RECYCLE</strong>：连接回收时间</li>
+                        <li><strong>DB_POOL_TIMEOUT</strong>：连接超时时间</li>
+                        <li><strong>DB_ECHO</strong>：SQL语句日志开关</li>
+                    </ul>
+                </div>
+
+                <div class="help-item">
+                    <h4>安全配置 (SECURITY)</h4>
+                    <p>安全相关配置，包括认证、加密等：</p>
+                    <ul>
+                        <li><strong>SECRET_KEY</strong>：Flask密钥，用于加密会话</li>
+                        <li><strong>JWT_SECRET_KEY</strong>：JWT令牌密钥</li>
+                        <li><strong>JWT_ACCESS_TOKEN_EXPIRES</strong>：访问令牌过期时间</li>
+                        <li><strong>SESSION_TIMEOUT</strong>：会话超时时间</li>
+                        <li><strong>PASSWORD_MIN_LENGTH</strong>：密码最小长度</li>
+                    </ul>
+                </div>
+
+                <div class="help-item">
+                    <h4>日志配置 (LOGGING)</h4>
+                    <p>日志记录和轮转配置：</p>
+                    <ul>
+                        <li><strong>LOG_LEVEL</strong>：日志级别（DEBUG、INFO、WARNING、ERROR）</li>
+                        <li><strong>LOG_FILE_PATH</strong>：日志文件路径</li>
+                        <li><strong>LOG_MAX_SIZE</strong>：单个日志文件最大大小</li>
+                        <li><strong>LOG_BACKUP_COUNT</strong>：保留的日志文件数量</li>
+                        <li><strong>LOG_FORMAT</strong>：日志格式</li>
+                    </ul>
+                </div>
+
+                <div class="help-item">
+                    <h4>任务配置 (TASKS)</h4>
+                    <p>Celery任务和定时任务配置：</p>
+                    <ul>
+                        <li><strong>CELERY_BROKER_URL</strong>：Celery消息代理URL</li>
+                        <li><strong>CELERY_RESULT_BACKEND</strong>：Celery结果后端URL</li>
+                        <li><strong>CELERY_TASK_SERIALIZER</strong>：任务序列化格式</li>
+                        <li><strong>CELERY_RESULT_SERIALIZER</strong>：结果序列化格式</li>
+                        <li><strong>CELERY_TIMEZONE</strong>：时区设置</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 操作指南 -->
+            <div class="help-section">
+                <h3><i class="fas fa-list-ol"></i> 操作指南</h3>
+                
+                <div class="help-item">
+                    <h4>编辑配置</h4>
+                    <ol>
+                        <li>在配置列表中找到要修改的配置项</li>
+                        <li>点击右侧的"编辑"按钮</li>
+                        <li>在弹出的编辑框中输入新值</li>
+                        <li>查看配置描述和默认值（如有需要）</li>
+                        <li>点击"保存"按钮确认修改</li>
+                        <li>系统会显示修改结果和重启提示</li>
+                    </ol>
+                </div>
+
+                <div class="help-item">
+                    <h4>批量操作</h4>
+                    <ol>
+                        <li>选择要批量操作的配置项（使用复选框）</li>
+                        <li>点击"批量操作"按钮</li>
+                        <li>选择操作类型（重置、删除等）</li>
+                        <li>确认操作</li>
+                        <li>查看操作结果</li>
+                    </ol>
+                </div>
+
+                <div class="help-item">
+                    <h4>搜索和筛选</h4>
+                    <ol>
+                        <li>使用搜索框输入关键词</li>
+                        <li>选择配置类型进行筛选</li>
+                        <li>使用排序功能按名称或类型排序</li>
+                        <li>点击"重置"按钮清除筛选条件</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- 注意事项 -->
+            <div class="help-section">
+                <h3><i class="fas fa-exclamation-triangle"></i> 注意事项</h3>
+                
+                <div class="warning-box">
+                    <h5><i class="fas fa-warning"></i> 重要提醒</h5>
+                    <p>修改配置前请确保您了解配置的作用和影响范围，错误的配置可能导致应用无法正常启动。</p>
+                </div>
+
+                <div class="help-item">
+                    <h4>配置修改注意事项</h4>
+                    <ul>
+                        <li><strong>备份配置</strong>：修改前建议备份当前配置</li>
+                        <li><strong>测试环境</strong>：重要配置修改建议先在测试环境验证</li>
+                        <li><strong>重启应用</strong>：大部分配置修改需要重启应用才能生效</li>
+                        <li><strong>数据库配置</strong>：修改数据库配置后需要重启数据库连接</li>
+                        <li><strong>安全配置</strong>：修改安全相关配置后所有用户需要重新登录</li>
+                    </ul>
+                </div>
+
+                <div class="help-item">
+                    <h4>常见问题</h4>
+                    <ul>
+                        <li><strong>配置不生效</strong>：检查是否已重启应用</li>
+                        <li><strong>应用无法启动</strong>：检查配置值格式是否正确</li>
+                        <li><strong>数据库连接失败</strong>：检查数据库配置和网络连接</li>
+                        <li><strong>权限不足</strong>：确保您有管理员权限</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 技术支持 -->
+            <div class="help-section">
+                <h3><i class="fas fa-life-ring"></i> 技术支持</h3>
+                
+                <div class="info-box">
+                    <h5><i class="fas fa-info-circle"></i> 获取帮助</h5>
+                    <p>如果您在使用过程中遇到问题，可以通过以下方式获取帮助：</p>
+                    <ul>
+                        <li>查看系统日志获取详细错误信息</li>
+                        <li>联系系统管理员</li>
+                        <li>查看项目文档和README</li>
+                        <li>提交问题报告</li>
+                    </ul>
+                </div>
+
+                <div class="help-item">
+                    <h4>日志查看</h4>
+                    <p>系统日志记录了所有配置修改操作和错误信息：</p>
+                    <ul>
+                        <li>访问"系统管理" → "日志管理"查看系统日志</li>
+                        <li>筛选"配置管理"模块的日志</li>
+                        <li>查看ERROR级别的日志获取错误详情</li>
+                    </ul>
+                </div>
+
+                <div class="help-item">
+                    <h4>配置恢复</h4>
+                    <p>如果配置修改导致问题，可以：</p>
+                    <ul>
+                        <li>使用配置历史功能恢复到之前的版本</li>
+                        <li>手动编辑配置文件恢复默认值</li>
+                        <li>从备份中恢复配置</li>
+                        <li>联系技术支持获取帮助</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 平滑滚动到锚点
+    $('a[href^="#"]').on('click', function(event) {
+        var target = $(this.getAttribute('href'));
+        if (target.length) {
+            event.preventDefault();
+            $('html, body').stop().animate({
+                scrollTop: target.offset().top - 100
+            }, 1000);
+        }
+    });
+
+    // 返回顶部按钮
+    $(window).scroll(function() {
+        if ($(this).scrollTop() > 100) {
+            $('.back-to-top').fadeIn();
+        } else {
+            $('.back-to-top').fadeOut();
+        }
+    });
+
+    $('.back-to-top').click(function() {
+        $('html, body').animate({scrollTop: 0}, 800);
+        return false;
+    });
+});
+</script>
+{% endblock %}
