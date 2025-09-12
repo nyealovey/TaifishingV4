@@ -247,8 +247,14 @@ function loadJobs() {
         },
         error: function(xhr) {
             $('#loadingRow').hide();
-            const error = xhr.responseJSON;
-            showAlert('加载任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+            if (xhr.status === 401 || xhr.status === 403) {
+                showAlert('请先登录或检查管理员权限', 'warning');
+                // 重定向到登录页面
+                window.location.href = '{{ url_for("auth.login") }}';
+            } else {
+                const error = xhr.responseJSON;
+                showAlert('加载任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+            }
         }
     });
 }
@@ -346,8 +352,14 @@ function createJob() {
             }
         },
         error: function(xhr) {
-            const error = xhr.responseJSON;
-            showAlert('创建任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+            if (xhr.status === 401 || xhr.status === 403) {
+                showAlert('请先登录或检查管理员权限', 'warning');
+                // 重定向到登录页面
+                window.location.href = '{{ url_for("auth.login") }}';
+            } else {
+                const error = xhr.responseJSON;
+                showAlert('创建任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+            }
         }
     });
 }
