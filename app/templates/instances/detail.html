@@ -288,7 +288,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="viewAccountPermissions({{ account.id }})">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
                                         <i class="fas fa-eye me-1"></i>查看权限
                                     </button>
                                 </td>
@@ -324,7 +324,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="viewAccountPermissions({{ account.id }})">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
                                         <i class="fas fa-eye me-1"></i>查看权限
                                     </button>
                                 </td>
@@ -343,7 +343,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="viewAccountPermissions({{ account.id }})">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
                                         <i class="fas fa-eye me-1"></i>查看权限
                                     </button>
                                 </td>
@@ -421,7 +421,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="viewAccountPermissions({{ account.id }})">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
                                         <i class="fas fa-eye me-1"></i>查看权限
                                     </button>
                                 </td>
@@ -472,7 +472,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="viewAccountPermissions({{ account.id }})">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
                                         <i class="fas fa-eye me-1"></i>查看权限
                                     </button>
                                 </td>
@@ -637,9 +637,11 @@ function syncAccounts() {
 }
 
 // 使用共享的权限查看功能，但需要指定正确的API URL
-function viewAccountPermissions(accountId) {
-    // 使用共享组件，但指定instances页面的API URL
-    viewAccountPermissions(accountId, {
+// 注意：这里不能重新定义 viewAccountPermissions 函数，会造成无限递归
+// 创建一个包装函数来调用全局的 viewAccountPermissions 函数
+function viewInstanceAccountPermissions(accountId) {
+    // 调用全局的 viewAccountPermissions 函数，指定instances页面的API URL
+    window.viewAccountPermissions(accountId, {
         apiUrl: `/instances/{{ instance.id }}/accounts/${accountId}/permissions`
     });
 }
