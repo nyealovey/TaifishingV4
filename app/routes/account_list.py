@@ -154,6 +154,125 @@ def list_accounts(db_type=None):
     )
 
 
+@account_list_bp.route("/export")
+@login_required
+def export_accounts():
+    """导出账户数据为CSV"""
+    import csv
+    import io
+    from flask import Response
+    from datetime import datetime
+
+    # 获取查询参数（与list_accounts方法保持一致）
+    db_type = request.args.get("db_type", type=str)
+    search = request.args.get("search", "").strip()
+    instance_id = request.args.get("instance_id", type=int)
+    is_locked = request.args.get("is_locked")
+    is_superuser = request.args.get("is_superuser")
+    plugin = request.args.get("plugin", "").strip()
+    environment = request.args.get("environment", "").strip()
+    classification = request.args.get("classification", "").strip()
+
+    # 构建查询（与list_accounts方法保持一致）
+    query = Account.query
+
+    # 数据库类型过滤
+    if db_type and db_type != "all":
+        query = query.join(Instance).filter(Instance.db_type == db_type)
+
+    # 实例过滤
+    if instance_id:
+        query = query.filter(Account.instance_id == instance_id)
+
+    # 搜索过滤
+    if search:
+        query = query.filter(Account.username.contains(search))
+
+    # 锁定状态过滤
+    if is_locked is not None:
+        query = query.filter(Account.is_locked == (is_locked == "true"))
+
+    # 超级用户过滤
+    if is_superuser is not None:
+        query = query.filter(Account.is_superuser == (is_superuser == "true"))
+
+    # 排序
+    query = query.order_by(Account.username.asc())
+
+    # 获取所有账户数据
+    accounts = query.all()
+
+    # 获取账户分类信息
+    from app.models.account_classification import AccountClassification, AccountClassificationAssignment
+    
+    classifications = {}
+    if accounts:
+        account_ids = [account.id for account in accounts]
+        assignments = AccountClassificationAssignment.query.filter(
+            AccountClassificationAssignment.account_id.in_(account_ids)
+        ).all()
+        
+        for assignment in assignments:
+            if assignment.account_id not in classifications:
+                classifications[assignment.account_id] = []
+            classifications[assignment.account_id].append(assignment.classification.name)
+
+    # 创建CSV内容
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # 写入表头
+    writer.writerow([
+        "ID",
+        "用户名",
+        "主机",
+        "数据库类型",
+        "实例名称",
+        "插件",
+        "是否锁定",
+        "是否超级用户",
+        "账户分类",
+        "创建时间",
+        "更新时间"
+    ])
+
+    # 写入账户数据
+    for account in accounts:
+        # 获取实例信息
+        instance = Instance.query.get(account.instance_id) if account.instance_id else None
+        
+        # 获取分类信息
+        account_classifications = classifications.get(account.id, [])
+        classification_str = ", ".join(account_classifications) if account_classifications else ""
+        
+        writer.writerow([
+            account.id,
+            account.username,
+            account.host or "",
+            instance.db_type if instance else "",
+            instance.name if instance else "",
+            account.plugin or "",
+            "是" if account.is_locked else "否",
+            "是" if account.is_superuser else "否",
+            classification_str,
+            account.created_at.strftime("%Y-%m-%d %H:%M:%S") if account.created_at else "",
+            account.updated_at.strftime("%Y-%m-%d %H:%M:%S") if account.updated_at else ""
+        ])
+
+    # 创建响应
+    output.seek(0)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"accounts_export_{timestamp}.csv"
+    
+    response = Response(
+        output.getvalue(),
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+    return response
+
+
 @account_list_bp.route("/sync/<int:instance_id>", methods=["POST"])
 @login_required
 def sync_accounts(instance_id):
