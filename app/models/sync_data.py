@@ -73,6 +73,15 @@ class SyncData(db.Model):
         self.error_message = error_message
         self.records_count = records_count
 
+    def get_record_ids(self):
+        """
+        获取记录ID列表（兼容聚合记录接口）
+        
+        Returns:
+            list: 记录ID列表
+        """
+        return [self.id]
+
     def to_dict(self):
         """
         转换为字典
