@@ -25,7 +25,7 @@ def create_admin_user():
 
     with app.app_context():
         # 检查是否已存在管理员用户
-        admin_user = User.query.filter_by(username='admin').first()
+        admin_user = User.query.filter_by(username="admin").first()
 
         if admin_user:
             print("✅ 管理员用户已存在")
@@ -36,12 +36,8 @@ def create_admin_user():
 
         try:
             # 创建管理员用户
-            admin_user = User(
-                username='admin',
-                password='Admin123',
-                role='admin'
-            )
-            admin_user.email = 'admin@taifish.local'
+            admin_user = User(username="admin", password="Admin123", role="admin")
+            admin_user.email = "admin@taifish.local"
             admin_user.is_active = True
 
             db.session.add(admin_user)
@@ -60,6 +56,7 @@ def create_admin_user():
             db.session.rollback()
             return False
 
+
 def main():
     """主函数"""
     print("=" * 50)
@@ -75,5 +72,6 @@ def main():
         print("\n⚠️  管理员用户创建失败")
         sys.exit(1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

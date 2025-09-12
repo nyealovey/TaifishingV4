@@ -133,7 +133,8 @@ def create():
         try:
             port = int(data.get("port"))
             if port < 1 or port > 65535:
-                raise ValueError("端口号必须在1-65535之间")
+                error_msg = "端口号必须在1-65535之间"
+                raise ValueError(error_msg)
         except (ValueError, TypeError):
             error_msg = "端口号必须是1-65535之间的整数"
             if request.is_json:
@@ -147,7 +148,8 @@ def create():
                 credential_id = int(data.get("credential_id"))
                 credential = Credential.query.get(credential_id)
                 if not credential:
-                    raise ValueError("凭据不存在")
+                    error_msg = "凭据不存在"
+                    raise ValueError(error_msg)
             except (ValueError, TypeError):
                 error_msg = "无效的凭据ID"
                 if request.is_json:
@@ -429,7 +431,8 @@ def edit(instance_id):
         try:
             port = int(data.get("port"))
             if port < 1 or port > 65535:
-                raise ValueError("端口号必须在1-65535之间")
+                error_msg = "端口号必须在1-65535之间"
+                raise ValueError(error_msg)
         except (ValueError, TypeError):
             error_msg = "端口号必须是1-65535之间的整数"
             if request.is_json:
@@ -443,7 +446,8 @@ def edit(instance_id):
                 credential_id = int(data.get("credential_id"))
                 credential = Credential.query.get(credential_id)
                 if not credential:
-                    raise ValueError("凭据不存在")
+                    error_msg = "凭据不存在"
+                    raise ValueError(error_msg)
             except (ValueError, TypeError):
                 error_msg = "无效的凭据ID"
                 if request.is_json:

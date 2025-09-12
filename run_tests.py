@@ -15,14 +15,12 @@ sys.path.insert(0, str(project_root))
 # 设置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('test_results.log')
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(), logging.FileHandler("test_results.log")],
 )
 
 logger = logging.getLogger(__name__)
+
 
 def main():
     """主函数"""
@@ -47,23 +45,23 @@ def main():
         logger.info("=" * 60)
 
         # 单元测试结果
-        unit_tests = results.get('unit_tests', {})
+        unit_tests = results.get("unit_tests", {})
         logger.info(f"单元测试: {unit_tests.get('passed', 0)}/{unit_tests.get('total', 0)} 通过")
 
         # 集成测试结果
-        integration_tests = results.get('integration_tests', {})
+        integration_tests = results.get("integration_tests", {})
         logger.info(f"集成测试: {integration_tests.get('passed', 0)}/{integration_tests.get('total', 0)} 通过")
 
         # 性能测试结果
-        performance_tests = results.get('performance_tests', {})
+        performance_tests = results.get("performance_tests", {})
         logger.info(f"性能测试: {performance_tests.get('passed', 0)}/{performance_tests.get('total', 0)} 通过")
 
         # 安全测试结果
-        security_tests = results.get('security_tests', {})
+        security_tests = results.get("security_tests", {})
         logger.info(f"安全测试: {security_tests.get('passed', 0)}/{security_tests.get('total', 0)} 通过")
 
         # 总体结果
-        summary = results.get('summary', {})
+        summary = results.get("summary", {})
         logger.info(f"总测试数: {summary.get('total_tests', 0)}")
         logger.info(f"通过数: {summary.get('passed', 0)}")
         logger.info(f"失败数: {summary.get('failed', 0)}")
@@ -76,9 +74,9 @@ def main():
         logger.info("=" * 60)
 
         # 输出失败的测试
-        for category in ['unit_tests', 'integration_tests', 'performance_tests', 'security_tests']:
+        for category in ["unit_tests", "integration_tests", "performance_tests", "security_tests"]:
             category_results = results.get(category, {})
-            failed_tests = [r for r in category_results.get('results', []) if not r.get('success', False)]
+            failed_tests = [r for r in category_results.get("results", []) if not r.get("success", False)]
 
             if failed_tests:
                 logger.warning(f"\n{category.upper()} 失败测试:")
@@ -86,15 +84,15 @@ def main():
                     logger.warning(f"  - {test.get('name', 'Unknown')}: {test.get('error', 'Unknown error')}")
 
         # 输出性能测试详情
-        if performance_tests.get('results'):
+        if performance_tests.get("results"):
             logger.info("\n性能测试详情:")
-            for test in performance_tests['results']:
-                if test.get('success'):
-                    execution_time = test.get('execution_time', 0)
+            for test in performance_tests["results"]:
+                if test.get("success"):
+                    execution_time = test.get("execution_time", 0)
                     logger.info(f"  - {test.get('name', 'Unknown')}: {execution_time:.3f}秒")
 
         # 判断测试是否成功
-        if results.get('success', False) and summary.get('success_rate', 0) >= 80:
+        if results.get("success", False) and summary.get("success_rate", 0) >= 80:
             logger.info("\n" + "=" * 60)
             logger.info("✅ 测试通过！项目质量良好")
             logger.info("=" * 60)
@@ -107,9 +105,11 @@ def main():
     except Exception as e:
         logger.error(f"测试运行失败: {e}")
         import traceback
+
         logger.error(f"错误堆栈: {traceback.format_exc()}")
         return False
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)

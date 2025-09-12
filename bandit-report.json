@@ -1,6 +1,6 @@
 {
   "errors": [],
-  "generated_at": "2025-09-12T15:10:44Z",
+  "generated_at": "2025-09-12T22:57:36Z",
   "metrics": {
     "_totals": {
       "CONFIDENCE.HIGH": 7,
@@ -11,7 +11,7 @@
       "SEVERITY.LOW": 12,
       "SEVERITY.MEDIUM": 9,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 18697,
+      "loc": 18678,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -414,7 +414,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 446,
+      "loc": 440,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -713,7 +713,7 @@
       "SEVERITY.LOW": 2,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 114,
+      "loc": 115,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -869,7 +869,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 237,
+      "loc": 234,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -882,7 +882,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 183,
+      "loc": 176,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -908,7 +908,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 205,
+      "loc": 206,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -921,7 +921,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 78,
+      "loc": 75,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -934,7 +934,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 378,
+      "loc": 376,
       "nosec": 0,
       "skipped_tests": 0
     }
@@ -1084,7 +1084,7 @@
       "test_name": "try_except_continue"
     },
     {
-      "code": "277         cursor.execute(\n278             f\"\"\"\n279             SELECT \n280                 User as username,\n281                 Host as host,\n282                 'user' as account_type,\n283                 '' as database_name,\n284                 plugin as plugin,\n285                 password_expired as password_expired,\n286                 password_last_changed as password_last_changed,\n287                 account_locked as account_locked,\n288                 password_lifetime as password_lifetime,\n289                 Select_priv as can_select,\n290                 Insert_priv as can_insert,\n291                 Update_priv as can_update,\n292                 Delete_priv as can_delete,\n293                 Create_priv as can_create,\n294                 Drop_priv as can_drop,\n295                 Super_priv as is_superuser\n296             FROM mysql.user\n297             WHERE {filter_conditions}\n298             ORDER BY User, Host\n299         \"\"\"\n300         )\n",
+      "code": "277         cursor.execute(\n278             f\"\"\"\n279             SELECT\n280                 User as username,\n281                 Host as host,\n282                 'user' as account_type,\n283                 '' as database_name,\n284                 plugin as plugin,\n285                 password_expired as password_expired,\n286                 password_last_changed as password_last_changed,\n287                 account_locked as account_locked,\n288                 password_lifetime as password_lifetime,\n289                 Select_priv as can_select,\n290                 Insert_priv as can_insert,\n291                 Update_priv as can_update,\n292                 Delete_priv as can_delete,\n293                 Create_priv as can_create,\n294                 Drop_priv as can_drop,\n295                 Super_priv as is_superuser\n296             FROM mysql.user\n297             WHERE {filter_conditions}\n298             ORDER BY User, Host\n299         \"\"\"\n300         )\n",
       "col_offset": 16,
       "end_col_offset": 18,
       "filename": "app/services/account_sync_service.py",
@@ -1145,7 +1145,7 @@
       "test_name": "hardcoded_password_string"
     },
     {
-      "code": "478         cursor.execute(\n479             f\"\"\"\n480             SELECT \n481                     rolname as username,\n482                     rolsuper as is_superuser,\n483                     rolinherit as can_inherit,\n484                     rolcreaterole as can_create_role,\n485                     rolcreatedb as can_create_db,\n486                     rolcanlogin as can_login,\n487                     rolconnlimit as conn_limit,\n488                     CASE \n489                         WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL\n490                         ELSE rolvaliduntil \n491                     END as valid_until,\n492                     rolbypassrls as can_bypass_rls,\n493                     rolreplication as can_replicate\n494                 FROM pg_roles\n495                 WHERE {filter_conditions}\n496                 ORDER BY rolname\n497             \"\"\"\n498         )\n",
+      "code": "478         cursor.execute(\n479             f\"\"\"\n480             SELECT\n481                     rolname as username,\n482                     rolsuper as is_superuser,\n483                     rolinherit as can_inherit,\n484                     rolcreaterole as can_create_role,\n485                     rolcreatedb as can_create_db,\n486                     rolcanlogin as can_login,\n487                     rolconnlimit as conn_limit,\n488                     CASE\n489                         WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL\n490                         ELSE rolvaliduntil\n491                     END as valid_until,\n492                     rolbypassrls as can_bypass_rls,\n493                     rolreplication as can_replicate\n494                 FROM pg_roles\n495                 WHERE {filter_conditions}\n496                 ORDER BY rolname\n497             \"\"\"\n498         )\n",
       "col_offset": 16,
       "end_col_offset": 22,
       "filename": "app/services/account_sync_service.py",
@@ -1183,7 +1183,7 @@
       "test_name": "hardcoded_sql_expressions"
     },
     {
-      "code": "805         cursor.execute(\n806             f\"\"\"\n807             SELECT \n808                 name as username,\n809                 type_desc as account_type,\n810                 'master' as database_name,\n811                 is_disabled as is_disabled,\n812                 create_date as created_date,\n813                 modify_date as modified_date\n814             FROM sys.server_principals\n815             WHERE type IN ('S', 'U', 'G')\n816             AND {filter_conditions}\n817             AND (name = 'sa' OR name NOT LIKE 'NT %')\n818             ORDER BY name\n819         \"\"\"\n820         )\n",
+      "code": "805         cursor.execute(\n806             f\"\"\"\n807             SELECT\n808                 name as username,\n809                 type_desc as account_type,\n810                 'master' as database_name,\n811                 is_disabled as is_disabled,\n812                 create_date as created_date,\n813                 modify_date as modified_date\n814             FROM sys.server_principals\n815             WHERE type IN ('S', 'U', 'G')\n816             AND {filter_conditions}\n817             AND (name = 'sa' OR name NOT LIKE 'NT %')\n818             ORDER BY name\n819         \"\"\"\n820         )\n",
       "col_offset": 16,
       "end_col_offset": 16,
       "filename": "app/services/account_sync_service.py",
@@ -1216,7 +1216,7 @@
       "test_name": "hardcoded_sql_expressions"
     },
     {
-      "code": "956         cursor.execute(\n957             f\"\"\"\n958             SELECT \n959                 username,\n960                 authentication_type as account_type,\n961                 '' as database_name,\n962                 account_status,\n963                 created,\n964                 expiry_date,\n965                 profile\n966             FROM dba_users\n967             WHERE {filter_conditions}\n968             ORDER BY username\n969         \"\"\"\n970         )\n",
+      "code": "956         cursor.execute(\n957             f\"\"\"\n958             SELECT\n959                 username,\n960                 authentication_type as account_type,\n961                 '' as database_name,\n962                 account_status,\n963                 created,\n964                 expiry_date,\n965                 profile\n966             FROM dba_users\n967             WHERE {filter_conditions}\n968             ORDER BY username\n969         \"\"\"\n970         )\n",
       "col_offset": 16,
       "end_col_offset": 18,
       "filename": "app/services/account_sync_service.py",
@@ -1272,7 +1272,7 @@
       "test_name": "hardcoded_sql_expressions"
     },
     {
-      "code": "378         cursor.execute(\n379             f\"\"\"\n380             SELECT \n381                 rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, \n382                 rolcanlogin, rolconnlimit, \n383                 CASE \n384                     WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL\n385                     ELSE rolvaliduntil \n386                 END as rolvaliduntil,\n387                 rolbypassrls, rolreplication\n388             FROM pg_roles\n389             WHERE {filter_conditions}\n390         \"\"\"\n391         )\n",
+      "code": "378         cursor.execute(\n379             f\"\"\"\n380             SELECT\n381                 rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb,\n382                 rolcanlogin, rolconnlimit,\n383                 CASE\n384                     WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL\n385                     ELSE rolvaliduntil\n386                 END as rolvaliduntil,\n387                 rolbypassrls, rolreplication\n388             FROM pg_roles\n389             WHERE {filter_conditions}\n390         \"\"\"\n391         )\n",
       "col_offset": 16,
       "end_col_offset": 18,
       "filename": "app/services/database_service.py",
@@ -1329,7 +1329,7 @@
       "test_name": "hardcoded_sql_expressions"
     },
     {
-      "code": "694         cursor.execute(\n695             f\"\"\"\n696             SELECT username, user_id, account_status, lock_date, expiry_date, \n697                    default_tablespace, created, authentication_type\n698             FROM dba_users\n699             WHERE {filter_conditions}\n700             ORDER BY username\n701         \"\"\"\n702         )\n",
+      "code": "694         cursor.execute(\n695             f\"\"\"\n696             SELECT username, user_id, account_status, lock_date, expiry_date,\n697                    default_tablespace, created, authentication_type\n698             FROM dba_users\n699             WHERE {filter_conditions}\n700             ORDER BY username\n701         \"\"\"\n702         )\n",
       "col_offset": 16,
       "end_col_offset": 18,
       "filename": "app/services/database_service.py",
@@ -1417,7 +1417,7 @@
       "test_name": "try_except_pass"
     },
     {
-      "code": "71                     connection.close()\n72                 except:\n73                     pass\n74                 with self._lock:\n",
+      "code": "72                     connection.close()\n73                 except:\n74                     pass\n75                 with self._lock:\n",
       "col_offset": 16,
       "end_col_offset": 24,
       "filename": "app/utils/connection_pool.py",
@@ -1428,17 +1428,17 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Try, Except, Pass detected.",
-      "line_number": 72,
+      "line_number": 73,
       "line_range": [
-        72,
-        73
+        73,
+        74
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
       "test_id": "B110",
       "test_name": "try_except_pass"
     },
     {
-      "code": "99                         conn.close()\n100                     except:\n101                         pass\n102                 with self._lock:\n",
+      "code": "100                         conn.close()\n101                     except:\n102                         pass\n103                 with self._lock:\n",
       "col_offset": 20,
       "end_col_offset": 28,
       "filename": "app/utils/connection_pool.py",
@@ -1449,10 +1449,10 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Try, Except, Pass detected.",
-      "line_number": 100,
+      "line_number": 101,
       "line_range": [
-        100,
-        101
+        101,
+        102
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
       "test_id": "B110",

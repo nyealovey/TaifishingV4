@@ -41,17 +41,16 @@ def test_log_trend():
 
         # 4. 检查今天的日志数量
         from app.utils.timezone import CHINA_TZ, china_to_utc, get_china_today
+
         today = get_china_today().date()
         start_utc = china_to_utc(CHINA_TZ.localize(datetime.combine(today, datetime.min.time())))
         end_utc = china_to_utc(CHINA_TZ.localize(datetime.combine(today, datetime.max.time())))
 
-        today_count = Log.query.filter(
-            Log.created_at >= start_utc,
-            Log.created_at <= end_utc
-        ).count()
+        today_count = Log.query.filter(Log.created_at >= start_utc, Log.created_at <= end_utc).count()
 
         print(f"\n今天({today})的日志数量: {today_count}")
         print(f"UTC时间范围: {start_utc} 到 {end_utc}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test_log_trend()

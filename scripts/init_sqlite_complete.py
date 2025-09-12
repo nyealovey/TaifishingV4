@@ -12,12 +12,12 @@ from datetime import datetime
 # 添加项目根目录到 Python 路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+
 def run_script(script_path, description):
     """运行脚本并显示结果"""
     print(f"\n🚀 {description}...")
     try:
-        result = subprocess.run([sys.executable, script_path],
-                              capture_output=True, text=True, check=True)
+        result = subprocess.run([sys.executable, script_path], capture_output=True, text=True, check=True)
         print(f"✅ {description} 完成")
         if result.stdout:
             print(result.stdout)
@@ -29,6 +29,7 @@ def run_script(script_path, description):
         if e.stderr:
             print("STDERR:", e.stderr)
         return False
+
 
 def main():
     """主函数"""
@@ -62,6 +63,7 @@ def main():
     print("\n🔍 验证数据库状态...")
     try:
         import sqlite3
+
         db_path = "userdata/taifish_dev.db"
 
         if not os.path.exists(db_path):
@@ -78,13 +80,13 @@ def main():
 
         # 检查关键表的数据
         key_tables = {
-            'users': '用户',
-            'database_type_configs': '数据库类型配置',
-            'account_classifications': '账户分类',
-            'classification_rules': '分类规则',
-            'permission_configs': '权限配置',
-            'tasks': '任务',
-            'global_params': '全局参数'
+            "users": "用户",
+            "database_type_configs": "数据库类型配置",
+            "account_classifications": "账户分类",
+            "classification_rules": "分类规则",
+            "permission_configs": "权限配置",
+            "tasks": "任务",
+            "global_params": "全局参数",
         }
 
         print("\n📊 关键表数据统计:")
@@ -120,6 +122,7 @@ def main():
     print("\n🚀 现在可以启动应用程序了！")
 
     return True
+
 
 if __name__ == "__main__":
     success = main()

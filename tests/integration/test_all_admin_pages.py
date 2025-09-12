@@ -12,6 +12,7 @@ BASE_URL = "http://localhost:5001"
 ADMIN_USER = "admin"
 ADMIN_PASSWORD = "Admin123"
 
+
 def login():
     """登录获取session"""
     session = requests.Session()
@@ -25,10 +26,7 @@ def login():
         return None
 
     # 登录
-    login_data = {
-        "username": ADMIN_USER,
-        "password": ADMIN_PASSWORD
-    }
+    login_data = {"username": ADMIN_USER, "password": ADMIN_PASSWORD}
 
     response = session.post(login_url, data=login_data, allow_redirects=False)
 
@@ -37,6 +35,7 @@ def login():
         return session
     print(f"❌ 登录失败: {response.status_code}")
     return None
+
 
 def test_admin_page(session, page_name, page_url):
     """测试单个管理页面"""
@@ -59,6 +58,7 @@ def test_admin_page(session, page_name, page_url):
     except Exception as e:
         print(f"❌ {page_name}: 请求失败 - {e}")
         return False
+
 
 def main():
     """主测试函数"""
@@ -101,6 +101,7 @@ def main():
         return True
     print(f"⚠️  有 {total_count - success_count} 个页面需要检查")
     return False
+
 
 if __name__ == "__main__":
     success = main()

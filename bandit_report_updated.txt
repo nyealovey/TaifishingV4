@@ -38,7 +38,7 @@ Test results:
    Location: app/constants.py:267:23
 266	    # 密码模式（至少8位，包含大小写字母和数字）
 267	    PASSWORD_PATTERN = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$"
-268	
+268
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
@@ -50,7 +50,7 @@ Test results:
 59	        except Exception:
 60	            # 避免在日志记录过程中出错
 61	            pass
-62	
+62
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'Admin123'
@@ -71,7 +71,7 @@ Test results:
 225	                    )
 226	            except:
 227	                continue
-228	
+228
 
 --------------------------------------------------
 >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
@@ -81,7 +81,7 @@ Test results:
    Location: app/services/account_sync_service.py:282:16
 281	        cursor.execute(
 282	            f"""
-283	            SELECT 
+283	            SELECT
 284	                User as username,
 285	                Host as host,
 286	                'user' as account_type,
@@ -112,7 +112,7 @@ Test results:
    Location: app/services/account_sync_service.py:341:54
 340	            # 处理密码过期状态
 341	            is_password_expired = password_expired == "Y" if password_expired else False
-342	
+342
 
 --------------------------------------------------
 >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
@@ -122,7 +122,7 @@ Test results:
    Location: app/services/account_sync_service.py:485:20
 484	        cursor.execute(
 485	                f"""
-486	            SELECT 
+486	            SELECT
 487	                    rolname as username,
 488	                    rolsuper as is_superuser,
 489	                    rolinherit as can_inherit,
@@ -130,9 +130,9 @@ Test results:
 491	                    rolcreatedb as can_create_db,
 492	                    rolcanlogin as can_login,
 493	                    rolconnlimit as conn_limit,
-494	                    CASE 
+494	                    CASE
 495	                        WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
-496	                        ELSE rolvaliduntil 
+496	                        ELSE rolvaliduntil
 497	                    END as valid_until,
 498	                    rolbypassrls as can_bypass_rls,
 499	                    rolreplication as can_replicate
@@ -150,7 +150,7 @@ Test results:
    Location: app/services/account_sync_service.py:825:16
 824	        cursor.execute(
 825	            f"""
-826	            SELECT 
+826	            SELECT
 827	                name as username,
 828	                type_desc as account_type,
 829	                'master' as database_name,
@@ -173,7 +173,7 @@ Test results:
    Location: app/services/account_sync_service.py:978:16
 977	        cursor.execute(
 978	            f"""
-979	            SELECT 
+979	            SELECT
 980	                username,
 981	                authentication_type as account_type,
 982	                '' as database_name,
@@ -209,12 +209,12 @@ Test results:
    Location: app/services/database_service.py:385:16
 384	        cursor.execute(
 385	            f"""
-386	            SELECT 
-387	                rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, 
-388	                rolcanlogin, rolconnlimit, 
-389	                CASE 
+386	            SELECT
+387	                rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb,
+388	                rolcanlogin, rolconnlimit,
+389	                CASE
 390	                    WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
-391	                    ELSE rolvaliduntil 
+391	                    ELSE rolvaliduntil
 392	                END as rolvaliduntil,
 393	                rolbypassrls, rolreplication
 394	            FROM pg_roles
@@ -246,7 +246,7 @@ Test results:
    Location: app/services/database_service.py:705:16
 704	        cursor.execute(
 705	            f"""
-706	            SELECT username, user_id, account_status, lock_date, expiry_date, 
+706	            SELECT username, user_id, account_status, lock_date, expiry_date,
 707	                   default_tablespace, created, authentication_type
 708	            FROM dba_users
 709	            WHERE {filter_conditions}
@@ -263,7 +263,7 @@ Test results:
 1038	                del self.connections[instance_id]
 1039	            except Exception:
 1040	                pass
-1041	
+1041
 
 --------------------------------------------------
 >> Issue: [B102:exec_used] Use of exec detected.
@@ -273,7 +273,7 @@ Test results:
    Location: app/services/task_executor.py:200:16
 199	                # 执行Python代码
 200	                exec(task.python_code, exec_globals)
-201	
+201
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
@@ -284,7 +284,7 @@ Test results:
 297	                            info["backup_version"] = data["version"]
 298	                except:
 299	                    pass
-300	
+300
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.

@@ -51,5 +51,6 @@ def test_timezone():
         china_time = format_china_time(utc_time_with_tz)
         print(f"转换为东八区时间: {china_time}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test_timezone()

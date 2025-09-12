@@ -167,7 +167,7 @@ class DatabaseTypeService:
 
             return {
                 "success": True,
-                "message": f'数据库类型已{"启用" if config.is_active else "禁用"}',
+                "message": f"数据库类型已{'启用' if config.is_active else '禁用'}",
                 "data": config.to_dict(),
             }
 

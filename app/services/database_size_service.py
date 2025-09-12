@@ -96,7 +96,8 @@ class DatabaseSizeService:
                 )
             if instance.db_type == "postgresql":
                 if psycopg is None:
-                    raise ImportError("psycopg模块未安装，无法连接PostgreSQL")
+                    error_msg = "psycopg模块未安装，无法连接PostgreSQL"
+                    raise ImportError(error_msg)
                 return psycopg.connect(
                     host=instance.host,
                     port=instance.port,
@@ -106,7 +107,8 @@ class DatabaseSizeService:
                 )
             if instance.db_type == "sqlserver":
                 if pyodbc is None:
-                    raise ImportError("pyodbc模块未安装，无法连接SQL Server")
+                    error_msg = "pyodbc模块未安装，无法连接SQL Server"
+                    raise ImportError(error_msg)
                 return pyodbc.connect(
                     f"DRIVER={{ODBC Driver 17 for SQL Server}};"
                     f"SERVER={instance.host},{instance.port};"
@@ -116,7 +118,8 @@ class DatabaseSizeService:
                 )
             if instance.db_type == "oracle":
                 if oracledb is None:
-                    raise ImportError("oracledb模块未安装，无法连接Oracle")
+                    error_msg = "oracledb模块未安装，无法连接Oracle"
+                    raise ImportError(error_msg)
 
                 # 优先使用Thick模式连接（适用于所有Oracle版本，包括11g）
                 try:

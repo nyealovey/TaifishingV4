@@ -88,4 +88,4 @@ class AccountChange(db.Model):
         )
 
     def __repr__(self):
-        return f'<AccountChange {self.change_type} for account {self.account_data.get("username", "Unknown")}>'
+        return f"<AccountChange {self.change_type} for account {self.account_data.get('username', 'Unknown')}>"

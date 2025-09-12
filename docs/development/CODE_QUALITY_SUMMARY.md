@@ -4,7 +4,7 @@
 
 ✅ **已完成的任务**
 - [x] 集成 Ruff 代码检查工具
-- [x] 集成 Mypy 类型检查工具  
+- [x] 集成 Mypy 类型检查工具
 - [x] 集成 Bandit 安全扫描工具
 - [x] 集成 Black 代码格式化工具
 - [x] 配置 pre-commit hooks 自动化检查

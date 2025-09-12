@@ -408,13 +408,15 @@ def validate_instance_data(data: dict[str, Any]) -> dict[str, Any]:
     # 验证名称
     name = InputValidator.validate_string(data.get("name"), min_length=1, max_length=100, allow_empty=False)
     if not name:
-        raise ValueError("实例名称无效")
+        error_msg = "实例名称无效"
+        raise ValueError(error_msg)
     validated["name"] = name
 
     # 验证数据库类型
     db_type = InputValidator.validate_db_type(data.get("db_type"))
     if not db_type:
-        raise ValueError("不支持的数据库类型")
+        error_msg = "不支持的数据库类型"
+        raise ValueError(error_msg)
     validated["db_type"] = db_type
 
     # 验证主机地址
@@ -426,13 +428,15 @@ def validate_instance_data(data: dict[str, Any]) -> dict[str, Any]:
         pattern=r"^[a-zA-Z0-9.-]+$",
     )
     if not host:
-        raise ValueError("主机地址无效")
+        error_msg = "主机地址无效"
+        raise ValueError(error_msg)
     validated["host"] = host
 
     # 验证端口
     port = InputValidator.validate_integer(data.get("port"), min_val=1, max_val=65535)
     if not port:
-        raise ValueError("端口号无效")
+        error_msg = "端口号无效"
+        raise ValueError(error_msg)
     validated["port"] = port
 
     # 验证数据库名
@@ -444,7 +448,8 @@ def validate_instance_data(data: dict[str, Any]) -> dict[str, Any]:
         pattern=r"^[a-zA-Z0-9_]+$",
     )
     if not database_name:
-        raise ValueError("数据库名无效")
+        error_msg = "数据库名无效"
+        raise ValueError(error_msg)
     validated["database_name"] = database_name
 
     # 验证描述
@@ -473,7 +478,8 @@ def validate_credential_data(data: dict[str, Any]) -> dict[str, Any]:
     # 验证名称
     name = InputValidator.validate_string(data.get("name"), min_length=1, max_length=100, allow_empty=False)
     if not name:
-        raise ValueError("凭据名称无效")
+        error_msg = "凭据名称无效"
+        raise ValueError(error_msg)
     validated["name"] = name
 
     # 验证用户名
@@ -485,13 +491,15 @@ def validate_credential_data(data: dict[str, Any]) -> dict[str, Any]:
         pattern=r"^[a-zA-Z0-9_@.-]+$",
     )
     if not username:
-        raise ValueError("用户名无效")
+        error_msg = "用户名无效"
+        raise ValueError(error_msg)
     validated["username"] = username
 
     # 验证密码
     password = data.get("password")
     if not password or len(password) < 6:
-        raise ValueError("密码长度至少6位")
+        error_msg = "密码长度至少6位"
+        raise ValueError(error_msg)
     validated["password"] = password
 
     # 验证描述

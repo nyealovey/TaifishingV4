@@ -4,7 +4,7 @@
 
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -40,14 +40,14 @@ class EnvironmentValidator:
     }
 
     @classmethod
-    def validate_environment(cls) -> Dict[str, Any]:
+    def validate_environment(cls) -> dict[str, Any]:
         """
         验证环境变量
 
         Returns:
             dict: 验证结果
         """
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "valid": True,
             "errors": [],
             "warnings": [],
@@ -78,7 +78,7 @@ class EnvironmentValidator:
         return result
 
     @classmethod
-    def _validate_specific_vars(cls, result: Dict[str, Any]) -> None:
+    def _validate_specific_vars(cls, result: dict[str, Any]) -> None:
         """验证特定变量"""
         # 验证SECRET_KEY
         secret_key = os.getenv("SECRET_KEY")
@@ -149,7 +149,7 @@ class EnvironmentValidator:
             return False
 
     @classmethod
-    def _generate_suggestions(cls, result: Dict[str, Any]) -> None:
+    def _generate_suggestions(cls, result: dict[str, Any]) -> None:
         """生成配置建议"""
         suggestions = []
 

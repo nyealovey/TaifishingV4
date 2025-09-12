@@ -43,6 +43,7 @@ def test_constants_import():
         print(f"✗ 常量导入失败: {e}")
         return False
 
+
 def test_config_integration():
     """测试配置集成"""
     print("\n=== 测试配置集成 ===")
@@ -64,27 +65,28 @@ def test_config_integration():
         print(f"✗ 配置集成失败: {e}")
         return False
 
+
 def test_hardcoded_replacement():
     """测试硬编码值替换"""
     print("\n=== 测试硬编码值替换 ===")
 
     # 检查一些关键文件是否还有硬编码值
     files_to_check = [
-        'app/config.py',
-        'app/utils/rate_limiter.py',
+        "app/config.py",
+        "app/utils/rate_limiter.py",
     ]
 
     hardcoded_found = False
 
     for file_path in files_to_check:
         if os.path.exists(file_path):
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # 检查是否还有明显的硬编码值
-            suspicious_values = ['= 20', '= 100', '= 300', '= 3600', '= 80', '= 12']
+            suspicious_values = ["= 20", "= 100", "= 300", "= 3600", "= 80", "= 12"]
             for value in suspicious_values:
-                if value in content and 'SystemConstants' not in content:
+                if value in content and "SystemConstants" not in content:
                     print(f"⚠  {file_path} 中可能还有硬编码值: {value}")
                     hardcoded_found = True
 
@@ -93,6 +95,7 @@ def test_hardcoded_replacement():
         return True
     print("⚠ 发现一些可能的硬编码值，需要进一步检查")
     return False
+
 
 def test_constant_usage():
     """测试常量使用"""
@@ -115,16 +118,12 @@ def test_constant_usage():
         print(f"✗ 常量使用测试失败: {e}")
         return False
 
+
 def main():
     """主函数"""
     print("开始常量集成测试...\n")
 
-    tests = [
-        test_constants_import,
-        test_config_integration,
-        test_hardcoded_replacement,
-        test_constant_usage
-    ]
+    tests = [test_constants_import, test_config_integration, test_hardcoded_replacement, test_constant_usage]
 
     passed = 0
     total = len(tests)
@@ -135,7 +134,7 @@ def main():
 
     print("\n=== 测试结果 ===")
     print(f"通过: {passed}/{total}")
-    print(f"成功率: {passed/total*100:.1f}%")
+    print(f"成功率: {passed / total * 100:.1f}%")
 
     if passed == total:
         print("🎉 所有测试通过！常量管理系统集成成功！")
@@ -143,6 +142,7 @@ def main():
     print("❌ 部分测试失败，需要进一步检查")
     return False
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)

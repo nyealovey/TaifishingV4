@@ -3,7 +3,7 @@
 防止SQL注入攻击
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 
 class SafeQueryBuilder:
@@ -45,10 +45,10 @@ class SafeQueryBuilder:
     ORACLE_USER_FIELDS = {"username", "authentication_type", "account_status", "created", "expiry_date", "profile"}
 
     @classmethod
-    def build_mysql_user_query(cls, filter_conditions: Dict[str, Any]) -> tuple[str, List[Union[str, int, float]]]:
+    def build_mysql_user_query(cls, filter_conditions: dict[str, Any]) -> tuple[str, list[str | int | float]]:
         """构建MySQL用户查询"""
         base_query = """
-            SELECT 
+            SELECT
                 User as username,
                 Host as host,
                 'user' as account_type,
@@ -69,7 +69,7 @@ class SafeQueryBuilder:
         """
 
         where_clauses = []
-        params: List[Union[str, int, float]] = []
+        params: list[str | int | float] = []
 
         for field, value in filter_conditions.items():
             if field in cls.MYSQL_USER_FIELDS:
@@ -91,12 +91,10 @@ class SafeQueryBuilder:
         return base_query, params
 
     @classmethod
-    def build_postgres_role_query(
-        cls, filter_conditions: Dict[str, Any]
-    ) -> tuple[str, List[Union[str, int, float, bool]]]:
+    def build_postgres_role_query(cls, filter_conditions: dict[str, Any]) -> tuple[str, list[str | int | float | bool]]:
         """构建PostgreSQL角色查询"""
         base_query = """
-            SELECT 
+            SELECT
                 rolname as username,
                 rolsuper as is_superuser,
                 rolinherit as can_inherit,
@@ -104,9 +102,9 @@ class SafeQueryBuilder:
                 rolcreatedb as can_create_db,
                 rolcanlogin as can_login,
                 rolconnlimit as conn_limit,
-                CASE 
+                CASE
                     WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
-                    ELSE rolvaliduntil 
+                    ELSE rolvaliduntil
                 END as valid_until,
                 rolbypassrls as can_bypass_rls,
                 rolreplication as can_replicate
@@ -114,17 +112,14 @@ class SafeQueryBuilder:
         """
 
         where_clauses = []
-        params: List[Union[str, int, float, bool]] = []
+        params: list[str | int | float | bool] = []
 
         for field, value in filter_conditions.items():
             if field in cls.POSTGRES_ROLE_FIELDS:
                 if isinstance(value, str):
                     where_clauses.append(f"{field} ILIKE %s")
                     params.append(f"%{value}%")
-                elif isinstance(value, (int, float)):
-                    where_clauses.append(f"{field} = %s")
-                    params.append(value)
-                elif isinstance(value, bool):
+                elif isinstance(value, (int, float)) or isinstance(value, bool):
                     where_clauses.append(f"{field} = %s")
                     params.append(value)
 
@@ -137,11 +132,11 @@ class SafeQueryBuilder:
 
     @classmethod
     def build_sqlserver_principal_query(
-        cls, filter_conditions: Dict[str, Any]
-    ) -> tuple[str, List[Union[str, int, float, bool]]]:
+        cls, filter_conditions: dict[str, Any]
+    ) -> tuple[str, list[str | int | float | bool]]:
         """构建SQL Server主体查询"""
         base_query = """
-            SELECT 
+            SELECT
                 name as username,
                 type_desc as account_type,
                 'master' as database_name,
@@ -153,7 +148,7 @@ class SafeQueryBuilder:
         """
 
         where_clauses = []
-        params: List[Union[str, int, float, bool]] = []
+        params: list[str | int | float | bool] = []
 
         for field, value in filter_conditions.items():
             if field in cls.SQLSERVER_PRINCIPAL_FIELDS:
@@ -178,12 +173,10 @@ class SafeQueryBuilder:
         return base_query, params
 
     @classmethod
-    def build_oracle_user_query(
-        cls, filter_conditions: Dict[str, Any]
-    ) -> tuple[str, List[Union[str, int, float, bool]]]:
+    def build_oracle_user_query(cls, filter_conditions: dict[str, Any]) -> tuple[str, list[str | int | float | bool]]:
         """构建Oracle用户查询"""
         base_query = """
-            SELECT 
+            SELECT
                 username,
                 authentication_type as account_type,
                 '' as database_name,
@@ -195,7 +188,7 @@ class SafeQueryBuilder:
         """
 
         where_clauses = []
-        params: List[Union[str, int, float, bool]] = []
+        params: list[str | int | float | bool] = []
 
         for field, value in filter_conditions.items():
             if field in cls.ORACLE_USER_FIELDS:

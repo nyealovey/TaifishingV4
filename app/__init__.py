@@ -132,7 +132,8 @@ def configure_app(app, config_name):
             secret_key = secrets.token_urlsafe(32)
             print("⚠️  开发环境使用随机生成的SECRET_KEY，生产环境请设置环境变量")
         else:
-            raise ValueError("SECRET_KEY environment variable must be set in production")
+            error_msg = "SECRET_KEY environment variable must be set in production"
+            raise ValueError(error_msg)
 
     if not jwt_secret_key:
         if app.debug:
@@ -142,7 +143,8 @@ def configure_app(app, config_name):
             jwt_secret_key = secrets.token_urlsafe(32)
             print("⚠️  开发环境使用随机生成的JWT_SECRET_KEY，生产环境请设置环境变量")
         else:
-            raise ValueError("JWT_SECRET_KEY environment variable must be set in production")
+            error_msg = "JWT_SECRET_KEY environment variable must be set in production"
+            raise ValueError(error_msg)
 
     app.config["SECRET_KEY"] = secret_key
     app.config["JWT_SECRET_KEY"] = jwt_secret_key

@@ -279,13 +279,13 @@ from typing import List, Dict, Optional, Union, Any
 from datetime import datetime
 
 def process_users(
-    users: List[Dict[str, Any]], 
+    users: List[Dict[str, Any]],
     active_only: bool = True
 ) -> Dict[str, int]:
     """处理用户数据并返回统计信息"""
     if active_only:
         users = [u for u in users if u.get('active', False)]
-    
+
     return {
         'total': len(users),
         'processed': len([u for u in users if u.get('processed', False)])
@@ -344,26 +344,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.13'
-    
+
     - name: Install dependencies
       run: |
         pip install uv
         uv sync --dev
-    
+
     - name: Run Ruff
       run: uv run ruff check app/
-    
+
     - name: Run Mypy
       run: uv run mypy app/
-    
+
     - name: Run Bandit
       run: uv run bandit -r app/
-    
+
     - name: Run Black
       run: uv run black app/ --check
 ```

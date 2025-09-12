@@ -24,7 +24,7 @@ def create_test_credential():
 
     with app.app_context():
         # 检查是否已存在测试凭据
-        test_cred = Credential.query.filter_by(name='测试MySQL凭据').first()
+        test_cred = Credential.query.filter_by(name="测试MySQL凭据").first()
 
         if test_cred:
             print("✅ 测试凭据已存在")
@@ -36,12 +36,12 @@ def create_test_credential():
         try:
             # 创建测试凭据
             test_cred = Credential(
-                name='测试MySQL凭据',
-                credential_type='database',
-                username='testuser',
-                password='testpass123',
-                db_type='mysql',
-                description='用于测试的MySQL数据库凭据'
+                name="测试MySQL凭据",
+                credential_type="database",
+                username="testuser",
+                password="testpass123",
+                db_type="mysql",
+                description="用于测试的MySQL数据库凭据",
             )
             test_cred.is_active = True
 
@@ -63,6 +63,7 @@ def create_test_credential():
             db.session.rollback()
             return False
 
+
 def main():
     """主函数"""
     print("=" * 50)
@@ -78,5 +79,6 @@ def main():
         print("\n⚠️  测试凭据创建失败")
         sys.exit(1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

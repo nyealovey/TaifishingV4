@@ -276,7 +276,7 @@ class AccountSyncService:
         # 查询用户信息 - 包含完整的账户信息
         cursor.execute(
             f"""
-            SELECT 
+            SELECT
                 User as username,
                 Host as host,
                 'user' as account_type,
@@ -477,7 +477,7 @@ class AccountSyncService:
         # 查询角色信息（PostgreSQL中用户和角色是同一个概念）
         cursor.execute(
             f"""
-            SELECT 
+            SELECT
                     rolname as username,
                     rolsuper as is_superuser,
                     rolinherit as can_inherit,
@@ -485,9 +485,9 @@ class AccountSyncService:
                     rolcreatedb as can_create_db,
                     rolcanlogin as can_login,
                     rolconnlimit as conn_limit,
-                    CASE 
+                    CASE
                         WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
-                        ELSE rolvaliduntil 
+                        ELSE rolvaliduntil
                     END as valid_until,
                     rolbypassrls as can_bypass_rls,
                     rolreplication as can_replicate
@@ -676,10 +676,10 @@ class AccountSyncService:
             try:
                 cursor.execute(
                     """
-                    SELECT 
-                        rolsuper, rolcreatedb, rolcreaterole, rolinherit, 
+                    SELECT
+                        rolsuper, rolcreatedb, rolcreaterole, rolinherit,
                         rolcanlogin, rolreplication, rolbypassrls
-                    FROM pg_roles 
+                    FROM pg_roles
                     WHERE rolname = %s
                 """,
                     (username,),
@@ -727,7 +727,7 @@ class AccountSyncService:
                     try:
                         cursor.execute(
                             """
-                            SELECT 
+                            SELECT
                                 CASE WHEN has_database_privilege(%s, %s, 'CONNECT') THEN 'CONNECT' END,
                                 CASE WHEN has_database_privilege(%s, %s, 'CREATE') THEN 'CREATE' END,
                                 CASE WHEN has_database_privilege(%s, %s, 'TEMPORARY') THEN 'TEMPORARY' END
@@ -761,7 +761,7 @@ class AccountSyncService:
             try:
                 cursor.execute(
                     """
-                    SELECT 
+                    SELECT
                         CASE WHEN has_tablespace_privilege(%s, 'pg_default', 'CREATE') THEN 'CREATE' END
                 """,
                     (username,),
@@ -804,7 +804,7 @@ class AccountSyncService:
         # 查询用户信息 - 只同步sa和用户创建的账户，排除内置账户
         cursor.execute(
             f"""
-            SELECT 
+            SELECT
                 name as username,
                 type_desc as account_type,
                 'master' as database_name,
@@ -955,7 +955,7 @@ class AccountSyncService:
         # 查询用户信息
         cursor.execute(
             f"""
-            SELECT 
+            SELECT
                 username,
                 authentication_type as account_type,
                 '' as database_name,
@@ -1097,7 +1097,7 @@ class AccountSyncService:
             # 获取全局权限 - 使用mysql.user表获取更完整的权限信息
             cursor.execute(
                 """
-                SELECT 
+                SELECT
                     User, Host, Select_priv, Insert_priv, Update_priv, Delete_priv,
                     Create_priv, Drop_priv, Reload_priv, Shutdown_priv, Process_priv,
                     File_priv, Grant_priv, References_priv, Index_priv, Alter_priv,
@@ -1105,7 +1105,7 @@ class AccountSyncService:
                     Execute_priv, Repl_slave_priv, Repl_client_priv, Create_view_priv,
                     Show_view_priv, Create_routine_priv, Alter_routine_priv, Create_user_priv,
                     Event_priv, Trigger_priv, Create_tablespace_priv
-                FROM mysql.user 
+                FROM mysql.user
                 WHERE User = %s AND Host = %s
             """,
                 (username, host),
@@ -1306,7 +1306,7 @@ class AccountSyncService:
                         # 查询该数据库的权限
                         cursor.execute(
                             """
-                            SELECT 
+                            SELECT
                                 p.permission_name,
                                 p.state_desc
                             FROM sys.database_permissions p

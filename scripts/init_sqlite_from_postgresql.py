@@ -12,6 +12,7 @@ from datetime import datetime
 # 添加项目根目录到 Python 路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+
 def init_sqlite_database():
     """初始化 SQLite 数据库"""
 
@@ -34,7 +35,8 @@ def init_sqlite_database():
     try:
         # 1. 创建用户表
         print("📝 创建用户表...")
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username VARCHAR(255) NOT NULL UNIQUE,
@@ -44,11 +46,13 @@ def init_sqlite_database():
             last_login TIMESTAMP,
             is_active BOOLEAN NOT NULL
         )
-        ''')
+        """
+        )
 
         # 2. 创建数据库类型配置表
         print("📝 创建数据库类型配置表...")
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS database_type_configs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR(50) NOT NULL UNIQUE,
@@ -67,11 +71,13 @@ def init_sqlite_database():
             created_at TIMESTAMP,
             updated_at TIMESTAMP
         )
-        ''')
+        """
+        )
 
         # 3. 创建凭据表
         print("📝 创建凭据表...")
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS credentials (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR(255) NOT NULL UNIQUE,
@@ -87,11 +93,13 @@ def init_sqlite_database():
             updated_at TIMESTAMP,
             deleted_at TIMESTAMP
         )
-        ''')
+        """
+        )
 
         # 4. 创建实例表
         print("📝 创建实例表...")
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS instances (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR(255) NOT NULL UNIQUE,
@@ -113,11 +121,13 @@ def init_sqlite_database():
             deleted_at TIMESTAMP,
             FOREIGN KEY (credential_id) REFERENCES credentials(id)
         )
-        ''')
+        """
+        )
 
         # 5. 创建账户表
         print("📝 创建账户表...")
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS accounts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             instance_id INTEGER NOT NULL,
@@ -143,11 +153,13 @@ def init_sqlite_database():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (instance_id) REFERENCES instances(id)
         )
-        ''')
+        """
+        )
 
         # 6. 创建账户分类表
         print("📝 创建账户分类表...")
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS account_classifications (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR(100) NOT NULL UNIQUE,
@@ -160,11 +172,13 @@ def init_sqlite_database():
             created_at TIMESTAMP,
             updated_at TIMESTAMP
         )
-        ''')
+        """
+        )
 
         # 7. 创建分类规则表
         print("📝 创建分类规则表...")
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS classification_rules (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             classification_id INTEGER NOT NULL,
@@ -176,11 +190,13 @@ def init_sqlite_database():
             updated_at TIMESTAMP,
             FOREIGN KEY (classification_id) REFERENCES account_classifications(id)
         )
-        ''')
+        """
+        )
 
         # 8. 创建账户分类分配表
         print("📝 创建账户分类分配表...")
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS account_classification_assignments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             account_id INTEGER NOT NULL,
@@ -197,11 +213,13 @@ def init_sqlite_database():
             FOREIGN KEY (assigned_by) REFERENCES users(id),
             UNIQUE(account_id, classification_id)
         )
-        ''')
+        """
+        )
 
         # 9. 创建权限配置表
         print("📝 创建权限配置表...")
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS permission_configs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             db_type VARCHAR(50) NOT NULL,
@@ -214,11 +232,13 @@ def init_sqlite_database():
             updated_at TIMESTAMP,
             UNIQUE(db_type, category, permission_name)
         )
-        ''')
+        """
+        )
 
         # 10. 创建任务表
         print("📝 创建任务表...")
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR(255) NOT NULL UNIQUE,
@@ -239,11 +259,13 @@ def init_sqlite_database():
             created_at TIMESTAMP,
             updated_at TIMESTAMP
         )
-        ''')
+        """
+        )
 
         # 11. 创建同步数据表
         print("📝 创建同步数据表...")
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS sync_data (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             sync_type VARCHAR(50) NOT NULL,
@@ -262,11 +284,13 @@ def init_sqlite_database():
             FOREIGN KEY (instance_id) REFERENCES instances(id),
             FOREIGN KEY (task_id) REFERENCES tasks(id)
         )
-        ''')
+        """
+        )
 
         # 12. 创建账户变化表
         print("📝 创建账户变化表...")
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS account_changes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             sync_data_id INTEGER NOT NULL,
@@ -277,11 +301,13 @@ def init_sqlite_database():
             FOREIGN KEY (sync_data_id) REFERENCES sync_data(id),
             FOREIGN KEY (instance_id) REFERENCES instances(id)
         )
-        ''')
+        """
+        )
 
         # 13. 创建日志表
         print("📝 创建日志表...")
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             level VARCHAR(20) NOT NULL,
@@ -296,11 +322,13 @@ def init_sqlite_database():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
-        ''')
+        """
+        )
 
         # 14. 创建全局参数表
         print("📝 创建全局参数表...")
-        cursor.execute('''
+        cursor.execute(
+            """
         CREATE TABLE IF NOT EXISTS global_params (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR(100) NOT NULL UNIQUE,
@@ -311,7 +339,8 @@ def init_sqlite_database():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-        ''')
+        """
+        )
 
         # 创建索引
         print("📝 创建索引...")
@@ -350,7 +379,7 @@ def init_sqlite_database():
             "CREATE INDEX IF NOT EXISTS idx_logs_module ON logs(module)",
             "CREATE INDEX IF NOT EXISTS idx_logs_user_id ON logs(user_id)",
             "CREATE INDEX IF NOT EXISTS idx_logs_source ON logs(source)",
-            "CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at)"
+            "CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at)",
         ]
 
         for index_sql in indexes:
@@ -368,6 +397,7 @@ def init_sqlite_database():
         raise
     finally:
         conn.close()
+
 
 if __name__ == "__main__":
     init_sqlite_database()

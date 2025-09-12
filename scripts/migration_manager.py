@@ -18,6 +18,7 @@ from app import create_app
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class MigrationManager:
     """迁移管理器"""
 
@@ -154,81 +155,84 @@ class MigrationManager:
                 logger.error(f"数据库恢复失败: {e}")
                 return False
 
+
 def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='数据库迁移管理工具')
-    parser.add_argument('action', choices=[
-        'current', 'history', 'upgrade', 'downgrade', 'create',
-        'merge', 'show', 'stamp', 'backup', 'restore'
-    ], help='操作类型')
-    parser.add_argument('--revision', help='目标版本')
-    parser.add_argument('--message', help='迁移消息')
-    parser.add_argument('--revisions', nargs='+', help='要合并的版本列表')
-    parser.add_argument('--backup-file', help='备份文件路径')
+    parser = argparse.ArgumentParser(description="数据库迁移管理工具")
+    parser.add_argument(
+        "action",
+        choices=["current", "history", "upgrade", "downgrade", "create", "merge", "show", "stamp", "backup", "restore"],
+        help="操作类型",
+    )
+    parser.add_argument("--revision", help="目标版本")
+    parser.add_argument("--message", help="迁移消息")
+    parser.add_argument("--revisions", nargs="+", help="要合并的版本列表")
+    parser.add_argument("--backup-file", help="备份文件路径")
 
     args = parser.parse_args()
 
     app = create_app()
     manager = MigrationManager(app)
 
-    if args.action == 'current':
+    if args.action == "current":
         revision = manager.get_current_revision()
         print(f"当前版本: {revision}")
 
-    elif args.action == 'history':
+    elif args.action == "history":
         history = manager.get_migration_history()
         for item in history:
             print(f"{item.revision}: {item.comment}")
 
-    elif args.action == 'upgrade':
+    elif args.action == "upgrade":
         if args.revision:
             manager.upgrade_to_revision(args.revision)
         else:
             manager.upgrade_to_latest()
 
-    elif args.action == 'downgrade':
+    elif args.action == "downgrade":
         if args.revision:
             manager.downgrade_to_revision(args.revision)
         else:
             manager.downgrade_one_step()
 
-    elif args.action == 'create':
+    elif args.action == "create":
         if not args.message:
             print("错误: 创建迁移需要提供消息")
             return
         manager.create_migration(args.message)
 
-    elif args.action == 'merge':
+    elif args.action == "merge":
         if not args.revisions or not args.message:
             print("错误: 合并迁移需要提供版本列表和消息")
             return
         manager.merge_migrations(args.revisions, args.message)
 
-    elif args.action == 'show':
+    elif args.action == "show":
         if not args.revision:
             print("错误: 显示迁移需要提供版本")
             return
         manager.show_migration(args.revision)
 
-    elif args.action == 'stamp':
+    elif args.action == "stamp":
         if not args.revision:
             print("错误: 标记版本需要提供版本号")
             return
         manager.stamp_revision(args.revision)
 
-    elif args.action == 'backup':
+    elif args.action == "backup":
         if not args.backup_file:
             print("错误: 备份需要提供文件路径")
             return
         manager.backup_database(args.backup_file)
 
-    elif args.action == 'restore':
+    elif args.action == "restore":
         if not args.backup_file:
             print("错误: 恢复需要提供备份文件路径")
             return
         manager.restore_database(args.backup_file)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

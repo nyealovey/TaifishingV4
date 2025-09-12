@@ -14,8 +14,9 @@ from pathlib import Path
 def generate_key():
     """生成新的加密密钥"""
     key = secrets.token_bytes(32)
-    encoded_key = base64.b64encode(key).decode('utf-8')
+    encoded_key = base64.b64encode(key).decode("utf-8")
     return encoded_key
+
 
 def validate_key(key):
     """验证密钥格式"""
@@ -25,7 +26,8 @@ def validate_key(key):
     except Exception:
         return False
 
-def update_env_file(key, env_file='.env'):
+
+def update_env_file(key, env_file=".env"):
     """更新.env文件中的密钥"""
     env_path = Path(env_file)
 
@@ -34,25 +36,26 @@ def update_env_file(key, env_file='.env'):
         return False
 
     # 读取现有内容
-    with open(env_path, encoding='utf-8') as f:
+    with open(env_path, encoding="utf-8") as f:
         lines = f.readlines()
 
     # 更新或添加密钥
     updated = False
     for i, line in enumerate(lines):
-        if line.startswith('PASSWORD_ENCRYPTION_KEY='):
-            lines[i] = f'PASSWORD_ENCRYPTION_KEY={key}\n'
+        if line.startswith("PASSWORD_ENCRYPTION_KEY="):
+            lines[i] = f"PASSWORD_ENCRYPTION_KEY={key}\n"
             updated = True
             break
 
     if not updated:
-        lines.append(f'PASSWORD_ENCRYPTION_KEY={key}\n')
+        lines.append(f"PASSWORD_ENCRYPTION_KEY={key}\n")
 
     # 写回文件
-    with open(env_path, 'w', encoding='utf-8') as f:
+    with open(env_path, "w", encoding="utf-8") as f:
         f.writelines(lines)
 
     return True
+
 
 def main():
     """主函数"""
@@ -68,19 +71,19 @@ def main():
 
     command = sys.argv[1]
 
-    if command == 'generate':
+    if command == "generate":
         key = generate_key()
         print(f"✅ 生成新密钥: {key}")
         print(f"🔧 设置环境变量: export PASSWORD_ENCRYPTION_KEY='{key}'")
 
         # 询问是否更新.env文件
-        if input("\n是否更新.env文件? (y/N): ").lower() == 'y':
+        if input("\n是否更新.env文件? (y/N): ").lower() == "y":
             if update_env_file(key):
                 print("✅ .env文件已更新")
             else:
                 print("❌ 更新.env文件失败")
 
-    elif command == 'validate':
+    elif command == "validate":
         if len(sys.argv) < 3:
             print("❌ 请提供要验证的密钥")
             return
@@ -91,7 +94,7 @@ def main():
         else:
             print("❌ 密钥格式错误")
 
-    elif command == 'update':
+    elif command == "update":
         if len(sys.argv) < 3:
             print("❌ 请提供要更新的密钥")
             return
@@ -109,5 +112,6 @@ def main():
     else:
         print(f"❌ 未知命令: {command}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

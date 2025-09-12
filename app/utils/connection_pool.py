@@ -4,9 +4,10 @@
 
 import logging
 import threading
+from collections.abc import Callable
 from contextlib import contextmanager
 from queue import Empty, Queue
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -18,9 +19,9 @@ class ConnectionPool:
         self.max_connections = max_connections
         self.min_connections = min_connections
         self.timeout = timeout
-        self.pools: Dict[int, Queue[Any]] = {}  # {instance_id: Queue}
-        self.locks: Dict[int, threading.Lock] = {}  # {instance_id: Lock}
-        self.connection_counts: Dict[int, int] = {}  # {instance_id: int}
+        self.pools: dict[int, Queue[Any]] = {}  # {instance_id: Queue}
+        self.locks: dict[int, threading.Lock] = {}  # {instance_id: Lock}
+        self.connection_counts: dict[int, int] = {}  # {instance_id: int}
         self._lock = threading.Lock()
         self._cleanup_thread = None
         self._stop_cleanup = False
@@ -87,7 +88,7 @@ class ConnectionPool:
                 if instance_id in self.connection_counts:
                     self.connection_counts[instance_id] -= 1
 
-    def close_all_connections(self, instance_id: Optional[int] = None) -> None:
+    def close_all_connections(self, instance_id: int | None = None) -> None:
         """关闭所有连接"""
         if instance_id:
             # 关闭特定实例的所有连接
@@ -117,7 +118,7 @@ class ConnectionPool:
             if connection:
                 self.return_connection(instance_id, connection)
 
-    def get_pool_status(self) -> Dict[int, Dict[str, Union[int, float]]]:
+    def get_pool_status(self) -> dict[int, dict[str, int | float]]:
         """获取连接池状态"""
         status = {}
         with self._lock:

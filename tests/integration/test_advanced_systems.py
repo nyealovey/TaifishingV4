@@ -11,6 +11,7 @@ import requests
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+
 def test_advanced_error_handler():
     """测试高级错误处理系统"""
     print("=== 测试高级错误处理系统 ===")
@@ -39,6 +40,7 @@ def test_advanced_error_handler():
         print(f"✗ 高级错误处理系统测试失败: {e}")
         return False
 
+
 def test_admin_api_endpoints():
     """测试管理API端点"""
     print("\n=== 测试管理API端点 ===")
@@ -49,7 +51,7 @@ def test_admin_api_endpoints():
         "/admin/performance",
         "/admin/error-metrics",
         "/admin/constants/api",
-        "/admin/system-logs"
+        "/admin/system-logs",
     ]
 
     success_count = 0
@@ -68,6 +70,7 @@ def test_admin_api_endpoints():
     print(f"✓ 管理API端点测试: {success_count}/{len(endpoints)} 个端点可访问")
     return success_count >= len(endpoints) * 0.8  # 80% 成功率
 
+
 def test_error_handling_integration():
     """测试错误处理集成"""
     print("\n=== 测试错误处理集成 ===")
@@ -82,7 +85,7 @@ def test_error_handling_integration():
             # 检查响应是否包含高级错误处理的信息
             try:
                 data = response.json()
-                if 'error_id' in data or 'category' in data:
+                if "error_id" in data or "category" in data:
                     print("✓ 高级错误处理信息已包含在响应中")
                     return True
                 print("⚠ 响应中未找到高级错误处理信息")
@@ -98,19 +101,16 @@ def test_error_handling_integration():
         print(f"✗ 错误处理集成测试失败: {e}")
         return False
 
+
 # 性能监控功能已移除
+
 
 def test_management_interfaces():
     """测试管理界面"""
     print("\n=== 测试管理界面 ===")
 
     base_url = "http://localhost:5001"
-    interfaces = [
-        "/admin/system-management",
-        "/admin/error-management",
-        "/admin/constants",
-        "/admin/dashboard"
-    ]
+    interfaces = ["/admin/system-management", "/admin/error-management", "/admin/constants", "/admin/dashboard"]
 
     success_count = 0
 
@@ -127,6 +127,7 @@ def test_management_interfaces():
 
     print(f"✓ 管理界面测试: {success_count}/{len(interfaces)} 个界面可访问")
     return success_count >= len(interfaces) * 0.8  # 80% 成功率
+
 
 def test_constant_management():
     """测试常量管理"""
@@ -150,6 +151,7 @@ def test_constant_management():
         print(f"✗ 常量管理测试失败: {e}")
         return False
 
+
 def main():
     """主函数"""
     print("开始高级系统功能测试...\n")
@@ -159,7 +161,7 @@ def main():
         test_admin_api_endpoints,
         test_error_handling_integration,
         test_management_interfaces,
-        test_constant_management
+        test_constant_management,
     ]
 
     passed = 0
@@ -171,7 +173,7 @@ def main():
 
     print("\n=== 测试结果 ===")
     print(f"通过: {passed}/{total}")
-    print(f"成功率: {passed/total*100:.1f}%")
+    print(f"成功率: {passed / total * 100:.1f}%")
 
     if passed == total:
         print("🎉 所有测试通过！高级系统功能完全集成！")
@@ -179,6 +181,7 @@ def main():
     print("❌ 部分测试失败，需要进一步检查")
     return False
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)

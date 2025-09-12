@@ -37,10 +37,11 @@ def test_china_time():
     print(f"东八区今天的开始时间（UTC）: {china_today_utc}")
 
     # 5. 手动计算东八区时间
-    china_tz = pytz.timezone('Asia/Shanghai')
+    china_tz = pytz.timezone("Asia/Shanghai")
     manual_china_time = datetime.now(china_tz)
     print(f"手动计算的东八区时间: {manual_china_time}")
     print(f"手动计算的东八区日期: {manual_china_time.date()}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test_china_time()

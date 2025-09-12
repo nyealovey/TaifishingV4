@@ -3,8 +3,9 @@
 """
 
 import logging
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 from flask import Response, make_response, request
 
@@ -302,7 +303,7 @@ def setup_security_headers(app: Any) -> None:
     logger.info("安全头中间件已设置")
 
 
-def get_security_report() -> Dict[str, Any]:
+def get_security_report() -> dict[str, Any]:
     """获取安全报告"""
     return {
         "headers": security_headers.headers,

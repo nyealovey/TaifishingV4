@@ -11,6 +11,7 @@ import requests
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+
 def test_admin_menu_templates():
     """测试管理菜单模板"""
     print("=== 测试管理菜单模板 ===")
@@ -18,12 +19,12 @@ def test_admin_menu_templates():
     try:
         # 检查模板文件是否存在
         template_files = [
-            'app/templates/admin/menu.html',
-            'app/templates/admin/layout.html',
-            'app/templates/admin/dashboard.html',
-            'app/templates/admin/system_management.html',
-            'app/templates/admin/error_management.html',
-            'app/templates/admin/constants.html'
+            "app/templates/admin/menu.html",
+            "app/templates/admin/layout.html",
+            "app/templates/admin/dashboard.html",
+            "app/templates/admin/system_management.html",
+            "app/templates/admin/error_management.html",
+            "app/templates/admin/constants.html",
         ]
 
         missing_files = []
@@ -41,6 +42,7 @@ def test_admin_menu_templates():
         print(f"✗ 模板文件检查失败: {e}")
         return False
 
+
 def test_admin_endpoints():
     """测试管理API端点"""
     print("\n=== 测试管理API端点 ===")
@@ -55,7 +57,7 @@ def test_admin_endpoints():
         "/admin/performance",
         "/admin/error-metrics",
         "/admin/constants/api",
-        "/admin/system-logs"
+        "/admin/system-logs",
     ]
 
     success_count = 0
@@ -74,25 +76,18 @@ def test_admin_endpoints():
     print(f"✓ 管理API端点测试: {success_count}/{len(endpoints)} 个端点可访问")
     return success_count >= len(endpoints) * 0.8  # 80% 成功率
 
+
 def test_menu_structure():
     """测试菜单结构"""
     print("\n=== 测试菜单结构 ===")
 
     try:
         # 读取菜单模板文件
-        with open('app/templates/admin/menu.html', encoding='utf-8') as f:
+        with open("app/templates/admin/menu.html", encoding="utf-8") as f:
             menu_content = f.read()
 
         # 检查关键菜单项
-        menu_items = [
-            '系统概览',
-            '系统管理',
-            '错误管理',
-            '配置管理',
-            '用户管理',
-            '数据管理',
-            '开发工具'
-        ]
+        menu_items = ["系统概览", "系统管理", "错误管理", "配置管理", "用户管理", "数据管理", "开发工具"]
 
         missing_items = []
         for item in menu_items:
@@ -105,12 +100,7 @@ def test_menu_structure():
         print("✓ 所有主要菜单项都存在")
 
         # 检查菜单链接
-        menu_links = [
-            '/admin/dashboard',
-            '/admin/system-management',
-            '/admin/error-management',
-            '/admin/constants'
-        ]
+        menu_links = ["/admin/dashboard", "/admin/system-management", "/admin/error-management", "/admin/constants"]
 
         missing_links = []
         for link in menu_links:
@@ -127,22 +117,18 @@ def test_menu_structure():
         print(f"✗ 菜单结构检查失败: {e}")
         return False
 
+
 def test_layout_integration():
     """测试布局集成"""
     print("\n=== 测试布局集成 ===")
 
     try:
         # 检查布局模板
-        with open('app/templates/admin/layout.html', encoding='utf-8') as f:
+        with open("app/templates/admin/layout.html", encoding="utf-8") as f:
             layout_content = f.read()
 
         # 检查关键元素
-        layout_elements = [
-            'admin-menu',
-            'admin-content',
-            '管理菜单组件',
-            '管理中心'
-        ]
+        layout_elements = ["admin-menu", "admin-content", "管理菜单组件", "管理中心"]
 
         missing_elements = []
         for element in layout_elements:
@@ -155,12 +141,7 @@ def test_layout_integration():
         print("✓ 所有布局元素都存在")
 
         # 检查CSS样式
-        css_elements = [
-            'position: fixed',
-            'width: 280px',
-            'height: 100vh',
-            'admin-content'
-        ]
+        css_elements = ["position: fixed", "width: 280px", "height: 100vh", "admin-content"]
 
         missing_css = []
         for css in css_elements:
@@ -177,20 +158,17 @@ def test_layout_integration():
         print(f"✗ 布局集成检查失败: {e}")
         return False
 
+
 def test_responsive_design():
     """测试响应式设计"""
     print("\n=== 测试响应式设计 ===")
 
     try:
         # 检查响应式CSS
-        with open('app/templates/admin/menu.html', encoding='utf-8') as f:
+        with open("app/templates/admin/menu.html", encoding="utf-8") as f:
             menu_content = f.read()
 
-        responsive_elements = [
-            '@media (max-width: 768px)',
-            'width: 100%',
-            'position: relative'
-        ]
+        responsive_elements = ["@media (max-width: 768px)", "width: 100%", "position: relative"]
 
         missing_responsive = []
         for element in responsive_elements:
@@ -207,6 +185,7 @@ def test_responsive_design():
         print(f"✗ 响应式设计检查失败: {e}")
         return False
 
+
 def main():
     """主函数"""
     print("开始管理菜单系统测试...\n")
@@ -216,7 +195,7 @@ def main():
         test_admin_endpoints,
         test_menu_structure,
         test_layout_integration,
-        test_responsive_design
+        test_responsive_design,
     ]
 
     passed = 0
@@ -228,7 +207,7 @@ def main():
 
     print("\n=== 测试结果 ===")
     print(f"通过: {passed}/{total}")
-    print(f"成功率: {passed/total*100:.1f}%")
+    print(f"成功率: {passed / total * 100:.1f}%")
 
     if passed == total:
         print("🎉 所有测试通过！管理菜单系统完全正常！")
@@ -236,6 +215,7 @@ def main():
     print("❌ 部分测试失败，需要进一步检查")
     return False
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)

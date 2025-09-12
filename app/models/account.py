@@ -45,7 +45,7 @@ class Account(db.Model):
     # 关联关系 - 注意：backref在Instance模型中定义
 
     def __repr__(self):
-        return f'<Account {self.username}@{self.instance.name if self.instance else "Unknown"}>'
+        return f"<Account {self.username}@{self.instance.name if self.instance else 'Unknown'}>"
 
     def to_dict(self):
         """转换为字典"""

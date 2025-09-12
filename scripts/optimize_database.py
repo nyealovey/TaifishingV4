@@ -19,6 +19,7 @@ from app import create_app, db
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def add_indexes():
     """添加数据库索引"""
     indexes = [
@@ -28,7 +29,6 @@ def add_indexes():
         "CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)",
         "CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at)",
         "CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login)",
-
         # 实例表索引
         "CREATE INDEX IF NOT EXISTS idx_instances_name ON instances(name)",
         "CREATE INDEX IF NOT EXISTS idx_instances_db_type ON instances(db_type)",
@@ -36,13 +36,11 @@ def add_indexes():
         "CREATE INDEX IF NOT EXISTS idx_instances_is_active ON instances(is_active)",
         "CREATE INDEX IF NOT EXISTS idx_instances_created_at ON instances(created_at)",
         "CREATE INDEX IF NOT EXISTS idx_instances_credential_id ON instances(credential_id)",
-
         # 凭据表索引
         "CREATE INDEX IF NOT EXISTS idx_credentials_name ON credentials(name)",
         "CREATE INDEX IF NOT EXISTS idx_credentials_username ON credentials(username)",
         "CREATE INDEX IF NOT EXISTS idx_credentials_is_active ON credentials(is_active)",
         "CREATE INDEX IF NOT EXISTS idx_credentials_created_at ON credentials(created_at)",
-
         # 任务表索引
         "CREATE INDEX IF NOT EXISTS idx_tasks_name ON tasks(name)",
         "CREATE INDEX IF NOT EXISTS idx_tasks_task_type ON tasks(task_type)",
@@ -52,7 +50,6 @@ def add_indexes():
         "CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(created_at)",
         "CREATE INDEX IF NOT EXISTS idx_tasks_last_run ON tasks(last_run)",
         "CREATE INDEX IF NOT EXISTS idx_tasks_schedule ON tasks(schedule)",
-
         # 账户表索引
         "CREATE INDEX IF NOT EXISTS idx_accounts_instance_id ON accounts(instance_id)",
         "CREATE INDEX IF NOT EXISTS idx_accounts_username ON accounts(username)",
@@ -60,19 +57,16 @@ def add_indexes():
         "CREATE INDEX IF NOT EXISTS idx_accounts_account_type ON accounts(account_type)",
         "CREATE INDEX IF NOT EXISTS idx_accounts_is_active ON accounts(is_active)",
         "CREATE INDEX IF NOT EXISTS idx_accounts_created_at ON accounts(created_at)",
-
         # 日志表索引
         "CREATE INDEX IF NOT EXISTS idx_logs_user_id ON logs(user_id)",
         "CREATE INDEX IF NOT EXISTS idx_logs_operation ON logs(operation)",
         "CREATE INDEX IF NOT EXISTS idx_logs_level ON logs(level)",
         "CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at)",
         "CREATE INDEX IF NOT EXISTS idx_logs_ip_address ON logs(ip_address)",
-
         # 系统参数表索引
         "CREATE INDEX IF NOT EXISTS idx_system_params_key ON system_params(param_key)",
         "CREATE INDEX IF NOT EXISTS idx_system_params_category ON system_params(category)",
         "CREATE INDEX IF NOT EXISTS idx_system_params_is_active ON system_params(is_active)",
-
         # 复合索引
         "CREATE INDEX IF NOT EXISTS idx_instances_type_active ON instances(db_type, is_active)",
         "CREATE INDEX IF NOT EXISTS idx_tasks_type_active ON tasks(db_type, is_active)",
@@ -95,12 +89,10 @@ def add_indexes():
     db.session.commit()
     logger.info(f"索引创建完成: 成功 {success_count}, 失败 {error_count}")
 
+
 def analyze_tables():
     """分析表统计信息"""
-    tables = [
-        'users', 'instances', 'credentials', 'tasks', 'accounts',
-        'logs', 'system_params', 'sync_data'
-    ]
+    tables = ["users", "instances", "credentials", "tasks", "accounts", "logs", "system_params", "sync_data"]
 
     for table in tables:
         try:
@@ -110,15 +102,14 @@ def analyze_tables():
         except Exception as e:
             logger.warning(f"分析表失败: {table}, 错误: {e}")
 
+
 def optimize_queries():
     """优化查询"""
     optimizations = [
         # 清理未使用的索引
         "SELECT '清理未使用索引' as operation",
-
         # 更新表统计信息
         "SELECT '更新统计信息' as operation",
-
         # 检查表碎片
         "SELECT '检查表碎片' as operation",
     ]
@@ -130,15 +121,14 @@ def optimize_queries():
         except Exception as e:
             logger.warning(f"优化失败: {optimization}, 错误: {e}")
 
+
 def check_performance():
     """检查性能"""
     performance_queries = [
         # 检查慢查询
         "SELECT '检查慢查询' as check_type",
-
         # 检查索引使用情况
         "SELECT '检查索引使用' as check_type",
-
         # 检查表大小
         "SELECT '检查表大小' as check_type",
     ]
@@ -150,6 +140,7 @@ def check_performance():
         except Exception as e:
             logger.warning(f"性能检查失败: {query}, 错误: {e}")
 
+
 def vacuum_database():
     """清理数据库"""
     try:
@@ -158,6 +149,7 @@ def vacuum_database():
         logger.info("数据库清理完成")
     except Exception as e:
         logger.warning(f"数据库清理失败: {e}")
+
 
 def main():
     """主函数"""
@@ -183,5 +175,6 @@ def main():
 
         logger.info("数据库优化完成")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

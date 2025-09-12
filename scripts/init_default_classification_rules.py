@@ -38,7 +38,7 @@ def init_default_classification_rules():
             color="#dc3545",
             priority=90,
             is_system=True,
-            is_active=True
+            is_active=True,
         )
         db.session.add(oracle_super_classification)
 
@@ -49,7 +49,7 @@ def init_default_classification_rules():
             color="#fd7e14",
             priority=95,
             is_system=True,
-            is_active=True
+            is_active=True,
         )
         db.session.add(oracle_grant_classification)
 
@@ -61,7 +61,7 @@ def init_default_classification_rules():
             color="#dc3545",
             priority=90,
             is_system=True,
-            is_active=True
+            is_active=True,
         )
         db.session.add(postgresql_super_classification)
 
@@ -72,7 +72,7 @@ def init_default_classification_rules():
             color="#fd7e14",
             priority=95,
             is_system=True,
-            is_active=True
+            is_active=True,
         )
         db.session.add(postgresql_grant_classification)
 
@@ -84,7 +84,7 @@ def init_default_classification_rules():
             color="#dc3545",
             priority=90,
             is_system=True,
-            is_active=True
+            is_active=True,
         )
         db.session.add(mysql_super_classification)
 
@@ -95,7 +95,7 @@ def init_default_classification_rules():
             color="#fd7e14",
             priority=95,
             is_system=True,
-            is_active=True
+            is_active=True,
         )
         db.session.add(mysql_grant_classification)
 
@@ -107,7 +107,7 @@ def init_default_classification_rules():
             color="#dc3545",
             priority=90,
             is_system=True,
-            is_active=True
+            is_active=True,
         )
         db.session.add(sqlserver_super_classification)
 
@@ -118,7 +118,7 @@ def init_default_classification_rules():
             color="#fd7e14",
             priority=95,
             is_system=True,
-            is_active=True
+            is_active=True,
         )
         db.session.add(sqlserver_grant_classification)
 
@@ -134,7 +134,7 @@ def init_default_classification_rules():
             rule_name="oracle_super_rule",
             db_type="oracle",
             rule_expression="roles.DBA",
-            is_active=True
+            is_active=True,
         )
         db.session.add(oracle_super_rule)
 
@@ -143,7 +143,7 @@ def init_default_classification_rules():
             rule_name="oracle_grant_rule",
             db_type="oracle",
             rule_expression="system_privileges.GRANT ANY PRIVILEGE",
-            is_active=True
+            is_active=True,
         )
         db.session.add(oracle_grant_rule)
 
@@ -153,7 +153,7 @@ def init_default_classification_rules():
             rule_name="postgresql_super_rule",
             db_type="postgresql",
             rule_expression="role_attributes.SUPERUSER",
-            is_active=True
+            is_active=True,
         )
         db.session.add(postgresql_super_rule)
 
@@ -162,7 +162,7 @@ def init_default_classification_rules():
             rule_name="postgresql_grant_rule",
             db_type="postgresql",
             rule_expression="role_attributes.CREATEROLE",
-            is_active=True
+            is_active=True,
         )
         db.session.add(postgresql_grant_rule)
 
@@ -172,7 +172,7 @@ def init_default_classification_rules():
             rule_name="mysql_super_rule",
             db_type="mysql",
             rule_expression="global_privileges.SUPER",
-            is_active=True
+            is_active=True,
         )
         db.session.add(mysql_super_rule)
 
@@ -181,7 +181,7 @@ def init_default_classification_rules():
             rule_name="mysql_grant_rule",
             db_type="mysql",
             rule_expression="global_privileges.GRANT OPTION",
-            is_active=True
+            is_active=True,
         )
         db.session.add(mysql_grant_rule)
 
@@ -191,7 +191,7 @@ def init_default_classification_rules():
             rule_name="sqlserver_super_rule",
             db_type="sqlserver",
             rule_expression="server_roles.sysadmin",
-            is_active=True
+            is_active=True,
         )
         db.session.add(sqlserver_super_rule)
 
@@ -200,7 +200,7 @@ def init_default_classification_rules():
             rule_name="sqlserver_grant_rule",
             db_type="sqlserver",
             rule_expression="database_roles.db_owner",
-            is_active=True
+            is_active=True,
         )
         db.session.add(sqlserver_grant_rule)
 
@@ -220,6 +220,7 @@ def init_default_classification_rules():
             print(f"- {rule.rule_name} (数据库类型: {rule.db_type})")
 
         print("\n✅ 默认分类规则初始化完成！")
+
 
 if __name__ == "__main__":
     init_default_classification_rules()

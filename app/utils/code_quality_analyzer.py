@@ -524,7 +524,7 @@ class CodeQualityAnalyzer:
                                     line_number=i + 1,
                                     issue_type="duplicate_code",
                                     severity=self.rules["duplicate_code"]["severity"],
-                                    message=f"重复代码 (与 {file2}:{j+1} 相同)",
+                                    message=f"重复代码 (与 {file2}:{j + 1} 相同)",
                                     suggestion="提取重复代码为公共函数",
                                     code_snippet="\n".join(lines1[i : i + 5]),
                                 )
@@ -602,7 +602,7 @@ class CodeQualityAnalyzer:
                     "category": "code_structure",
                     "priority": "medium",
                     "title": "函数过长问题",
-                    "description": f'发现 {issue_types["function_length"]} 个函数过长',
+                    "description": f"发现 {issue_types['function_length']} 个函数过长",
                     "actions": [
                         "将长函数拆分为更小的函数",
                         "提取公共逻辑为独立函数",
@@ -617,7 +617,7 @@ class CodeQualityAnalyzer:
                     "category": "complexity",
                     "priority": "high",
                     "title": "圈复杂度过高",
-                    "description": f'发现 {issue_types["cyclomatic_complexity"]} 个函数复杂度过高',
+                    "description": f"发现 {issue_types['cyclomatic_complexity']} 个函数复杂度过高",
                     "actions": [
                         "简化条件逻辑",
                         "使用策略模式替换复杂的if-else",
@@ -632,7 +632,7 @@ class CodeQualityAnalyzer:
                     "category": "code_duplication",
                     "priority": "medium",
                     "title": "重复代码",
-                    "description": f'发现 {issue_types["duplicate_code"]} 处重复代码',
+                    "description": f"发现 {issue_types['duplicate_code']} 处重复代码",
                     "actions": [
                         "提取重复代码为公共函数",
                         "使用继承或组合减少重复",
@@ -647,7 +647,7 @@ class CodeQualityAnalyzer:
                     "category": "documentation",
                     "priority": "low",
                     "title": "缺少文档字符串",
-                    "description": f'发现 {issue_types["missing_docstring"]} 个函数/类缺少文档',
+                    "description": f"发现 {issue_types['missing_docstring']} 个函数/类缺少文档",
                     "actions": [
                         "为所有公共函数添加文档字符串",
                         "使用JSDoc风格编写文档",

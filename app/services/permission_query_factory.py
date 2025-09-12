@@ -83,10 +83,10 @@ class MySQLPermissionQuery(PermissionQuery):
 
             # 查询全局权限
             query = """
-                SELECT 
+                SELECT
                     PRIVILEGE_TYPE as privilege,
                     IS_GRANTABLE = 'YES' as grantable
-                FROM information_schema.USER_PRIVILEGES 
+                FROM information_schema.USER_PRIVILEGES
                 WHERE GRANTEE = %s
                 ORDER BY PRIVILEGE_TYPE
             """
@@ -113,10 +113,10 @@ class MySQLPermissionQuery(PermissionQuery):
 
             # 查询数据库权限
             query = """
-                SELECT 
+                SELECT
                     TABLE_SCHEMA as database_name,
                     GROUP_CONCAT(PRIVILEGE_TYPE) as privileges
-                FROM information_schema.SCHEMA_PRIVILEGES 
+                FROM information_schema.SCHEMA_PRIVILEGES
                 WHERE GRANTEE = %s
                 GROUP BY TABLE_SCHEMA
                 ORDER BY TABLE_SCHEMA
@@ -144,10 +144,10 @@ class MySQLPermissionQuery(PermissionQuery):
 
             # 查询表权限
             query = """
-                SELECT 
+                SELECT
                     TABLE_NAME as table_name,
                     GROUP_CONCAT(PRIVILEGE_TYPE) as privileges
-                FROM information_schema.TABLE_PRIVILEGES 
+                FROM information_schema.TABLE_PRIVILEGES
                 WHERE GRANTEE = %s AND TABLE_SCHEMA = %s
                 GROUP BY TABLE_NAME
                 ORDER BY TABLE_NAME
@@ -218,7 +218,7 @@ class PostgreSQLPermissionQuery(PermissionQuery):
 
             # 查询角色属性（全局权限）
             query = """
-                SELECT 
+                SELECT
                     rolname as role_name,
                     rolsuper as is_superuser,
                     rolinherit as can_inherit,
@@ -226,7 +226,7 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                     rolcreatedb as can_create_db,
                     rolcanlogin as can_login,
                     rolreplication as can_replicate
-                FROM pg_roles 
+                FROM pg_roles
                 WHERE rolname = %s
             """
 
@@ -246,7 +246,7 @@ class PostgreSQLPermissionQuery(PermissionQuery):
 
             # 查询预定义角色
             predefined_roles_query = """
-                SELECT 
+                SELECT
                     r.rolname as role_name
                 FROM pg_roles r
                 JOIN pg_auth_members m ON r.oid = m.roleid
@@ -277,12 +277,12 @@ class PostgreSQLPermissionQuery(PermissionQuery):
 
             # 查询数据库权限
             query = """
-                SELECT 
+                SELECT
                     datname as database_name,
                     has_database_privilege(%s, datname, 'CONNECT') as can_connect,
                     has_database_privilege(%s, datname, 'CREATE') as can_create,
                     has_database_privilege(%s, datname, 'TEMPORARY') as can_temp
-                FROM pg_database 
+                FROM pg_database
                 WHERE datistemplate = false
                 ORDER BY datname
             """
@@ -317,14 +317,14 @@ class PostgreSQLPermissionQuery(PermissionQuery):
 
             # 查询表权限
             query = """
-                SELECT 
+                SELECT
                     schemaname as schema_name,
                     tablename as table_name,
                     has_table_privilege(%s, schemaname||'.'||tablename, 'SELECT') as can_select,
                     has_table_privilege(%s, schemaname||'.'||tablename, 'INSERT') as can_insert,
                     has_table_privilege(%s, schemaname||'.'||tablename, 'UPDATE') as can_update,
                     has_table_privilege(%s, schemaname||'.'||tablename, 'DELETE') as can_delete
-                FROM pg_tables 
+                FROM pg_tables
                 WHERE schemaname NOT IN ('information_schema', 'pg_catalog')
                 ORDER BY schemaname, tablename
             """
@@ -434,7 +434,7 @@ class SQLServerPermissionQuery(PermissionQuery):
 
             # 查询服务器角色
             query = """
-                SELECT 
+                SELECT
                     r.name as role_name,
                     r.type_desc as role_type
                 FROM sys.server_role_members rm
@@ -517,7 +517,7 @@ class SQLServerPermissionQuery(PermissionQuery):
 
             # 查询表权限
             query = """
-                SELECT 
+                SELECT
                     SCHEMA_NAME(t.schema_id) as schema_name,
                     t.name as table_name,
                     p.permission_name as permission
@@ -618,7 +618,7 @@ class OraclePermissionQuery(PermissionQuery):
 
             # 查询系统权限 - 使用dba_sys_privs查询指定用户的权限
             sys_privs_query = """
-                SELECT 
+                SELECT
                     privilege,
                     admin_option
                 FROM dba_sys_privs
@@ -635,7 +635,7 @@ class OraclePermissionQuery(PermissionQuery):
 
             # 查询角色权限 - 使用dba_role_privs查询指定用户的角色
             roles_query = """
-                SELECT 
+                SELECT
                     granted_role,
                     admin_option
                 FROM dba_role_privs
@@ -671,7 +671,7 @@ class OraclePermissionQuery(PermissionQuery):
 
             # 查询表空间配额 - 使用user_ts_quotas查询指定用户的配额
             quota_query = """
-                SELECT 
+                SELECT
                     tablespace_name,
                     bytes,
                     max_bytes
@@ -726,7 +726,7 @@ class OraclePermissionQuery(PermissionQuery):
 
             # 查询表权限
             query = """
-                SELECT 
+                SELECT
                     owner,
                     table_name,
                     privilege,

@@ -205,7 +205,7 @@ def validate_json(required_fields=None):
                         jsonify(
                             {
                                 "success": False,
-                                "message": f'缺少必需字段: {", ".join(missing_fields)}',
+                                "message": f"缺少必需字段: {', '.join(missing_fields)}",
                                 "code": "MISSING_FIELDS",
                             }
                         ),

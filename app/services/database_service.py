@@ -377,12 +377,12 @@ class DatabaseService:
 
         cursor.execute(
             f"""
-            SELECT 
-                rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, 
-                rolcanlogin, rolconnlimit, 
-                CASE 
+            SELECT
+                rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb,
+                rolcanlogin, rolconnlimit,
+                CASE
                     WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
-                    ELSE rolvaliduntil 
+                    ELSE rolvaliduntil
                 END as rolvaliduntil,
                 rolbypassrls, rolreplication
             FROM pg_roles
@@ -693,7 +693,7 @@ class DatabaseService:
 
         cursor.execute(
             f"""
-            SELECT username, user_id, account_status, lock_date, expiry_date, 
+            SELECT username, user_id, account_status, lock_date, expiry_date,
                    default_tablespace, created, authentication_type
             FROM dba_users
             WHERE {filter_conditions}
@@ -1224,7 +1224,7 @@ class DatabaseService:
                 # 检查用户是否真正拥有GRANT OPTION权限
                 cursor.execute(
                     """
-                    SELECT Grant_priv FROM mysql.user 
+                    SELECT Grant_priv FROM mysql.user
                     WHERE User = %s AND Host = %s
                 """,
                     (account.username, account.host),

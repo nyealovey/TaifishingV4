@@ -11,6 +11,7 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+
 def test_database_connection():
     """测试数据库连接"""
     print("🔧 测试数据库连接...")
@@ -41,19 +42,22 @@ def test_database_connection():
         print(f"❌ 数据库连接失败: {e}")
         return False
 
+
 def test_redis_connection():
     """测试Redis连接"""
     print("\n🔴 测试Redis连接...")
 
     try:
         import redis
-        r = redis.Redis(host='localhost', port=6379, db=0)
+
+        r = redis.Redis(host="localhost", port=6379, db=0)
         r.ping()
         print("✅ Redis连接成功")
         return True
     except Exception as e:
         print(f"❌ Redis连接失败: {e}")
         return False
+
 
 def main():
     """主函数"""
@@ -79,6 +83,7 @@ def main():
     print("⚠️  部分服务连接失败，请检查配置")
     return False
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     success = main()
     sys.exit(0 if success else 1)

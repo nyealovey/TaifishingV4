@@ -107,7 +107,8 @@ class MySQLConnection(DatabaseConnection):
         """执行MySQL查询"""
         if not self.is_connected:
             if not self.connect():
-                raise Exception("无法建立数据库连接")
+                error_msg = "无法建立数据库连接"
+                raise Exception(error_msg)
 
         cursor = self.connection.cursor()
         try:
@@ -185,7 +186,8 @@ class PostgreSQLConnection(DatabaseConnection):
         """执行PostgreSQL查询"""
         if not self.is_connected:
             if not self.connect():
-                raise Exception("无法建立数据库连接")
+                error_msg = "无法建立数据库连接"
+                raise Exception(error_msg)
 
         cursor = self.connection.cursor()
         try:
@@ -267,7 +269,8 @@ class SQLServerConnection(DatabaseConnection):
         """执行SQL Server查询"""
         if not self.is_connected:
             if not self.connect():
-                raise Exception("无法建立数据库连接")
+                error_msg = "无法建立数据库连接"
+                raise Exception(error_msg)
 
         cursor = self.connection.cursor()
         try:
@@ -379,7 +382,8 @@ class OracleConnection(DatabaseConnection):
         """执行Oracle查询"""
         if not self.is_connected:
             if not self.connect():
-                raise Exception("无法建立数据库连接")
+                error_msg = "无法建立数据库连接"
+                raise Exception(error_msg)
 
         cursor = self.connection.cursor()
         try:

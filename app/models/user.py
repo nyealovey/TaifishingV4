@@ -48,13 +48,17 @@ class User(UserMixin, db.Model):
         """
         # 增加密码强度验证
         if len(password) < 8:
-            raise ValueError("密码长度至少8位")
+            error_msg = "密码长度至少8位"
+            raise ValueError(error_msg)
         if not any(c.isupper() for c in password):
-            raise ValueError("密码必须包含大写字母")
+            error_msg = "密码必须包含大写字母"
+            raise ValueError(error_msg)
         if not any(c.islower() for c in password):
-            raise ValueError("密码必须包含小写字母")
+            error_msg = "密码必须包含小写字母"
+            raise ValueError(error_msg)
         if not any(c.isdigit() for c in password):
-            raise ValueError("密码必须包含数字")
+            error_msg = "密码必须包含数字"
+            raise ValueError(error_msg)
 
         self.password = bcrypt.generate_password_hash(password, rounds=12).decode("utf-8")
 

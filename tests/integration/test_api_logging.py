@@ -21,7 +21,7 @@ def test_api_endpoints():
         "/dashboard/api/overview",
         "/dashboard/api/charts",
         "/dashboard/api/activities",
-        "/dashboard/api/status"
+        "/dashboard/api/status",
     ]
 
     print("🧪 开始测试API日志记录...")
@@ -52,6 +52,7 @@ def test_api_endpoints():
     print("\n📋 请检查以下日志文件:")
     print("   - userdata/logs/api.log (API专用日志)")
     print("   - userdata/logs/app.log (主应用日志)")
+
 
 if __name__ == "__main__":
     test_api_endpoints()

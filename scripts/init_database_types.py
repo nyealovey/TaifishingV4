@@ -41,5 +41,6 @@ def init_database_types():
             print(f"❌ 初始化失败: {e}")
             raise
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     init_database_types()

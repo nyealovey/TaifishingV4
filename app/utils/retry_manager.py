@@ -86,7 +86,8 @@ class RetryManager:
         if last_exception is not None:
             raise last_exception
         else:
-            raise RuntimeError("重试失败，但没有捕获到异常")
+            error_msg = "重试失败，但没有捕获到异常"
+            raise RuntimeError(error_msg)
 
 
 def retry(
@@ -140,7 +141,8 @@ def retry(
             if last_exception is not None:
                 raise last_exception
             else:
-                raise RuntimeError("重试失败，但没有捕获到异常")
+                error_msg = "重试失败，但没有捕获到异常"
+            raise RuntimeError(error_msg)
 
         return wrapper
 
@@ -258,7 +260,8 @@ def smart_retry(max_attempts: int = 3) -> Callable[[Callable[..., Any]], Callabl
             if last_exception is not None:
                 raise last_exception
             else:
-                raise RuntimeError("重试失败，但没有捕获到异常")
+                error_msg = "重试失败，但没有捕获到异常"
+            raise RuntimeError(error_msg)
 
         return wrapper
 

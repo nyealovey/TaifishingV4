@@ -87,7 +87,7 @@ Test results:
    Location: app/constants.py:267:23
 266	    # 密码模式（至少8位，包含大小写字母和数字）
 267	    PASSWORD_PATTERN = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$"
-268	
+268
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
@@ -99,7 +99,7 @@ Test results:
 59	        except Exception:
 60	            # 避免在日志记录过程中出错
 61	            pass
-62	
+62
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'Admin123'
@@ -120,7 +120,7 @@ Test results:
 225	                    )
 226	            except:
 227	                continue
-228	
+228
 
 --------------------------------------------------
 >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
@@ -130,7 +130,7 @@ Test results:
    Location: app/services/account_sync_service.py:282:16
 281	        cursor.execute(
 282	            f"""
-283	            SELECT 
+283	            SELECT
 284	                User as username,
 285	                Host as host,
 286	                'user' as account_type,
@@ -161,7 +161,7 @@ Test results:
    Location: app/services/account_sync_service.py:341:54
 340	            # 处理密码过期状态
 341	            is_password_expired = password_expired == "Y" if password_expired else False
-342	
+342
 
 --------------------------------------------------
 >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
@@ -171,7 +171,7 @@ Test results:
    Location: app/services/account_sync_service.py:485:20
 484	        cursor.execute(
 485	                f"""
-486	            SELECT 
+486	            SELECT
 487	                    rolname as username,
 488	                    rolsuper as is_superuser,
 489	                    rolinherit as can_inherit,
@@ -179,9 +179,9 @@ Test results:
 491	                    rolcreatedb as can_create_db,
 492	                    rolcanlogin as can_login,
 493	                    rolconnlimit as conn_limit,
-494	                    CASE 
+494	                    CASE
 495	                        WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
-496	                        ELSE rolvaliduntil 
+496	                        ELSE rolvaliduntil
 497	                    END as valid_until,
 498	                    rolbypassrls as can_bypass_rls,
 499	                    rolreplication as can_replicate
@@ -199,7 +199,7 @@ Test results:
    Location: app/services/account_sync_service.py:825:16
 824	        cursor.execute(
 825	            f"""
-826	            SELECT 
+826	            SELECT
 827	                name as username,
 828	                type_desc as account_type,
 829	                'master' as database_name,
@@ -222,7 +222,7 @@ Test results:
    Location: app/services/account_sync_service.py:978:16
 977	        cursor.execute(
 978	            f"""
-979	            SELECT 
+979	            SELECT
 980	                username,
 981	                authentication_type as account_type,
 982	                '' as database_name,
@@ -258,12 +258,12 @@ Test results:
    Location: app/services/database_service.py:385:16
 384	        cursor.execute(
 385	            f"""
-386	            SELECT 
-387	                rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, 
-388	                rolcanlogin, rolconnlimit, 
-389	                CASE 
+386	            SELECT
+387	                rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb,
+388	                rolcanlogin, rolconnlimit,
+389	                CASE
 390	                    WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL
-391	                    ELSE rolvaliduntil 
+391	                    ELSE rolvaliduntil
 392	                END as rolvaliduntil,
 393	                rolbypassrls, rolreplication
 394	            FROM pg_roles
@@ -295,7 +295,7 @@ Test results:
    Location: app/services/database_service.py:705:16
 704	        cursor.execute(
 705	            f"""
-706	            SELECT username, user_id, account_status, lock_date, expiry_date, 
+706	            SELECT username, user_id, account_status, lock_date, expiry_date,
 707	                   default_tablespace, created, authentication_type
 708	            FROM dba_users
 709	            WHERE {filter_conditions}
@@ -312,7 +312,7 @@ Test results:
 1038	                del self.connections[instance_id]
 1039	            except Exception:
 1040	                pass
-1041	
+1041
 
 --------------------------------------------------
 >> Issue: [B102:exec_used] Use of exec detected.
@@ -322,7 +322,7 @@ Test results:
    Location: app/services/task_executor.py:200:16
 199	                # 执行Python代码
 200	                exec(task.python_code, exec_globals)
-201	
+201
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'TestPass123'
@@ -342,7 +342,7 @@ Test results:
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html
    Location: app/utils/advanced_test_framework.py:256:8
-255	
+255
 256	        assert user.id is not None
 257	        assert user.username == "testuser"
 
@@ -384,7 +384,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:260:8
 259	        assert user.check_password("TestPass123")
 260	        assert not user.check_password("wrongpass")
-261	
+261
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'AuthPass123'
@@ -416,7 +416,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:276:8
 275	        assert user.check_password("AuthPass123")
 276	        assert not user.check_password("wrongpass")
-277	
+277
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -436,7 +436,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:280:8
 279	        assert user.is_active
 280	        assert user.role == UserRole.ADMIN.value
-281	
+281
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'HashPass123'
@@ -476,7 +476,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:291:8
 290	        assert user.password != "HashPass123"
 291	        assert len(user.password) > 50  # bcrypt哈希长度
-292	
+292
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -496,7 +496,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:295:8
 294	        assert user.check_password("HashPass123")
 295	        assert not user.check_password("wrongpass")
-296	
+296
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -504,7 +504,7 @@ Test results:
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html
    Location: app/utils/advanced_test_framework.py:313:8
-312	
+312
 313	        assert instance.id is not None
 314	        assert instance.name == "test_instance"
 
@@ -526,7 +526,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:315:8
 314	        assert instance.name == "test_instance"
 315	        assert instance.instance_type == "mysql"
-316	
+316
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass'
@@ -538,7 +538,7 @@ Test results:
 321	        credential = Credential(
 322	            name="test_credential", username="testuser", password="testpass", user_id=1
 323	        )
-324	
+324
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -546,7 +546,7 @@ Test results:
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html
    Location: app/utils/advanced_test_framework.py:328:8
-327	
+327
 328	        assert credential.id is not None
 329	        assert credential.name == "test_credential"
 
@@ -568,7 +568,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:330:8
 329	        assert credential.name == "test_credential"
 330	        assert credential.username == "testuser"
-331	
+331
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -576,7 +576,7 @@ Test results:
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html
    Location: app/utils/advanced_test_framework.py:346:8
-345	
+345
 346	        assert task.id is not None
 347	        assert task.name == "test_task"
 
@@ -598,7 +598,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:348:8
 347	        assert task.name == "test_task"
 348	        assert task.status == TaskStatus.PENDING.value
-349	
+349
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -606,7 +606,7 @@ Test results:
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html
    Location: app/utils/advanced_test_framework.py:365:8
-364	
+364
 365	        assert log.id is not None
 366	        assert log.level == LogLevel.INFO.value
 
@@ -628,7 +628,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:367:8
 366	        assert log.level == LogLevel.INFO.value
 367	        assert log.message == "Test log message"
-368	
+368
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -638,7 +638,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:379:8
 378	        )
 379	        assert valid_string == "valid_string"
-380	
+380
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -648,7 +648,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:383:8
 382	        invalid_string = InputValidator.validate_string("ab", min_length=5)
 383	        assert invalid_string is None
-384	
+384
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -658,7 +658,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:393:8
 392	        china_time = get_china_time()
 393	        assert china_time is not None
-394	
+394
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -668,7 +668,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:397:8
 396	        formatted_time = format_datetime(china_time)
 397	        assert formatted_time is not None
-398	
+398
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'RegPass123'
@@ -698,7 +698,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:414:8
 413	        assert created_user is not None
 414	        assert created_user.check_password("RegPass123")
-415	
+415
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -708,7 +708,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:422:8
 421	        result = db.session.execute("SELECT 1").fetchone()
 422	        assert result[0] == 1
-423	
+423
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'DbPass123'
@@ -726,9 +726,9 @@ Test results:
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html
    Location: app/utils/advanced_test_framework.py:458:8
-457	
+457
 458	        assert task.status == TaskStatus.COMPLETED.value
-459	
+459
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -748,7 +748,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:479:8
 478	        assert created_log is not None
 479	        assert created_log.message == "Integration test log"
-480	
+480
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -758,7 +758,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:492:8
 491	        cached_value = cache.get("test_key")
 492	        assert cached_value == "test_value"
-493	
+493
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -768,7 +768,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:501:12
 500	            response = client.get("/health/health")
 501	            assert response.status_code == 200
-502	
+502
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -778,7 +778,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:505:12
 504	            response = client.get("/api/health")
 505	            assert response.status_code == 200
-506	
+506
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'PerfPass123'
@@ -798,7 +798,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:526:8
 525	        users = User.query.filter(User.username.like("perf_test_%")).all()
 526	        assert len(users) == 100
-527	
+527
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -808,7 +808,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:529:8
 528	        duration = time.time() - start_time
 529	        assert duration < 5.0  # 应该在5秒内完成
-530	
+530
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -828,7 +828,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:542:12
 541	            assert response.status_code == 200
 542	            assert duration < 1.0  # 应该在1秒内响应
-543	
+543
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'MemoryPass123'
@@ -848,7 +848,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:567:8
 566	        # 内存增长不应超过50MB
 567	        assert memory_increase < 50
-568	
+568
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'ConcurrentPass123'
@@ -880,7 +880,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:590:8
 589	        assert len(results) == 50
 590	        assert all(result is not None for result in results)
-591	
+591
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -890,7 +890,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:606:12
 605	            value = cache.get(f"perf_key_{i}")
 606	            assert value == f"perf_value_{i}"
-607	
+607
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -900,7 +900,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:609:8
 608	        duration = time.time() - start_time
 609	        assert duration < 2.0  # 应该在2秒内完成
-610	
+610
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'QueryPass123'
@@ -930,7 +930,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:633:8
 632	        assert len(users) == 100
 633	        assert duration < 0.1  # 应该在0.1秒内完成
-634	
+634
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -940,7 +940,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:645:8
 644	        users = User.query.filter(User.username == malicious_input).all()
 645	        assert len(users) == 0  # 不应该找到任何用户
-646	
+646
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -960,7 +960,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:659:8
 658	        assert "<script>" not in cleaned_input
 659	        assert "alert" not in cleaned_input
-660	
+660
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -970,7 +970,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:672:12
 671	            # 应该需要CSRF token
 672	            assert response.status_code in [400, 403]
-673	
+673
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1004,7 +1004,7 @@ Test results:
 697	        regular_user = User(
 698	            username="user", password="UserPass123", role=UserRole.USER.value
 699	        )
-700	
+700
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1024,7 +1024,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:706:8
 705	        assert admin_user.role == UserRole.ADMIN.value
 706	        assert regular_user.role == UserRole.USER.value
-707	
+707
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1057,7 +1057,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:720:8
 719	        assert InputValidator.validate_string("ab", min_length=3) is None
 720	        assert InputValidator.validate_string("toolongstring", max_length=5) is None
-721	
+721
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'SecurePass123'
@@ -1107,7 +1107,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:733:8
 732	        assert user.check_password("SecurePass123")
 733	        assert not user.check_password("wrongpass")
-734	
+734
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1127,7 +1127,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:748:12
 747	            # 应该包含HttpOnly标志
 748	            assert "HttpOnly" in cookie
-749	
+749
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1137,7 +1137,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:767:8
 766	        # 所有请求都应该成功
 767	        assert all(results)
-768	
+768
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1147,7 +1147,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:779:16
 778	                response = client.get("/health/health")
 779	                assert response.status_code == 200
-780	
+780
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1157,7 +1157,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:782:12
 781	            duration = time.time() - start_time
 782	            assert duration < 10.0  # 应该在10秒内完成
-783	
+783
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'LoadPass123'
@@ -1177,7 +1177,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:802:8
 801	        duration = time.time() - start_time
 802	        assert duration < 30.0  # 应该在30秒内完成
-803	
+803
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'LoadMemoryPass123'
@@ -1197,7 +1197,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:827:8
 826	        # 内存增长应该合理
 827	        assert memory_increase < 100  # 不应超过100MB
-828	
+828
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'LoadCpuPass123'
@@ -1217,7 +1217,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:851:8
 850	        # CPU使用应该合理
 851	        assert cpu_after < 90  # 不应超过90%
-852	
+852
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1227,7 +1227,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:868:16
 867	                response = client.get(endpoint)
 868	                assert response.status_code == 200
-869	
+869
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1237,7 +1237,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:877:12
 876	            response = client.get("/api/instances")
 877	            assert response.status_code == 401
-878	
+878
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1247,7 +1247,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:891:12
 890	            response = client.get("/nonexistent")
 891	            assert response.status_code == 404
-892	
+892
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1257,7 +1257,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:901:16
 900	                response = client.get("/health/health")
 901	                assert response.status_code == 200
-902	
+902
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1267,7 +1267,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:909:12
 908	            response = client.get("/health/health")
 909	            assert response.status_code == 200
-910	
+910
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1277,7 +1277,7 @@ Test results:
    Location: app/utils/advanced_test_framework.py:912:12
 911	            data = response.get_json()
 912	            assert "success" in data or "status" in data
-913	
+913
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
@@ -1288,7 +1288,7 @@ Test results:
 297	                            info["backup_version"] = data["version"]
 298	                except:
 299	                    pass
-300	
+300
 
 --------------------------------------------------
 >> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
@@ -1298,7 +1298,7 @@ Test results:
    Location: app/utils/cache_manager.py:32:19
 31	        # 生成哈希值
 32	        key_hash = hashlib.md5(key_string.encode()).hexdigest()
-33	
+33
 
 --------------------------------------------------
 >> Issue: [B110:try_except_pass] Try, Except, Pass detected.
@@ -1354,7 +1354,7 @@ Test results:
    Location: app/utils/test_runner.py:230:12
 229	            assert created_user is not None
 230	            assert created_user.email == "test@example.com"
-231	
+231
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1374,7 +1374,7 @@ Test results:
    Location: app/utils/test_runner.py:252:12
 251	            assert created_instance is not None
 252	            assert created_instance.db_type == "mysql"
-253	
+253
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'test_password'
@@ -1406,7 +1406,7 @@ Test results:
    Location: app/utils/test_runner.py:272:12
 271	            assert created_credential is not None
 272	            assert created_credential.username == "test_user"
-273	
+273
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1426,7 +1426,7 @@ Test results:
    Location: app/utils/test_runner.py:298:12
 297	            assert created_task is not None
 298	            assert created_task.task_type == "sync_accounts"
-299	
+299
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1436,7 +1436,7 @@ Test results:
    Location: app/utils/test_runner.py:309:12
 308	            result = db.session.execute("SELECT 1").scalar()
 309	            assert result == 1
-310	
+310
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1446,7 +1446,7 @@ Test results:
    Location: app/utils/test_runner.py:328:12
 327	            )
 328	            assert valid_string == "test"
-329	
+329
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1456,7 +1456,7 @@ Test results:
    Location: app/utils/test_runner.py:332:12
 331	            valid_int = InputValidator.validate_integer("123", min_val=1, max_val=1000)
 332	            assert valid_int == 123
-333	
+333
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1466,7 +1466,7 @@ Test results:
    Location: app/utils/test_runner.py:336:12
 335	            valid_email = InputValidator.validate_email("test@example.com")
 336	            assert valid_email == "test@example.com"
-337	
+337
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1474,7 +1474,7 @@ Test results:
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html
    Location: app/utils/test_runner.py:356:12
-355	
+355
 356	            assert china_time is not None
 357	            assert formatted_time is not None
 
@@ -1486,7 +1486,7 @@ Test results:
    Location: app/utils/test_runner.py:357:12
 356	            assert china_time is not None
 357	            assert formatted_time is not None
-358	
+358
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'hashed_password'
@@ -1524,7 +1524,7 @@ Test results:
    Location: app/utils/test_runner.py:402:12
 401	            updated_instance = Instance.query.get(instance.id)
 402	            assert updated_instance.credential_id == credential.id
-403	
+403
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1534,7 +1534,7 @@ Test results:
    Location: app/utils/test_runner.py:428:12
 427	            all_instances = Instance.query.all()
 428	            assert len(all_instances) >= 5
-429	
+429
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1544,7 +1544,7 @@ Test results:
    Location: app/utils/test_runner.py:432:12
 431	            mysql_instances = Instance.query.filter_by(db_type="mysql").all()
 432	            assert len(mysql_instances) >= 5
-433	
+433
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1554,7 +1554,7 @@ Test results:
    Location: app/utils/test_runner.py:462:12
 461	            # 注意：这里不实际执行任务，只测试创建
 462	            assert executor is not None
-463	
+463
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1564,7 +1564,7 @@ Test results:
    Location: app/utils/test_runner.py:474:16
 473	                response = client.get("/api/health")
 474	                assert response.status_code == 200
-475	
+475
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1574,7 +1574,7 @@ Test results:
    Location: app/utils/test_runner.py:477:16
 476	                data = response.get_json()
 477	                assert data["status"] == "healthy"
-478	
+478
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'hash'
@@ -1594,7 +1594,7 @@ Test results:
    Location: app/utils/test_runner.py:493:12
 492	            found_user = User.query.filter_by(username="db_test").first()
 493	            assert found_user is not None
-494	
+494
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1604,7 +1604,7 @@ Test results:
    Location: app/utils/test_runner.py:500:12
 499	            updated_user = User.query.get(found_user.id)
 500	            assert updated_user.email == "updated@test.com"
-501	
+501
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1614,7 +1614,7 @@ Test results:
    Location: app/utils/test_runner.py:507:12
 506	            deleted_user = User.query.get(found_user.id)
 507	            assert deleted_user is None
-508	
+508
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'hash'
@@ -1638,7 +1638,7 @@ Test results:
    Location: app/utils/test_runner.py:542:12
 541	            # 性能要求：100条记录查询应在1秒内完成
 542	            assert query_time < 1.0, f"查询时间过长: {query_time:.3f}秒"
-543	
+543
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1658,7 +1658,7 @@ Test results:
    Location: app/utils/test_runner.py:569:16
 568	                assert response_time < 0.1, f"API响应时间过长: {response_time:.3f}秒"
 569	                assert response.status_code == 200
-570	
+570
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'hash'
@@ -1682,7 +1682,7 @@ Test results:
    Location: app/utils/test_runner.py:604:12
 603	            # 内存增长不应超过50MB
 604	            assert memory_increase < 50, f"内存增长过多: {memory_increase:.2f}MB"
-605	
+605
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'hash'
@@ -1716,7 +1716,7 @@ Test results:
    Location: app/utils/test_runner.py:648:12
 647	            assert len(errors) == 0, f"并发操作出现错误: {errors}"
 648	            assert len(results) == 10, f"并发操作结果不完整: {len(results)}/10"
-649	
+649
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1726,7 +1726,7 @@ Test results:
    Location: app/utils/test_runner.py:672:12
 671	            validated = InputValidator.validate_string(malicious_input)
 672	            assert validated is not None  # 应该被转义而不是被拒绝
-673	
+673
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1736,7 +1736,7 @@ Test results:
    Location: app/utils/test_runner.py:677:12
 676	            validated = InputValidator.validate_string(xss_input)
 677	            assert "<script>" not in validated  # 应该被转义
-678	
+678
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1746,7 +1746,7 @@ Test results:
    Location: app/utils/test_runner.py:693:12
 692	            is_safe = service._is_safe_query(dangerous_query)
 693	            assert not is_safe, "危险查询应该被检测出来"
-694	
+694
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1756,7 +1756,7 @@ Test results:
    Location: app/utils/test_runner.py:698:12
 697	            is_safe = service._is_safe_query(safe_query)
 698	            assert is_safe, "安全查询应该被允许"
-699	
+699
 
 --------------------------------------------------
 >> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'test_password'
@@ -1776,7 +1776,7 @@ Test results:
    Location: app/utils/test_runner.py:719:12
 718	            is_valid = bcrypt.check_password_hash(password_hash, password)
 719	            assert is_valid, "密码验证应该成功"
-720	
+720
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1786,7 +1786,7 @@ Test results:
    Location: app/utils/test_runner.py:723:12
 722	            is_invalid = bcrypt.check_password_hash(password_hash, "wrong_password")
 723	            assert not is_invalid, "错误密码应该验证失败"
-724	
+724
 
 --------------------------------------------------
 >> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'hash'
@@ -1794,14 +1794,14 @@ Test results:
    CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
    More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b106_hardcoded_password_funcarg.html
    Location: app/utils/test_runner.py:739:19
-738	
+738
 739	            user = User(
 740	                username="auth_test",
 741	                email="auth@test.com",
 742	                password_hash="hash",
 743	                role="user",
 744	            )
-745	
+745
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1809,9 +1809,9 @@ Test results:
    CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
    More Info: https://bandit.readthedocs.io/en/1.8.6/plugins/b101_assert_used.html
    Location: app/utils/test_runner.py:746:12
-745	
+745
 746	            assert user.role == "user"
-747	
+747
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1821,7 +1821,7 @@ Test results:
    Location: app/utils/test_runner.py:766:12
 765	            # 加密后的数据应该与原数据不同
 766	            assert encrypted != sensitive_data
-767	
+767
 
 --------------------------------------------------
 >> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
@@ -1831,7 +1831,7 @@ Test results:
    Location: app/utils/test_runner.py:770:12
 769	            is_valid = bcrypt.check_password_hash(encrypted, sensitive_data)
 770	            assert is_valid
-771	
+771
 
 --------------------------------------------------
 
