@@ -44,10 +44,12 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="mb-0">定时任务管理</h1>
                 <div>
+                    {% if current_user.is_admin() %}
                     <!-- 暂时隐藏添加任务功能 -->
                     <!-- <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addJobModal">
                         <i class="fas fa-plus me-1"></i>添加任务
                     </button> -->
+                    {% endif %}
                     <button class="btn btn-outline-secondary" onclick="refreshJobs()">
                         <i class="fas fa-sync-alt me-1"></i>刷新
                     </button>
@@ -281,6 +283,9 @@ function createJobCard(job) {
     const builtinTasks = ['sync_accounts', 'cleanup_logs'];
     const isBuiltin = job.is_builtin || builtinTasks.includes(job.id);
     
+    // 检查用户权限（从模板中获取）
+    const isAdmin = {{ 'true' if current_user.is_admin() else 'false' }};
+    
     // 为内置任务添加特殊标识
     const builtinBadge = isBuiltin ? '<span class="badge bg-info ms-2">内置任务</span>' : '';
     
@@ -289,55 +294,68 @@ function createJobCard(job) {
         '<span class="badge bg-warning ms-2">已禁用</span>' : 
         '<span class="badge bg-success ms-2">已启用</span>';
     
-    // 根据是否为内置任务和状态生成不同的按钮
+    // 根据用户权限和任务状态生成不同的按钮
     let actionButtons = '';
-    if (isBuiltin) {
-        // 内置任务：根据状态显示不同按钮
-        if (isPaused) {
-            actionButtons = `
-                <div class="btn-group-vertical w-100">
-                    <button class="btn btn-sm btn-outline-primary" onclick="runJob('${job.id}')">
-                        <i class="fas fa-play me-1"></i>立即执行
-                    </button>
-                    <button class="btn btn-sm btn-outline-success" onclick="enableJob('${job.id}')">
-                        <i class="fas fa-play-circle me-1"></i>启用
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="editTrigger('${job.id}')">
-                        <i class="fas fa-edit me-1"></i>编辑触发器
-                    </button>
-                </div>
-            `;
+    
+    if (isAdmin) {
+        // 管理员：完整功能
+        if (isBuiltin) {
+            // 内置任务：根据状态显示不同按钮
+            if (isPaused) {
+                actionButtons = `
+                    <div class="btn-group-vertical w-100">
+                        <button class="btn btn-sm btn-outline-primary" onclick="runJob('${job.id}')">
+                            <i class="fas fa-play me-1"></i>立即执行
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="enableJob('${job.id}')">
+                            <i class="fas fa-play-circle me-1"></i>启用
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="editTrigger('${job.id}')">
+                            <i class="fas fa-edit me-1"></i>编辑触发器
+                        </button>
+                    </div>
+                `;
+            } else {
+                actionButtons = `
+                    <div class="btn-group-vertical w-100">
+                        <button class="btn btn-sm btn-outline-primary" onclick="runJob('${job.id}')">
+                            <i class="fas fa-play me-1"></i>立即执行
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="disableJob('${job.id}')">
+                            <i class="fas fa-pause-circle me-1"></i>禁用
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="editTrigger('${job.id}')">
+                            <i class="fas fa-edit me-1"></i>编辑触发器
+                        </button>
+                    </div>
+                `;
+            }
         } else {
+            // 自定义任务：完整功能
             actionButtons = `
                 <div class="btn-group-vertical w-100">
                     <button class="btn btn-sm btn-outline-primary" onclick="runJob('${job.id}')">
                         <i class="fas fa-play me-1"></i>立即执行
                     </button>
-                    <button class="btn btn-sm btn-outline-warning" onclick="disableJob('${job.id}')">
-                        <i class="fas fa-pause-circle me-1"></i>禁用
+                    <button class="btn btn-sm btn-outline-warning" onclick="pauseJob('${job.id}')">
+                        <i class="fas fa-pause me-1"></i>暂停
                     </button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="editTrigger('${job.id}')">
-                        <i class="fas fa-edit me-1"></i>编辑触发器
+                    <button class="btn btn-sm btn-outline-info" onclick="editJob('${job.id}')">
+                        <i class="fas fa-edit me-1"></i>编辑
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteJob('${job.id}')">
+                        <i class="fas fa-trash me-1"></i>删除
                     </button>
                 </div>
             `;
         }
     } else {
-        // 自定义任务：完整功能
+        // 普通用户：只能查看，不能操作
         actionButtons = `
-            <div class="btn-group-vertical w-100">
-                <button class="btn btn-sm btn-outline-primary" onclick="runJob('${job.id}')">
-                    <i class="fas fa-play me-1"></i>立即执行
-                </button>
-                <button class="btn btn-sm btn-outline-warning" onclick="pauseJob('${job.id}')">
-                    <i class="fas fa-pause me-1"></i>暂停
-                </button>
-                <button class="btn btn-sm btn-outline-info" onclick="editJob('${job.id}')">
-                    <i class="fas fa-edit me-1"></i>编辑
-                </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteJob('${job.id}')">
-                    <i class="fas fa-trash me-1"></i>删除
-                </button>
+            <div class="text-center">
+                <span class="text-muted">
+                    <i class="fas fa-lock me-1"></i>需要管理员权限才能操作
+                </span>
             </div>
         `;
     }
@@ -421,6 +439,13 @@ function createJob() {
 }
 
 function runJob(jobId) {
+    // 检查权限
+    const isAdmin = {{ 'true' if current_user.is_admin() else 'false' }};
+    if (!isAdmin) {
+        showAlert('需要管理员权限才能执行任务', 'warning');
+        return;
+    }
+    
     if (confirm('确定要立即执行此任务吗？')) {
         $.ajax({
             url: `{{ url_for("scheduler.run_job", job_id="PLACEHOLDER") }}`.replace('PLACEHOLDER', jobId),
@@ -436,14 +461,25 @@ function runJob(jobId) {
                 }
             },
             error: function(xhr) {
-                const error = xhr.responseJSON;
-                showAlert('执行任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+                if (xhr.status === 403) {
+                    showAlert('需要管理员权限才能执行任务', 'warning');
+                } else {
+                    const error = xhr.responseJSON;
+                    showAlert('执行任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+                }
             }
         });
     }
 }
 
 function pauseJob(jobId) {
+    // 检查权限
+    const isAdmin = {{ 'true' if current_user.is_admin() else 'false' }};
+    if (!isAdmin) {
+        showAlert('需要管理员权限才能暂停任务', 'warning');
+        return;
+    }
+    
     $.ajax({
         url: `{{ url_for("scheduler.pause_job", job_id="") }}${jobId}/pause`,
         method: 'POST',
@@ -459,13 +495,24 @@ function pauseJob(jobId) {
             }
         },
         error: function(xhr) {
-            const error = xhr.responseJSON;
-            showAlert('暂停任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+            if (xhr.status === 403) {
+                showAlert('需要管理员权限才能暂停任务', 'warning');
+            } else {
+                const error = xhr.responseJSON;
+                showAlert('暂停任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+            }
         }
     });
 }
 
 function deleteJob(jobId) {
+    // 检查权限
+    const isAdmin = {{ 'true' if current_user.is_admin() else 'false' }};
+    if (!isAdmin) {
+        showAlert('需要管理员权限才能删除任务', 'warning');
+        return;
+    }
+    
     // 检查是否为内置任务
     const builtinTasks = ['sync_accounts', 'cleanup_logs'];
     if (builtinTasks.includes(jobId)) {
@@ -489,8 +536,12 @@ function deleteJob(jobId) {
                 }
             },
             error: function(xhr) {
-                const error = xhr.responseJSON;
-                showAlert('删除任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+                if (xhr.status === 403) {
+                    showAlert('需要管理员权限才能删除任务', 'warning');
+                } else {
+                    const error = xhr.responseJSON;
+                    showAlert('删除任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+                }
             }
         });
     }
@@ -501,6 +552,13 @@ function refreshJobs() {
 }
 
 function editTrigger(jobId) {
+    // 检查权限
+    const isAdmin = {{ 'true' if current_user.is_admin() else 'false' }};
+    if (!isAdmin) {
+        showAlert('需要管理员权限才能编辑触发器', 'warning');
+        return;
+    }
+    
     // 获取任务详情
     $.ajax({
         url: `{{ url_for("scheduler.get_job", job_id="") }}${jobId}`,
@@ -614,6 +672,13 @@ function updateJob() {
 }
 
 function disableJob(jobId) {
+    // 检查权限
+    const isAdmin = {{ 'true' if current_user.is_admin() else 'false' }};
+    if (!isAdmin) {
+        showAlert('需要管理员权限才能禁用任务', 'warning');
+        return;
+    }
+    
     if (confirm('确定要禁用此任务吗？')) {
         $.ajax({
             url: `{{ url_for("scheduler.disable_job", job_id="PLACEHOLDER") }}`.replace('PLACEHOLDER', jobId),
@@ -630,14 +695,25 @@ function disableJob(jobId) {
                 }
             },
             error: function(xhr) {
-                const error = xhr.responseJSON;
-                showAlert('禁用任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+                if (xhr.status === 403) {
+                    showAlert('需要管理员权限才能禁用任务', 'warning');
+                } else {
+                    const error = xhr.responseJSON;
+                    showAlert('禁用任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+                }
             }
         });
     }
 }
 
 function enableJob(jobId) {
+    // 检查权限
+    const isAdmin = {{ 'true' if current_user.is_admin() else 'false' }};
+    if (!isAdmin) {
+        showAlert('需要管理员权限才能启用任务', 'warning');
+        return;
+    }
+    
     $.ajax({
         url: `{{ url_for("scheduler.enable_job", job_id="PLACEHOLDER") }}`.replace('PLACEHOLDER', jobId),
         method: 'POST',
@@ -653,8 +729,12 @@ function enableJob(jobId) {
             }
         },
         error: function(xhr) {
-            const error = xhr.responseJSON;
-            showAlert('启用任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+            if (xhr.status === 403) {
+                showAlert('需要管理员权限才能启用任务', 'warning');
+            } else {
+                const error = xhr.responseJSON;
+                showAlert('启用任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+            }
         }
     });
 }

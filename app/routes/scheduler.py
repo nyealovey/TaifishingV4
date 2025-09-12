@@ -4,7 +4,7 @@
 
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
-from app.utils.decorators import admin_required
+from app.utils.decorators import admin_required, scheduler_manage_required, scheduler_view_required
 from app.utils.api_response import APIResponse
 from app.scheduler import get_scheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -22,7 +22,7 @@ scheduler_bp = Blueprint('scheduler', __name__, url_prefix='/scheduler')
 
 @scheduler_bp.route('/')
 @login_required
-@admin_required
+@scheduler_view_required
 def index():
     """定时任务管理页面"""
     return render_template('scheduler/index.html')
@@ -30,7 +30,7 @@ def index():
 
 @scheduler_bp.route('/api/jobs')
 @login_required
-@admin_required
+@scheduler_view_required
 def get_jobs():
     """获取所有定时任务"""
     try:
@@ -72,7 +72,7 @@ def get_jobs():
 
 @scheduler_bp.route('/api/jobs/<job_id>')
 @login_required
-@admin_required
+@scheduler_view_required
 def get_job(job_id):
     """获取指定任务详情"""
     try:
@@ -102,7 +102,7 @@ def get_job(job_id):
 
 @scheduler_bp.route('/api/jobs', methods=['POST'])
 @login_required
-@admin_required
+@scheduler_manage_required
 def create_job():
     """创建新的定时任务"""
     try:
@@ -161,7 +161,7 @@ def create_job():
 
 @scheduler_bp.route('/api/jobs/<job_id>', methods=['PUT'])
 @login_required
-@admin_required
+@scheduler_manage_required
 def update_job(job_id):
     """更新定时任务"""
     try:
@@ -236,7 +236,7 @@ def update_job(job_id):
 
 @scheduler_bp.route('/api/jobs/<job_id>', methods=['DELETE'])
 @login_required
-@admin_required
+@scheduler_manage_required
 def delete_job(job_id):
     """删除定时任务"""
     try:
@@ -260,7 +260,7 @@ def delete_job(job_id):
 
 @scheduler_bp.route('/api/jobs/<job_id>/disable', methods=['POST'])
 @login_required
-@admin_required
+@scheduler_manage_required
 def disable_job(job_id):
     """禁用定时任务"""
     try:
@@ -284,7 +284,7 @@ def disable_job(job_id):
 
 @scheduler_bp.route('/api/jobs/<job_id>/enable', methods=['POST'])
 @login_required
-@admin_required
+@scheduler_manage_required
 def enable_job(job_id):
     """启用定时任务"""
     try:
@@ -308,7 +308,7 @@ def enable_job(job_id):
 
 @scheduler_bp.route('/api/jobs/<job_id>/pause', methods=['POST'])
 @login_required
-@admin_required
+@scheduler_manage_required
 def pause_job(job_id):
     """暂停任务"""
     try:
@@ -323,7 +323,7 @@ def pause_job(job_id):
 
 @scheduler_bp.route('/api/jobs/<job_id>/resume', methods=['POST'])
 @login_required
-@admin_required
+@scheduler_manage_required
 def resume_job(job_id):
     """恢复任务"""
     try:
@@ -338,7 +338,7 @@ def resume_job(job_id):
 
 @scheduler_bp.route('/api/jobs/<job_id>/run', methods=['POST'])
 @login_required
-@admin_required
+@scheduler_manage_required
 def run_job(job_id):
     """立即执行任务"""
     try:

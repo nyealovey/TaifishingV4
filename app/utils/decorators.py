@@ -48,6 +48,78 @@ def admin_required(f):
     return decorated_function
 
 
+def scheduler_manage_required(f):
+    """
+    定时任务管理权限装饰器
+    只有管理员可以管理定时任务（创建、编辑、删除、启用/禁用、运行）
+    
+    Args:
+        f: 被装饰的函数
+        
+    Returns:
+        装饰后的函数
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            if request.is_json:
+                return jsonify({
+                    'success': False,
+                    'message': '请先登录',
+                    'code': 'UNAUTHORIZED'
+                }), 401
+            else:
+                from flask import redirect, url_for, flash
+                flash('请先登录', 'warning')
+                return redirect(url_for('auth.login'))
+        
+        if not current_user.is_admin():
+            if request.is_json:
+                return jsonify({
+                    'success': False,
+                    'message': '需要管理员权限才能管理定时任务',
+                    'code': 'FORBIDDEN'
+                }), 403
+            else:
+                from flask import redirect, url_for, flash
+                flash('需要管理员权限才能管理定时任务', 'error')
+                return redirect(url_for('main.index'))
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function
+
+
+def scheduler_view_required(f):
+    """
+    定时任务查看权限装饰器
+    普通用户可以查看定时任务状态，但不能操作
+    
+    Args:
+        f: 被装饰的函数
+        
+    Returns:
+        装饰后的函数
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            if request.is_json:
+                return jsonify({
+                    'success': False,
+                    'message': '请先登录',
+                    'code': 'UNAUTHORIZED'
+                }), 401
+            else:
+                from flask import redirect, url_for, flash
+                flash('请先登录', 'warning')
+                return redirect(url_for('auth.login'))
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function
+
+
 def login_required(f):
     """
     登录权限装饰器
