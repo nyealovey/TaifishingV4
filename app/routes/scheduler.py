@@ -33,6 +33,7 @@ def get_jobs():
     """获取所有定时任务"""
     try:
         jobs = scheduler.get_jobs()
+        logger.info(f"获取到 {len(jobs)} 个任务")
         jobs_data = []
         
         for job in jobs:
@@ -94,11 +95,13 @@ def create_job():
     """创建新的定时任务"""
     try:
         data = request.get_json()
+        logger.info(f"创建任务请求数据: {data}")
         
         # 验证必需字段
         required_fields = ['id', 'name', 'func', 'trigger_type']
         for field in required_fields:
             if field not in data:
+                logger.error(f"缺少必需字段: {field}")
                 return APIResponse.error(f"缺少必需字段: {field}", status_code=400)
         
         # 构建触发器
@@ -106,9 +109,14 @@ def create_job():
         if not trigger:
             return APIResponse.error("无效的触发器配置", status_code=400)
         
+        # 获取任务函数
+        task_func = _get_task_function(data['func'])
+        if not task_func:
+            return APIResponse.error(f"未找到任务函数: {data['func']}", status_code=400)
+        
         # 添加任务
         job = scheduler.add_job(
-            func=data['func'],
+            func=task_func,
             trigger=trigger,
             id=data['id'],
             name=data['name'],
@@ -233,6 +241,26 @@ def run_job(job_id):
     except Exception as e:
         logger.error(f"执行任务失败: {e}")
         return APIResponse.error(f"执行任务失败: {str(e)}")
+
+
+def _get_task_function(func_name):
+    """获取任务函数"""
+    from app.tasks import (
+        cleanup_old_logs,
+        backup_database,
+        sync_accounts,
+        generate_reports
+    )
+    
+    # 任务函数映射
+    task_functions = {
+        'cleanup_old_logs': cleanup_old_logs,
+        'backup_database': backup_database,
+        'sync_accounts': sync_accounts,
+        'generate_reports': generate_reports
+    }
+    
+    return task_functions.get(func_name)
 
 
 def _build_trigger(data):
