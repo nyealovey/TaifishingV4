@@ -386,20 +386,35 @@ def sync_details_batch():
         instance_records = {}
         
         for record in records:
-            instance = Instance.query.get(record.instance_id)
-            instance_name = instance.name if instance else "未知实例"
-            
-            # 如果这个实例还没有记录，或者当前记录更新，则保存
-            if (instance_name not in instance_records or 
-                record.sync_time > instance_records[instance_name]['sync_time']):
-                instance_records[instance_name] = {
-                    "id": record.id,
-                    "instance_name": instance_name,
-                    "status": record.status,
-                    "message": record.message,
-                    "synced_count": record.synced_count,
-                    "sync_time": record.sync_time
-                }
+            if record.instance_id is None:
+                # 聚合记录：从data.results中提取每个实例的详细信息
+                if record.data and 'results' in record.data:
+                    for result in record.data['results']:
+                        instance_name = result.get('instance_name', '未知实例')
+                        instance_records[instance_name] = {
+                            "id": record.id,
+                            "instance_name": instance_name,
+                            "status": "success" if result.get('success', False) else "failed",
+                            "message": result.get('message', ''),
+                            "synced_count": result.get('synced_count', 0),
+                            "sync_time": record.sync_time
+                        }
+            else:
+                # 单个实例记录
+                instance = Instance.query.get(record.instance_id)
+                instance_name = instance.name if instance else "未知实例"
+                
+                # 如果这个实例还没有记录，或者当前记录更新，则保存
+                if (instance_name not in instance_records or 
+                    record.sync_time > instance_records[instance_name]['sync_time']):
+                    instance_records[instance_name] = {
+                        "id": record.id,
+                        "instance_name": instance_name,
+                        "status": record.status,
+                        "message": record.message,
+                        "synced_count": record.synced_count,
+                        "sync_time": record.sync_time
+                    }
         
         # 转换为列表并按实例名称排序
         details = list(instance_records.values())
