@@ -6,6 +6,7 @@
 
 from flask import Blueprint, render_template, request, jsonify, current_app
 from flask_login import login_required, current_user
+from app.utils.decorators import view_required, create_required, update_required, delete_required
 from app import db
 from app.models.account_classification import (
     AccountClassification,
@@ -22,6 +23,7 @@ account_classification_bp = Blueprint(
 
 @account_classification_bp.route("/")
 @login_required
+@view_required
 def index():
     """账户分类管理首页"""
     return render_template("account_classification/index.html")
@@ -29,6 +31,7 @@ def index():
 
 @account_classification_bp.route("/rules-page")
 @login_required
+@view_required
 def rules():
     """规则管理页面"""
     return render_template("account_classification/rules.html")
@@ -36,6 +39,7 @@ def rules():
 
 @account_classification_bp.route("/classifications")
 @login_required
+@view_required
 def get_classifications():
     """获取所有账户分类"""
     try:
@@ -87,6 +91,7 @@ def get_classifications():
 
 @account_classification_bp.route("/classifications", methods=["POST"])
 @login_required
+@create_required
 def create_classification():
     """创建账户分类"""
     try:
@@ -127,6 +132,7 @@ def create_classification():
 
 @account_classification_bp.route("/classifications/<int:classification_id>")
 @login_required
+@view_required
 def get_classification(classification_id):
     """获取单个账户分类"""
     try:
@@ -166,6 +172,7 @@ def get_classification(classification_id):
     "/classifications/<int:classification_id>", methods=["PUT"]
 )
 @login_required
+@update_required
 def update_classification(classification_id):
     """更新账户分类"""
     try:
@@ -192,6 +199,7 @@ def update_classification(classification_id):
     "/classifications/<int:classification_id>", methods=["DELETE"]
 )
 @login_required
+@delete_required
 def delete_classification(classification_id):
     """删除账户分类"""
     try:
@@ -214,6 +222,7 @@ def delete_classification(classification_id):
 
 @account_classification_bp.route("/rules/filter")
 @login_required
+@view_required
 def get_rules():
     """获取分类规则"""
     try:
@@ -261,6 +270,7 @@ def get_rules():
 
 @account_classification_bp.route("/rules")
 @login_required
+@view_required
 def list_rules():
     """获取所有规则列表（按数据库类型分组）"""
     try:
@@ -314,6 +324,7 @@ def list_rules():
 
 @account_classification_bp.route("/rules", methods=["POST"])
 @login_required
+@create_required
 def create_rule():
     """创建分类规则"""
     try:
@@ -343,6 +354,7 @@ def create_rule():
 
 @account_classification_bp.route("/rules/<int:rule_id>", methods=["GET"])
 @login_required
+@view_required
 def get_rule(rule_id):
     """获取单个规则详情"""
     try:
@@ -379,6 +391,7 @@ def get_rule(rule_id):
 
 @account_classification_bp.route("/rules/<int:rule_id>", methods=["PUT"])
 @login_required
+@update_required
 def update_rule(rule_id):
     """更新分类规则"""
     try:
@@ -407,6 +420,7 @@ def update_rule(rule_id):
     "/rules/<int:rule_id>/matched-accounts", methods=["GET"]
 )
 @login_required
+@view_required
 def get_matched_accounts(rule_id):
     """获取规则匹配的账户"""
     try:
@@ -490,6 +504,7 @@ def get_matched_accounts(rule_id):
 
 @account_classification_bp.route("/rules/<int:rule_id>", methods=["DELETE"])
 @login_required
+@delete_required
 def delete_rule(rule_id):
     """删除分类规则"""
     try:
@@ -508,6 +523,7 @@ def delete_rule(rule_id):
 
 @account_classification_bp.route("/assign", methods=["POST"])
 @login_required
+@update_required
 def assign_classification():
     """分配账户分类"""
     try:
@@ -527,6 +543,7 @@ def assign_classification():
 
 @account_classification_bp.route("/auto-classify", methods=["POST"])
 @login_required
+@update_required
 def auto_classify():
     """自动分类账户"""
     try:
@@ -546,6 +563,7 @@ def auto_classify():
 
 @account_classification_bp.route("/assignments")
 @login_required
+@view_required
 def get_assignments():
     """获取账户分类分配"""
     try:
@@ -585,6 +603,7 @@ def get_assignments():
 
 @account_classification_bp.route("/assignments/<int:assignment_id>", methods=["DELETE"])
 @login_required
+@delete_required
 def remove_assignment(assignment_id):
     """移除账户分类分配"""
     try:
@@ -602,6 +621,7 @@ def remove_assignment(assignment_id):
 
 @account_classification_bp.route("/permissions/<db_type>")
 @login_required
+@view_required
 def get_permissions(db_type):
     """获取数据库权限列表"""
     try:

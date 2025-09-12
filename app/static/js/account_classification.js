@@ -59,14 +59,20 @@ function displayClassifications(classifications) {
                             <small class="text-muted">${classification.rules_count > 0 ? classification.rules_count + ' 规则' : '无匹配'}</small>
                         </div>
                         <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary" onclick="editClassification(${classification.id})" title="编辑">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            ${!classification.is_system ? `
-                                <button class="btn btn-outline-danger" onclick="deleteClassification(${classification.id})" title="删除">
-                                    <i class="fas fa-trash"></i>
+                            ${window.currentUserRole === 'admin' ? `
+                                <button class="btn btn-outline-primary" onclick="editClassification(${classification.id})" title="编辑">
+                                    <i class="fas fa-edit"></i>
                                 </button>
-                            ` : ''}
+                                ${!classification.is_system ? `
+                                    <button class="btn btn-outline-danger" onclick="deleteClassification(${classification.id})" title="删除">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                ` : ''}
+                            ` : `
+                                <span class="btn btn-outline-secondary disabled" title="只读模式">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                            `}
                         </div>
                     </div>
                     ${classification.description ? `<small class="text-muted d-block mt-1">${classification.description}</small>` : ''}
@@ -314,12 +320,18 @@ function displayRules(rulesByDbType) {
                                                             <button class="btn btn-outline-info" onclick="viewRule(${rule.id})" title="查看详情">
                                                                 <i class="fas fa-eye"></i>
                                                             </button>
-                                                            <button class="btn btn-outline-primary" onclick="editRule(${rule.id})" title="编辑规则">
-                                                                <i class="fas fa-edit"></i>
-                                                            </button>
-                                                            <button class="btn btn-outline-danger" onclick="deleteRule(${rule.id})" title="删除规则">
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
+                                                            ${window.currentUserRole === 'admin' ? `
+                                                                <button class="btn btn-outline-primary" onclick="editRule(${rule.id})" title="编辑规则">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
+                                                                <button class="btn btn-outline-danger" onclick="deleteRule(${rule.id})" title="删除规则">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            ` : `
+                                                                <span class="btn btn-outline-secondary disabled" title="只读模式">
+                                                                    <i class="fas fa-lock"></i>
+                                                                </span>
+                                                            `}
                                                         </div>
                                                     </div>
                                                 </div>
