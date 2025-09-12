@@ -16,6 +16,8 @@ class InputValidator:
     """输入验证器"""
 
     # 数据库类型白名单
+    # 注意：ALLOWED_DB_TYPES 已废弃，现在使用数据库类型配置管理
+    # 保留此常量用于向后兼容，但建议使用 get_allowed_db_types() 方法
     ALLOWED_DB_TYPES = ["mysql", "postgresql", "sqlserver", "oracle"]
 
     # 任务类型白名单
@@ -165,6 +167,22 @@ class InputValidator:
         return url.strip()
 
     @staticmethod
+    def get_allowed_db_types() -> List[str]:
+        """
+        获取允许的数据库类型列表（从数据库类型配置中动态获取）
+        
+        Returns:
+            List[str]: 启用的数据库类型名称列表
+        """
+        try:
+            from app.services.database_type_service import DatabaseTypeService
+            active_types = DatabaseTypeService.get_active_types()
+            return [config.name for config in active_types]
+        except Exception:
+            # 如果获取失败，回退到硬编码列表
+            return InputValidator.ALLOWED_DB_TYPES
+
+    @staticmethod
     def validate_db_type(db_type: str) -> Optional[str]:
         """
         验证数据库类型
@@ -175,9 +193,16 @@ class InputValidator:
         Returns:
             str: 验证后的数据库类型，验证失败返回None
         """
-        if not db_type or db_type.lower() not in InputValidator.ALLOWED_DB_TYPES:
+        if not db_type:
             return None
-        return db_type.lower()
+        
+        # 使用动态获取的数据库类型列表
+        allowed_types = InputValidator.get_allowed_db_types()
+        db_type_lower = db_type.lower()
+        
+        if db_type_lower not in allowed_types:
+            return None
+        return db_type_lower
 
     @staticmethod
     def validate_task_type(task_type: str) -> Optional[str]:
