@@ -5,7 +5,9 @@
 
 import logging
 import traceback
-from typing import Any
+from typing import Any, Optional, Callable, TypeVar, Dict
+
+F = TypeVar('F', bound=Callable[..., Any])
 
 from flask import current_app, has_request_context, request
 from flask_login import current_user
@@ -46,10 +48,10 @@ class EnhancedLogger:
         level: str,
         log_type: str,
         message: str,
-        module: str = None,
-        details: str = None,
-        exception: Exception = None,
-        source: str = None,
+        module: Optional[str] = None,
+        details: Optional[str] = None,
+        exception: Optional[Exception] = None,
+        source: Optional[str] = None,
     ) -> None:
         """记录日志到数据库"""
         try:
@@ -72,7 +74,7 @@ class EnhancedLogger:
             # 记录到数据库
             from app.models.log import Log
 
-            Log.log_operation(
+            Log.log_operation(  # type: ignore
                 level=level,
                 log_type=log_type,
                 message=message,
@@ -89,63 +91,63 @@ class EnhancedLogger:
             self.logger.error(f"记录日志到数据库失败: {e}")
 
     def debug(
-        self, message: str, module: str = None, details: str = None, exception: Exception = None, source: str = None
+        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
     ) -> None:
         """记录DEBUG级别日志"""
         self.logger.debug(message)
         self._log_to_database("DEBUG", "system", message, module, details, exception, source)
 
     def info(
-        self, message: str, module: str = None, details: str = None, exception: Exception = None, source: str = None
+        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
     ) -> None:
         """记录INFO级别日志"""
         self.logger.info(message)
         self._log_to_database("INFO", "operation", message, module, details, exception, source)
 
     def warning(
-        self, message: str, module: str = None, details: str = None, exception: Exception = None, source: str = None
+        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
     ) -> None:
         """记录WARNING级别日志"""
         self.logger.warning(message)
         self._log_to_database("WARNING", "operation", message, module, details, exception, source)
 
     def error(
-        self, message: str, module: str = None, details: str = None, exception: Exception = None, source: str = None
+        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
     ) -> None:
         """记录ERROR级别日志"""
         self.logger.error(message)
         self._log_to_database("ERROR", "error", message, module, details, exception, source)
 
     def critical(
-        self, message: str, module: str = None, details: str = None, exception: Exception = None, source: str = None
+        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
     ) -> None:
         """记录CRITICAL级别日志"""
         self.logger.critical(message)
         self._log_to_database("CRITICAL", "error", message, module, details, exception, source)
 
     def security(
-        self, message: str, module: str = None, details: str = None, exception: Exception = None, source: str = None
+        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
     ) -> None:
         """记录安全相关日志"""
         self.logger.warning(f"SECURITY: {message}")
         self._log_to_database("WARNING", "security", message, module, details, exception, source)
 
     def database(
-        self, message: str, module: str = None, details: str = None, exception: Exception = None, source: str = None
+        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
     ) -> None:
         """记录数据库相关日志"""
         self.logger.error(f"DATABASE: {message}")
         self._log_to_database("ERROR", "database", message, module, details, exception, source)
 
     def sync(
-        self, message: str, module: str = None, details: str = None, exception: Exception = None, source: str = None
+        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
     ) -> None:
         """记录同步相关日志"""
         self.logger.info(f"SYNC: {message}")
         self._log_to_database("INFO", "sync", message, module, details, exception, source)
 
     def api(
-        self, message: str, module: str = None, details: str = None, exception: Exception = None, source: str = None
+        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
     ) -> None:
         """记录API相关日志"""
         self.logger.info(f"API: {message}")
@@ -164,7 +166,7 @@ security_logger = EnhancedLogger("taifish.security")
 system_logger = EnhancedLogger("taifish.system")
 
 
-def log_exception(exception: Exception, message: str = None, module: str = None, level: str = "ERROR") -> None:
+def log_exception(exception: Exception, message: Optional[str] = None, module: Optional[str] = None, level: str = "ERROR") -> None:
     """记录异常的便捷函数"""
     if message is None:
         message = f"未处理的异常: {type(exception).__name__}"
@@ -177,25 +179,25 @@ def log_exception(exception: Exception, message: str = None, module: str = None,
         enhanced_logger.error(message, module, exception=exception)
 
 
-def log_database_error(operation: str, error: Exception, module: str = None, details: str = None) -> None:
+def log_database_error(operation: str, error: Exception, module: Optional[str] = None, details: Optional[str] = None) -> None:
     """记录数据库错误的便捷函数"""
     message = f"数据库操作失败: {operation}"
     db_logger.database(message, module, details, error)
 
 
-def log_sync_error(operation: str, error: Exception, module: str = None, details: str = None) -> None:
+def log_sync_error(operation: str, error: Exception, module: Optional[str] = None, details: Optional[str] = None) -> None:
     """记录同步错误的便捷函数"""
     message = f"同步操作失败: {operation}"
     sync_logger.error(message, module, details, error)
 
 
-def log_api_error(endpoint: str, error: Exception, module: str = None, details: str = None) -> None:
+def log_api_error(endpoint: str, error: Exception, module: Optional[str] = None, details: Optional[str] = None) -> None:
     """记录API错误的便捷函数"""
     message = f"API调用失败: {endpoint}"
     api_logger.error(message, module, details, error)
 
 
-def log_security_event(event: str, details: str = None, module: str = None, level: str = "WARNING") -> None:
+def log_security_event(event: str, details: Optional[str] = None, module: Optional[str] = None, level: str = "WARNING") -> None:
     """记录安全事件的便捷函数"""
     if level == "ERROR":
         security_logger.error(f"安全事件: {event}", module, details)
@@ -204,7 +206,7 @@ def log_security_event(event: str, details: str = None, module: str = None, leve
 
 
 # 应用日志记录器
-def get_app_logger():
+def get_app_logger() -> logging.Logger:
     """
     获取应用日志记录器
 
@@ -217,7 +219,7 @@ def get_app_logger():
 
 
 # 操作日志函数
-def log_operation(operation_type, user_id=None, details=None):
+def log_operation(operation_type: str, user_id: Optional[int] = None, details: Optional[Dict[str, Any]] = None) -> None:
     """
     记录操作日志（安全版本）
 
@@ -247,7 +249,7 @@ def log_operation(operation_type, user_id=None, details=None):
         from app import db
         from app.models.log import Log
 
-        log_entry = Log(
+        log_entry = Log(  # type: ignore
             log_type="operation",
             level="INFO",
             module="system",
@@ -264,7 +266,7 @@ def log_operation(operation_type, user_id=None, details=None):
         logger.error(f"保存操作日志到数据库失败: {e}")
 
 
-def _sanitize_log_details(details):
+def _sanitize_log_details(details: Dict[str, Any]) -> Dict[str, Any]:
     """
     清理日志中的敏感信息
 
@@ -275,7 +277,7 @@ def _sanitize_log_details(details):
         dict: 清理后的详情字典
     """
     if not isinstance(details, dict):
-        return details
+        return {}  # type: ignore
 
     sensitive_keys = ["password", "token", "secret", "key", "credential"]
     safe_details = {}
@@ -290,7 +292,7 @@ def _sanitize_log_details(details):
 
 
 # 错误日志函数
-def log_error(error, user_id=None, context=None):
+def log_error(error: Exception, user_id: Optional[int] = None, context: Optional[Dict[str, Any]] = None) -> None:
     """
     记录错误日志
 
@@ -313,7 +315,7 @@ def log_error(error, user_id=None, context=None):
 
 
 # API请求日志函数
-def log_api_request(method, endpoint, status_code, duration, user_id=None, ip_address=None):
+def log_api_request(method: str, endpoint: str, status_code: int, duration: float, user_id: Optional[int] = None, ip_address: Optional[str] = None) -> None:
     """
     记录API请求日志
 
@@ -341,11 +343,11 @@ def log_api_request(method, endpoint, status_code, duration, user_id=None, ip_ad
 
 
 # 装饰器函数
-def log_function_call(module: str = None, log_args: bool = False):
+def log_function_call(module: Optional[str] = None, log_args: bool = False) -> Callable[[F], F]:
     """记录函数调用的装饰器"""
 
-    def decorator(func):
-        def wrapper(*args, **kwargs):
+    def decorator(func: F) -> F:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             func_name = func.__name__
             enhanced_logger.info(f"调用函数: {func_name}", module)
 
@@ -360,16 +362,16 @@ def log_function_call(module: str = None, log_args: bool = False):
                 enhanced_logger.error(f"函数执行失败: {func_name}", module, exception=e)
                 raise
 
-        return wrapper
+        return wrapper  # type: ignore
 
     return decorator
 
 
-def log_database_operation(operation: str, module: str = None):
+def log_database_operation(operation: str, module: Optional[str] = None) -> Callable[[F], F]:
     """记录数据库操作的装饰器"""
 
-    def decorator(func):
-        def wrapper(*args, **kwargs):
+    def decorator(func: F) -> F:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 result = func(*args, **kwargs)
                 db_logger.info(f"数据库操作成功: {operation}", module)
@@ -378,6 +380,6 @@ def log_database_operation(operation: str, module: str = None):
                 db_logger.database(f"数据库操作失败: {operation}", module, exception=e)
                 raise
 
-        return wrapper
+        return wrapper  # type: ignore
 
     return decorator
