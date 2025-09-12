@@ -86,7 +86,7 @@
     align-items: center;
 }
 
-.rule-card .col-md-4:first-child {
+.rule-card .col-md-3:first-child {
     padding-left: 0;
 }
 
@@ -145,9 +145,9 @@
     background: linear-gradient(135deg, #28a745, #20c997);
     border: none;
     color: white;
-    font-size: 0.8rem;
-    padding: 0.4rem 0.8rem;
-    border-radius: 18px;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 15px;
     transition: all 0.3s ease;
     font-weight: 600;
     white-space: nowrap;

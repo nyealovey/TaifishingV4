@@ -295,11 +295,11 @@ function displayRules(rulesByDbType) {
                                         <div class="rule-card">
                                             <div class="card-body">
                                                 <div class="row align-items-center">
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-3">
                                                         <h6 class="card-title mb-0">${rule.rule_name}</h6>
                                                     </div>
-                                                    <div class="col-md-3">
-                                                        <div class="d-flex align-items-center justify-content-center flex-wrap gap-1">
+                                                    <div class="col-md-4">
+                                                        <div class="d-flex align-items-center justify-content-center gap-1">
                                                             <span class="rule-classification-badge ${getClassificationClass(rule.classification_name)}">${rule.classification_name || '未分类'}</span>
                                                             <span class="db-type-badge">${rule.db_type.toUpperCase()}</span>
                                                         </div>

@@ -6,7 +6,7 @@ from flask import Blueprint, render_template, request, jsonify, flash, redirect,
 from flask_login import login_required, current_user
 from app.utils.decorators import admin_required
 from app.utils.api_response import APIResponse
-from app.scheduler import scheduler
+from app.scheduler import get_scheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
@@ -32,7 +32,8 @@ def index():
 def get_jobs():
     """获取所有定时任务"""
     try:
-        jobs = scheduler.get_jobs()
+        scheduler = get_scheduler()
+        jobs = get_scheduler().get_jobs()
         logger.info(f"获取到 {len(jobs)} 个任务")
         jobs_data = []
         
@@ -64,7 +65,7 @@ def get_jobs():
 def get_job(job_id):
     """获取指定任务详情"""
     try:
-        job = scheduler.get_job(job_id)
+        job = get_scheduler().get_job(job_id)
         if not job:
             return APIResponse.error("任务不存在", status_code=404)
         
@@ -115,7 +116,7 @@ def create_job():
             return APIResponse.error(f"未找到任务函数: {data['func']}", status_code=400)
         
         # 添加任务
-        job = scheduler.add_job(
+        job = get_scheduler().add_job(
             func=task_func,
             trigger=trigger,
             id=data['id'],
@@ -142,7 +143,7 @@ def update_job(job_id):
         data = request.get_json()
         
         # 检查任务是否存在
-        job = scheduler.get_job(job_id)
+        job = get_scheduler().get_job(job_id)
         if not job:
             return APIResponse.error("任务不存在", status_code=404)
         
@@ -153,7 +154,7 @@ def update_job(job_id):
                 return APIResponse.error("无效的触发器配置", status_code=400)
             
             # 更新任务
-            scheduler.modify_job(
+            get_scheduler().modify_job(
                 job_id,
                 trigger=trigger,
                 name=data.get('name', job.name),
@@ -162,7 +163,7 @@ def update_job(job_id):
             )
         else:
             # 只更新其他属性
-            scheduler.modify_job(
+            get_scheduler().modify_job(
                 job_id,
                 name=data.get('name', job.name),
                 args=data.get('args', job.args),
@@ -183,7 +184,7 @@ def update_job(job_id):
 def delete_job(job_id):
     """删除定时任务"""
     try:
-        scheduler.remove_job(job_id)
+        get_scheduler().remove_job(job_id)
         logger.info(f"任务删除成功: {job_id}")
         return APIResponse.success("任务删除成功")
         
@@ -198,7 +199,7 @@ def delete_job(job_id):
 def pause_job(job_id):
     """暂停任务"""
     try:
-        scheduler.pause_job(job_id)
+        get_scheduler().pause_job(job_id)
         logger.info(f"任务暂停成功: {job_id}")
         return APIResponse.success("任务暂停成功")
         
@@ -213,7 +214,7 @@ def pause_job(job_id):
 def resume_job(job_id):
     """恢复任务"""
     try:
-        scheduler.resume_job(job_id)
+        get_scheduler().resume_job(job_id)
         logger.info(f"任务恢复成功: {job_id}")
         return APIResponse.success("任务恢复成功")
         
@@ -228,7 +229,7 @@ def resume_job(job_id):
 def run_job(job_id):
     """立即执行任务"""
     try:
-        job = scheduler.get_job(job_id)
+        job = get_scheduler().get_job(job_id)
         if not job:
             return APIResponse.error("任务不存在", status_code=404)
         

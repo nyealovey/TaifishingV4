@@ -108,6 +108,11 @@ class TaskScheduler:
 # 全局调度器实例
 scheduler = TaskScheduler()
 
+# 确保scheduler实例可以被正确访问
+def get_scheduler():
+    """获取调度器实例"""
+    return scheduler
+
 
 def init_scheduler(app):
     """初始化调度器"""
