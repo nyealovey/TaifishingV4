@@ -1,16 +1,16 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 监控指标收集工具
 """
 
-import time
-import psutil
 import logging
+import time
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
 from functools import wraps
-from flask import request, g
+from typing import Any
+
+import psutil
+from flask import g, request
+
 from app import db
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class MetricsCollector:
         self.metrics = {}
         self.start_time = time.time()
 
-    def collect_system_metrics(self) -> Dict[str, Any]:
+    def collect_system_metrics(self) -> dict[str, Any]:
         """收集系统指标"""
         try:
             # CPU指标
@@ -83,14 +83,14 @@ class MetricsCollector:
             logger.error(f"收集系统指标失败: {e}")
             return {}
 
-    def collect_database_metrics(self) -> Dict[str, Any]:
+    def collect_database_metrics(self) -> dict[str, Any]:
         """收集数据库指标"""
         try:
-            from app.models.user import User
-            from app.models.instance import Instance
             from app.models.credential import Credential
-            from app.models.task import Task
+            from app.models.instance import Instance
             from app.models.log import Log
+            from app.models.task import Task
+            from app.models.user import User
 
             # 数据库连接测试
             start_time = time.time()
@@ -135,7 +135,7 @@ class MetricsCollector:
                 "database": {"status": "error", "error": str(e)},
             }
 
-    def collect_application_metrics(self) -> Dict[str, Any]:
+    def collect_application_metrics(self) -> dict[str, Any]:
         """收集应用指标"""
         try:
             # 请求统计
@@ -156,23 +156,17 @@ class MetricsCollector:
                     "requests": {
                         "total": request_count,
                         "errors": error_count,
-                        "success_rate": (request_count - error_count)
-                        / max(request_count, 1)
-                        * 100,
+                        "success_rate": (request_count - error_count) / max(request_count, 1) * 100,
                     },
                     "cache": {
                         "hits": cache_hits,
                         "misses": cache_misses,
-                        "hit_rate": cache_hits
-                        / max(cache_hits + cache_misses, 1)
-                        * 100,
+                        "hit_rate": cache_hits / max(cache_hits + cache_misses, 1) * 100,
                     },
                     "tasks": {
                         "executions": task_executions,
                         "failures": task_failures,
-                        "success_rate": (task_executions - task_failures)
-                        / max(task_executions, 1)
-                        * 100,
+                        "success_rate": (task_executions - task_failures) / max(task_executions, 1) * 100,
                     },
                 },
             }
@@ -180,7 +174,7 @@ class MetricsCollector:
             logger.error(f"收集应用指标失败: {e}")
             return {}
 
-    def collect_all_metrics(self) -> Dict[str, Any]:
+    def collect_all_metrics(self) -> dict[str, Any]:
         """收集所有指标"""
         return {
             "system": self.collect_system_metrics(),
@@ -211,7 +205,7 @@ def track_request_metrics(f):
         try:
             result = f(*args, **kwargs)
             return result
-        except Exception as e:
+        except Exception:
             g.error_count += 1
             raise
         finally:
@@ -251,7 +245,7 @@ class HealthChecker:
     """健康检查器"""
 
     @staticmethod
-    def check_database_health() -> Dict[str, Any]:
+    def check_database_health() -> dict[str, Any]:
         """检查数据库健康状态"""
         try:
             start_time = time.time()
@@ -271,7 +265,7 @@ class HealthChecker:
             }
 
     @staticmethod
-    def check_redis_health() -> Dict[str, Any]:
+    def check_redis_health() -> dict[str, Any]:
         """检查Redis健康状态"""
         try:
             from app import cache
@@ -293,7 +287,7 @@ class HealthChecker:
             }
 
     @staticmethod
-    def check_scheduler_health() -> Dict[str, Any]:
+    def check_scheduler_health() -> dict[str, Any]:
         """检查APScheduler健康状态"""
         try:
             from app import scheduler
@@ -310,12 +304,11 @@ class HealthChecker:
                     "jobs_count": len(jobs),
                     "timestamp": datetime.now().isoformat(),
                 }
-            else:
-                return {
-                    "status": "unhealthy",
-                    "error": "Scheduler not running",
-                    "timestamp": datetime.now().isoformat(),
-                }
+            return {
+                "status": "unhealthy",
+                "error": "Scheduler not running",
+                "timestamp": datetime.now().isoformat(),
+            }
         except Exception as e:
             return {
                 "status": "unhealthy",
@@ -324,7 +317,7 @@ class HealthChecker:
             }
 
     @staticmethod
-    def check_overall_health() -> Dict[str, Any]:
+    def check_overall_health() -> dict[str, Any]:
         """检查整体健康状态"""
         checks = {
             "database": HealthChecker.check_database_health(),
@@ -350,7 +343,7 @@ class MetricsStorage:
         self.max_records = max_records
         self.metrics_history = []
 
-    def store_metrics(self, metrics: Dict[str, Any]):
+    def store_metrics(self, metrics: dict[str, Any]):
         """存储指标数据"""
         self.metrics_history.append(metrics)
 
@@ -358,18 +351,17 @@ class MetricsStorage:
         if len(self.metrics_history) > self.max_records:
             self.metrics_history = self.metrics_history[-self.max_records :]
 
-    def get_metrics_history(self, hours: int = 24) -> List[Dict[str, Any]]:
+    def get_metrics_history(self, hours: int = 24) -> list[dict[str, Any]]:
         """获取历史指标数据"""
         cutoff_time = datetime.now() - timedelta(hours=hours)
 
         return [
             metrics
             for metrics in self.metrics_history
-            if datetime.fromisoformat(metrics.get("timestamp", "1970-01-01T00:00:00"))
-            >= cutoff_time
+            if datetime.fromisoformat(metrics.get("timestamp", "1970-01-01T00:00:00")) >= cutoff_time
         ]
 
-    def get_latest_metrics(self) -> Optional[Dict[str, Any]]:
+    def get_latest_metrics(self) -> dict[str, Any] | None:
         """获取最新指标数据"""
         return self.metrics_history[-1] if self.metrics_history else None
 

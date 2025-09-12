@@ -3,20 +3,22 @@
 基于Flask的DBA数据库管理Web应用
 """
 
-from app.constants import SystemConstants, DefaultConfig
-import os
 import logging
+import os
 from logging.handlers import RotatingFileHandler
-from flask import Flask, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from flask_caching import Cache
-from flask_jwt_extended import JWTManager
-from flask_bcrypt import Bcrypt
-from flask_login import LoginManager
-from flask_cors import CORS
-from flask_wtf.csrf import CSRFProtect
+
 from dotenv import load_dotenv
+from flask import Flask, jsonify
+from flask_bcrypt import Bcrypt
+from flask_caching import Cache
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+from flask_login import LoginManager
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
+
+from app.constants import DefaultConfig, SystemConstants
 
 # 加载环境变量
 load_dotenv()
@@ -26,9 +28,7 @@ oracle_instant_client_path = os.getenv("DYLD_LIBRARY_PATH")
 if oracle_instant_client_path and os.path.exists(oracle_instant_client_path):
     current_dyld_path = os.environ.get("DYLD_LIBRARY_PATH", "")
     if oracle_instant_client_path not in current_dyld_path:
-        os.environ["DYLD_LIBRARY_PATH"] = (
-            f"{oracle_instant_client_path}:{current_dyld_path}"
-        )
+        os.environ["DYLD_LIBRARY_PATH"] = f"{oracle_instant_client_path}:{current_dyld_path}"
         print(f"🔧 已设置Oracle Instant Client环境变量: {oracle_instant_client_path}")
 
 # 初始化扩展
@@ -40,7 +40,6 @@ bcrypt = Bcrypt()
 login_manager = LoginManager()
 cors = CORS()
 csrf = CSRFProtect()
-
 
 
 def create_app(config_name=None):
@@ -85,6 +84,7 @@ def create_app(config_name=None):
 
     # 注册错误日志中间件
     from app.middleware.error_logging_middleware import register_error_logging_middleware
+
     register_error_logging_middleware(app)
 
     # 注册高级错误处理器到Flask应用
@@ -126,28 +126,28 @@ def configure_app(app, config_name):
 
     if not secret_key:
         if app.debug:
-            secret_key = "dev-secret-key-change-in-production"
+            # 开发环境使用随机生成的密钥
+            import secrets
+
+            secret_key = secrets.token_urlsafe(32)
+            print("⚠️  开发环境使用随机生成的SECRET_KEY，生产环境请设置环境变量")
         else:
-            raise ValueError(
-                "SECRET_KEY environment variable must be set in production"
-            )
+            raise ValueError("SECRET_KEY environment variable must be set in production")
 
     if not jwt_secret_key:
         if app.debug:
-            jwt_secret_key = "dev-jwt-secret-change-in-production"
+            # 开发环境使用随机生成的密钥
+            import secrets
+
+            jwt_secret_key = secrets.token_urlsafe(32)
+            print("⚠️  开发环境使用随机生成的JWT_SECRET_KEY，生产环境请设置环境变量")
         else:
-            raise ValueError(
-                "JWT_SECRET_KEY environment variable must be set in production"
-            )
+            raise ValueError("JWT_SECRET_KEY environment variable must be set in production")
 
     app.config["SECRET_KEY"] = secret_key
     app.config["JWT_SECRET_KEY"] = jwt_secret_key
-    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = int(
-        os.getenv("JWT_ACCESS_TOKEN_EXPIRES", 3600)
-    )
-    app.config["JWT_REFRESH_TOKEN_EXPIRES"] = int(
-        os.getenv("JWT_REFRESH_TOKEN_EXPIRES", 2592000)
-    )
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES", 3600))
+    app.config["JWT_REFRESH_TOKEN_EXPIRES"] = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES", 2592000))
 
     # 数据库配置
     database_url = os.getenv("DATABASE_URL") or os.getenv("SQLALCHEMY_DATABASE_URI")
@@ -183,9 +183,7 @@ def configure_app(app, config_name):
     app.config["CACHE_TYPE"] = cache_type
 
     if cache_type == "redis":
-        app.config["CACHE_REDIS_URL"] = os.getenv(
-            "REDIS_URL", "redis://localhost:6379/0"
-        )
+        app.config["CACHE_REDIS_URL"] = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
     app.config["CACHE_DEFAULT_TIMEOUT"] = int(os.getenv("CACHE_DEFAULT_TIMEOUT", 300))
 
@@ -228,9 +226,7 @@ def configure_session_security(app):
         app: Flask应用实例
     """
     # 会话配置
-    app.config["PERMANENT_SESSION_LIFETIME"] = (
-        SystemConstants.SESSION_LIFETIME
-    )  # 会话1小时过期
+    app.config["PERMANENT_SESSION_LIFETIME"] = SystemConstants.SESSION_LIFETIME  # 会话1小时过期
     app.config["SESSION_COOKIE_SECURE"] = not app.debug  # 生产环境使用HTTPS
     app.config["SESSION_COOKIE_HTTPONLY"] = True  # 防止XSS攻击
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # CSRF保护
@@ -278,9 +274,7 @@ def initialize_extensions(app):
 
     # 会话安全配置
     login_manager.session_protection = "basic"  # 基础会话保护
-    login_manager.remember_cookie_duration = (
-        SystemConstants.SESSION_LIFETIME
-    )  # 记住我功能1小时过期
+    login_manager.remember_cookie_duration = SystemConstants.SESSION_LIFETIME  # 记住我功能1小时过期
     login_manager.remember_cookie_secure = not app.debug  # 生产环境使用HTTPS
     login_manager.remember_cookie_httponly = True  # 防止XSS攻击
 
@@ -292,9 +286,7 @@ def initialize_extensions(app):
         return User.query.get(int(user_id))
 
     # 初始化CORS
-    allowed_origins = os.getenv(
-        "CORS_ORIGINS", "http://localhost:5001,http://127.0.0.1:5001"
-    ).split(",")
+    allowed_origins = os.getenv("CORS_ORIGINS", "http://localhost:5001,http://127.0.0.1:5001").split(",")
     cors.init_app(
         app,
         resources={
@@ -339,56 +331,56 @@ def register_blueprints(app):
         app: Flask应用实例
     """
     # 导入蓝图
-    from app.routes.main import main_bp
-    from app.routes.auth import auth_bp
-    from app.routes.instances import instances_bp
-    from app.routes.credentials import credentials_bp
-    from app.routes.account_list import account_list_bp
-    from app.routes.account_sync import account_sync_bp
-    from app.routes.account_static import account_static_bp
-    from app.routes.logs import logs_bp
-    from app.routes.dashboard import dashboard_bp
-    from app.routes.health import health_bp
-    from app.routes.admin import admin_bp
     from app.routes.account_classification import account_classification_bp
+    from app.routes.account_list import account_list_bp
+    from app.routes.account_static import account_static_bp
+    from app.routes.account_sync import account_sync_bp
+    from app.routes.admin import admin_bp
+    from app.routes.auth import auth_bp
+    from app.routes.credentials import credentials_bp
+    from app.routes.dashboard import dashboard_bp
     from app.routes.database_types import database_types_bp
+    from app.routes.health import health_bp
+    from app.routes.instances import instances_bp
+    from app.routes.logs import logs_bp
+    from app.routes.main import main_bp
 
     # 注册蓝图
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(instances_bp, url_prefix="/instances")
     app.register_blueprint(credentials_bp, url_prefix="/credentials")
-    
+
     # 新的账户相关蓝图
     app.register_blueprint(account_list_bp, url_prefix="/account-list")
     app.register_blueprint(account_sync_bp, url_prefix="/account-sync")
     app.register_blueprint(account_static_bp, url_prefix="/account-static")
-    
+
     # 保留旧的accounts_bp，等测试通过后删除
     # app.register_blueprint(accounts_bp, url_prefix="/accounts")
-    
+
     app.register_blueprint(logs_bp, url_prefix="/logs")
     app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
     app.register_blueprint(health_bp, url_prefix="/health")
     app.register_blueprint(admin_bp, url_prefix="/admin")
-    app.register_blueprint(
-        account_classification_bp, url_prefix="/account-classification"
-    )
-    
+    app.register_blueprint(account_classification_bp, url_prefix="/account-classification")
+
     # 注册数据库类型管理蓝图
     app.register_blueprint(database_types_bp)
-    
-    
+
     # 注册用户管理蓝图
     from app.routes.user_management import user_management_bp
+
     app.register_blueprint(user_management_bp)
-    
+
     # 注册定时任务管理蓝图
     from app.routes.scheduler import scheduler_bp
+
     app.register_blueprint(scheduler_bp)
-    
+
     # 初始化定时任务调度器
     from app.scheduler import init_scheduler
+
     init_scheduler(app)
 
 
@@ -412,9 +404,7 @@ def configure_logging(app):
             backupCount=app.config["LOG_BACKUP_COUNT"],
         )
         file_handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]"
-            )
+            logging.Formatter("%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]")
         )
         file_handler.setLevel(getattr(logging, app.config["LOG_LEVEL"]))
         app.logger.addHandler(file_handler)
@@ -427,7 +417,6 @@ def configure_error_handlers(app):
     """
     配置错误处理器 - 已移除，使用统一的错误处理器
     """
-    pass
 
 
 def configure_template_filters(app):
@@ -459,8 +448,10 @@ def configure_template_filters(app):
 app = create_app()
 
 # 导入模型（确保模型被注册）
-from app.models import user, instance, credential, account, task, log, database_type_config
+from app.models import account, credential, database_type_config, instance, log, task, user
 
 if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "False").lower() == "true"
-    app.run(debug=debug_mode, host="0.0.0.0", port=8000)
+    host = os.getenv("FLASK_HOST", "127.0.0.1")  # 默认绑定本地接口
+    port = int(os.getenv("FLASK_PORT", 8000))
+    app.run(debug=debug_mode, host=host, port=port)

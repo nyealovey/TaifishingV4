@@ -3,8 +3,9 @@
 用于安全地存储和获取数据库密码
 """
 
-import os
 import base64
+import os
+
 from cryptography.fernet import Fernet
 
 
@@ -21,7 +22,7 @@ class PasswordManager:
         if not key:
             # 如果没有设置密钥，生成一个新的
             key = Fernet.generate_key()
-            print(f"⚠️  警告: 没有设置PASSWORD_ENCRYPTION_KEY环境变量")
+            print("⚠️  警告: 没有设置PASSWORD_ENCRYPTION_KEY环境变量")
             print(f"   生成的临时密钥: {key.decode()}")
             print(f"   请设置环境变量: export PASSWORD_ENCRYPTION_KEY='{key.decode()}'")
         else:

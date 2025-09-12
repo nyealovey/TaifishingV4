@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 账户变化跟踪模型
 """
 
-from app import db
 from datetime import datetime
+
+from app import db
 
 
 class AccountChange(db.Model):
@@ -16,9 +15,7 @@ class AccountChange(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sync_data_id = db.Column(db.Integer, db.ForeignKey("sync_data.id"), nullable=False)
     instance_id = db.Column(db.Integer, db.ForeignKey("instances.id"), nullable=False)
-    change_type = db.Column(
-        db.String(20), nullable=False
-    )  # 'added', 'removed', 'modified'
+    change_type = db.Column(db.String(20), nullable=False)  # 'added', 'removed', 'modified'
     account_data = db.Column(db.JSON, nullable=False)  # 账户的完整信息
     change_time = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 

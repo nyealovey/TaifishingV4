@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 主要路由
 """
 
-from flask import Blueprint, render_template, jsonify, request, redirect, url_for, send_from_directory
-from flask_login import login_required, current_user
-from app.utils.enhanced_logger import log_operation, log_api_request
 import psutil
-from app.utils.timezone import get_china_time, format_china_time
-import os
+from flask import Blueprint, jsonify, redirect, render_template, request, url_for
+from flask_login import login_required
+
+from app.utils.enhanced_logger import log_api_request
+from app.utils.timezone import get_china_time
 
 # 创建蓝图
 main_bp = Blueprint("main", __name__)
@@ -25,13 +23,14 @@ def index():
 def favicon():
     """提供favicon.ico文件"""
     # 返回一个空的响应，避免404错误
-    return '', 204
+    return "", 204
+
 
 @main_bp.route("/.well-known/appspecific/com.chrome.devtools.json")
 def chrome_devtools():
     """处理Chrome开发者工具的请求"""
     # 返回一个空的响应，避免404错误
-    return '', 204
+    return "", 204
 
 
 @main_bp.route("/admin")
@@ -47,7 +46,6 @@ def api_health():
     import time
 
     start_time = time.time()
-    from datetime import datetime
     from app import db
 
     # 检查数据库状态
@@ -73,11 +71,7 @@ def api_health():
         redis_status = "error"
 
     # 整体状态
-    overall_status = (
-        "healthy"
-        if db_status == "connected" and redis_status == "connected"
-        else "unhealthy"
-    )
+    overall_status = "healthy" if db_status == "connected" and redis_status == "connected" else "unhealthy"
 
     result = {
         "status": overall_status,

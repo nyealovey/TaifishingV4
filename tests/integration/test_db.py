@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 测试数据库连接和迁移
@@ -19,18 +18,19 @@ os.environ.setdefault('SQLALCHEMY_DATABASE_URI', f'sqlite:///{project_root}/user
 
 from app import create_app, db
 
+
 def main():
     print("🔧 测试数据库连接...")
-    
+
     # 创建Flask应用
     app = create_app()
-    
+
     with app.app_context():
         try:
             # 创建数据库文件
             db.create_all()
             print("✅ 数据库创建成功")
-            
+
             # 检查数据库文件
             db_path = project_root / 'userdata' / 'taifish_dev.db'
             if db_path.exists():
@@ -38,11 +38,11 @@ def main():
                 print(f"📊 文件大小: {db_path.stat().st_size} bytes")
             else:
                 print("❌ 数据库文件不存在")
-                
+
         except Exception as e:
             print(f"❌ 数据库创建失败: {e}")
             return False
-    
+
     return True
 
 if __name__ == '__main__':

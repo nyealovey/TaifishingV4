@@ -1,23 +1,20 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 用户认证路由
 """
 
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
-from flask_login import login_user, logout_user, login_required, current_user
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
-    jwt_required,
     get_jwt_identity,
+    jwt_required,
 )
-from werkzeug.security import check_password_hash
+from flask_login import current_user, login_required, login_user, logout_user
+
+from app import db
 from app.models.user import User
-from app import db, bcrypt
 from app.utils.enhanced_logger import log_operation
 from app.utils.rate_limiter import (
-    login_rate_limit,
     password_reset_rate_limit,
 )
 
@@ -76,19 +73,13 @@ def login():
                             },
                         }
                     )
-                else:
-                    # Web登录，重定向到首页
-                    flash("登录成功！", "success")
-                    next_page = request.args.get("next")
-                    return (
-                        redirect(next_page)
-                        if next_page
-                        else redirect(url_for("dashboard.index"))
-                    )
-            else:
-                if request.is_json:
-                    return jsonify({"error": "账户已被禁用"}), 403
-                flash("账户已被禁用", "error")
+                # Web登录，重定向到首页
+                flash("登录成功！", "success")
+                next_page = request.args.get("next")
+                return redirect(next_page) if next_page else redirect(url_for("dashboard.index"))
+            if request.is_json:
+                return jsonify({"error": "账户已被禁用"}), 403
+            flash("账户已被禁用", "error")
         else:
             if request.is_json:
                 return jsonify({"error": "用户名或密码错误"}), 401
@@ -140,16 +131,8 @@ def profile():
                 "email": current_user.email,
                 "role": current_user.role,
                 "is_active": current_user.is_active,
-                "created_at": (
-                    current_user.created_at.isoformat()
-                    if current_user.created_at
-                    else None
-                ),
-                "last_login": (
-                    current_user.last_login.isoformat()
-                    if current_user.last_login
-                    else None
-                ),
+                "created_at": (current_user.created_at.isoformat() if current_user.created_at else None),
+                "last_login": (current_user.last_login.isoformat() if current_user.last_login else None),
             }
         )
 
@@ -198,7 +181,7 @@ def change_password():
             flash("密码修改成功！", "success")
             return redirect(url_for("auth.profile"))
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
             if request.is_json:
                 return jsonify({"error": "密码修改失败，请重试"}), 500
@@ -218,9 +201,7 @@ def refresh():
     """刷新JWT token"""
     current_user_id = get_jwt_identity()
     access_token = create_access_token(identity=current_user_id)
-    return jsonify(
-        {"access_token": access_token, "token_type": "Bearer", "expires_in": 3600}
-    )
+    return jsonify({"access_token": access_token, "token_type": "Bearer", "expires_in": 3600})
 
 
 @auth_bp.route("/api/me")

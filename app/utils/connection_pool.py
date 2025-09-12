@@ -1,15 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 数据库连接池管理
 """
 
-import threading
-import time
-from typing import Dict, Any, Optional
-from queue import Queue, Empty
-from contextlib import contextmanager
 import logging
+import threading
+from contextlib import contextmanager
+from queue import Empty, Queue
+from typing import Any, Callable, Dict, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -17,18 +14,18 @@ logger = logging.getLogger(__name__)
 class ConnectionPool:
     """数据库连接池"""
 
-    def __init__(self, max_connections=20, timeout=30, min_connections=2):
+    def __init__(self, max_connections: int = 20, timeout: int = 30, min_connections: int = 2) -> None:
         self.max_connections = max_connections
         self.min_connections = min_connections
         self.timeout = timeout
-        self.pools = {}  # {instance_id: Queue}
-        self.locks = {}  # {instance_id: Lock}
-        self.connection_counts = {}  # {instance_id: int}
+        self.pools: Dict[int, Queue[Any]] = {}  # {instance_id: Queue}
+        self.locks: Dict[int, threading.Lock] = {}  # {instance_id: Lock}
+        self.connection_counts: Dict[int, int] = {}  # {instance_id: int}
         self._lock = threading.Lock()
         self._cleanup_thread = None
         self._stop_cleanup = False
 
-    def get_connection(self, instance_id: int, connection_factory):
+    def get_connection(self, instance_id: int, connection_factory: Callable[[], Any]) -> Any:
         """获取数据库连接"""
         with self._lock:
             if instance_id not in self.pools:
@@ -59,11 +56,9 @@ class ConnectionPool:
                         logger.error(f"创建连接失败: {e}")
                         raise
                 else:
-                    raise Exception(
-                        f"连接池已满，无法创建新连接: instance_id={instance_id}"
-                    )
+                    raise Exception(f"连接池已满，无法创建新连接: instance_id={instance_id}")
 
-    def return_connection(self, instance_id: int, connection):
+    def return_connection(self, instance_id: int, connection: Any) -> None:
         """归还数据库连接"""
         if instance_id in self.pools:
             try:
@@ -80,7 +75,7 @@ class ConnectionPool:
                     if instance_id in self.connection_counts:
                         self.connection_counts[instance_id] -= 1
 
-    def close_connection(self, instance_id: int, connection):
+    def close_connection(self, instance_id: int, connection: Any) -> None:
         """关闭数据库连接"""
         try:
             connection.close()
@@ -92,7 +87,7 @@ class ConnectionPool:
                 if instance_id in self.connection_counts:
                     self.connection_counts[instance_id] -= 1
 
-    def close_all_connections(self, instance_id: int = None):
+    def close_all_connections(self, instance_id: Optional[int] = None) -> None:
         """关闭所有连接"""
         if instance_id:
             # 关闭特定实例的所有连接
@@ -112,7 +107,7 @@ class ConnectionPool:
                 self.close_all_connections(instance_id)
 
     @contextmanager
-    def get_connection_context(self, instance_id: int, connection_factory):
+    def get_connection_context(self, instance_id: int, connection_factory: Callable[[], Any]) -> Any:
         """连接上下文管理器"""
         connection = None
         try:
@@ -122,7 +117,7 @@ class ConnectionPool:
             if connection:
                 self.return_connection(instance_id, connection)
 
-    def get_pool_status(self) -> Dict[str, Any]:
+    def get_pool_status(self) -> Dict[int, Dict[str, Union[int, float]]]:
         """获取连接池状态"""
         status = {}
         with self._lock:
@@ -131,9 +126,7 @@ class ConnectionPool:
                     "max_connections": self.max_connections,
                     "current_connections": self.connection_counts.get(instance_id, 0),
                     "available_connections": pool.qsize(),
-                    "utilization": self.connection_counts.get(instance_id, 0)
-                    / self.max_connections
-                    * 100,
+                    "utilization": self.connection_counts.get(instance_id, 0) / self.max_connections * 100,
                 }
         return status
 

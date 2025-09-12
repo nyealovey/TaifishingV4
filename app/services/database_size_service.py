@@ -3,9 +3,10 @@
 统一处理手动同步和定时任务的数据库大小同步逻辑
 """
 
-import pymysql
 import logging
-from typing import Dict, Any, Optional
+from typing import Any
+
+import pymysql
 
 # 可选导入数据库驱动
 try:
@@ -23,9 +24,8 @@ try:
 except ImportError:
     oracledb = None
 
-from app.models import Instance
 from app import db
-from datetime import datetime
+from app.models import Instance
 from app.utils.timezone import now
 
 
@@ -35,9 +35,7 @@ class DatabaseSizeService:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    def sync_database_size(
-        self, instance: Instance, sync_type: str = "batch"
-    ) -> Dict[str, Any]:
+    def sync_database_size(self, instance: Instance, sync_type: str = "batch") -> dict[str, Any]:
         """
         同步数据库大小信息 - 统一入口
 
@@ -96,7 +94,7 @@ class DatabaseSizeService:
                     user=instance.credential.username,
                     password=instance.credential.get_plain_password(),
                 )
-            elif instance.db_type == "postgresql":
+            if instance.db_type == "postgresql":
                 if psycopg is None:
                     raise ImportError("psycopg模块未安装，无法连接PostgreSQL")
                 return psycopg.connect(
@@ -106,7 +104,7 @@ class DatabaseSizeService:
                     user=instance.credential.username,
                     password=instance.credential.get_plain_password(),
                 )
-            elif instance.db_type == "sqlserver":
+            if instance.db_type == "sqlserver":
                 if pyodbc is None:
                     raise ImportError("pyodbc模块未安装，无法连接SQL Server")
                 return pyodbc.connect(
@@ -116,7 +114,7 @@ class DatabaseSizeService:
                     f"UID={instance.credential.username};"
                     f"PWD={instance.credential.get_plain_password()}"
                 )
-            elif instance.db_type == "oracle":
+            if instance.db_type == "oracle":
                 if oracledb is None:
                     raise ImportError("oracledb模块未安装，无法连接Oracle")
 
@@ -139,7 +137,7 @@ class DatabaseSizeService:
                                 password=instance.credential.get_plain_password(),
                                 dsn=f"{instance.host}:{instance.port}/{instance.database_name or 'ORCL'}",
                             )
-                        except oracledb.DatabaseError as thin_error:
+                        except oracledb.DatabaseError:
                             # 如果Thin模式也失败，抛出原始错误
                             raise e
                     else:
@@ -150,7 +148,7 @@ class DatabaseSizeService:
             self.logger.error(f"数据库连接失败: {str(e)}")
             return None
 
-    def _get_mysql_size(self, instance: Instance, conn) -> Dict[str, Any]:
+    def _get_mysql_size(self, instance: Instance, conn) -> dict[str, Any]:
         """获取MySQL数据库大小"""
         cursor = conn.cursor()
 
@@ -183,7 +181,7 @@ class DatabaseSizeService:
             conn.close()
             raise e
 
-    def _get_postgresql_size(self, instance: Instance, conn) -> Dict[str, Any]:
+    def _get_postgresql_size(self, instance: Instance, conn) -> dict[str, Any]:
         """获取PostgreSQL数据库大小"""
         cursor = conn.cursor()
 
@@ -214,7 +212,7 @@ class DatabaseSizeService:
             conn.close()
             raise e
 
-    def _get_sqlserver_size(self, instance: Instance, conn) -> Dict[str, Any]:
+    def _get_sqlserver_size(self, instance: Instance, conn) -> dict[str, Any]:
         """获取SQL Server数据库大小"""
         cursor = conn.cursor()
 
@@ -247,7 +245,7 @@ class DatabaseSizeService:
             conn.close()
             raise e
 
-    def _get_oracle_size(self, instance: Instance, conn) -> Dict[str, Any]:
+    def _get_oracle_size(self, instance: Instance, conn) -> dict[str, Any]:
         """获取Oracle数据库大小"""
         cursor = conn.cursor()
 

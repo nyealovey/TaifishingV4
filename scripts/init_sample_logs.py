@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 泰摸鱼吧 - 初始化示例日志数据脚本
 """
 
-import os
-import sys
-from pathlib import Path
-from datetime import datetime, timedelta
-from app.utils.timezone import now
 import random
+import sys
+from datetime import timedelta
+from pathlib import Path
+
+from app.utils.timezone import now
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -20,20 +19,21 @@ from app import create_app, db
 from app.models.log import Log
 from app.models.user import User
 
+
 def init_sample_logs():
     """初始化示例日志数据"""
     print("📝 初始化示例日志数据...")
-    
+
     # 创建Flask应用
     app = create_app()
-    
+
     with app.app_context():
         # 获取用户
         users = User.query.all()
         if not users:
             print("❌ 没有找到用户，请先创建用户")
             return False
-        
+
         # 示例日志数据
         sample_logs = [
             # 系统启动日志
@@ -57,7 +57,7 @@ def init_sample_logs():
                 'ip_address': '127.0.0.1',
                 'user_agent': 'TaifishV4/1.0.0'
             },
-            
+
             # 用户操作日志
             {
                 'level': 'INFO',
@@ -140,7 +140,7 @@ def init_sample_logs():
                 'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
         ]
-        
+
         # 生成更多随机日志
         modules = ['auth', 'instances', 'credentials', 'accounts', 'tasks', 'params', 'logs', 'sync']
         log_types = ['operation', 'system', 'error', 'security']
@@ -149,19 +149,19 @@ def init_sample_logs():
             '用户操作', '系统检查', '数据同步', '任务执行', '参数修改',
             '登录验证', '权限检查', '数据备份', '系统维护', '错误处理'
         ]
-        
+
         # 生成过去7天的随机日志
         for i in range(50):
             days_ago = random.randint(0, 7)
             hours_ago = random.randint(0, 23)
             minutes_ago = random.randint(0, 59)
-            
+
             created_at = now() - timedelta(
-                days=days_ago, 
-                hours=hours_ago, 
+                days=days_ago,
+                hours=hours_ago,
                 minutes=minutes_ago
             )
-            
+
             log_data = {
                 'level': random.choice(levels),
                 'log_type': random.choice(log_types),
@@ -172,11 +172,11 @@ def init_sample_logs():
                 'ip_address': f'192.168.1.{random.randint(100, 200)}',
                 'user_agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
             }
-            
+
             sample_logs.append(log_data)
-        
+
         created_count = 0
-        
+
         for log_data in sample_logs:
             try:
                 log = Log(
@@ -189,24 +189,24 @@ def init_sample_logs():
                     ip_address=log_data['ip_address'],
                     user_agent=log_data['user_agent']
                 )
-                
+
                 # 设置创建时间
                 if 'created_at' in log_data:
                     log.created_at = log_data['created_at']
-                
+
                 db.session.add(log)
                 created_count += 1
-                
+
             except Exception as e:
                 print(f"  ❌ 创建日志失败: {e}")
                 continue
-        
+
         try:
             db.session.commit()
-            print(f"\n🎉 示例日志数据初始化完成！")
+            print("\n🎉 示例日志数据初始化完成！")
             print(f"   创建: {created_count} 条日志")
             return True
-            
+
         except Exception as e:
             db.session.rollback()
             print(f"❌ 初始化示例日志失败: {e}")
@@ -217,9 +217,9 @@ def main():
     print("=" * 50)
     print("🐟 泰摸鱼吧 - 初始化示例日志数据")
     print("=" * 50)
-    
+
     success = init_sample_logs()
-    
+
     if success:
         print("\n🎉 示例日志数据设置完成！")
         print("现在可以在操作日志管理中查看这些日志")

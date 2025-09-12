@@ -3,9 +3,10 @@
 """
 
 from datetime import datetime
-from app.utils.timezone import now
+
 from app import db
 from app.utils.enhanced_logger import log_operation
+from app.utils.timezone import now
 
 
 class Instance(db.Model):
@@ -24,18 +25,14 @@ class Instance(db.Model):
         db.String(20), default="production", nullable=False, index=True
     )  # 环境：production, development, testing
     sync_count = db.Column(db.Integer, default=0, nullable=False)
-    credential_id = db.Column(
-        db.Integer, db.ForeignKey("credentials.id"), nullable=True
-    )
+    credential_id = db.Column(db.Integer, db.ForeignKey("credentials.id"), nullable=True)
     description = db.Column(db.Text, nullable=True)
     tags = db.Column(db.JSON, nullable=True)
     status = db.Column(db.String(20), default="active", index=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     last_connected = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     # 关系
@@ -89,15 +86,14 @@ class Instance(db.Model):
         try:
             if self.db_type == "SQL Server":
                 return self._test_sql_server_connection()
-            elif self.db_type == "MySQL":
+            if self.db_type == "MySQL":
                 return self._test_mysql_connection()
-            elif self.db_type == "Oracle":
+            if self.db_type == "Oracle":
                 return self._test_oracle_connection()
-            else:
-                return {
-                    "status": "error",
-                    "message": f"不支持的数据库类型: {self.db_type}",
-                }
+            return {
+                "status": "error",
+                "message": f"不支持的数据库类型: {self.db_type}",
+            }
         except Exception as e:
             return {"status": "error", "message": f"连接测试失败: {str(e)}"}
 
@@ -160,9 +156,7 @@ class Instance(db.Model):
                     try:
                         conn = oracledb.connect(
                             user=self.credential.username if self.credential else "",
-                            password=(
-                                self.credential.password if self.credential else ""
-                            ),
+                            password=(self.credential.password if self.credential else ""),
                             dsn=dsn,
                         )
                         conn.close()
@@ -170,7 +164,7 @@ class Instance(db.Model):
                             "status": "success",
                             "message": "Oracle连接成功 (Thin模式)",
                         }
-                    except oracledb.DatabaseError as thin_error:
+                    except oracledb.DatabaseError:
                         # 如果Thin模式也失败，抛出原始错误
                         raise e
                 else:
@@ -200,9 +194,7 @@ class Instance(db.Model):
             "tags": self.tags,
             "status": self.status,
             "is_active": self.is_active,
-            "last_connected": (
-                self.last_connected.isoformat() if self.last_connected else None
-            ),
+            "last_connected": (self.last_connected.isoformat() if self.last_connected else None),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
@@ -232,18 +224,14 @@ class Instance(db.Model):
         self.deleted_at = now()
         self.status = "deleted"
         db.session.commit()
-        log_operation(
-            "instance_delete", details={"instance_id": self.id, "name": self.name}
-        )
+        log_operation("instance_delete", details={"instance_id": self.id, "name": self.name})
 
     def restore(self):
         """恢复实例"""
         self.deleted_at = None
         self.status = "active"
         db.session.commit()
-        log_operation(
-            "instance_restore", details={"instance_id": self.id, "name": self.name}
-        )
+        log_operation("instance_restore", details={"instance_id": self.id, "name": self.name})
 
     @staticmethod
     def get_active_instances():
@@ -263,9 +251,7 @@ class Instance(db.Model):
     @staticmethod
     def get_by_db_type_and_environment(db_type, environment):
         """根据数据库类型和环境类型获取实例"""
-        return Instance.query.filter_by(
-            db_type=db_type, environment=environment, deleted_at=None
-        ).all()
+        return Instance.query.filter_by(db_type=db_type, environment=environment, deleted_at=None).all()
 
     @staticmethod
     def get_environment_choices():

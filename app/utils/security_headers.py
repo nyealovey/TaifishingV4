@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 安全头设置工具
 """
 
-from flask import request, make_response
-from functools import wraps
 import logging
+from functools import wraps
+from typing import Any, Callable, Dict, List, Optional, Union
+
+from flask import Response, make_response, request
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class SecurityHeaders:
     """安全头管理器"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.headers = {
             "X-Content-Type-Options": "nosniff",
             "X-Frame-Options": "DENY",
@@ -42,21 +42,21 @@ class SecurityHeaders:
             "form-action 'self'"
         )
 
-    def apply_headers(self, response):
+    def apply_headers(self, response: Response) -> Response:
         """应用安全头"""
         for header, value in self.headers.items():
             response.headers[header] = value
         return response
 
-    def set_custom_csp(self, policy: str):
+    def set_custom_csp(self, policy: str) -> None:
         """设置自定义CSP策略"""
         self.headers["Content-Security-Policy"] = policy
 
-    def add_header(self, name: str, value: str):
+    def add_header(self, name: str, value: str) -> None:
         """添加自定义安全头"""
         self.headers[name] = value
 
-    def remove_header(self, name: str):
+    def remove_header(self, name: str) -> None:
         """移除安全头"""
         self.headers.pop(name, None)
 
@@ -65,11 +65,11 @@ class SecurityHeaders:
 security_headers = SecurityHeaders()
 
 
-def security_headers_middleware(f):
+def security_headers_middleware(f: Callable[..., Any]) -> Callable[..., Any]:
     """安全头中间件装饰器"""
 
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorated_function(*args: Any, **kwargs: Any) -> Any:
         response = f(*args, **kwargs)
 
         # 确保响应是Response对象
@@ -84,20 +84,18 @@ def security_headers_middleware(f):
     return decorated_function
 
 
-def csp_report_only(f):
+def csp_report_only(f: Callable[..., Any]) -> Callable[..., Any]:
     """CSP报告模式装饰器"""
 
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorated_function(*args: Any, **kwargs: Any) -> Any:
         response = f(*args, **kwargs)
 
         if not hasattr(response, "headers"):
             response = make_response(response)
 
         # 设置CSP报告模式
-        response.headers["Content-Security-Policy-Report-Only"] = (
-            security_headers.headers["Content-Security-Policy"]
-        )
+        response.headers["Content-Security-Policy-Report-Only"] = security_headers.headers["Content-Security-Policy"]
         response.headers.pop("Content-Security-Policy", None)
 
         return response
@@ -107,12 +105,12 @@ def csp_report_only(f):
 
 def hsts_header(
     max_age: int = 31536000, include_subdomains: bool = True, preload: bool = False
-):
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """HSTS头装饰器"""
 
-    def security_decorator(f):
+    def security_decorator(f: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(f)
-        def decorated_function(*args, **kwargs):
+        def decorated_function(*args: Any, **kwargs: Any) -> Any:
             response = f(*args, **kwargs)
 
             if not hasattr(response, "headers"):
@@ -134,11 +132,11 @@ def hsts_header(
     return security_decorator
 
 
-def no_cache_headers(f):
+def no_cache_headers(f: Callable[..., Any]) -> Callable[..., Any]:
     """禁用缓存头装饰器"""
 
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorated_function(*args: Any, **kwargs: Any) -> Any:
         response = f(*args, **kwargs)
 
         if not hasattr(response, "headers"):
@@ -154,11 +152,11 @@ def no_cache_headers(f):
     return decorated_function
 
 
-def api_security_headers(f):
+def api_security_headers(f: Callable[..., Any]) -> Callable[..., Any]:
     """API安全头装饰器"""
 
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorated_function(*args: Any, **kwargs: Any) -> Any:
         response = f(*args, **kwargs)
 
         if not hasattr(response, "headers"):
@@ -175,11 +173,11 @@ def api_security_headers(f):
     return decorated_function
 
 
-def cors_security_headers(f):
+def cors_security_headers(f: Callable[..., Any]) -> Callable[..., Any]:
     """CORS安全头装饰器"""
 
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorated_function(*args: Any, **kwargs: Any) -> Any:
         response = f(*args, **kwargs)
 
         if not hasattr(response, "headers"):
@@ -190,12 +188,8 @@ def cors_security_headers(f):
         if origin:
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
-            response.headers["Access-Control-Allow-Methods"] = (
-                "GET, POST, PUT, DELETE, OPTIONS"
-            )
-            response.headers["Access-Control-Allow-Headers"] = (
-                "Content-Type, Authorization, X-CSRFToken"
-            )
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-CSRFToken"
             response.headers["Access-Control-Max-Age"] = "86400"
 
         return response
@@ -203,12 +197,14 @@ def cors_security_headers(f):
     return decorated_function
 
 
-def rate_limit_headers(limit: int, remaining: int, reset_time: int):
+def rate_limit_headers(
+    limit: int, remaining: int, reset_time: int
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """速率限制头装饰器"""
 
-    def security_decorator(f):
+    def security_decorator(f: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(f)
-        def decorated_function(*args, **kwargs):
+        def decorated_function(*args: Any, **kwargs: Any) -> Any:
             response = f(*args, **kwargs)
 
             if not hasattr(response, "headers"):
@@ -226,19 +222,17 @@ def rate_limit_headers(limit: int, remaining: int, reset_time: int):
     return security_decorator
 
 
-def security_audit_log(f):
+def security_audit_log(f: Callable[..., Any]) -> Callable[..., Any]:
     """安全审计日志装饰器"""
 
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorated_function(*args: Any, **kwargs: Any) -> Any:
         # 记录请求信息
         client_ip = request.environ.get("HTTP_X_FORWARDED_FOR", request.remote_addr)
         user_agent = request.headers.get("User-Agent", "")
         referer = request.headers.get("Referer", "")
 
-        logger.info(
-            f"安全审计 - IP: {client_ip}, User-Agent: {user_agent}, Referer: {referer}"
-        )
+        logger.info(f"安全审计 - IP: {client_ip}, User-Agent: {user_agent}, Referer: {referer}")
 
         response = f(*args, **kwargs)
 
@@ -251,11 +245,11 @@ def security_audit_log(f):
     return decorated_function
 
 
-def validate_origin(f):
+def validate_origin(f: Callable[..., Any]) -> Callable[..., Any]:
     """验证来源装饰器"""
 
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorated_function(*args: Any, **kwargs: Any) -> Any:
         origin = request.headers.get("Origin")
         referer = request.headers.get("Referer")
 
@@ -279,16 +273,14 @@ def validate_origin(f):
     return decorated_function
 
 
-def csrf_protection(f):
+def csrf_protection(f: Callable[..., Any]) -> Callable[..., Any]:
     """CSRF保护装饰器"""
 
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorated_function(*args: Any, **kwargs: Any) -> Any:
         if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
             # 检查CSRF令牌
-            csrf_token = request.headers.get("X-CSRFToken") or request.form.get(
-                "csrf_token"
-            )
+            csrf_token = request.headers.get("X-CSRFToken") or request.form.get("csrf_token")
             session_csrf_token = request.cookies.get("csrf_token")
 
             if not csrf_token or csrf_token != session_csrf_token:
@@ -300,17 +292,17 @@ def csrf_protection(f):
     return decorated_function
 
 
-def setup_security_headers(app):
+def setup_security_headers(app: Any) -> None:
     """设置应用安全头"""
 
-    @app.after_request
-    def after_request(response):
+    @app.after_request  # type: ignore[misc]
+    def after_request(response: Response) -> Response:
         return security_headers.apply_headers(response)
 
     logger.info("安全头中间件已设置")
 
 
-def get_security_report() -> dict:
+def get_security_report() -> Dict[str, Any]:
     """获取安全报告"""
     return {
         "headers": security_headers.headers,

@@ -2,11 +2,10 @@
 泰摸鱼吧 - 安全工具模块
 """
 
-import re
-import html
 import hmac
-import hashlib
-from typing import Any, Dict, List, Optional
+import html
+import re
+from typing import Any
 
 
 def sanitize_input(value: Any) -> str:
@@ -36,9 +35,7 @@ def sanitize_input(value: Any) -> str:
     return value.strip()
 
 
-def validate_required_fields(
-    data: Dict[str, Any], required_fields: List[str]
-) -> Optional[str]:
+def validate_required_fields(data: dict[str, Any], required_fields: list[str]) -> str | None:
     """
     验证必填字段
 
@@ -55,7 +52,7 @@ def validate_required_fields(
     return None
 
 
-def validate_username(username: str) -> Optional[str]:
+def validate_username(username: str) -> str | None:
     """
     验证用户名格式
 
@@ -81,7 +78,7 @@ def validate_username(username: str) -> Optional[str]:
     return None
 
 
-def validate_password(password: str) -> Optional[str]:
+def validate_password(password: str) -> str | None:
     """
     验证密码强度
 
@@ -103,7 +100,7 @@ def validate_password(password: str) -> Optional[str]:
     return None
 
 
-def validate_db_type(db_type: str) -> Optional[str]:
+def validate_db_type(db_type: str) -> str | None:
     """
     验证数据库类型
 
@@ -121,7 +118,7 @@ def validate_db_type(db_type: str) -> Optional[str]:
     return None
 
 
-def validate_credential_type(credential_type: str) -> Optional[str]:
+def validate_credential_type(credential_type: str) -> str | None:
     """
     验证凭据类型
 
@@ -139,7 +136,7 @@ def validate_credential_type(credential_type: str) -> Optional[str]:
     return None
 
 
-def sanitize_form_data(data: Dict[str, Any]) -> Dict[str, Any]:
+def sanitize_form_data(data: dict[str, Any]) -> dict[str, Any]:
     """
     清理表单数据
 
@@ -154,9 +151,7 @@ def sanitize_form_data(data: Dict[str, Any]) -> Dict[str, Any]:
     for key, value in data.items():
         if isinstance(value, str):
             sanitized[key] = sanitize_input(value)
-        elif isinstance(value, bool):
-            sanitized[key] = value
-        elif isinstance(value, (int, float)):
+        elif isinstance(value, bool) or isinstance(value, (int, float)):
             sanitized[key] = value
         else:
             sanitized[key] = sanitize_input(str(value))

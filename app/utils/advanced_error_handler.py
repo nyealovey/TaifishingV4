@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 高级错误处理系统
 提供更精细的错误分类、处理和恢复机制
@@ -8,15 +6,17 @@
 import logging
 import traceback
 import uuid
-from datetime import datetime
-from app.utils.timezone import now
-from typing import Dict, Any, Optional, Callable, List
+from collections.abc import Callable
 from functools import wraps
-from flask import current_app, request, jsonify, render_template
+from typing import Any
+
+from flask import current_app, jsonify, request
+from sqlalchemy.exc import IntegrityError, OperationalError, SQLAlchemyError
 from werkzeug.exceptions import HTTPException
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
-from app.constants import ErrorMessages, LogLevel, LogType
+
 from app import db
+from app.constants import ErrorMessages, LogLevel
+from app.utils.timezone import now
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class ErrorSeverity:
 class ErrorContext:
     """错误上下文信息"""
 
-    def __init__(self, error: Exception, request_data: Dict[str, Any] = None):
+    def __init__(self, error: Exception, request_data: dict[str, Any] = None):
         self.error_id = str(uuid.uuid4())
         self.timestamp = now()
         self.error_type = type(error).__name__
@@ -80,9 +80,7 @@ class AdvancedErrorHandler:
         """注册恢复策略"""
         self.recovery_strategies[error_category] = strategy
 
-    def handle_error(
-        self, error: Exception, context: ErrorContext = None
-    ) -> Dict[str, Any]:
+    def handle_error(self, error: Exception, context: ErrorContext = None) -> dict[str, Any]:
         """处理错误"""
         if context is None:
             context = ErrorContext(error)
@@ -112,9 +110,7 @@ class AdvancedErrorHandler:
         # 通用错误处理器
         self.register_error_handler(Exception, self._handle_generic_error)
 
-    def _handle_integrity_error(
-        self, error: IntegrityError, context: ErrorContext
-    ) -> Dict[str, Any]:
+    def _handle_integrity_error(self, error: IntegrityError, context: ErrorContext) -> dict[str, Any]:
         """处理完整性错误"""
         error_message = str(error.orig) if hasattr(error, "orig") else str(error)
 
@@ -127,7 +123,7 @@ class AdvancedErrorHandler:
                 "recoverable": True,
                 "suggestions": ["检查数据是否重复", "使用不同的唯一标识符"],
             }
-        elif "FOREIGN KEY constraint failed" in error_message:
+        if "FOREIGN KEY constraint failed" in error_message:
             return {
                 "category": ErrorCategory.VALIDATION,
                 "severity": ErrorSeverity.MEDIUM,
@@ -136,19 +132,16 @@ class AdvancedErrorHandler:
                 "recoverable": True,
                 "suggestions": ["检查关联数据是否存在", "先创建关联数据"],
             }
-        else:
-            return {
-                "category": ErrorCategory.DATABASE,
-                "severity": ErrorSeverity.HIGH,
-                "message": "数据完整性错误",
-                "user_message": ErrorMessages.CONSTRAINT_VIOLATION,
-                "recoverable": False,
-                "suggestions": ["检查数据格式", "联系管理员"],
-            }
+        return {
+            "category": ErrorCategory.DATABASE,
+            "severity": ErrorSeverity.HIGH,
+            "message": "数据完整性错误",
+            "user_message": ErrorMessages.CONSTRAINT_VIOLATION,
+            "recoverable": False,
+            "suggestions": ["检查数据格式", "联系管理员"],
+        }
 
-    def _handle_operational_error(
-        self, error: OperationalError, context: ErrorContext
-    ) -> Dict[str, Any]:
+    def _handle_operational_error(self, error: OperationalError, context: ErrorContext) -> dict[str, Any]:
         """处理操作错误"""
         error_message = str(error.orig) if hasattr(error, "orig") else str(error)
 
@@ -161,7 +154,7 @@ class AdvancedErrorHandler:
                 "recoverable": True,
                 "suggestions": ["检查数据库连接", "稍后重试"],
             }
-        elif "timeout" in error_message.lower():
+        if "timeout" in error_message.lower():
             return {
                 "category": ErrorCategory.DATABASE,
                 "severity": ErrorSeverity.MEDIUM,
@@ -170,19 +163,16 @@ class AdvancedErrorHandler:
                 "recoverable": True,
                 "suggestions": ["稍后重试", "检查查询复杂度"],
             }
-        else:
-            return {
-                "category": ErrorCategory.DATABASE,
-                "severity": ErrorSeverity.HIGH,
-                "message": "数据库操作错误",
-                "user_message": ErrorMessages.DATABASE_QUERY_ERROR,
-                "recoverable": False,
-                "suggestions": ["检查SQL语句", "联系管理员"],
-            }
+        return {
+            "category": ErrorCategory.DATABASE,
+            "severity": ErrorSeverity.HIGH,
+            "message": "数据库操作错误",
+            "user_message": ErrorMessages.DATABASE_QUERY_ERROR,
+            "recoverable": False,
+            "suggestions": ["检查SQL语句", "联系管理员"],
+        }
 
-    def _handle_sqlalchemy_error(
-        self, error: SQLAlchemyError, context: ErrorContext
-    ) -> Dict[str, Any]:
+    def _handle_sqlalchemy_error(self, error: SQLAlchemyError, context: ErrorContext) -> dict[str, Any]:
         """处理SQLAlchemy错误"""
         return {
             "category": ErrorCategory.DATABASE,
@@ -193,9 +183,7 @@ class AdvancedErrorHandler:
             "suggestions": ["检查数据库状态", "联系管理员"],
         }
 
-    def _handle_http_exception(
-        self, error: HTTPException, context: ErrorContext
-    ) -> Dict[str, Any]:
+    def _handle_http_exception(self, error: HTTPException, context: ErrorContext) -> dict[str, Any]:
         """处理HTTP异常"""
         status_code = error.code
 
@@ -208,7 +196,7 @@ class AdvancedErrorHandler:
                 "recoverable": True,
                 "suggestions": ["检查请求参数", "查看API文档"],
             }
-        elif status_code == 401:
+        if status_code == 401:
             return {
                 "category": ErrorCategory.AUTHENTICATION,
                 "severity": ErrorSeverity.MEDIUM,
@@ -217,7 +205,7 @@ class AdvancedErrorHandler:
                 "recoverable": True,
                 "suggestions": ["重新登录", "检查认证信息"],
             }
-        elif status_code == 403:
+        if status_code == 403:
             return {
                 "category": ErrorCategory.AUTHORIZATION,
                 "severity": ErrorSeverity.MEDIUM,
@@ -226,7 +214,7 @@ class AdvancedErrorHandler:
                 "recoverable": False,
                 "suggestions": ["联系管理员", "检查权限设置"],
             }
-        elif status_code == 404:
+        if status_code == 404:
             return {
                 "category": ErrorCategory.VALIDATION,
                 "severity": ErrorSeverity.LOW,
@@ -235,19 +223,16 @@ class AdvancedErrorHandler:
                 "recoverable": True,
                 "suggestions": ["检查URL", "查看资源列表"],
             }
-        else:
-            return {
-                "category": ErrorCategory.SYSTEM,
-                "severity": ErrorSeverity.MEDIUM,
-                "message": f"HTTP错误 {status_code}",
-                "user_message": ErrorMessages.INTERNAL_ERROR,
-                "recoverable": False,
-                "suggestions": ["稍后重试", "联系管理员"],
-            }
+        return {
+            "category": ErrorCategory.SYSTEM,
+            "severity": ErrorSeverity.MEDIUM,
+            "message": f"HTTP错误 {status_code}",
+            "user_message": ErrorMessages.INTERNAL_ERROR,
+            "recoverable": False,
+            "suggestions": ["稍后重试", "联系管理员"],
+        }
 
-    def _handle_generic_error(
-        self, error: Exception, context: ErrorContext
-    ) -> Dict[str, Any]:
+    def _handle_generic_error(self, error: Exception, context: ErrorContext) -> dict[str, Any]:
         """处理通用错误"""
         return {
             "category": ErrorCategory.UNKNOWN,
@@ -290,10 +275,9 @@ class AdvancedErrorHandler:
 
         if error_type in ["IntegrityError", "OperationalError"]:
             return LogLevel.ERROR
-        elif error_type in ["HTTPException"]:
+        if error_type in ["HTTPException"]:
             return LogLevel.WARNING
-        else:
-            return LogLevel.ERROR
+        return LogLevel.ERROR
 
     def _update_error_metrics(self, error: Exception, context: ErrorContext):
         """更新错误指标"""
@@ -317,9 +301,7 @@ class AdvancedErrorHandler:
         if metrics["first_occurrence"] is None:
             metrics["first_occurrence"] = context.timestamp
 
-    def _attempt_recovery(
-        self, error: Exception, context: ErrorContext
-    ) -> Dict[str, Any]:
+    def _attempt_recovery(self, error: Exception, context: ErrorContext) -> dict[str, Any]:
         """尝试错误恢复"""
         error_info = self._get_error_info(error, context)
 
@@ -339,21 +321,18 @@ class AdvancedErrorHandler:
 
         return {"success": False, "message": "无可用恢复策略"}
 
-    def _get_error_info(
-        self, error: Exception, context: ErrorContext
-    ) -> Dict[str, Any]:
+    def _get_error_info(self, error: Exception, context: ErrorContext) -> dict[str, Any]:
         """获取错误信息"""
         error_type = type(error)
 
         if error_type in self.error_handlers:
             handler = self.error_handlers[error_type]
             return handler(error, context)
-        else:
-            return self._handle_generic_error(error, context)
+        return self._handle_generic_error(error, context)
 
     def _generate_error_response(
-        self, error: Exception, context: ErrorContext, recovery_result: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, error: Exception, context: ErrorContext, recovery_result: dict[str, Any]
+    ) -> dict[str, Any]:
         """生成错误响应"""
         error_info = self._get_error_info(error, context)
 
@@ -382,7 +361,7 @@ class AdvancedErrorHandler:
 
         return response
 
-    def get_error_metrics(self) -> Dict[str, Any]:
+    def get_error_metrics(self) -> dict[str, Any]:
         """获取错误指标"""
         return self.error_metrics
 
@@ -413,18 +392,15 @@ def handle_advanced_errors(func):
                 ErrorSeverity.HIGH,
             ]:
                 return jsonify(error_response), 500
-            elif error_response.get("severity") == ErrorSeverity.MEDIUM:
+            if error_response.get("severity") == ErrorSeverity.MEDIUM:
                 return jsonify(error_response), 400
-            else:
-                return jsonify(error_response), 200
+            return jsonify(error_response), 200
 
     return wrapper
 
 
 # 恢复策略
-def database_recovery_strategy(
-    error: Exception, context: ErrorContext
-) -> Dict[str, Any]:
+def database_recovery_strategy(error: Exception, context: ErrorContext) -> dict[str, Any]:
     """数据库恢复策略"""
     try:
         # 尝试重新连接数据库
@@ -439,20 +415,14 @@ def database_recovery_strategy(
         }
 
 
-def validation_recovery_strategy(
-    error: Exception, context: ErrorContext
-) -> Dict[str, Any]:
+def validation_recovery_strategy(error: Exception, context: ErrorContext) -> dict[str, Any]:
     """验证恢复策略"""
     return {"action": "validation_retry", "success": True, "message": "请检查输入数据"}
 
 
 # 注册恢复策略
-advanced_error_handler.register_recovery_strategy(
-    ErrorCategory.DATABASE, database_recovery_strategy
-)
-advanced_error_handler.register_recovery_strategy(
-    ErrorCategory.VALIDATION, validation_recovery_strategy
-)
+advanced_error_handler.register_recovery_strategy(ErrorCategory.DATABASE, database_recovery_strategy)
+advanced_error_handler.register_recovery_strategy(ErrorCategory.VALIDATION, validation_recovery_strategy)
 
 
 # 错误监控装饰器

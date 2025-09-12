@@ -5,45 +5,50 @@
 
 import os
 import sys
-import logging
-from datetime import datetime
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import create_app, db
-from app.models import User, Instance, Credential, Account, Task, Log, GlobalParam, SyncData, AccountClassification, ClassificationRule, AccountClassificationAssignment, PermissionConfig
-from app.utils.logger import setup_logger
+from app.models import (
+    AccountClassification,
+    Credential,
+    GlobalParam,
+    Instance,
+    PermissionConfig,
+    User,
+)
+
 
 def init_database():
     """初始化数据库"""
     app = create_app()
-    
+
     with app.app_context():
         try:
             # 创建所有表
             print("🔨 创建数据库表...")
             db.create_all()
             print("✅ 数据库表创建成功")
-            
+
             # 创建默认管理员用户
             print("👤 创建默认管理员用户...")
             User.create_admin()
-            
+
             # 初始化全局参数
             print("⚙️ 初始化全局参数...")
             init_global_params()
-            
+
             # 初始化账户分类
             print("🏷️ 初始化账户分类...")
             init_account_classifications()
-            
+
             # 初始化权限配置
             print("🔐 初始化权限配置...")
             init_permission_configs()
-            
+
             print("✅ 数据库初始化完成")
-            
+
         except Exception as e:
             print(f"❌ 数据库初始化失败: {e}")
             raise
@@ -86,7 +91,7 @@ def init_global_params():
             }
         }
     ]
-    
+
     # 凭据类型参数
     cred_types = [
         {
@@ -119,7 +124,7 @@ def init_global_params():
             }
         }
     ]
-    
+
     # 同步类型参数
     sync_types = [
         {
@@ -143,7 +148,7 @@ def init_global_params():
             }
         }
     ]
-    
+
     # 角色类型参数
     role_types = [
         {
@@ -163,17 +168,17 @@ def init_global_params():
             }
         }
     ]
-    
+
     # 合并所有参数
     all_params = db_types + cred_types + sync_types + role_types
-    
+
     # 插入参数
     for param_data in all_params:
         existing = GlobalParam.query.filter_by(
             param_type=param_data['param_type'],
             name=param_data['name']
         ).first()
-        
+
         if not existing:
             param = GlobalParam(
                 param_type=param_data['param_type'],
@@ -181,7 +186,7 @@ def init_global_params():
                 config=param_data['config']
             )
             db.session.add(param)
-    
+
     db.session.commit()
     print("✅ 全局参数初始化完成")
 
@@ -225,13 +230,13 @@ def init_account_classifications():
             'is_system': True
         }
     ]
-    
+
     for class_data in classifications:
         existing = AccountClassification.query.filter_by(name=class_data['name']).first()
         if not existing:
             classification = AccountClassification(**class_data)
             db.session.add(classification)
-    
+
     db.session.commit()
     print("✅ 账户分类初始化完成")
 
@@ -258,7 +263,7 @@ def init_permission_configs():
         {'db_type': 'mysql', 'category': 'database_privileges', 'permission_name': 'ALTER', 'description': '修改权限', 'sort_order': 7},
         {'db_type': 'mysql', 'category': 'database_privileges', 'permission_name': 'INDEX', 'description': '索引权限', 'sort_order': 8},
     ]
-    
+
     # SQL Server权限配置
     sqlserver_permissions = [
         # 服务器角色
@@ -293,7 +298,7 @@ def init_permission_configs():
         {'db_type': 'sqlserver', 'category': 'database_privileges', 'permission_name': 'EXECUTE', 'description': '执行权限', 'sort_order': 7},
         {'db_type': 'sqlserver', 'category': 'database_privileges', 'permission_name': 'CONTROL', 'description': '控制权限', 'sort_order': 8},
     ]
-    
+
     # PostgreSQL权限配置
     postgresql_permissions = [
         # 角色属性
@@ -336,7 +341,7 @@ def init_permission_configs():
         # 类型权限
         {'db_type': 'postgresql', 'category': 'type_privileges', 'permission_name': 'USAGE', 'description': '使用类型权限', 'sort_order': 1},
     ]
-    
+
     # Oracle权限配置
     oracle_permissions = [
         # 系统权限
@@ -418,41 +423,41 @@ def init_permission_configs():
         {'db_type': 'oracle', 'category': 'tablespace_privileges', 'permission_name': 'DROP TABLESPACE', 'description': '删除表空间权限', 'sort_order': 3},
         {'db_type': 'oracle', 'category': 'tablespace_privileges', 'permission_name': 'UNLIMITED TABLESPACE', 'description': '无限制表空间权限', 'sort_order': 4},
     ]
-    
+
     # 合并所有权限配置
     all_permissions = mysql_permissions + sqlserver_permissions + postgresql_permissions + oracle_permissions
-    
+
     for perm_data in all_permissions:
         existing = PermissionConfig.query.filter_by(
             db_type=perm_data['db_type'],
             category=perm_data['category'],
             permission_name=perm_data['permission_name']
         ).first()
-        
+
         if not existing:
             permission = PermissionConfig(**perm_data)
             db.session.add(permission)
-    
+
     db.session.commit()
     print("✅ 权限配置初始化完成")
 
 def reset_database():
     """重置数据库"""
     app = create_app()
-    
+
     with app.app_context():
         try:
             print("🗑️ 删除所有表...")
             db.drop_all()
             print("✅ 所有表已删除")
-            
+
             print("🔨 重新创建数据库表...")
             db.create_all()
             print("✅ 数据库表重新创建成功")
-            
+
             # 重新初始化
             init_database()
-            
+
         except Exception as e:
             print(f"❌ 数据库重置失败: {e}")
             raise
@@ -460,46 +465,46 @@ def reset_database():
 def check_database():
     """检查数据库状态"""
     app = create_app()
-    
+
     with app.app_context():
         try:
             # 检查表是否存在
             tables = db.engine.table_names()
             print(f"📊 数据库表数量: {len(tables)}")
             print(f"📋 表列表: {', '.join(tables)}")
-            
+
             # 检查用户数量
             user_count = User.query.count()
             print(f"👥 用户数量: {user_count}")
-            
+
             # 检查实例数量
             instance_count = Instance.query.count()
             print(f"🗄️ 实例数量: {instance_count}")
-            
+
             # 检查凭据数量
             credential_count = Credential.query.count()
             print(f"🔑 凭据数量: {credential_count}")
-            
+
             # 检查全局参数数量
             param_count = GlobalParam.query.count()
             print(f"⚙️ 全局参数数量: {param_count}")
-            
+
             print("✅ 数据库状态检查完成")
-            
+
         except Exception as e:
             print(f"❌ 数据库状态检查失败: {e}")
             raise
 
 if __name__ == '__main__':
     import argparse
-    
+
     parser = argparse.ArgumentParser(description='泰摸鱼吧数据库管理工具')
     parser.add_argument('--init', action='store_true', help='初始化数据库')
     parser.add_argument('--reset', action='store_true', help='重置数据库')
     parser.add_argument('--check', action='store_true', help='检查数据库状态')
-    
+
     args = parser.parse_args()
-    
+
     if args.init:
         init_database()
     elif args.reset:

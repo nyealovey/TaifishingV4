@@ -1,18 +1,15 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 代码质量分析工具
 提供代码质量检查、复杂度分析、重复代码检测和重构建议
 """
 
 import ast
+import logging
 import os
 import re
-import logging
-from typing import Dict, List, Any, Optional, Tuple
+from collections import Counter
 from dataclasses import dataclass
-from collections import defaultdict, Counter
-from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +67,7 @@ class CodeQualityAnalyzer:
             "naming_conventions": {"severity": "warning"},
         }
 
-    def analyze_project(self) -> Dict[str, Any]:
+    def analyze_project(self) -> dict[str, Any]:
         """分析整个项目"""
         logger.info("开始分析项目代码质量...")
 
@@ -88,17 +85,13 @@ class CodeQualityAnalyzer:
         # 生成报告
         return self._generate_quality_report()
 
-    def _find_python_files(self) -> List[str]:
+    def _find_python_files(self) -> list[str]:
         """查找Python文件"""
         python_files = []
 
         for root, dirs, files in os.walk(self.project_root):
             # 跳过虚拟环境和缓存目录
-            dirs[:] = [
-                d
-                for d in dirs
-                if d not in ["venv", "__pycache__", ".git", "node_modules"]
-            ]
+            dirs[:] = [d for d in dirs if d not in ["venv", "__pycache__", ".git", "node_modules"]]
 
             for file in files:
                 if file.endswith(".py"):
@@ -109,7 +102,7 @@ class CodeQualityAnalyzer:
     def _analyze_file(self, file_path: str):
         """分析单个文件"""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # 解析AST
@@ -136,37 +129,19 @@ class CodeQualityAnalyzer:
         except Exception as e:
             logger.error(f"分析文件时出错: {file_path}, 错误: {e}")
 
-    def _calculate_metrics(
-        self, file_path: str, content: str, tree: ast.AST
-    ) -> CodeMetrics:
+    def _calculate_metrics(self, file_path: str, content: str, tree: ast.AST) -> CodeMetrics:
         """计算代码指标"""
         lines = content.split("\n")
 
         # 基本指标
-        lines_of_code = len(
-            [
-                line
-                for line in lines
-                if line.strip() and not line.strip().startswith("#")
-            ]
-        )
+        lines_of_code = len([line for line in lines if line.strip() and not line.strip().startswith("#")])
         comment_lines = len([line for line in lines if line.strip().startswith("#")])
         comment_ratio = comment_lines / len(lines) if lines else 0
 
         # 函数和类统计
-        function_count = len(
-            [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
-        )
-        class_count = len(
-            [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
-        )
-        import_count = len(
-            [
-                node
-                for node in ast.walk(tree)
-                if isinstance(node, (ast.Import, ast.ImportFrom))
-            ]
-        )
+        function_count = len([node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)])
+        class_count = len([node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)])
+        import_count = len([node for node in ast.walk(tree) if isinstance(node, (ast.Import, ast.ImportFrom))])
 
         # 圈复杂度
         cyclomatic_complexity = self._calculate_cyclomatic_complexity(tree)
@@ -193,11 +168,11 @@ class CodeQualityAnalyzer:
         complexity = 1  # 基础复杂度
 
         for node in ast.walk(tree):
-            if isinstance(node, (ast.If, ast.While, ast.For, ast.AsyncFor)):
-                complexity += 1
-            elif isinstance(node, ast.ExceptHandler):
-                complexity += 1
-            elif isinstance(node, (ast.And, ast.Or)):
+            if (
+                isinstance(node, (ast.If, ast.While, ast.For, ast.AsyncFor))
+                or isinstance(node, ast.ExceptHandler)
+                or isinstance(node, (ast.And, ast.Or))
+            ):
                 complexity += 1
 
         return complexity
@@ -212,9 +187,7 @@ class CodeQualityAnalyzer:
 
         # 简化的可维护性指数计算
         volume = lines_of_code * (1 + cyclomatic_complexity)
-        maintainability = max(
-            0, 100 - (volume / 100) - (cyclomatic_complexity * 2) + (comment_ratio * 20)
-        )
+        maintainability = max(0, 100 - (volume / 100) - (cyclomatic_complexity * 2) + (comment_ratio * 20))
 
         return min(100, max(0, maintainability))
 
@@ -255,7 +228,7 @@ class CodeQualityAnalyzer:
         # 检查命名约定
         self._check_naming_conventions(file_path, tree)
 
-    def _check_function_length(self, file_path: str, tree: ast.AST, lines: List[str]):
+    def _check_function_length(self, file_path: str, tree: ast.AST, lines: list[str]):
         """检查函数长度"""
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
@@ -276,7 +249,7 @@ class CodeQualityAnalyzer:
                         )
                     )
 
-    def _check_class_length(self, file_path: str, tree: ast.AST, lines: List[str]):
+    def _check_class_length(self, file_path: str, tree: ast.AST, lines: list[str]):
         """检查类长度"""
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
@@ -371,7 +344,7 @@ class CodeQualityAnalyzer:
 
         return max_depth
 
-    def _check_line_length(self, file_path: str, lines: List[str]):
+    def _check_line_length(self, file_path: str, lines: list[str]):
         """检查行长度"""
         for i, line in enumerate(lines, 1):
             if len(line) > self.rules["line_length"]["max_length"]:
@@ -419,14 +392,10 @@ class CodeQualityAnalyzer:
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    imports.append(
-                        (node.lineno, alias.name, alias.asname or alias.name)
-                    )
+                    imports.append((node.lineno, alias.name, alias.asname or alias.name))
             elif isinstance(node, ast.ImportFrom):
                 for alias in node.names:
-                    full_name = (
-                        f"{node.module}.{alias.name}" if node.module else alias.name
-                    )
+                    full_name = f"{node.module}.{alias.name}" if node.module else alias.name
                     imports.append((node.lineno, full_name, alias.asname or alias.name))
 
         # 收集所有使用的名称
@@ -456,7 +425,7 @@ class CodeQualityAnalyzer:
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
                 # 获取函数参数
-                param_names = {arg.arg for arg in node.args.args}
+                {arg.arg for arg in node.args.args}
 
                 # 获取函数中使用的变量
                 used_vars = set()
@@ -533,7 +502,7 @@ class CodeQualityAnalyzer:
 
         for file_path in self.metrics.keys():
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     file_contents[file_path] = f.read().split("\n")
             except Exception as e:
                 logger.error(f"读取文件失败: {file_path}, 错误: {e}")
@@ -561,7 +530,7 @@ class CodeQualityAnalyzer:
                                 )
                             )
 
-    def _generate_quality_report(self) -> Dict[str, Any]:
+    def _generate_quality_report(self) -> dict[str, Any]:
         """生成质量报告"""
         # 统计问题
         issue_stats = Counter(issue.issue_type for issue in self.issues)
@@ -571,14 +540,12 @@ class CodeQualityAnalyzer:
         total_files = len(self.metrics)
         total_lines = sum(metrics.lines_of_code for metrics in self.metrics.values())
         avg_complexity = (
-            sum(metrics.cyclomatic_complexity for metrics in self.metrics.values())
-            / total_files
+            sum(metrics.cyclomatic_complexity for metrics in self.metrics.values()) / total_files
             if total_files > 0
             else 0
         )
         avg_maintainability = (
-            sum(metrics.maintainability_index for metrics in self.metrics.values())
-            / total_files
+            sum(metrics.maintainability_index for metrics in self.metrics.values()) / total_files
             if total_files > 0
             else 0
         )
@@ -622,7 +589,7 @@ class CodeQualityAnalyzer:
             "suggestions": suggestions,
         }
 
-    def _generate_suggestions(self) -> List[Dict[str, Any]]:
+    def _generate_suggestions(self) -> list[dict[str, Any]]:
         """生成改进建议"""
         suggestions = []
 

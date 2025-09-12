@@ -1,17 +1,15 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 缓存管理工具
 """
 
-import json
 import hashlib
-import time
-from functools import wraps
-from typing import Any, Optional, Callable, Dict, Union
-from flask import current_app, request
-from flask_caching import Cache
+import json
 import logging
+from collections.abc import Callable
+from functools import wraps
+from typing import Any
+
+from flask_caching import Cache
 
 logger = logging.getLogger(__name__)
 
@@ -29,12 +27,12 @@ class CacheManager:
         key_data = {"args": args, "kwargs": sorted(kwargs.items())}
         key_string = json.dumps(key_data, sort_keys=True, default=str)
 
-        # 生成哈希值
-        key_hash = hashlib.md5(key_string.encode()).hexdigest()
+        # 生成哈希值（使用SHA256替代MD5）
+        key_hash = hashlib.sha256(key_string.encode()).hexdigest()
 
         return f"{prefix}:{key_hash}"
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """获取缓存值"""
         try:
             return self.cache.get(key)
@@ -42,7 +40,7 @@ class CacheManager:
             logger.warning(f"获取缓存失败: {key}, 错误: {e}")
             return None
 
-    def set(self, key: str, value: Any, timeout: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, timeout: int | None = None) -> bool:
         """设置缓存值"""
         try:
             timeout = timeout or self.default_timeout
@@ -70,9 +68,7 @@ class CacheManager:
             logger.warning(f"清空缓存失败: {e}")
             return False
 
-    def get_or_set(
-        self, key: str, func: Callable, timeout: Optional[int] = None, *args, **kwargs
-    ) -> Any:
+    def get_or_set(self, key: str, func: Callable, timeout: int | None = None, *args, **kwargs) -> Any:
         """获取缓存值，如果不存在则设置"""
         value = self.get(key)
         if value is None:
@@ -87,9 +83,8 @@ class CacheManager:
             # Redis支持模式匹配，其他后端可能需要遍历
             if hasattr(self.cache.cache, "delete_pattern"):
                 return self.cache.cache.delete_pattern(pattern)
-            else:
-                logger.warning("当前缓存后端不支持模式删除")
-                return 0
+            logger.warning("当前缓存后端不支持模式删除")
+            return 0
         except Exception as e:
             logger.warning(f"模式删除缓存失败: {pattern}, 错误: {e}")
             return 0
@@ -109,8 +104,8 @@ def init_cache_manager(cache: Cache):
 def cached(
     timeout: int = 300,
     key_prefix: str = "default",
-    unless: Optional[Callable] = None,
-    key_func: Optional[Callable] = None,
+    unless: Callable | None = None,
+    key_func: Callable | None = None,
 ):
     """
     缓存装饰器
@@ -133,9 +128,7 @@ def cached(
             if key_func:
                 cache_key = key_func(*args, **kwargs)
             else:
-                cache_key = cache_manager._generate_key(
-                    f"{key_prefix}:{f.__name__}", *args, **kwargs
-                )
+                cache_key = cache_manager._generate_key(f"{key_prefix}:{f.__name__}", *args, **kwargs)
 
             # 尝试获取缓存
             cached_value = cache_manager.get(cache_key)
@@ -264,14 +257,13 @@ def clear_all_cache():
 
 
 # 缓存统计
-def get_cache_stats() -> Dict[str, Any]:
+def get_cache_stats() -> dict[str, Any]:
     """获取缓存统计信息"""
     try:
         if hasattr(cache_manager.cache.cache, "info"):
             info = cache_manager.cache.cache.info()
             return {"status": "connected", "info": info}
-        else:
-            return {"status": "connected", "info": "No detailed info available"}
+        return {"status": "connected", "info": "No detailed info available"}
     except Exception as e:
         return {"status": "error", "error": str(e)}
 
@@ -280,9 +272,9 @@ def get_cache_stats() -> Dict[str, Any]:
 def warm_up_cache():
     """缓存预热"""
     try:
-        from app.models.user import User
         from app.models.instance import Instance
         from app.models.task import Task
+        from app.models.user import User
 
         # 预热用户缓存
         users = User.query.limit(10).all()

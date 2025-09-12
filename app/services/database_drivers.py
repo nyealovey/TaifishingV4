@@ -4,8 +4,6 @@
 """
 
 import platform
-import sys
-from typing import Dict, Any, Optional
 
 
 class DatabaseDriverManager:
@@ -16,7 +14,7 @@ class DatabaseDriverManager:
         self.architecture = platform.machine().lower()
         self.available_drivers = self._detect_available_drivers()
 
-    def _detect_available_drivers(self) -> Dict[str, bool]:
+    def _detect_available_drivers(self) -> dict[str, bool]:
         """检测可用的数据库驱动"""
         drivers = {
             "mysql": False,
@@ -76,7 +74,7 @@ class DatabaseDriverManager:
         username: str,
         password: str,
         database: str = None,
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         获取数据库连接字符串
 
@@ -94,29 +92,25 @@ class DatabaseDriverManager:
         if db_type.lower() == "mysql":
             if self.available_drivers["mysql"]:
                 return f"mysql+pymysql://{username}:{password}@{host}:{port}/{database or 'mysql'}"
-            else:
-                return None
+            return None
 
-        elif db_type.lower() == "postgresql":
+        if db_type.lower() == "postgresql":
             if self.available_drivers["postgresql"]:
                 return f"postgresql://{username}:{password}@{host}:{port}/{database or 'postgres'}"
-            else:
-                return None
+            return None
 
-        elif db_type.lower() == "sql server":
+        if db_type.lower() == "sql server":
             if self.available_drivers["sqlserver"]:
                 return f"mssql+pymssql://{username}:{password}@{host}:{port}/{database or 'master'}"
-            elif self.available_drivers["odbc"]:
+            if self.available_drivers["odbc"]:
                 # 使用ODBC连接SQL Server
                 return f"mssql+pyodbc://{username}:{password}@{host}:{port}/{database or 'master'}?driver=ODBC+Driver+17+for+SQL+Server"
-            else:
-                return None
+            return None
 
-        elif db_type.lower() == "oracle":
+        if db_type.lower() == "oracle":
             if self.available_drivers["oracle"]:
                 return f"oracle+oracledb://{username}:{password}@{host}:{port}/{database or 'ORCL'}"
-            else:
-                return None
+            return None
 
         return None
 
@@ -133,32 +127,28 @@ class DatabaseDriverManager:
         if db_type.lower() == "mysql":
             if self.available_drivers["mysql"]:
                 return "PyMySQL (推荐)"
-            else:
-                return "需要安装: pip install PyMySQL"
+            return "需要安装: pip install PyMySQL"
 
-        elif db_type.lower() == "postgresql":
+        if db_type.lower() == "postgresql":
             if self.available_drivers["postgresql"]:
                 return "psycopg (推荐)"
-            else:
-                return "需要安装: pip install psycopg[binary]"
+            return "需要安装: pip install psycopg[binary]"
 
-        elif db_type.lower() == "sql server":
+        if db_type.lower() == "sql server":
             if self.available_drivers["sqlserver"]:
                 return "pymssql (推荐)"
-            elif self.available_drivers["odbc"]:
+            if self.available_drivers["odbc"]:
                 return "pyodbc (替代方案)"
-            else:
-                return "需要安装: pip install pymssql 或 pip install pyodbc"
+            return "需要安装: pip install pymssql 或 pip install pyodbc"
 
-        elif db_type.lower() == "oracle":
+        if db_type.lower() == "oracle":
             if self.available_drivers["oracle"]:
                 return "python-oracledb (推荐)"
-            else:
-                return "需要安装: pip install python-oracledb"
+            return "需要安装: pip install python-oracledb"
 
         return "未知数据库类型"
 
-    def get_installation_guide(self) -> Dict[str, str]:
+    def get_installation_guide(self) -> dict[str, str]:
         """获取安装指南"""
         guide = {
             "mysql": "pip install PyMySQL",
@@ -171,9 +161,7 @@ class DatabaseDriverManager:
         # 添加平台特定说明
         if self.system == "darwin":  # macOS
             guide["sqlserver"] += " (在ARM64 Mac上可能编译失败，建议使用pyodbc)"
-            guide[
-                "oracle"
-            ] += " (python-oracledb支持Thin模式，无需Oracle Instant Client)"
+            guide["oracle"] += " (python-oracledb支持Thin模式，无需Oracle Instant Client)"
 
         return guide
 

@@ -3,6 +3,7 @@
 """
 
 from datetime import datetime
+
 from app import db
 
 
@@ -14,9 +15,7 @@ class SyncData(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sync_type = db.Column(db.String(50), nullable=False, index=True)
     instance_id = db.Column(db.Integer, db.ForeignKey("instances.id"), nullable=True)
-    task_id = db.Column(
-        db.Integer, db.ForeignKey("tasks.id"), nullable=True, index=True
-    )  # 关联任务ID
+    task_id = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=True, index=True)  # 关联任务ID
     data = db.Column(db.JSON, nullable=True)
     sync_time = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     status = db.Column(db.String(20), default="success", index=True)
@@ -76,7 +75,7 @@ class SyncData(db.Model):
     def get_record_ids(self):
         """
         获取记录ID列表（兼容聚合记录接口）
-        
+
         Returns:
             list: 记录ID列表
         """
@@ -123,7 +122,6 @@ class SyncData(db.Model):
         if sync_type:
             query = query.filter_by(sync_type=sync_type)
         return query.order_by(SyncData.sync_time.desc()).first()
-
 
     def __repr__(self):
         return f"<SyncData {self.sync_type} for instance {self.instance_id}>"

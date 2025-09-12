@@ -1,15 +1,15 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 健康检查路由
 """
 
-import time
-import psutil
-from flask import Blueprint, jsonify
-from app import db, cache
-from app.utils.api_response import APIResponse
 import logging
+import time
+
+import psutil
+from flask import Blueprint
+
+from app import cache, db
+from app.utils.api_response import APIResponse
 
 logger = logging.getLogger(__name__)
 
@@ -155,8 +155,7 @@ def readiness_check():
 
         if db_ready and cache_ready:
             return APIResponse.success(data={"status": "ready"}, message="服务就绪")
-        else:
-            return APIResponse.error(message="服务未就绪", code=503)
+        return APIResponse.error(message="服务未就绪", code=503)
     except Exception as e:
         logger.error(f"就绪检查失败: {e}")
         return APIResponse.server_error("就绪检查失败")

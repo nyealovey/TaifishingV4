@@ -4,30 +4,28 @@ SQLite 数据库数据初始化脚本
 基于 init_postgresql.sql 文档插入初始数据
 """
 
-import sqlite3
 import os
+import sqlite3
 import sys
-from datetime import datetime
-import json
 
 # 添加项目根目录到 Python 路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def init_sqlite_data():
     """初始化 SQLite 数据库数据"""
-    
+
     # 数据库文件路径
     db_path = "userdata/taifish_dev.db"
-    
+
     if not os.path.exists(db_path):
         print("❌ 数据库文件不存在，请先运行 init_sqlite_from_postgresql.py")
         return
-    
+
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    
+
     print("🚀 开始插入初始数据...")
-    
+
     try:
         # 1. 插入用户数据
         print("👤 插入用户数据...")
@@ -35,12 +33,12 @@ def init_sqlite_data():
             (1, 'admin', '$2b$12$DKFZJIArZQ0ASgxpcGyrHeAXYTBS0ThJjewzso1BnQQm7UWdomcAu', 'admin', '2025-09-12 00:25:19.014781', None, True),
             (2, 'jinxj', '$2b$12$MFRYxABcpq2UCv1aC22KLuZ88TO0ICM53jIunXNz5C.L7IaOm.Ca.', 'user', '2025-09-12 04:55:11.168860', None, True)
         ]
-        
+
         cursor.executemany('''
         INSERT OR IGNORE INTO users (id, username, password, role, created_at, last_login, is_active) 
         VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', users_data)
-        
+
         # 2. 插入数据库类型配置数据
         print("🗄️ 插入数据库类型配置数据...")
         db_types_data = [
@@ -49,14 +47,14 @@ def init_sqlite_data():
             (3, 'sqlserver', 'SQL Server', 'pymssql', 1433, 'master', 30, 'Microsoft SQL Server数据库', 'fa-database', 'danger', '["clustering", "mirroring", "always_on"]', True, True, 3, '2025-09-12 02:02:33.899542', '2025-09-12 03:08:49.557828'),
             (4, 'oracle', 'Oracle', 'oracledb', 1521, 'orcl', 30, 'Oracle数据库', 'fa-database', 'warning', '["rac", "asm", "flashback"]', True, True, 4, '2025-09-12 02:02:33.899757', '2025-09-12 03:02:58.407992')
         ]
-        
+
         cursor.executemany('''
         INSERT OR IGNORE INTO database_type_configs 
         (id, name, display_name, driver, default_port, default_schema, connection_timeout, 
          description, icon, color, features, is_active, is_system, sort_order, created_at, updated_at) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', db_types_data)
-        
+
         # 3. 插入账户分类数据
         print("🏷️ 插入账户分类数据...")
         classifications_data = [
@@ -66,13 +64,13 @@ def init_sqlite_data():
             (7, '特权账户', '用于具有高级权限的管理员或系统账户，负责管理数据库核心操作', 'critical', '#dc3545', 90, True, True, '2025-09-12 00:44:16.876259', '2025-09-12 05:26:04.919677'),
             (8, '普通账户', '用于日常操作的普通用户账户，权限范围有限', 'low', '#3c49fb', 60, True, True, '2025-09-12 00:44:16.876276', '2025-09-12 05:27:45.250653')
         ]
-        
+
         cursor.executemany('''
         INSERT OR IGNORE INTO account_classifications 
         (id, name, description, risk_level, color, priority, is_system, is_active, created_at, updated_at) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', classifications_data)
-        
+
         # 4. 插入分类规则数据
         print("📋 插入分类规则数据...")
         rules_data = [
@@ -86,13 +84,13 @@ def init_sqlite_data():
             (11, 4, 'sqlserver', 'sqlserver_delete_rule', '{"type": "sqlserver_permissions", "server_roles": [], "server_permissions": ["ALTER ANY DATABASE"], "database_roles": ["db_owner"], "database_privileges": ["DELETE"], "operator": "OR"}', True, '2025-09-12 06:01:31.340355', '2025-09-12 06:01:31.340362'),
             (12, 7, 'postgresql', 'postgresql_super_rule', '{"type": "postgresql_permissions", "role_attributes": ["SUPERUSER"], "database_privileges": [], "tablespace_privileges": [], "permissions": ["SUPERUSER"], "operator": "OR"}', True, '2025-09-12 06:03:41.681866', '2025-09-12 06:03:41.681870')
         ]
-        
+
         cursor.executemany('''
         INSERT OR IGNORE INTO classification_rules 
         (id, classification_id, db_type, rule_name, rule_expression, is_active, created_at, updated_at) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', rules_data)
-        
+
         # 5. 插入权限配置数据 - MySQL
         print("🔐 插入MySQL权限配置数据...")
         mysql_permissions = [
@@ -145,13 +143,13 @@ def init_sqlite_data():
             ('mysql', 'database_privileges', 'EVENT', '创建、修改、删除事件', True, 16),
             ('mysql', 'database_privileges', 'TRIGGER', '创建和删除触发器', True, 17)
         ]
-        
+
         cursor.executemany('''
         INSERT OR IGNORE INTO permission_configs 
         (db_type, category, permission_name, description, is_active, sort_order) 
         VALUES (?, ?, ?, ?, ?, ?)
         ''', mysql_permissions)
-        
+
         # 6. 插入权限配置数据 - PostgreSQL
         print("🔐 插入PostgreSQL权限配置数据...")
         postgresql_permissions = [
@@ -175,13 +173,13 @@ def init_sqlite_data():
             ('postgresql', 'tablespace_privileges', 'CREATE', '创建表空间权限', True, 1),
             ('postgresql', 'tablespace_privileges', 'USAGE', '使用表空间权限', True, 2)
         ]
-        
+
         cursor.executemany('''
         INSERT OR IGNORE INTO permission_configs 
         (db_type, category, permission_name, description, is_active, sort_order) 
         VALUES (?, ?, ?, ?, ?, ?)
         ''', postgresql_permissions)
-        
+
         # 7. 插入权限配置数据 - SQL Server
         print("🔐 插入SQL Server权限配置数据...")
         sqlserver_permissions = [
@@ -244,13 +242,13 @@ def init_sqlite_data():
             ('sqlserver', 'server_permissions', 'IMPERSONATE ANY LOGIN', '模拟任意登录', True, 16),
             ('sqlserver', 'server_permissions', 'VIEW ANY DEFINITION', '查看任意定义', True, 17)
         ]
-        
+
         cursor.executemany('''
         INSERT OR IGNORE INTO permission_configs 
         (db_type, category, permission_name, description, is_active, sort_order) 
         VALUES (?, ?, ?, ?, ?, ?)
         ''', sqlserver_permissions)
-        
+
         # 8. 插入权限配置数据 - Oracle
         print("🔐 插入Oracle权限配置数据...")
         oracle_permissions = [
@@ -299,17 +297,17 @@ def init_sqlite_data():
             ('oracle', 'tablespace_quotas', 'NO QUOTA', '无表空间配额', True, 4),
             ('oracle', 'tablespace_quotas', 'QUOTA 1M', '1MB表空间配额', True, 5)
         ]
-        
+
         cursor.executemany('''
         INSERT OR IGNORE INTO permission_configs 
         (db_type, category, permission_name, description, is_active, sort_order) 
         VALUES (?, ?, ?, ?, ?, ?)
         ''', oracle_permissions)
-        
+
         # 9. 插入任务数据
         print("⏰ 插入任务数据...")
         tasks_data = [
-            (1, 'account_sync', 'sync_accounts', 'mysql', '*/5 * * * *', '测试', 
+            (1, 'account_sync', 'sync_accounts', 'mysql', '*/5 * * * *', '测试',
              '''# 账户同步任务 - MySQL                                       
 # 此任务将使用统一的AccountSyncService进行账户同步
 # 无需手动编写代码，系统会自动调用相应的服务
@@ -320,10 +318,10 @@ def sync_mysql_accounts(instance, config):
     
     # 调用统一的账户同步服务
     result = account_sync_service.sync_accounts(instance, sync_type='task')                                       
-    return result''', 
+    return result''',
              '{}', True, False, None, None, None, None, 0, 0, '2025-09-12 01:20:05.772007', '2025-09-12 01:20:05.772013')
         ]
-        
+
         cursor.executemany('''
         INSERT OR IGNORE INTO tasks 
         (id, name, task_type, db_type, schedule, description, python_code, config, 
@@ -331,7 +329,7 @@ def sync_mysql_accounts(instance, config):
          run_count, success_count, created_at, updated_at) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', tasks_data)
-        
+
         # 10. 插入全局参数数据
         print("⚙️ 插入全局参数数据...")
         global_params_data = [
@@ -344,29 +342,29 @@ def sync_mysql_accounts(instance, config):
             ('backup_retention_days', '30', '备份保留天数', 'integer', True),
             ('sync_interval_minutes', '5', '同步间隔（分钟）', 'integer', True)
         ]
-        
+
         cursor.executemany('''
         INSERT OR IGNORE INTO global_params 
         (name, value, description, param_type, is_active) 
         VALUES (?, ?, ?, ?, ?)
         ''', global_params_data)
-        
+
         # 提交事务
         conn.commit()
         print("✅ 初始数据插入完成！")
-        
+
         # 验证数据
         print("\n📊 数据验证:")
-        tables = ['users', 'database_type_configs', 'account_classifications', 
+        tables = ['users', 'database_type_configs', 'account_classifications',
                  'classification_rules', 'permission_configs', 'tasks', 'global_params']
-        
+
         for table in tables:
             cursor.execute(f"SELECT COUNT(*) FROM {table}")
             count = cursor.fetchone()[0]
             print(f"  {table}: {count} 条记录")
-        
+
         print("\n🎉 SQLite 数据库数据初始化完成！")
-        
+
     except Exception as e:
         print(f"❌ 数据插入失败: {e}")
         conn.rollback()

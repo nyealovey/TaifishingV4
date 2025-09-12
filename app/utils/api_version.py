@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - API版本控制工具
 """
 
-from functools import wraps
-from flask import request, jsonify, current_app
-from typing import Dict, Any, Optional, List
 import logging
+from functools import wraps
+from typing import Any
+
+from flask import jsonify, request
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +55,7 @@ class APIVersionManager:
         """检查版本是否支持"""
         return version in self.supported_versions
 
-    def get_version_info(self) -> Dict[str, Any]:
+    def get_version_info(self) -> dict[str, Any]:
         """获取版本信息"""
         return {
             "supported_versions": self.supported_versions,
@@ -102,7 +101,7 @@ def api_version(version: str):
     return version_decorator
 
 
-def versioned_api(versions: List[str]):
+def versioned_api(versions: list[str]):
     """
     多版本API装饰器
 
@@ -176,9 +175,7 @@ class VersionCompatibility:
     """版本兼容性处理"""
 
     @staticmethod
-    def handle_request_data(
-        data: Dict[str, Any], from_version: str, to_version: str
-    ) -> Dict[str, Any]:
+    def handle_request_data(data: dict[str, Any], from_version: str, to_version: str) -> dict[str, Any]:
         """处理请求数据版本兼容性"""
         if from_version == to_version:
             return data
@@ -186,15 +183,13 @@ class VersionCompatibility:
         # 版本转换逻辑
         if from_version == "v1" and to_version == "v2":
             return VersionCompatibility._v1_to_v2(data)
-        elif from_version == "v2" and to_version == "v1":
+        if from_version == "v2" and to_version == "v1":
             return VersionCompatibility._v2_to_v1(data)
 
         return data
 
     @staticmethod
-    def handle_response_data(
-        data: Dict[str, Any], from_version: str, to_version: str
-    ) -> Dict[str, Any]:
+    def handle_response_data(data: dict[str, Any], from_version: str, to_version: str) -> dict[str, Any]:
         """处理响应数据版本兼容性"""
         if from_version == to_version:
             return data
@@ -202,13 +197,13 @@ class VersionCompatibility:
         # 版本转换逻辑
         if from_version == "v2" and to_version == "v1":
             return VersionCompatibility._v2_to_v1(data)
-        elif from_version == "v1" and to_version == "v2":
+        if from_version == "v1" and to_version == "v2":
             return VersionCompatibility._v1_to_v2(data)
 
         return data
 
     @staticmethod
-    def _v1_to_v2(data: Dict[str, Any]) -> Dict[str, Any]:
+    def _v1_to_v2(data: dict[str, Any]) -> dict[str, Any]:
         """v1到v2的转换"""
         # 示例转换逻辑
         if "user_id" in data:
@@ -217,7 +212,7 @@ class VersionCompatibility:
         return data
 
     @staticmethod
-    def _v2_to_v1(data: Dict[str, Any]) -> Dict[str, Any]:
+    def _v2_to_v1(data: dict[str, Any]) -> dict[str, Any]:
         """v2到v1的转换"""
         # 示例转换逻辑
         if "user" in data and isinstance(data["user"], dict):
@@ -284,9 +279,7 @@ def version_middleware():
     def middleware(response):
         current_version = api_version_manager.get_current_version()
         response.headers["API-Version"] = current_version
-        response.headers["API-Supported-Versions"] = ", ".join(
-            api_version_manager.supported_versions
-        )
+        response.headers["API-Supported-Versions"] = ", ".join(api_version_manager.supported_versions)
         return response
 
     return middleware

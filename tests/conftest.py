@@ -1,10 +1,11 @@
 # 泰摸鱼吧 - 测试配置
 
+
 import pytest
-import os
-import tempfile
+
 from app import create_app, db
-from app.models import User, Instance, Credential, Account, Task, Log, GlobalParam, SyncData
+from app.models import Account, Credential, Instance, User
+
 
 @pytest.fixture
 def app():
@@ -16,7 +17,7 @@ def app():
         'JWT_SECRET_KEY': 'test-jwt-secret',
         'WTF_CSRF_ENABLED': False
     })
-    
+
     with app.app_context():
         db.create_all()
         yield app
@@ -40,13 +41,13 @@ def auth_headers(client):
     user.set_password('testpass')
     db.session.add(user)
     db.session.commit()
-    
+
     # 登录获取token
     response = client.post('/api/auth/login', json={
         'username': 'testuser',
         'password': 'testpass'
     })
-    
+
     token = response.json.get('access_token')
     return {'Authorization': f'Bearer {token}'}
 

@@ -1,39 +1,33 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 系统仪表板路由
 """
 
-from flask import Blueprint, render_template, request, jsonify
-from flask_login import login_required, current_user
-from app.models.user import User
-from app.models.instance import Instance
-from app.models.credential import Credential
-from app.models.task import Task
-from app.models.log import Log
-from app.models.sync_data import SyncData
-from app import db
 import logging
 from datetime import datetime, timedelta
+
 import psutil
-import os
+from flask import Blueprint, jsonify, render_template, request
+from flask_login import current_user, login_required
 from sqlalchemy import text
-from app.utils.timezone import (
-    get_china_time,
-    utc_to_china,
-    format_china_time,
-    get_china_today,
-    get_china_date,
-    china_to_utc,
-    CHINA_TZ,
-)
+
+from app import db
+from app.models.credential import Credential
+from app.models.instance import Instance
+from app.models.log import Log
+from app.models.sync_data import SyncData
+from app.models.task import Task
+from app.models.user import User
 from app.utils.cache_manager import (
     cached,
-    cache_dashboard_data,
-    get_cached_dashboard_data,
-    invalidate_dashboard_cache,
 )
-from app.utils.enhanced_logger import log_operation, log_api_request
+from app.utils.enhanced_logger import log_api_request, log_operation
+from app.utils.timezone import (
+    CHINA_TZ,
+    china_to_utc,
+    get_china_date,
+    get_china_time,
+    get_china_today,
+)
 
 # 创建蓝图
 dashboard_bp = Blueprint("dashboard", __name__)
@@ -52,7 +46,6 @@ def index():
 
     # 获取图表数据
     chart_data = get_chart_data()
-
 
     # 获取系统状态
     system_status = get_system_status()
@@ -135,13 +128,12 @@ def api_charts():
     return jsonify(charts)
 
 
-
-
 @dashboard_bp.route("/api/activities")
 @login_required
 def api_activities():
     """获取最近活动API - 已废弃，返回空数据"""
     return jsonify([])
+
 
 @dashboard_bp.route("/api/status")
 @login_required
@@ -192,9 +184,7 @@ def get_system_overview():
         error_logs = Log.query.filter(Log.level.in_(["ERROR", "CRITICAL"])).count()
 
         # 最近同步数据（东八区）
-        recent_syncs = SyncData.query.filter(
-            SyncData.sync_time >= get_china_today() - timedelta(days=7)
-        ).count()
+        recent_syncs = SyncData.query.filter(SyncData.sync_time >= get_china_today() - timedelta(days=7)).count()
 
         return {
             "users": {"total": total_users, "active": total_users},  # 简化处理
@@ -261,31 +251,21 @@ def get_log_trend_data():
             date = start_date + timedelta(days=i)
 
             # 计算该日期的UTC时间范围（东八区转UTC）
-            start_utc = china_to_utc(
-                CHINA_TZ.localize(datetime.combine(date, datetime.min.time()))
-            )
-            end_utc = china_to_utc(
-                CHINA_TZ.localize(datetime.combine(date, datetime.max.time()))
-            )
+            start_utc = china_to_utc(CHINA_TZ.localize(datetime.combine(date, datetime.min.time())))
+            end_utc = china_to_utc(CHINA_TZ.localize(datetime.combine(date, datetime.max.time())))
 
             # 分别统计错误日志和告警日志
             error_count = Log.query.filter(
-                Log.created_at >= start_utc, 
-                Log.created_at <= end_utc,
-                Log.level.in_(["ERROR", "CRITICAL"])
-            ).count()
-            
-            warning_count = Log.query.filter(
-                Log.created_at >= start_utc, 
-                Log.created_at <= end_utc,
-                Log.level == "WARNING"
+                Log.created_at >= start_utc, Log.created_at <= end_utc, Log.level.in_(["ERROR", "CRITICAL"])
             ).count()
 
-            trend_data.append({
-                "date": date.strftime("%Y-%m-%d"), 
-                "error_count": error_count,
-                "warning_count": warning_count
-            })
+            warning_count = Log.query.filter(
+                Log.created_at >= start_utc, Log.created_at <= end_utc, Log.level == "WARNING"
+            ).count()
+
+            trend_data.append(
+                {"date": date.strftime("%Y-%m-%d"), "error_count": error_count, "warning_count": warning_count}
+            )
 
         return trend_data
     except Exception as e:
@@ -313,9 +293,7 @@ def get_instance_type_distribution():
     """获取实例类型分布"""
     try:
         type_stats = (
-            db.session.query(
-                Instance.db_type, db.func.count(Instance.id).label("count")
-            )
+            db.session.query(Instance.db_type, db.func.count(Instance.id).label("count"))
             .group_by(Instance.db_type)
             .all()
         )
@@ -330,15 +308,10 @@ def get_task_status_distribution():
     """获取任务状态分布"""
     try:
         status_stats = (
-            db.session.query(Task.last_status, db.func.count(Task.id).label("count"))
-            .group_by(Task.last_status)
-            .all()
+            db.session.query(Task.last_status, db.func.count(Task.id).label("count")).group_by(Task.last_status).all()
         )
 
-        return [
-            {"status": stat.last_status or "unknown", "count": stat.count}
-            for stat in status_stats
-        ]
+        return [{"status": stat.last_status or "unknown", "count": stat.count} for stat in status_stats]
     except Exception as e:
         logging.error(f"获取任务状态分布失败: {e}")
         return []
@@ -354,19 +327,13 @@ def get_sync_trend_data():
         trend_data = []
         for i in range(7):
             date = start_date + timedelta(days=i)
-            count = SyncData.query.filter(
-                db.func.date(SyncData.sync_time) == date
-            ).count()
+            count = SyncData.query.filter(db.func.date(SyncData.sync_time) == date).count()
             trend_data.append({"date": date.strftime("%Y-%m-%d"), "count": count})
 
         return trend_data
     except Exception as e:
         logging.error(f"获取同步趋势数据失败: {e}")
         return []
-
-
-
-
 
 
 def get_system_status():

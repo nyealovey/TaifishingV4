@@ -4,9 +4,10 @@ from app.utils.timezone import now
 泰摸鱼吧 - API路由
 """
 
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.utils.enhanced_logger import log_operation, log_api_request
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import get_jwt_identity, jwt_required
+
+from app.utils.enhanced_logger import log_api_request
 
 api_bp = Blueprint("api", __name__)
 
@@ -17,23 +18,21 @@ def health():
     # 记录API调用
     log_api_request("GET", "/api/health", 200, 0, None, request.remote_addr)
 
-    return jsonify(
-        {"status": "healthy", "message": "泰摸鱼吧服务正常运行", "version": "1.0.0"}
-    )
+    return jsonify({"status": "healthy", "message": "泰摸鱼吧服务正常运行", "version": "1.0.0"})
 
 
 @api_bp.route("/status")
 @jwt_required()
 def status():
     """服务状态"""
-    from app import db, cache
-    from app.models.user import User
+    import time
+
+    import psutil
+
+    from app import cache, db
     from app.models.instance import Instance
     from app.models.task import Task
-    import redis
-    import psutil
-    from datetime import datetime
-    import time
+    from app.models.user import User
 
     start_time = time.time()
 
@@ -60,6 +59,7 @@ def status():
     # 检查APScheduler状态
     try:
         from app import scheduler
+
         if scheduler.running:
             status_info["scheduler"] = "running"
         else:

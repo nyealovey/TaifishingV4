@@ -1,26 +1,24 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 数据库实例管理路由
 """
 
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
-from flask_login import login_required, current_user
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.utils.decorators import view_required, create_required, update_required, delete_required
-from app.models.instance import Instance
-from app.models.credential import Credential
-from app.models.account import Account
+import logging
+
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask_login import current_user, login_required
+
 from app import db
+from app.models.account import Account
+from app.models.credential import Credential
+from app.models.instance import Instance
+from app.services.database_service import DatabaseService
+from app.utils.decorators import create_required, delete_required, update_required, view_required
 from app.utils.enhanced_logger import log_operation
 from app.utils.security import (
     sanitize_form_data,
-    validate_required_fields,
-    validate_username,
     validate_db_type,
+    validate_required_fields,
 )
-from app.services.database_service import DatabaseService
-import logging
 
 # 创建蓝图
 instances_bp = Blueprint("instances", __name__)
@@ -60,9 +58,10 @@ def index():
 
     # 获取所有可用的凭据
     credentials = Credential.query.filter_by(is_active=True).all()
-    
+
     # 获取数据库类型配置
     from app.services.database_type_service import DatabaseTypeService
+
     database_types = DatabaseTypeService.get_active_types()
 
     if request.is_json:
@@ -173,11 +172,7 @@ def create():
                 host=data.get("host").strip(),
                 port=int(data.get("port")),
                 database_name=data.get("database_name", "").strip() or None,
-                credential_id=(
-                    int(data.get("credential_id"))
-                    if data.get("credential_id")
-                    else None
-                ),
+                credential_id=(int(data.get("credential_id")) if data.get("credential_id") else None),
                 description=data.get("description", "").strip(),
                 environment=data.get("environment", "production"),
             )
@@ -202,9 +197,7 @@ def create():
 
             if request.is_json:
                 return (
-                    jsonify(
-                        {"message": "实例创建成功", "instance": instance.to_dict()}
-                    ),
+                    jsonify({"message": "实例创建成功", "instance": instance.to_dict()}),
                     201,
                 )
 
@@ -232,20 +225,21 @@ def create():
 
     # GET请求，显示创建表单
     credentials = Credential.query.filter_by(is_active=True).all()
-    
+
     # 获取可用的数据库类型
     from app.services.database_type_service import DatabaseTypeService
+
     database_types = DatabaseTypeService.get_active_types()
 
     if request.is_json:
-        return jsonify({
-            "credentials": [cred.to_dict() for cred in credentials],
-            "database_types": [dt.to_dict() for dt in database_types]
-        })
+        return jsonify(
+            {
+                "credentials": [cred.to_dict() for cred in credentials],
+                "database_types": [dt.to_dict() for dt in database_types],
+            }
+        )
 
-    return render_template("instances/create.html", 
-                         credentials=credentials, 
-                         database_types=database_types)
+    return render_template("instances/create.html", credentials=credentials, database_types=database_types)
 
 
 @instances_bp.route("/test-connection", methods=["POST"])
@@ -308,9 +302,7 @@ def test_instance_connection():
 
         # 验证凭据ID
         try:
-            credential_id = (
-                int(data.get("credential_id")) if data.get("credential_id") else None
-            )
+            credential_id = int(data.get("credential_id")) if data.get("credential_id") else None
             if credential_id and credential_id <= 0:
                 return (
                     jsonify({"success": False, "error": "凭据ID必须是有效的正整数"}),
@@ -460,9 +452,7 @@ def edit(instance_id):
                 return render_template("instances/edit.html", instance=instance)
 
         # 验证实例名称唯一性（排除当前实例）
-        existing_instance = Instance.query.filter(
-            Instance.name == data.get("name"), Instance.id != instance_id
-        ).first()
+        existing_instance = Instance.query.filter(Instance.name == data.get("name"), Instance.id != instance_id).first()
         if existing_instance:
             error_msg = "实例名称已存在"
             if request.is_json:
@@ -480,9 +470,7 @@ def edit(instance_id):
             if instance.database_name:
                 instance.database_name = instance.database_name.strip() or None
             instance.environment = data.get("environment", instance.environment)
-            instance.credential_id = (
-                int(data.get("credential_id")) if data.get("credential_id") else None
-            )
+            instance.credential_id = int(data.get("credential_id")) if data.get("credential_id") else None
             instance.description = data.get("description", instance.description)
             if data.get("description"):
                 instance.description = data.get("description").strip()
@@ -518,9 +506,7 @@ def edit(instance_id):
             )
 
             if request.is_json:
-                return jsonify(
-                    {"message": "实例更新成功", "instance": instance.to_dict()}
-                )
+                return jsonify({"message": "实例更新成功", "instance": instance.to_dict()})
 
             flash("实例更新成功！", "success")
             return redirect(url_for("instances.detail", instance_id=instance_id))
@@ -546,9 +532,10 @@ def edit(instance_id):
 
     # GET请求，显示编辑表单
     credentials = Credential.query.filter_by(is_active=True).all()
-    
+
     # 获取可用的数据库类型
     from app.services.database_type_service import DatabaseTypeService
+
     database_types = DatabaseTypeService.get_active_types()
 
     if request.is_json:
@@ -556,15 +543,12 @@ def edit(instance_id):
             {
                 "instance": instance.to_dict(),
                 "credentials": [cred.to_dict() for cred in credentials],
-                "database_types": [dt.to_dict() for dt in database_types]
+                "database_types": [dt.to_dict() for dt in database_types],
             }
         )
 
     return render_template(
-        "instances/edit.html", 
-        instance=instance, 
-        credentials=credentials,
-        database_types=database_types
+        "instances/edit.html", instance=instance, credentials=credentials, database_types=database_types
     )
 
 
@@ -698,9 +682,7 @@ def batch_delete():
 
         db.session.commit()
 
-        logging.info(
-            f"批量删除完成：{deleted_count} 个实例，{deleted_accounts} 个账户，{deleted_sync_data} 条同步数据"
-        )
+        logging.info(f"批量删除完成：{deleted_count} 个实例，{deleted_accounts} 个账户，{deleted_sync_data} 条同步数据")
 
         return jsonify(
             {
@@ -729,8 +711,7 @@ def batch_create():
             file = request.files["file"]
             if file and file.filename.endswith(".csv"):
                 return _process_csv_file(file)
-            else:
-                return jsonify({"success": False, "error": "请上传CSV格式文件"}), 400
+            return jsonify({"success": False, "error": "请上传CSV格式文件"}), 400
 
         # 处理JSON格式（保持向后兼容）
         data = request.get_json()
@@ -793,9 +774,7 @@ def _process_instances_data(instances_data):
                 continue
 
             # 检查实例名称是否已存在
-            existing_instance = Instance.query.filter_by(
-                name=instance_data["name"]
-            ).first()
+            existing_instance = Instance.query.filter_by(name=instance_data["name"]).first()
             if existing_instance:
                 errors.append(f"第 {i+1} 个实例名称已存在: {instance_data['name']}")
                 continue
@@ -813,9 +792,7 @@ def _process_instances_data(instances_data):
                 try:
                     credential_id = int(instance_data["credential_id"])
                 except (ValueError, TypeError):
-                    errors.append(
-                        f"第 {i+1} 个实例凭据ID无效: {instance_data['credential_id']}"
-                    )
+                    errors.append(f"第 {i+1} 个实例凭据ID无效: {instance_data['credential_id']}")
                     continue
 
             # 创建实例
@@ -862,14 +839,13 @@ def _process_instances_data(instances_data):
                 "errors": errors,
             }
         )
-    else:
-        return jsonify(
-            {
-                "success": True,
-                "message": f"成功创建 {created_count} 个实例",
-                "created_count": created_count,
-            }
-        )
+    return jsonify(
+        {
+            "success": True,
+            "message": f"成功创建 {created_count} 个实例",
+            "created_count": created_count,
+        }
+    )
 
 
 @instances_bp.route("/export")
@@ -879,8 +855,9 @@ def export_instances():
     """导出实例数据为CSV"""
     import csv
     import io
-    from flask import Response
     from datetime import datetime
+
+    from flask import Response
 
     # 获取查询参数（与index方法保持一致）
     search = request.args.get("search", "", type=str)
@@ -913,47 +890,51 @@ def export_instances():
     writer = csv.writer(output)
 
     # 写入表头
-    writer.writerow([
-        "ID",
-        "实例名称",
-        "数据库类型",
-        "主机地址",
-        "端口",
-        "数据库名",
-        "环境",
-        "状态",
-        "描述",
-        "凭据ID",
-        "同步次数",
-        "最后连接时间",
-        "创建时间",
-        "更新时间"
-    ])
+    writer.writerow(
+        [
+            "ID",
+            "实例名称",
+            "数据库类型",
+            "主机地址",
+            "端口",
+            "数据库名",
+            "环境",
+            "状态",
+            "描述",
+            "凭据ID",
+            "同步次数",
+            "最后连接时间",
+            "创建时间",
+            "更新时间",
+        ]
+    )
 
     # 写入实例数据
     for instance in instances:
-        writer.writerow([
-            instance.id,
-            instance.name,
-            instance.db_type,
-            instance.host,
-            instance.port,
-            instance.database_name or "",
-            instance.environment,
-            "启用" if instance.is_active else "禁用",
-            instance.description or "",
-            instance.credential_id or "",
-            instance.sync_count or 0,
-            instance.last_connected.strftime("%Y-%m-%d %H:%M:%S") if instance.last_connected else "",
-            instance.created_at.strftime("%Y-%m-%d %H:%M:%S") if instance.created_at else "",
-            instance.updated_at.strftime("%Y-%m-%d %H:%M:%S") if instance.updated_at else ""
-        ])
+        writer.writerow(
+            [
+                instance.id,
+                instance.name,
+                instance.db_type,
+                instance.host,
+                instance.port,
+                instance.database_name or "",
+                instance.environment,
+                "启用" if instance.is_active else "禁用",
+                instance.description or "",
+                instance.credential_id or "",
+                instance.sync_count or 0,
+                instance.last_connected.strftime("%Y-%m-%d %H:%M:%S") if instance.last_connected else "",
+                instance.created_at.strftime("%Y-%m-%d %H:%M:%S") if instance.created_at else "",
+                instance.updated_at.strftime("%Y-%m-%d %H:%M:%S") if instance.updated_at else "",
+            ]
+        )
 
     # 创建响应
     output.seek(0)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"instances_export_{timestamp}.csv"
-    
+
     response = Response(
         output.getvalue(),
         mimetype="text/csv; charset=utf-8",
@@ -970,6 +951,7 @@ def download_template():
     """下载CSV模板"""
     import csv
     import io
+
     from flask import Response
 
     # 创建CSV内容
@@ -1261,9 +1243,7 @@ def api_test_instance_connection():
 
         # 验证凭据ID
         try:
-            credential_id = (
-                int(data.get("credential_id")) if data.get("credential_id") else None
-            )
+            credential_id = int(data.get("credential_id")) if data.get("credential_id") else None
             if credential_id and credential_id <= 0:
                 return (
                     jsonify({"success": False, "error": "凭据ID必须是有效的正整数"}),
@@ -1320,9 +1300,7 @@ def get_instance_statistics():
 
         # 数据库类型统计
         db_type_stats = (
-            db.session.query(
-                Instance.db_type, db.func.count(Instance.id).label("count")
-            )
+            db.session.query(Instance.db_type, db.func.count(Instance.id).label("count"))
             .group_by(Instance.db_type)
             .all()
         )
@@ -1358,11 +1336,7 @@ def get_instance_statistics():
         ]
 
         # 最近连接的实例（按最后连接时间排序）
-        recent_connections = (
-            Instance.query.order_by(Instance.last_connected.desc().nullslast())
-            .limit(10)
-            .all()
-        )
+        recent_connections = Instance.query.order_by(Instance.last_connected.desc().nullslast()).limit(10).all()
 
         # 数据库类型数量
         db_types_count = len(db_type_stats)
@@ -1372,12 +1346,8 @@ def get_instance_statistics():
             "active_instances": active_instances,
             "inactive_instances": inactive_instances,
             "db_types_count": db_types_count,
-            "db_type_stats": [
-                {"db_type": stat.db_type, "count": stat.count} for stat in db_type_stats
-            ],
-            "port_stats": [
-                {"port": stat.port, "count": stat.count} for stat in port_stats
-            ],
+            "db_type_stats": [{"db_type": stat.db_type, "count": stat.count} for stat in db_type_stats],
+            "port_stats": [{"port": stat.port, "count": stat.count} for stat in port_stats],
             "version_stats": version_stats,
             "recent_connections": recent_connections,
         }
@@ -1414,9 +1384,7 @@ def get_default_version(db_type):
 def get_account_permissions(instance_id, account_id):
     """获取账户权限详情"""
     instance = Instance.query.get_or_404(instance_id)
-    account = Account.query.filter_by(
-        id=account_id, instance_id=instance_id
-    ).first_or_404()
+    account = Account.query.filter_by(id=account_id, instance_id=instance_id).first_or_404()
 
     try:
         from app.services.database_service import DatabaseService

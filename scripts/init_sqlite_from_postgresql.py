@@ -4,34 +4,33 @@ SQLite 数据库初始化脚本
 基于 init_postgresql.sql 文档重新初始化 SQLite 数据库
 """
 
-import sqlite3
 import os
+import sqlite3
 import sys
 from datetime import datetime
-import json
 
 # 添加项目根目录到 Python 路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def init_sqlite_database():
     """初始化 SQLite 数据库"""
-    
+
     # 数据库文件路径
     db_path = "userdata/taifish_dev.db"
-    
+
     # 备份现有数据库
     if os.path.exists(db_path):
         backup_path = f"userdata/backups/taifish_dev_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
         os.makedirs("userdata/backups", exist_ok=True)
         os.rename(db_path, backup_path)
         print(f"✅ 已备份现有数据库到: {backup_path}")
-    
+
     # 创建新的数据库连接
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    
+
     print("🚀 开始初始化 SQLite 数据库...")
-    
+
     try:
         # 1. 创建用户表
         print("📝 创建用户表...")
@@ -46,7 +45,7 @@ def init_sqlite_database():
             is_active BOOLEAN NOT NULL
         )
         ''')
-        
+
         # 2. 创建数据库类型配置表
         print("📝 创建数据库类型配置表...")
         cursor.execute('''
@@ -69,7 +68,7 @@ def init_sqlite_database():
             updated_at TIMESTAMP
         )
         ''')
-        
+
         # 3. 创建凭据表
         print("📝 创建凭据表...")
         cursor.execute('''
@@ -89,7 +88,7 @@ def init_sqlite_database():
             deleted_at TIMESTAMP
         )
         ''')
-        
+
         # 4. 创建实例表
         print("📝 创建实例表...")
         cursor.execute('''
@@ -115,7 +114,7 @@ def init_sqlite_database():
             FOREIGN KEY (credential_id) REFERENCES credentials(id)
         )
         ''')
-        
+
         # 5. 创建账户表
         print("📝 创建账户表...")
         cursor.execute('''
@@ -145,7 +144,7 @@ def init_sqlite_database():
             FOREIGN KEY (instance_id) REFERENCES instances(id)
         )
         ''')
-        
+
         # 6. 创建账户分类表
         print("📝 创建账户分类表...")
         cursor.execute('''
@@ -162,7 +161,7 @@ def init_sqlite_database():
             updated_at TIMESTAMP
         )
         ''')
-        
+
         # 7. 创建分类规则表
         print("📝 创建分类规则表...")
         cursor.execute('''
@@ -178,7 +177,7 @@ def init_sqlite_database():
             FOREIGN KEY (classification_id) REFERENCES account_classifications(id)
         )
         ''')
-        
+
         # 8. 创建账户分类分配表
         print("📝 创建账户分类分配表...")
         cursor.execute('''
@@ -199,7 +198,7 @@ def init_sqlite_database():
             UNIQUE(account_id, classification_id)
         )
         ''')
-        
+
         # 9. 创建权限配置表
         print("📝 创建权限配置表...")
         cursor.execute('''
@@ -216,7 +215,7 @@ def init_sqlite_database():
             UNIQUE(db_type, category, permission_name)
         )
         ''')
-        
+
         # 10. 创建任务表
         print("📝 创建任务表...")
         cursor.execute('''
@@ -241,7 +240,7 @@ def init_sqlite_database():
             updated_at TIMESTAMP
         )
         ''')
-        
+
         # 11. 创建同步数据表
         print("📝 创建同步数据表...")
         cursor.execute('''
@@ -264,7 +263,7 @@ def init_sqlite_database():
             FOREIGN KEY (task_id) REFERENCES tasks(id)
         )
         ''')
-        
+
         # 12. 创建账户变化表
         print("📝 创建账户变化表...")
         cursor.execute('''
@@ -279,7 +278,7 @@ def init_sqlite_database():
             FOREIGN KEY (instance_id) REFERENCES instances(id)
         )
         ''')
-        
+
         # 13. 创建日志表
         print("📝 创建日志表...")
         cursor.execute('''
@@ -298,7 +297,7 @@ def init_sqlite_database():
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
         ''')
-        
+
         # 14. 创建全局参数表
         print("📝 创建全局参数表...")
         cursor.execute('''
@@ -313,7 +312,7 @@ def init_sqlite_database():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         ''')
-        
+
         # 创建索引
         print("📝 创建索引...")
         indexes = [
@@ -353,16 +352,16 @@ def init_sqlite_database():
             "CREATE INDEX IF NOT EXISTS idx_logs_source ON logs(source)",
             "CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at)"
         ]
-        
+
         for index_sql in indexes:
             cursor.execute(index_sql)
-        
+
         print("✅ 数据库表结构创建完成！")
-        
+
         # 提交事务
         conn.commit()
         print("🎉 SQLite 数据库初始化完成！")
-        
+
     except Exception as e:
         print(f"❌ 初始化失败: {e}")
         conn.rollback()

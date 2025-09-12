@@ -1,170 +1,125 @@
-# 泰摸鱼吧生产环境Makefile
-# 提供便捷的Docker操作命令
+# Makefile for TaifishingV4 代码质量工具
 
-.PHONY: help build up down restart logs shell backup restore clean
+.PHONY: help install check format fix lint type security clean test quality
 
 # 默认目标
 help:
-	@echo "🐟 泰摸鱼吧生产环境管理命令"
-	@echo "=========================================="
-	@echo "📦 构建和部署:"
-	@echo "  make build     - 构建Docker镜像"
-	@echo "  make up        - 启动所有服务"
-	@echo "  make down      - 停止所有服务"
-	@echo "  make restart   - 重启所有服务"
+	@echo "TaifishingV4 代码质量工具"
+	@echo "=========================="
 	@echo ""
-	@echo "🔍 监控和调试:"
-	@echo "  make logs      - 查看所有服务日志"
-	@echo "  make logs-app  - 查看应用日志"
-	@echo "  make logs-db   - 查看数据库日志"
-	@echo "  make shell     - 进入应用容器"
-	@echo "  make shell-db  - 进入数据库容器"
+	@echo "可用命令:"
+	@echo "  install    安装开发依赖"
+	@echo "  check      运行所有质量检查"
+	@echo "  format     格式化代码 (Black + isort)"
+	@echo "  fix        自动修复可修复的问题"
+	@echo "  lint       运行 Ruff 代码检查"
+	@echo "  type       运行 Mypy 类型检查"
+	@echo "  security   运行 Bandit 安全扫描"
+	@echo "  quality    运行快速质量检查脚本"
+	@echo "  clean      清理临时文件"
+	@echo "  test       运行测试"
 	@echo ""
-	@echo "💾 数据管理:"
-	@echo "  make backup    - 备份数据库"
-	@echo "  make restore   - 恢复数据库"
-	@echo "  make init-db   - 初始化数据库"
-	@echo ""
-	@echo "🧹 清理:"
-	@echo "  make clean     - 清理所有容器和镜像"
-	@echo "  make clean-volumes - 清理数据卷"
-	@echo "=========================================="
 
-# 构建镜像
-build:
-	@echo "🔨 构建Docker镜像..."
-	docker compose build --no-cache
+# 安装开发依赖
+install:
+	@echo "📦 安装开发依赖..."
+	uv sync --dev
+	@echo "✅ 依赖安装完成"
 
-# 启动服务
-up:
-	@echo "🚀 启动所有服务..."
-	docker compose up -d
-	@echo "✅ 服务启动完成"
+# 运行所有质量检查
+check: format lint type security
+	@echo "🎉 所有质量检查完成！"
 
-# 停止服务
-down:
-	@echo "🛑 停止所有服务..."
-	docker compose down
-	@echo "✅ 服务停止完成"
+# 格式化代码
+format:
+	@echo "🎨 格式化代码..."
+	uv run black app/
+	uv run isort app/
+	@echo "✅ 代码格式化完成"
 
-# 重启服务
-restart: down up
-	@echo "🔄 服务重启完成"
+# 自动修复问题
+fix:
+	@echo "🔧 自动修复问题..."
+	uv run ruff check app/ --fix
+	uv run black app/
+	uv run isort app/
+	@echo "✅ 自动修复完成"
 
-# 查看日志
-logs:
-	@echo "📋 查看所有服务日志..."
-	docker compose logs -f
+# Ruff 代码检查
+lint:
+	@echo "🔍 运行 Ruff 代码检查..."
+	uv run ruff check app/
+	@echo "✅ Ruff 检查完成"
 
-# 查看应用日志
-logs-app:
-	@echo "📋 查看应用日志..."
-	docker compose logs -f app
+# Mypy 类型检查
+type:
+	@echo "🔍 运行 Mypy 类型检查..."
+	uv run mypy app/
+	@echo "✅ Mypy 检查完成"
 
-# 查看数据库日志
-logs-db:
-	@echo "📋 查看数据库日志..."
-	docker compose logs -f postgres
+# Bandit 安全扫描
+security:
+	@echo "🔒 运行 Bandit 安全扫描..."
+	uv run bandit -r app/ -f json -o bandit-report.json
+	@echo "✅ Bandit 扫描完成"
 
-# 进入应用容器
-shell:
-	@echo "🐚 进入应用容器..."
-	docker compose exec app /bin/bash
+# 快速质量检查
+quality:
+	@echo "⚡ 运行快速质量检查..."
+	python scripts/quality_check.py
 
-# 进入数据库容器
-shell-db:
-	@echo "🐚 进入数据库容器..."
-	docker compose exec postgres psql -U taifish_user -d taifish_prod
-
-# 备份数据库
-backup:
-	@echo "💾 备份数据库..."
-	@mkdir -p backups
-	docker compose exec postgres pg_dump -U taifish_user taifish_prod > backups/taifish_backup_$(shell date +%Y%m%d_%H%M%S).sql
-	@echo "✅ 数据库备份完成"
-
-# 恢复数据库
-restore:
-	@echo "📥 恢复数据库..."
-	@if [ -z "$(FILE)" ]; then \
-		echo "❌ 请指定备份文件: make restore FILE=backups/taifish_backup_20240101_120000.sql"; \
-		exit 1; \
-	fi
-	docker compose exec -T postgres psql -U taifish_user -d taifish_prod < $(FILE)
-	@echo "✅ 数据库恢复完成"
-
-# 初始化数据库
-init-db:
-	@echo "🗄️ 初始化数据库..."
-	docker compose exec app python -c "from app import create_app, db; app = create_app(); app.app_context().push(); db.create_all(); print('数据库表创建完成')"
-	docker compose exec app python scripts/init_permission_config.py
-	docker compose exec app python scripts/init_default_classification_rules.py
-	docker compose exec app python scripts/create_admin_user.py
-	@echo "✅ 数据库初始化完成"
-
-# 清理容器和镜像
+# 清理临时文件
 clean:
-	@echo "🧹 清理容器和镜像..."
-	docker compose down --rmi all --volumes --remove-orphans
-	docker system prune -f
+	@echo "🧹 清理临时文件..."
+	rm -rf .mypy_cache/
+	rm -rf .ruff_cache/
+	rm -rf .pytest_cache/
+	rm -rf __pycache__/
+	rm -rf app/__pycache__/
+	rm -rf app/*/__pycache__/
+	rm -rf *.pyc
+	rm -rf app/*.pyc
+	rm -rf app/*/*.pyc
+	rm -rf bandit-report.json
+	rm -rf mypy-report/
+	rm -rf ruff-report.json
 	@echo "✅ 清理完成"
 
-# 清理数据卷
-clean-volumes:
-	@echo "🧹 清理数据卷..."
-	docker compose down -v
-	docker volume prune -f
-	@echo "✅ 数据卷清理完成"
+# 运行测试
+test:
+	@echo "🧪 运行测试..."
+	uv run pytest tests/ -v
+	@echo "✅ 测试完成"
 
-# 查看服务状态
-status:
-	@echo "📊 服务状态:"
-	docker compose ps
+# 安装 pre-commit hooks
+install-hooks:
+	@echo "🪝 安装 pre-commit hooks..."
+	uv run pre-commit install
+	@echo "✅ pre-commit hooks 安装完成"
 
-# 查看资源使用情况
-stats:
-	@echo "📊 资源使用情况:"
-	docker stats --no-stream
+# 更新 pre-commit hooks
+update-hooks:
+	@echo "🔄 更新 pre-commit hooks..."
+	uv run pre-commit autoupdate
+	@echo "✅ pre-commit hooks 更新完成"
 
-# 更新服务
-update:
-	@echo "🔄 更新服务..."
-	git pull
-	docker compose build --no-cache
-	docker compose up -d
-	@echo "✅ 服务更新完成"
+# 运行 pre-commit 检查
+pre-commit:
+	@echo "🪝 运行 pre-commit 检查..."
+	uv run pre-commit run --all-files
+	@echo "✅ pre-commit 检查完成"
 
-# 健康检查
-health:
-	@echo "🏥 健康检查..."
-	@curl -f http://localhost/health || echo "❌ 健康检查失败"
-	@docker compose exec postgres pg_isready -U taifish_user -d taifish_prod || echo "❌ 数据库连接失败"
-	@docker compose exec redis redis-cli ping || echo "❌ Redis连接失败"
-	@echo "✅ 健康检查完成"
+# 生成报告
+reports:
+	@echo "📊 生成质量报告..."
+	@mkdir -p reports
+	uv run ruff check app/ --output-format=json > reports/ruff-report.json
+	uv run mypy app/ --html-report reports/mypy-report/
+	uv run bandit -r app/ -f json -o reports/bandit-report.json
+	@echo "✅ 报告生成完成，查看 reports/ 目录"
 
-# 生产环境部署
-deploy-prod:
-	@echo "🚀 生产环境部署..."
-	@if [ ! -f .env.production ]; then \
-		echo "❌ 请先创建 .env.production 文件"; \
-		exit 1; \
-	fi
-	cp .env.production .env
-	make build
-	make up
-	sleep 30
-	make init-db
-	@echo "✅ 生产环境部署完成"
-
-# 开发环境部署
-deploy-dev:
-	@echo "🛠️ 开发环境部署..."
-	@if [ ! -f .env ]; then \
-		cp env.example .env; \
-		echo "📝 已创建 .env 文件，请根据需要修改"; \
-	fi
-	make build
-	make up
-	sleep 30
-	make init-db
-	@echo "✅ 开发环境部署完成"
+# 开发环境设置
+dev-setup: install install-hooks
+	@echo "🚀 开发环境设置完成！"
+	@echo "现在可以开始开发了。"
+	@echo "提交代码时会自动运行质量检查。"

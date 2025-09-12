@@ -3,7 +3,6 @@
 统一处理手动同步和定时任务的账户同步逻辑
 """
 
-import pymysql
 import logging
 
 # 可选导入数据库驱动
@@ -21,62 +20,58 @@ try:
     import oracledb
 except ImportError:
     oracledb = None
-from typing import Dict, Any, Optional, List, Tuple
-from app.models import Instance, Credential
-from app.models.account import Account
+from typing import Any
+
 from app import db
-from datetime import datetime
-from app.utils.timezone import now
-from app.utils.enhanced_logger import sync_logger, log_sync_error, log_exception
+from app.models import Instance
+from app.models.account import Account
 from app.services.database_filter_manager import database_filter_manager
+from app.utils.enhanced_logger import log_sync_error, sync_logger
+from app.utils.timezone import now
 
 
 class AccountSyncService:
     """账户同步服务 - 统一处理所有账户同步逻辑"""
-    
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-    
-    def sync_accounts(
-        self, instance: Instance, sync_type: str = "batch"
-    ) -> Dict[str, Any]:
+
+    def sync_accounts(self, instance: Instance, sync_type: str = "batch") -> dict[str, Any]:
         """
         同步账户信息 - 统一入口
-        
+
         Args:
             instance: 数据库实例
             sync_type: 同步类型 ('batch' 或 'task')
-            
+
         Returns:
             Dict: 同步结果
         """
         try:
             sync_logger.info(f"开始账户同步: {instance.name} ({instance.db_type})", "account_sync_service")
-            
+
             # 获取数据库连接
             conn = self._get_connection(instance)
             if not conn:
                 error_msg = "无法获取数据库连接"
-                sync_logger.error(error_msg, "account_sync_service", 
-                                f"实例: {instance.name}, 类型: {instance.db_type}")
+                sync_logger.error(error_msg, "account_sync_service", f"实例: {instance.name}, 类型: {instance.db_type}")
                 return {"success": False, "error": error_msg}
-            
+
             # 记录同步前的账户数量
             before_count = Account.query.filter_by(instance_id=instance.id).count()
-            sync_logger.info(f"同步前账户数量: {before_count}", "account_sync_service", 
-                           f"实例: {instance.name}")
-            
+            sync_logger.info(f"同步前账户数量: {before_count}", "account_sync_service", f"实例: {instance.name}")
+
             # 获取同步前的账户快照
-            before_accounts = self._get_account_snapshot(instance)
-            
+            self._get_account_snapshot(instance)
+
             synced_count = 0
             added_count = 0
             removed_count = 0
             modified_count = 0
-            
+
             # 根据数据库类型执行同步
             sync_logger.info(f"开始同步 {instance.db_type} 数据库账户 - 实例: {instance.name}", "account_sync_service")
-            
+
             if instance.db_type == "mysql":
                 result = self._sync_mysql_accounts(instance, conn)
             elif instance.db_type == "postgresql":
@@ -89,8 +84,7 @@ class AccountSyncService:
                 result = self._sync_oracle_accounts(instance, conn)
             else:
                 error_msg = f"不支持的数据库类型: {instance.db_type}"
-                sync_logger.warning(error_msg, "account_sync_service", 
-                                  f"实例: {instance.name}")
+                sync_logger.warning(error_msg, "account_sync_service", f"实例: {instance.name}")
                 return {
                     "success": False,
                     "error": error_msg,
@@ -100,15 +94,15 @@ class AccountSyncService:
             added_count = result["added_count"]
             removed_count = result["removed_count"]
             modified_count = result["modified_count"]
-            
+
             # 计算变化
             after_count = Account.query.filter_by(instance_id=instance.id).count()
             net_change = after_count - before_count
 
             # 创建同步报告记录（定时任务跳过单个实例记录，只创建聚合记录）
             if sync_type != "task":
-                from app.models.sync_data import SyncData
                 from app import db
+                from app.models.sync_data import SyncData
 
                 sync_record = SyncData(
                     sync_type=sync_type,  # 手动同步或任务同步
@@ -131,7 +125,7 @@ class AccountSyncService:
                 )
                 db.session.add(sync_record)
                 db.session.commit()
-            
+
             return {
                 "success": True,
                 "message": f"成功同步 {synced_count} 个{instance.db_type.upper()}账户",
@@ -141,16 +135,20 @@ class AccountSyncService:
                 "modified_count": modified_count,
                 "net_change": net_change,
             }
-            
+
         except Exception as e:
             # 记录详细的错误日志
-            log_sync_error("账户同步", e, "account_sync_service", 
-                          f"实例: {instance.name}, 类型: {instance.db_type}, 同步类型: {sync_type}")
+            log_sync_error(
+                "账户同步",
+                e,
+                "account_sync_service",
+                f"实例: {instance.name}, 类型: {instance.db_type}, 同步类型: {sync_type}",
+            )
 
             # 创建失败的同步报告记录（定时任务跳过单个实例记录，只创建聚合记录）
             if sync_type != "task":
-                from app.models.sync_data import SyncData
                 from app import db
+                from app.models.sync_data import SyncData
 
                 sync_record = SyncData(
                     sync_type=sync_type,  # 手动同步或任务同步
@@ -178,42 +176,42 @@ class AccountSyncService:
                 "error": f"{instance.db_type.upper()}账户同步失败: {str(e)}",
                 "synced_count": 0,
             }
-    
+
     def _get_connection(self, instance: Instance):
         """获取数据库连接 - 使用统一的连接工厂"""
         try:
             # 使用统一的连接工厂创建连接
             from app.services.connection_factory import ConnectionFactory
+
             connection_obj = ConnectionFactory.create_connection(instance)
-            
+
             if not connection_obj:
                 self.logger.error(f"不支持的数据库类型: {instance.db_type}")
                 return None
-            
+
             # 建立连接
             if connection_obj.connect():
                 return connection_obj.connection
-            else:
-                self.logger.error(f"无法建立{instance.db_type}连接")
-                return None
-                
+            self.logger.error(f"无法建立{instance.db_type}连接")
+            return None
+
         except Exception as e:
             self.logger.error(f"数据库连接失败: {str(e)}")
             return None
-    
+
     def _get_sqlserver_pyodbc_connection(self, instance: Instance):
         """获取SQL Server pyodbc连接字符串"""
         if pyodbc is None:
             return None
-        
+
         # 尝试不同的ODBC驱动
         drivers = [
             "ODBC Driver 17 for SQL Server",
-            "ODBC Driver 13 for SQL Server", 
+            "ODBC Driver 13 for SQL Server",
             "SQL Server",
             "SQL Server Native Client 11.0",
         ]
-        
+
         for driver in drivers:
             try:
                 # 检查驱动是否可用
@@ -227,9 +225,9 @@ class AccountSyncService:
                     )
             except:
                 continue
-        
+
         return None
-    
+
     def _get_sqlserver_pymssql_connection(self, instance: Instance):
         """获取SQL Server pymssql连接参数"""
         try:
@@ -244,8 +242,8 @@ class AccountSyncService:
             }
         except ImportError:
             return None
-    
-    def _get_account_snapshot(self, instance: Instance) -> Dict[str, Dict]:
+
+    def _get_account_snapshot(self, instance: Instance) -> dict[str, dict]:
         """获取同步前的账户快照"""
         before_accounts = {}
         existing_accounts = Account.query.filter_by(instance_id=instance.id).all()
@@ -260,25 +258,21 @@ class AccountSyncService:
                 "plugin": account.plugin,
                 "password_expired": account.password_expired,
                 "password_last_changed": (
-                    account.password_last_changed.isoformat()
-                    if account.password_last_changed
-                    else None
+                    account.password_last_changed.isoformat() if account.password_last_changed else None
                 ),
                 "is_locked": account.is_locked,
                 "is_active": account.is_active,
-                "last_login": (
-                    account.last_login.isoformat() if account.last_login else None
-                ),
+                "last_login": (account.last_login.isoformat() if account.last_login else None),
             }
         return before_accounts
-    
-    def _sync_mysql_accounts(self, instance: Instance, conn) -> Dict[str, int]:
+
+    def _sync_mysql_accounts(self, instance: Instance, conn) -> dict[str, int]:
         """同步MySQL账户"""
         cursor = conn.cursor()
-        
+
         # 获取MySQL过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions('mysql', 'User')
-        
+        filter_conditions = database_filter_manager.get_sql_filter_conditions("mysql", "User")
+
         # 查询用户信息 - 包含完整的账户信息
         cursor.execute(
             f"""
@@ -304,13 +298,13 @@ class AccountSyncService:
             ORDER BY User, Host
         """
         )
-        
+
         accounts = cursor.fetchall()
         synced_count = 0
         added_count = 0
         removed_count = 0
         modified_count = 0
-        
+
         for account_data in accounts:
             (
                 username,
@@ -330,21 +324,19 @@ class AccountSyncService:
                 can_drop,
                 is_superuser,
             ) = account_data
-            
+
             # 查找或创建账户记录
-            account = Account.query.filter_by(
-                instance_id=instance.id, username=username, host=host
-            ).first()
-            
+            account = Account.query.filter_by(instance_id=instance.id, username=username, host=host).first()
+
             # 处理插件信息
             plugin_name = plugin if plugin else "mysql_native_password"
-            
+
             # 处理密码过期状态
             is_password_expired = password_expired == "Y" if password_expired else False
-            
+
             # 处理锁定状态
             is_locked = account_locked == "Y" if account_locked else False
-            
+
             # 处理密码最后修改时间
             password_changed = None
             if password_last_changed:
@@ -352,10 +344,10 @@ class AccountSyncService:
                     password_changed = password_last_changed
                 except:
                     password_changed = None
-            
+
             # 获取完整权限信息
             permissions_info = self._get_mysql_account_permissions(conn, username, host)
-            
+
             if not account:
                 account = Account(
                     instance_id=instance.id,
@@ -398,7 +390,7 @@ class AccountSyncService:
                 if account.is_active != (not is_locked):
                     account.is_active = not is_locked
                     has_changes = True
-                
+
                 # 更新权限信息
                 if account.permissions != permissions_info["permissions_json"]:
                     account.permissions = permissions_info["permissions_json"]
@@ -409,13 +401,13 @@ class AccountSyncService:
                 if account.can_grant != permissions_info["can_grant"]:
                     account.can_grant = permissions_info["can_grant"]
                     has_changes = True
-                
+
                 if has_changes:
                     account.updated_at = now()
                     modified_count += 1
-            
+
             synced_count += 1
-        
+
         # 删除服务器端不存在的本地账户
         server_accounts = set()
         for account_data in accounts:
@@ -438,10 +430,10 @@ class AccountSyncService:
                 is_superuser,
             ) = account_data
             server_accounts.add((username, host))
-        
+
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
         removed_accounts = []
-        
+
         for local_account in local_accounts:
             if (local_account.username, local_account.host) not in server_accounts:
                 removed_accounts.append(
@@ -463,10 +455,10 @@ class AccountSyncService:
                 )
                 db.session.delete(local_account)
                 removed_count += 1
-        
+
         db.session.commit()
         cursor.close()
-        
+
         return {
             "synced_count": synced_count,
             "added_count": added_count,
@@ -474,17 +466,17 @@ class AccountSyncService:
             "modified_count": modified_count,
             "removed_accounts": removed_accounts,
         }
-    
-    def _sync_postgresql_accounts(self, instance: Instance, conn) -> Dict[str, int]:
+
+    def _sync_postgresql_accounts(self, instance: Instance, conn) -> dict[str, int]:
         """同步PostgreSQL账户"""
         cursor = conn.cursor()
-        
+
         # 获取PostgreSQL过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions('postgresql', 'rolname')
-        
+        filter_conditions = database_filter_manager.get_sql_filter_conditions("postgresql", "rolname")
+
         # 查询角色信息（PostgreSQL中用户和角色是同一个概念）
         cursor.execute(
-                f"""
+            f"""
             SELECT 
                     rolname as username,
                     rolsuper as is_superuser,
@@ -503,8 +495,8 @@ class AccountSyncService:
                 WHERE {filter_conditions}
                 ORDER BY rolname
             """
-            )
-        
+        )
+
         accounts = cursor.fetchall()
         synced_count = 0
         added_count = 0
@@ -513,7 +505,7 @@ class AccountSyncService:
 
         # 记录服务器端的账户
         server_accounts = set()
-        
+
         for account_data in accounts:
             (
                 username,
@@ -540,7 +532,7 @@ class AccountSyncService:
             if valid_until is not None:
                 try:
                     # 检查是否为'infinity'字符串
-                    if str(valid_until).lower() == 'infinity':
+                    if str(valid_until).lower() == "infinity":
                         password_expired = False
                     else:
                         password_expired = valid_until < now()
@@ -553,14 +545,14 @@ class AccountSyncService:
 
             # 检查账户是否活跃
             is_active = can_login and not password_expired
-            
+
             # 查找或创建账户记录
             account = Account.query.filter_by(
                 instance_id=instance.id,
                 username=username,
                 host="",  # PostgreSQL没有主机概念
             ).first()
-            
+
             if not account:
                 account = Account(
                     instance_id=instance.id,
@@ -599,14 +591,12 @@ class AccountSyncService:
                 if changes:
                     account.updated_at = now()
                     modified_count += 1
-            
+
             synced_count += 1
-        
+
             # 获取账户权限
             try:
-                permissions = self._get_postgresql_account_permissions(
-                    instance, conn, username
-                )
+                permissions = self._get_postgresql_account_permissions(instance, conn, username)
                 if permissions:
                     import json
 
@@ -616,9 +606,7 @@ class AccountSyncService:
                     account.can_grant = permissions.get("can_grant", False)
                     # 标记有权限更新
                     changes = True
-                    self.logger.info(
-                        f"PostgreSQL账户 {username} 权限已更新: {permissions}"
-                    )
+                    self.logger.info(f"PostgreSQL账户 {username} 权限已更新: {permissions}")
             except Exception as e:
                 self.logger.warning(f"获取PostgreSQL账户 {username} 权限失败: {e}")
 
@@ -628,10 +616,10 @@ class AccountSyncService:
             if (account.username, account.host) not in server_accounts:
                 db.session.delete(account)
                 removed_count += 1
-        
+
         db.session.commit()
         cursor.close()
-        
+
         return {
             "synced_count": synced_count,
             "added_count": added_count,
@@ -639,11 +627,8 @@ class AccountSyncService:
             "modified_count": modified_count,
         }
 
-    def _get_postgresql_account_permissions(
-        self, instance: Instance, conn, username: str
-    ) -> Dict[str, Any]:
+    def _get_postgresql_account_permissions(self, instance: Instance, conn, username: str) -> dict[str, Any]:
         """获取PostgreSQL账户权限 - 根据新的权限配置结构"""
-        import json
 
         cursor = conn.cursor()
         permissions = {
@@ -676,7 +661,7 @@ class AccountSyncService:
                     AND r.rolname LIKE %s
                     ORDER BY r.rolname
                 """,
-                    (username, 'pg_%'),
+                    (username, "pg_%"),
                 )
 
                 predefined_roles = cursor.fetchall()
@@ -685,9 +670,7 @@ class AccountSyncService:
                         if role and len(role) > 0:
                             permissions["predefined_roles"].append(role[0])
             except Exception as e:
-                self.logger.warning(
-                    f"获取PostgreSQL用户 {username} 预定义角色失败: {e}"
-                )
+                self.logger.warning(f"获取PostgreSQL用户 {username} 预定义角色失败: {e}")
 
             # 获取角色属性
             try:
@@ -736,9 +719,9 @@ class AccountSyncService:
                 # 获取所有数据库列表
                 cursor.execute("SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname")
                 databases = [row[0] for row in cursor.fetchall()]
-                
+
                 self.logger.info(f"PostgreSQL用户 {username} 权限查询使用默认数据库: postgres")
-                
+
                 # 为每个数据库查询权限
                 for db_name in databases:
                     try:
@@ -762,20 +745,17 @@ class AccountSyncService:
                                 db_privileges.append("CREATE")
                             if temp:
                                 db_privileges.append("TEMPORARY")
-                            
+
                             if db_privileges:
-                                permissions["database_privileges"].append({
-                                    "database": db_name,
-                                    "privileges": db_privileges
-                                })
+                                permissions["database_privileges"].append(
+                                    {"database": db_name, "privileges": db_privileges}
+                                )
                     except Exception as db_error:
                         self.logger.debug(f"查询数据库 {db_name} 的权限失败: {db_error}")
                         continue
-                        
+
             except Exception as e:
-                self.logger.warning(
-                    f"获取PostgreSQL用户 {username} 数据库权限失败: {e}"
-                )
+                self.logger.warning(f"获取PostgreSQL用户 {username} 数据库权限失败: {e}")
 
             # 获取表空间权限
             try:
@@ -793,9 +773,7 @@ class AccountSyncService:
                     if create:
                         permissions["tablespace_privileges"].append("CREATE")
             except Exception as e:
-                self.logger.warning(
-                    f"获取PostgreSQL用户 {username} 表空间权限失败: {e}"
-                )
+                self.logger.warning(f"获取PostgreSQL用户 {username} 表空间权限失败: {e}")
 
             # 确定是否为超级用户和是否可以授权
             is_superuser = "SUPERUSER" in permissions["role_attributes"]
@@ -816,13 +794,13 @@ class AccountSyncService:
 
         return permissions
 
-    def _sync_sqlserver_accounts(self, instance: Instance, conn) -> Dict[str, int]:
+    def _sync_sqlserver_accounts(self, instance: Instance, conn) -> dict[str, int]:
         """同步SQL Server账户"""
         cursor = conn.cursor()
-        
+
         # 获取SQL Server过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions('sqlserver', 'name')
-        
+        filter_conditions = database_filter_manager.get_sql_filter_conditions("sqlserver", "name")
+
         # 查询用户信息 - 只同步sa和用户创建的账户，排除内置账户
         cursor.execute(
             f"""
@@ -840,13 +818,13 @@ class AccountSyncService:
             ORDER BY name
         """
         )
-        
+
         accounts = cursor.fetchall()
         synced_count = 0
         added_count = 0
         removed_count = 0
         modified_count = 0
-        
+
         for account_data in accounts:
             (
                 username,
@@ -862,12 +840,10 @@ class AccountSyncService:
 
             # 获取权限信息
             permissions_info = self._get_sqlserver_account_permissions(conn, username)
-            
+
             # 查找或创建账户记录
-            account = Account.query.filter_by(
-                instance_id=instance.id, username=username
-            ).first()
-            
+            account = Account.query.filter_by(instance_id=instance.id, username=username).first()
+
             if not account:
                 account = Account(
                     instance_id=instance.id,
@@ -916,9 +892,9 @@ class AccountSyncService:
                 if has_changes:
                     account.updated_at = now()
                     modified_count += 1
-            
+
             synced_count += 1
-        
+
         # 删除服务器端不存在的本地账户
         server_accounts = set()
         for account_data in accounts:
@@ -931,10 +907,10 @@ class AccountSyncService:
                 modified_date,
             ) = account_data
             server_accounts.add(username)
-        
+
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
         removed_accounts = []
-        
+
         for local_account in local_accounts:
             if local_account.username not in server_accounts:
                 removed_accounts.append(
@@ -956,10 +932,10 @@ class AccountSyncService:
                 )
                 db.session.delete(local_account)
                 removed_count += 1
-        
+
         db.session.commit()
         cursor.close()
-        
+
         return {
             "synced_count": synced_count,
             "added_count": added_count,
@@ -967,15 +943,15 @@ class AccountSyncService:
             "modified_count": modified_count,
             "removed_accounts": removed_accounts,
         }
-    
-    def _sync_oracle_accounts(self, instance: Instance, conn) -> Dict[str, int]:
+
+    def _sync_oracle_accounts(self, instance: Instance, conn) -> dict[str, int]:
         """同步Oracle账户"""
         print("DEBUG: 开始Oracle账户同步 - 函数被调用")
         cursor = conn.cursor()
-        
+
         # 获取Oracle过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions('oracle', 'username')
-        
+        filter_conditions = database_filter_manager.get_sql_filter_conditions("oracle", "username")
+
         # 查询用户信息
         cursor.execute(
             f"""
@@ -992,7 +968,7 @@ class AccountSyncService:
             ORDER BY username
         """
         )
-        
+
         accounts = cursor.fetchall()
         synced_count = 0
         added_count = 0
@@ -1001,7 +977,7 @@ class AccountSyncService:
 
         # 记录服务器端的账户
         server_accounts = set()
-        
+
         for account_data in accounts:
             (
                 username,
@@ -1018,12 +994,10 @@ class AccountSyncService:
 
             # 获取权限信息
             permissions_info = self._get_oracle_account_permissions(conn, username)
-            
+
             # 查找或创建账户记录
-            account = Account.query.filter_by(
-                instance_id=instance.id, username=username
-            ).first()
-            
+            account = Account.query.filter_by(instance_id=instance.id, username=username).first()
+
             if not account:
                 account = Account(
                     instance_id=instance.id,
@@ -1066,9 +1040,9 @@ class AccountSyncService:
                 if has_changes:
                     account.updated_at = now()
                     modified_count += 1
-            
+
             synced_count += 1
-        
+
         # 删除服务器端不存在的本地账户
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
         removed_accounts = []
@@ -1101,10 +1075,10 @@ class AccountSyncService:
                 )
                 db.session.delete(local_account)
                 removed_count += 1
-        
+
         db.session.commit()
         cursor.close()
-        
+
         return {
             "synced_count": synced_count,
             "added_count": added_count,
@@ -1113,9 +1087,7 @@ class AccountSyncService:
             "removed_accounts": removed_accounts,
         }
 
-    def _get_mysql_account_permissions(
-        self, conn, username: str, host: str
-    ) -> Dict[str, Any]:
+    def _get_mysql_account_permissions(self, conn, username: str, host: str) -> dict[str, Any]:
         """获取MySQL账户权限信息"""
         import json
 
@@ -1147,46 +1119,42 @@ class AccountSyncService:
             if user_row:
                 # 定义权限映射
                 privilege_map = {
-                    'Select_priv': 'SELECT',
-                    'Insert_priv': 'INSERT', 
-                    'Update_priv': 'UPDATE',
-                    'Delete_priv': 'DELETE',
-                    'Create_priv': 'CREATE',
-                    'Drop_priv': 'DROP',
-                    'Reload_priv': 'RELOAD',
-                    'Shutdown_priv': 'SHUTDOWN',
-                    'Process_priv': 'PROCESS',
-                    'File_priv': 'FILE',
-                    'Grant_priv': 'GRANT OPTION',
-                    'References_priv': 'REFERENCES',
-                    'Index_priv': 'INDEX',
-                    'Alter_priv': 'ALTER',
-                    'Show_db_priv': 'SHOW DATABASES',
-                    'Super_priv': 'SUPER',
-                    'Create_tmp_table_priv': 'CREATE TEMPORARY TABLES',
-                    'Lock_tables_priv': 'LOCK TABLES',
-                    'Execute_priv': 'EXECUTE',
-                    'Repl_slave_priv': 'REPLICATION SLAVE',
-                    'Repl_client_priv': 'REPLICATION CLIENT',
-                    'Create_view_priv': 'CREATE VIEW',
-                    'Show_view_priv': 'SHOW VIEW',
-                    'Create_routine_priv': 'CREATE ROUTINE',
-                    'Alter_routine_priv': 'ALTER ROUTINE',
-                    'Create_user_priv': 'CREATE USER',
-                    'Event_priv': 'EVENT',
-                    'Trigger_priv': 'TRIGGER',
-                    'Create_tablespace_priv': 'CREATE TABLESPACE'
+                    "Select_priv": "SELECT",
+                    "Insert_priv": "INSERT",
+                    "Update_priv": "UPDATE",
+                    "Delete_priv": "DELETE",
+                    "Create_priv": "CREATE",
+                    "Drop_priv": "DROP",
+                    "Reload_priv": "RELOAD",
+                    "Shutdown_priv": "SHUTDOWN",
+                    "Process_priv": "PROCESS",
+                    "File_priv": "FILE",
+                    "Grant_priv": "GRANT OPTION",
+                    "References_priv": "REFERENCES",
+                    "Index_priv": "INDEX",
+                    "Alter_priv": "ALTER",
+                    "Show_db_priv": "SHOW DATABASES",
+                    "Super_priv": "SUPER",
+                    "Create_tmp_table_priv": "CREATE TEMPORARY TABLES",
+                    "Lock_tables_priv": "LOCK TABLES",
+                    "Execute_priv": "EXECUTE",
+                    "Repl_slave_priv": "REPLICATION SLAVE",
+                    "Repl_client_priv": "REPLICATION CLIENT",
+                    "Create_view_priv": "CREATE VIEW",
+                    "Show_view_priv": "SHOW VIEW",
+                    "Create_routine_priv": "CREATE ROUTINE",
+                    "Alter_routine_priv": "ALTER ROUTINE",
+                    "Create_user_priv": "CREATE USER",
+                    "Event_priv": "EVENT",
+                    "Trigger_priv": "TRIGGER",
+                    "Create_tablespace_priv": "CREATE TABLESPACE",
                 }
-                
+
                 # 检查每个权限
                 for i, (field_name, privilege_name) in enumerate(privilege_map.items()):
-                    if i + 2 < len(user_row) and user_row[i + 2] == 'Y':  # +2 因为前两个字段是User和Host
-                        global_permissions.append({
-                            "privilege": privilege_name,
-                            "granted": True,
-                            "grantable": False
-                        })
-                        
+                    if i + 2 < len(user_row) and user_row[i + 2] == "Y":  # +2 因为前两个字段是User和Host
+                        global_permissions.append({"privilege": privilege_name, "granted": True, "grantable": False})
+
                         if privilege_name == "SUPER":
                             is_superuser = True
                         if privilege_name == "GRANT OPTION":
@@ -1213,21 +1181,19 @@ class AccountSyncService:
             # 转换为前端需要的格式
             database_permissions = []
             for schema, privileges in db_permissions.items():
-                database_permissions.append(
-                    {"database": schema, "privileges": privileges}
-                )
+                database_permissions.append({"database": schema, "privileges": privileges})
 
             permissions_data = {
                 "global_privileges": global_permissions,
                 "database_privileges": database_permissions,
             }
-            
+
             return {
                 "permissions_json": json.dumps(permissions_data),
                 "is_superuser": is_superuser,
                 "can_grant": can_grant,
             }
-            
+
         except Exception as e:
             self.logger.error(f"获取MySQL权限失败: {e}")
             return {
@@ -1238,12 +1204,12 @@ class AccountSyncService:
         finally:
             cursor.close()
 
-    def _get_sqlserver_account_permissions(self, conn, username: str) -> Dict[str, Any]:
+    def _get_sqlserver_account_permissions(self, conn, username: str) -> dict[str, Any]:
         """获取SQL Server账户权限信息"""
         import json
 
         cursor = conn.cursor()
-        
+
         try:
             # 获取服务器角色
             cursor.execute(
@@ -1279,9 +1245,7 @@ class AccountSyncService:
             server_permissions = []
             for row in cursor.fetchall():
                 permission, state = row
-                server_permissions.append(
-                    {"permission": permission, "granted": state == "GRANT"}
-                )
+                server_permissions.append({"permission": permission, "granted": state == "GRANT"})
 
             # 获取数据库角色和权限
             database_roles = []
@@ -1292,15 +1256,15 @@ class AccountSyncService:
                 # 首先获取所有数据库列表
                 cursor.execute("SELECT name FROM sys.databases WHERE state = 0")
                 databases = [row[0] for row in cursor.fetchall()]
-                
+
                 db_roles = {}
-                
+
                 # 遍历每个数据库查询角色
                 for db_name in databases:
                     try:
                         # 切换到目标数据库
                         cursor.execute(f"USE [{db_name}]")
-                        
+
                         # 查询该数据库的角色
                         cursor.execute(
                             """
@@ -1312,33 +1276,33 @@ class AccountSyncService:
                             """,
                             (username,),
                         )
-                        
+
                         roles = cursor.fetchall()
                         if roles:
                             db_roles[db_name] = [row[0] for row in roles]
-                            
+
                     except Exception as db_error:
                         # 如果某个数据库查询失败，记录日志但继续处理其他数据库
                         self.logger.debug(f"查询数据库 {db_name} 的角色失败: {db_error}")
                         continue
-                
+
                 # 转换格式
                 for db_name, roles in db_roles.items():
                     database_roles.append({"database": db_name, "roles": roles})
-                    
+
             except Exception as e:
                 self.logger.debug(f"获取数据库角色失败: {e}")
-            
+
             # 获取数据库权限
             try:
                 db_permissions = {}
-                
+
                 # 遍历每个数据库查询权限
                 for db_name in databases:
                     try:
                         # 切换到目标数据库
                         cursor.execute(f"USE [{db_name}]")
-                        
+
                         # 查询该数据库的权限
                         cursor.execute(
                             """
@@ -1351,54 +1315,51 @@ class AccountSyncService:
                             """,
                             (username,),
                         )
-                        
+
                         permissions = cursor.fetchall()
                         if permissions:
                             db_permissions[db_name] = []
                             for perm_row in permissions:
                                 perm_name, state = perm_row
-                                db_permissions[db_name].append({
-                                    "permission": perm_name,
-                                    "granted": state == "GRANT"
-                                })
-                                
+                                db_permissions[db_name].append({"permission": perm_name, "granted": state == "GRANT"})
+
                     except Exception as db_error:
                         # 如果某个数据库查询失败，记录日志但继续处理其他数据库
                         self.logger.debug(f"查询数据库 {db_name} 的权限失败: {db_error}")
                         continue
-                
+
                 # 转换格式
                 for db_name, perms in db_permissions.items():
                     database_permissions.append({"database": db_name, "permissions": perms})
-                    
+
             except Exception as e:
                 self.logger.debug(f"获取数据库权限失败: {e}")
 
             # 转换数据格式以匹配前端期望的格式
             server_roles_list = [role["role"] for role in server_roles]
             server_permissions_list = [perm["permission"] for perm in server_permissions]
-            
+
             # 转换数据库角色格式
             database_roles_dict = {}
             for db_role in database_roles:
                 db_name = db_role["database"]
                 roles = db_role["roles"]
                 database_roles_dict[db_name] = roles
-            
+
             # 转换数据库权限格式
             database_privileges_dict = {}
             for db_perm in database_permissions:
                 db_name = db_perm["database"]
                 permissions = db_perm["permissions"]
                 database_privileges_dict[db_name] = [perm["permission"] for perm in permissions if perm["granted"]]
-            
+
             permissions_data = {
                 "server_roles": server_roles_list,
                 "server_permissions": server_permissions_list,
                 "database_roles": database_roles_dict,
                 "database_privileges": database_privileges_dict,
             }
-            
+
             return {
                 "permissions_json": json.dumps(permissions_data),
                 "is_superuser": is_sysadmin,
@@ -1422,20 +1383,19 @@ class AccountSyncService:
         finally:
             cursor.close()
 
-    def _get_oracle_account_permissions(self, conn, username: str) -> Dict[str, Any]:
+    def _get_oracle_account_permissions(self, conn, username: str) -> dict[str, Any]:
         """获取Oracle账户权限信息 - 使用统一的权限查询工厂"""
         import json
-        
+
         try:
             # 使用统一的权限查询工厂
-            from app.services.permission_query_factory import PermissionQueryFactory
             from app.models.account import Account
-            
+
             # 创建临时账户对象用于权限查询
             temp_account = Account()
             temp_account.username = username
             temp_account.instance_id = None  # 这里不需要实例ID，因为我们直接使用连接
-            
+
             # 直接使用连接查询权限，不使用权限查询工厂
             cursor = conn.cursor()
             permissions = {
@@ -1444,79 +1404,88 @@ class AccountSyncService:
                 "tablespace_privileges": [],
                 "tablespace_quotas": [],
             }
-            
+
             try:
                 # 查询系统权限
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT privilege, admin_option
                     FROM dba_sys_privs
                     WHERE grantee = :username
                     ORDER BY privilege
-                """, {"username": username.upper()})
-                
+                """,
+                    {"username": username.upper()},
+                )
+
                 for row in cursor.fetchall():
                     privilege, admin_option = row
                     permissions["system_privileges"].append(privilege)
-                
+
                 # 查询角色权限
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT granted_role, admin_option
                     FROM dba_role_privs
                     WHERE grantee = :username
                     ORDER BY granted_role
-                """, {"username": username.upper()})
-                
+                """,
+                    {"username": username.upper()},
+                )
+
                 for row in cursor.fetchall():
                     role, admin_option = row
                     permissions["roles"].append(role)
-                
+
                 # 查询表空间配额（使用user_ts_quotas，因为当前连接用户是SYS）
                 try:
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         SELECT tablespace_name, bytes, max_bytes
                         FROM user_ts_quotas
                         ORDER BY tablespace_name
-                    """)
-                    
+                    """
+                    )
+
                     for row in cursor.fetchall():
                         tablespace_name = row[0]
                         current_bytes = row[1] if row[1] else 0
                         max_bytes = row[2] if row[2] else 0
-                        
+
                         if max_bytes > 0:
                             quota_info = f"{tablespace_name}: {current_bytes}/{max_bytes} bytes"
                         else:
                             quota_info = f"{tablespace_name}: {current_bytes}/UNLIMITED"
-                        
+
                         permissions["tablespace_quotas"].append(quota_info)
                 except Exception as e:
                     print(f"DEBUG: 表空间配额查询失败: {e}")
-                
+
                 # 确定是否为超级用户和是否可以授权
                 is_superuser = any(role in ["DBA", "SYSDBA", "SYSOPER"] for role in permissions["roles"])
                 can_grant = is_superuser or any(
-                    priv in ["GRANT ANY PRIVILEGE", "GRANT ANY ROLE"]
-                    for priv in permissions["system_privileges"]
+                    priv in ["GRANT ANY PRIVILEGE", "GRANT ANY ROLE"] for priv in permissions["system_privileges"]
                 )
-                
+
                 return {
                     "permissions_json": json.dumps(permissions),
                     "is_superuser": is_superuser,
                     "can_grant": can_grant,
                 }
-                
+
             finally:
                 cursor.close()
-                
+
         except Exception as e:
             self.logger.error(f"获取Oracle权限失败: {e}")
             return {
-                "permissions_json": json.dumps({
-                    "roles": [],
-                    "system_privileges": [],
-                    "tablespace_privileges": [],
-                    "tablespace_quotas": [],
-                }),
+                "permissions_json": json.dumps(
+                    {
+                        "roles": [],
+                        "system_privileges": [],
+                        "tablespace_privileges": [],
+                        "tablespace_quotas": [],
+                    }
+                ),
                 "is_superuser": False,
                 "can_grant": False,
             }

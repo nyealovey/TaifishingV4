@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 环境变量验证工具
 """
 
-import os
 import logging
-from typing import Dict, Any, List, Optional
+import os
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +47,7 @@ class EnvironmentValidator:
         Returns:
             dict: 验证结果
         """
-        result = {
+        result: Dict[str, Any] = {
             "valid": True,
             "errors": [],
             "warnings": [],
@@ -80,7 +78,7 @@ class EnvironmentValidator:
         return result
 
     @classmethod
-    def _validate_specific_vars(cls, result: Dict[str, Any]):
+    def _validate_specific_vars(cls, result: Dict[str, Any]) -> None:
         """验证特定变量"""
         # 验证SECRET_KEY
         secret_key = os.getenv("SECRET_KEY")
@@ -151,7 +149,7 @@ class EnvironmentValidator:
             return False
 
     @classmethod
-    def _generate_suggestions(cls, result: Dict[str, Any]):
+    def _generate_suggestions(cls, result: Dict[str, Any]) -> None:
         """生成配置建议"""
         suggestions = []
 
@@ -183,7 +181,7 @@ class EnvironmentValidator:
         result["suggestions"] = suggestions
 
     @classmethod
-    def generate_env_file(cls, filename: str = ".env.example"):
+    def generate_env_file(cls, filename: str = ".env.example") -> bool:
         """生成环境变量示例文件"""
         content = "# 泰摸鱼吧环境变量配置\n\n"
         content += "# 必需变量\n"
@@ -228,7 +226,7 @@ class EnvironmentValidator:
             return False
 
 
-def validate_and_setup_environment():
+def validate_and_setup_environment() -> bool:
     """验证并设置环境变量"""
     validator = EnvironmentValidator()
     result = validator.validate_environment()

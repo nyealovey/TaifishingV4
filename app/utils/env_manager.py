@@ -2,9 +2,10 @@
 泰摸鱼吧 - 环境变量管理工具
 """
 
-import os
 import json
-from typing import Dict, Any, Optional
+import os
+from typing import Any
+
 from dotenv import load_dotenv
 
 
@@ -70,9 +71,7 @@ class EnvManager:
         except (ValueError, TypeError):
             raise ValueError(f"环境变量 {key} 的值 '{value}' 不是有效的整数")
 
-    def get_float(
-        self, key: str, default: float = 0.0, required: bool = False
-    ) -> float:
+    def get_float(self, key: str, default: float = 0.0, required: bool = False) -> float:
         """
         获取浮点数类型环境变量
 
@@ -204,7 +203,7 @@ class EnvManager:
         # 读取现有文件内容
         env_vars = {}
         if os.path.exists(self.env_file):
-            with open(self.env_file, "r", encoding="utf-8") as f:
+            with open(self.env_file, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if line and not line.startswith("#") and "=" in line:
@@ -238,7 +237,7 @@ class EnvManager:
         if missing_vars:
             raise ValueError(f"以下必需的环境变量未设置: {', '.join(missing_vars)}")
 
-    def get_database_config(self) -> Dict[str, Any]:
+    def get_database_config(self) -> dict[str, Any]:
         """
         获取数据库配置
 
@@ -254,7 +253,7 @@ class EnvManager:
             "password": self.get("POSTGRES_PASSWORD", "taifish_pass"),
         }
 
-    def get_redis_config(self) -> Dict[str, Any]:
+    def get_redis_config(self) -> dict[str, Any]:
         """
         获取Redis配置
 
@@ -269,7 +268,7 @@ class EnvManager:
             "db": self.get_int("REDIS_DB", 0),
         }
 
-    def get_external_db_config(self) -> Dict[str, Dict[str, Any]]:
+    def get_external_db_config(self) -> dict[str, dict[str, Any]]:
         """
         获取外部数据库配置
 
@@ -298,7 +297,7 @@ class EnvManager:
             },
         }
 
-    def get_security_config(self) -> Dict[str, Any]:
+    def get_security_config(self) -> dict[str, Any]:
         """
         获取安全配置
 
@@ -313,7 +312,7 @@ class EnvManager:
             "jwt_refresh_expires": self.get_int("JWT_REFRESH_TOKEN_EXPIRES", 2592000),
         }
 
-    def get_logging_config(self) -> Dict[str, Any]:
+    def get_logging_config(self) -> dict[str, Any]:
         """
         获取日志配置
 
@@ -327,7 +326,7 @@ class EnvManager:
             "backup_count": self.get_int("LOG_BACKUP_COUNT", 5),
         }
 
-    def get_app_config(self) -> Dict[str, Any]:
+    def get_app_config(self) -> dict[str, Any]:
         """
         获取应用配置
 
@@ -349,9 +348,7 @@ env_manager = EnvManager()
 
 # 验证必需的环境变量
 try:
-    env_manager.validate_required(
-        ["SECRET_KEY", "JWT_SECRET_KEY", "DATABASE_URL", "REDIS_URL"]
-    )
+    env_manager.validate_required(["SECRET_KEY", "JWT_SECRET_KEY", "DATABASE_URL", "REDIS_URL"])
 except ValueError as e:
     print(f"环境变量配置错误: {e}")
     print("请检查 .env 文件或环境变量设置")

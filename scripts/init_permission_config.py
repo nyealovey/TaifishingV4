@@ -1,31 +1,33 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 泰摸鱼吧 - 权限配置初始化脚本
 基于当前数据库实际状态生成完整的权限配置
 """
 
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from datetime import datetime
 
 from app import create_app, db
 from app.models.permission_config import PermissionConfig
-from datetime import datetime
+
 
 def init_permission_config():
     """初始化权限配置"""
     app = create_app()
-    
+
     with app.app_context():
         print("开始初始化权限配置...")
-        
+
         # 清空现有权限配置
         PermissionConfig.query.delete()
         db.session.commit()
         print("已清空现有权限配置")
-        
+
         # MySQL权限配置
         mysql_permissions = [
             # 全局权限（服务器权限）
@@ -58,7 +60,7 @@ def init_permission_config():
             ('mysql', 'global_privileges', 'TRIGGER', '创建和删除触发器', 27),
             ('mysql', 'global_privileges', 'UPDATE', '更新数据', 28),
             ('mysql', 'global_privileges', 'USAGE', '无权限，仅用于连接', 29),
-            
+
             # 数据库权限
             ('mysql', 'database_privileges', 'CREATE', '创建数据库和表', 1),
             ('mysql', 'database_privileges', 'DROP', '删除数据库和表', 2),
@@ -78,7 +80,7 @@ def init_permission_config():
             ('mysql', 'database_privileges', 'EVENT', '创建、修改、删除事件', 16),
             ('mysql', 'database_privileges', 'TRIGGER', '创建和删除触发器', 17),
         ]
-        
+
         # PostgreSQL权限配置
         postgresql_permissions = [
             # 预定义角色
@@ -92,7 +94,7 @@ def init_permission_config():
             ('postgresql', 'predefined_roles', 'CONNECTION LIMIT', '连接限制角色', 8),
             ('postgresql', 'predefined_roles', 'VALID UNTIL', '有效期限制角色', 9),
             ('postgresql', 'predefined_roles', 'PASSWORD', '密码角色', 10),
-            
+
             # 角色属性
             ('postgresql', 'role_attributes', 'SUPERUSER', '超级用户属性', 1),
             ('postgresql', 'role_attributes', 'CREATEDB', '创建数据库属性', 2),
@@ -104,18 +106,18 @@ def init_permission_config():
             ('postgresql', 'role_attributes', 'CONNECTION LIMIT', '连接限制属性', 8),
             ('postgresql', 'role_attributes', 'VALID UNTIL', '有效期限制属性', 9),
             ('postgresql', 'role_attributes', 'PASSWORD', '密码属性', 10),
-            
+
             # 数据库权限
             ('postgresql', 'database_privileges', 'CONNECT', '连接数据库权限', 1),
             ('postgresql', 'database_privileges', 'CREATE', '创建对象权限', 2),
             ('postgresql', 'database_privileges', 'TEMPORARY', '创建临时表权限', 3),
             ('postgresql', 'database_privileges', 'TEMP', '创建临时表权限（别名）', 4),
-            
+
             # 表空间权限
             ('postgresql', 'tablespace_privileges', 'CREATE', '在表空间中创建对象权限', 1),
             ('postgresql', 'tablespace_privileges', 'USAGE', '使用表空间权限', 2),
         ]
-        
+
         # SQL Server权限配置
         sqlserver_permissions = [
             # 服务器角色
@@ -128,7 +130,7 @@ def init_permission_config():
             ('sqlserver', 'server_roles', 'diskadmin', '磁盘管理员', 7),
             ('sqlserver', 'server_roles', 'dbcreator', '数据库创建者', 8),
             ('sqlserver', 'server_roles', 'public', '公共角色', 9),
-            
+
             # 数据库角色
             ('sqlserver', 'database_roles', 'db_owner', '数据库所有者', 1),
             ('sqlserver', 'database_roles', 'db_accessadmin', '访问管理员', 2),
@@ -139,7 +141,7 @@ def init_permission_config():
             ('sqlserver', 'database_roles', 'db_datawriter', '数据写入者', 7),
             ('sqlserver', 'database_roles', 'db_denydatareader', '拒绝数据读取', 8),
             ('sqlserver', 'database_roles', 'db_denydatawriter', '拒绝数据写入', 9),
-            
+
             # 服务器权限
             ('sqlserver', 'server_permissions', 'CONTROL SERVER', '控制服务器', 1),
             ('sqlserver', 'server_permissions', 'ALTER ANY LOGIN', '修改任意登录', 2),
@@ -160,7 +162,7 @@ def init_permission_config():
             ('sqlserver', 'server_permissions', 'VIEW ANY DEFINITION', '查看任意定义', 17),
             ('sqlserver', 'server_permissions', 'VIEW ANY COLUMN ENCRYPTION KEY DEFINITION', '查看任意列加密密钥定义', 18),
             ('sqlserver', 'server_permissions', 'VIEW ANY COLUMN MASTER KEY DEFINITION', '查看任意列主密钥定义', 19),
-            
+
             # 数据库权限
             ('sqlserver', 'database_privileges', 'SELECT', '查询数据', 1),
             ('sqlserver', 'database_privileges', 'INSERT', '插入数据', 2),
@@ -182,7 +184,7 @@ def init_permission_config():
             ('sqlserver', 'database_privileges', 'CREATE FUNCTION', '创建函数', 18),
             ('sqlserver', 'database_privileges', 'CREATE TRIGGER', '创建触发器', 19),
         ]
-        
+
         # Oracle权限配置 - 基于SYS账户实际权限
         oracle_permissions = [
             # 系统权限（基于SYS账户实际权限，200个）
@@ -386,7 +388,7 @@ def init_permission_config():
             ('oracle', 'system_privileges', 'UPDATE ANY CUBE DIMENSION', '更新任意多维数据集维度', 198),
             ('oracle', 'system_privileges', 'UPDATE ANY TABLE', '更新任意表', 199),
             ('oracle', 'system_privileges', 'INSERT ANY TABLE', '插入任意表', 200),
-            
+
             # Oracle角色（67个）
             ('oracle', 'roles', 'ADM_PARALLEL_EXECUTE_TASK', '并行执行任务管理角色', 1),
             ('oracle', 'roles', 'APEX_ADMINISTRATOR_ROLE', 'APEX管理员角色', 2),
@@ -455,7 +457,7 @@ def init_permission_config():
             ('oracle', 'roles', 'WM_ADMIN_ROLE', '工作区管理器管理员角色', 65),
             ('oracle', 'roles', 'XDBADMIN', 'XML数据库管理员角色', 66),
             ('oracle', 'roles', 'XDB_SET_INVOKER', 'XML数据库设置调用者角色', 67),
-            
+
             # Oracle表空间权限（21个）
             ('oracle', 'tablespace_privileges', 'ALTER ANY TABLESPACE', '修改任意表空间权限', 1),
             ('oracle', 'tablespace_privileges', 'ALTER TABLESPACE', '修改表空间权限', 2),
@@ -478,7 +480,7 @@ def init_permission_config():
             ('oracle', 'tablespace_privileges', 'UPDATE TABLESPACE', '更新表空间权限', 19),
             ('oracle', 'tablespace_privileges', 'WRITE ANY TABLESPACE', '写入任意表空间权限', 20),
             ('oracle', 'tablespace_privileges', 'WRITE TABLESPACE', '写入表空间权限', 21),
-            
+
             # Oracle表空间配额（25个）
             ('oracle', 'tablespace_quotas', 'DEFAULT', '默认配额', 1),
             ('oracle', 'tablespace_quotas', 'NO QUOTA', '无配额', 2),
@@ -506,16 +508,16 @@ def init_permission_config():
             ('oracle', 'tablespace_quotas', 'QUOTA 5G', '5G配额', 24),
             ('oracle', 'tablespace_quotas', 'QUOTA 50G', '50G配额', 25),
         ]
-        
+
         # 添加所有权限配置
         all_permissions = mysql_permissions + postgresql_permissions + sqlserver_permissions + oracle_permissions
-        
+
         print(f"开始添加 {len(all_permissions)} 个权限配置...")
-        
+
         # 检查重复权限
         seen_permissions = set()
         unique_permissions = []
-        
+
         for db_type, category, permission_name, description, sort_order in all_permissions:
             key = (db_type, category, permission_name)
             if key not in seen_permissions:
@@ -523,9 +525,9 @@ def init_permission_config():
                 unique_permissions.append((db_type, category, permission_name, description, sort_order))
             else:
                 print(f"跳过重复权限: {db_type}.{category}.{permission_name}")
-        
+
         print(f"去重后权限配置: {len(unique_permissions)}个")
-        
+
         for db_type, category, permission_name, description, sort_order in unique_permissions:
             permission_config = PermissionConfig(
                 db_type=db_type,
@@ -538,16 +540,16 @@ def init_permission_config():
                 updated_at=datetime.utcnow()
             )
             db.session.add(permission_config)
-        
+
         # 提交更改
         db.session.commit()
-        
+
         print("权限配置初始化完成！")
-        
+
         # 验证结果
         total_perms = PermissionConfig.query.count()
         print(f"总计权限配置: {total_perms}个")
-        
+
         for db_type in ['mysql', 'postgresql', 'sqlserver', 'oracle']:
             count = PermissionConfig.query.filter_by(db_type=db_type).count()
             print(f"  {db_type.upper()}: {count}个")

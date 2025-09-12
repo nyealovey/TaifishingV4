@@ -1,22 +1,16 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 管理API路由
 提供系统配置和常量管理功能
 """
 
-import json
-import time
 import logging
-from datetime import datetime, timedelta
-from app.utils.timezone import now
-from flask import Blueprint, request, jsonify, current_app, render_template
-from flask_login import login_required, current_user
 from functools import wraps
-from app import db
-from app.constants import UserRole, ErrorMessages, SuccessMessages
+
+from flask import Blueprint
+from flask_login import current_user, login_required
+
+from app.constants import UserRole
 from app.utils.api_response import APIResponse
-from app.utils.advanced_error_handler import advanced_error_handler
 
 logger = logging.getLogger(__name__)
 
@@ -40,33 +34,15 @@ def admin_required(f):
     return decorated_function
 
 
-
-
-
-
-
-
 @admin_bp.route("/app-info", methods=["GET"])
 def get_app_info():
     """获取应用信息（公开接口，用于右上角显示）"""
     try:
-        return APIResponse.success(data={
-            "app_name": "泰摸鱼吧",
-            "app_version": "4.0.0"
-        })
+        return APIResponse.success(data={"app_name": "泰摸鱼吧", "app_version": "4.0.0"})
 
     except Exception as e:
         logger.error(f"获取应用信息失败: {e}")
-        return APIResponse.success(data={
-            "app_name": "泰摸鱼吧",
-            "app_version": "4.0.0"
-        })
-
-
-
-
-
-
+        return APIResponse.success(data={"app_name": "泰摸鱼吧", "app_version": "4.0.0"})
 
 
 # 快速操作相关路由

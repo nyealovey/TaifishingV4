@@ -3,16 +3,16 @@
 """
 
 import logging
-from typing import Dict, Any, Optional, List
-from app.models import Instance, Credential
-from app.models.account import Account
+from typing import Any
+
 from app import db
-from app.utils.enhanced_logger import log_operation, log_error
-from app.utils.enhanced_logger import db_logger, log_database_error, log_database_operation
-from app.services.database_filter_manager import database_filter_manager
-from app.utils.database_type_utils import DatabaseTypeUtils
+from app.models import Instance
+from app.models.account import Account
 from app.services.connection_factory import ConnectionFactory
+from app.services.database_filter_manager import database_filter_manager
 from app.services.permission_query_factory import PermissionQueryFactory
+from app.utils.database_type_utils import DatabaseTypeUtils
+from app.utils.enhanced_logger import db_logger, log_database_error, log_error, log_operation
 
 
 class DatabaseService:
@@ -21,7 +21,7 @@ class DatabaseService:
     def __init__(self):
         self.connections = {}
 
-    def test_connection(self, instance: Instance) -> Dict[str, Any]:
+    def test_connection(self, instance: Instance) -> dict[str, Any]:
         """
         测试数据库连接
 
@@ -33,28 +33,30 @@ class DatabaseService:
         """
         try:
             db_logger.info(f"开始测试数据库连接: {instance.name} ({instance.db_type})", "database_service")
-            
+
             # 使用连接工厂测试连接
             result = ConnectionFactory.test_connection(instance)
-            
+
             if result.get("success"):
                 db_logger.info(f"数据库连接测试成功: {instance.name}", "database_service")
                 # 更新最后连接时间
                 from app.utils.timezone import now
+
                 instance.last_connected = now()
                 db.session.commit()
             else:
                 db_logger.warning(f"数据库连接测试失败: {instance.name} - {result.get('error')}", "database_service")
-            
+
             return result
-            
+
         except Exception as e:
             error_msg = f"连接测试失败: {str(e)}"
-            log_database_error("test_connection", e, "database_service", 
-                             f"实例: {instance.name}, 类型: {instance.db_type}")
+            log_database_error(
+                "test_connection", e, "database_service", f"实例: {instance.name}, 类型: {instance.db_type}"
+            )
             return {"success": False, "error": error_msg}
 
-    def sync_accounts(self, instance: Instance) -> Dict[str, Any]:
+    def sync_accounts(self, instance: Instance) -> dict[str, Any]:
         """
         同步账户信息
 
@@ -65,9 +67,8 @@ class DatabaseService:
             Dict: 同步结果
         """
         try:
-            from app.models.account import Account
-            from app.models.account_change import AccountChange
             from app import db
+            from app.models.account import Account
 
             # 获取数据库连接
             conn = self.get_connection(instance)
@@ -97,15 +98,11 @@ class DatabaseService:
                     "plugin": account.plugin,
                     "password_expired": account.password_expired,
                     "password_last_changed": (
-                        account.password_last_changed.isoformat()
-                        if account.password_last_changed
-                        else None
+                        account.password_last_changed.isoformat() if account.password_last_changed else None
                     ),
                     "is_locked": account.is_locked,
                     "is_active": account.is_active,
-                    "last_login": (
-                        account.last_login.isoformat() if account.last_login else None
-                    ),
+                    "last_login": (account.last_login.isoformat() if account.last_login else None),
                 }
 
             synced_count = 0
@@ -218,13 +215,13 @@ class DatabaseService:
 
             return {"success": False, "error": f"账户同步失败: {str(e)}"}
 
-    def _sync_mysql_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
+    def _sync_mysql_accounts(self, instance: Instance, conn) -> dict[str, Any]:
         """同步MySQL账户"""
         cursor = conn.cursor()
-        
+
         # 获取MySQL过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions('mysql', 'User')
-        
+        filter_conditions = database_filter_manager.get_sql_filter_conditions("mysql", "User")
+
         cursor.execute(
             f"""
             SELECT User, Host, authentication_string, plugin, account_locked, password_expired, password_last_changed
@@ -259,9 +256,7 @@ class DatabaseService:
             server_accounts.add((username, host))
 
             # 检查账户是否已存在
-            existing = Account.query.filter_by(
-                instance_id=instance.id, username=username, host=host
-            ).first()
+            existing = Account.query.filter_by(instance_id=instance.id, username=username, host=host).first()
 
             account_data = {
                 "username": username,
@@ -270,9 +265,7 @@ class DatabaseService:
                 "account_type": None,
                 "plugin": plugin,
                 "password_expired": expired == "Y",
-                "password_last_changed": (
-                    password_last_changed.isoformat() if password_last_changed else None
-                ),
+                "password_last_changed": (password_last_changed.isoformat() if password_last_changed else None),
                 "is_locked": locked == "Y",
                 "is_active": locked != "Y" and expired != "Y",
             }
@@ -285,8 +278,7 @@ class DatabaseService:
                     database_name="mysql",
                     account_type=None,  # MySQL没有账户类型概念
                     plugin=plugin,
-                    password_expired=expired
-                    == "Y",  # MySQL的password_expired字段，'Y'表示已过期
+                    password_expired=expired == "Y",  # MySQL的password_expired字段，'Y'表示已过期
                     password_last_changed=password_last_changed,
                     is_locked=locked == "Y",  # MySQL的account_locked字段，'Y'表示锁定
                     is_active=locked != "Y" and expired != "Y",
@@ -360,29 +352,29 @@ class DatabaseService:
             "modified_accounts": modified_accounts,
         }
 
-    def _sync_postgresql_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
+    def _sync_postgresql_accounts(self, instance: Instance, conn) -> dict[str, Any]:
         """同步PostgreSQL账户"""
-        
+
         def is_password_expired(valid_until):
             """检查PostgreSQL密码是否过期，处理infinity值"""
             if valid_until is None:
                 return False
             try:
                 # 检查是否为'infinity'字符串
-                if str(valid_until).lower() == 'infinity':
+                if str(valid_until).lower() == "infinity":
                     return False
-                else:
-                    from app.utils.timezone import now
-                    return valid_until < now()
+                from app.utils.timezone import now
+
+                return valid_until < now()
             except (ValueError, TypeError, OverflowError):
                 # 如果时间戳无法解析或超出范围，认为密码未过期
                 return False
-        
+
         cursor = conn.cursor()
-        
+
         # 获取PostgreSQL过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions('postgresql', 'rolname')
-        
+        filter_conditions = database_filter_manager.get_sql_filter_conditions("postgresql", "rolname")
+
         cursor.execute(
             f"""
             SELECT 
@@ -446,7 +438,9 @@ class DatabaseService:
             account_data = {
                 "username": username,
                 "host": "",  # PostgreSQL没有主机概念
-                "database_name": instance.database_name or DatabaseTypeUtils.get_database_type_config("postgresql").default_schema or "postgres",
+                "database_name": instance.database_name
+                or DatabaseTypeUtils.get_database_type_config("postgresql").default_schema
+                or "postgres",
                 "account_type": account_type,
                 "plugin": "postgresql",
                 "password_expired": password_expired,
@@ -472,16 +466,14 @@ class DatabaseService:
                     instance_id=instance.id,
                     username=username,
                     host="",  # PostgreSQL没有主机概念
-                    database_name=DatabaseTypeUtils.get_database_type_config("postgresql").default_schema or "postgres",  # PostgreSQL默认数据库
-                    account_type=(
-                        "superuser" if is_super else "user"
-                    ),  # PostgreSQL有明确的角色概念
+                    database_name=DatabaseTypeUtils.get_database_type_config("postgresql").default_schema
+                    or "postgres",  # PostgreSQL默认数据库
+                    account_type=("superuser" if is_super else "user"),  # PostgreSQL有明确的角色概念
                     plugin="postgresql",
                     password_expired=is_password_expired(valid_until),
                     password_last_changed=None,  # PostgreSQL不直接提供此信息
                     is_locked=not can_login,  # PostgreSQL的rolcanlogin字段，False表示被禁用
-                    is_active=can_login
-                    and not is_password_expired(valid_until),
+                    is_active=can_login and not is_password_expired(valid_until),
                 )
                 db.session.add(account)
                 added_count += 1
@@ -490,20 +482,16 @@ class DatabaseService:
                 # 检查是否有变化
                 has_changes = (
                     existing.account_type != ("superuser" if is_super else "user")
-                    or existing.password_expired
-                    != is_password_expired(valid_until)
+                    or existing.password_expired != is_password_expired(valid_until)
                     or existing.is_locked != (not can_login)
-                    or existing.is_active
-                    != (can_login and not is_password_expired(valid_until))
+                    or existing.is_active != (can_login and not is_password_expired(valid_until))
                 )
 
                 if has_changes:
                     # 更新现有账户信息
                     existing.account_type = "superuser" if is_super else "user"
                     existing.password_expired = is_password_expired(valid_until)
-                    existing.is_locked = (
-                        not can_login
-                    )  # PostgreSQL的rolcanlogin字段，False表示被禁用
+                    existing.is_locked = not can_login  # PostgreSQL的rolcanlogin字段，False表示被禁用
                     existing.is_active = can_login and not is_password_expired(valid_until)
                     updated_count += 1
                     modified_accounts.append(account_data)
@@ -554,13 +542,13 @@ class DatabaseService:
             "modified_accounts": modified_accounts,
         }
 
-    def _sync_sqlserver_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
+    def _sync_sqlserver_accounts(self, instance: Instance, conn) -> dict[str, Any]:
         """同步SQL Server账户"""
         cursor = conn.cursor()
-        
+
         # 获取SQL Server过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions('sqlserver', 'name')
-        
+        filter_conditions = database_filter_manager.get_sql_filter_conditions("sqlserver", "name")
+
         cursor.execute(
             f"""
             SELECT name, type_desc, is_disabled, create_date, modify_date
@@ -591,13 +579,13 @@ class DatabaseService:
             account_data = {
                 "username": username,
                 "host": None,
-                "database_name": instance.database_name or DatabaseTypeUtils.get_database_type_config("sqlserver").default_schema or "master",
+                "database_name": instance.database_name
+                or DatabaseTypeUtils.get_database_type_config("sqlserver").default_schema
+                or "master",
                 "account_type": type_desc.lower(),
                 "plugin": None,
                 "password_expired": False,
-                "password_last_changed": (
-                    modify_date.isoformat() if modify_date else None
-                ),
+                "password_last_changed": (modify_date.isoformat() if modify_date else None),
                 "is_locked": bool(is_disabled),
                 "is_active": not is_disabled,
                 "account_created_at": create_date.isoformat() if create_date else None,
@@ -615,7 +603,9 @@ class DatabaseService:
                     instance_id=instance.id,
                     username=username,
                     host=None,  # SQL Server没有主机概念
-                    database_name=instance.database_name or DatabaseTypeUtils.get_database_type_config("sqlserver").default_schema or "master",
+                    database_name=instance.database_name
+                    or DatabaseTypeUtils.get_database_type_config("sqlserver").default_schema
+                    or "master",
                     account_type=type_desc.lower(),  # 直接使用原始type_desc名称
                     plugin=None,  # SQL Server没有插件概念
                     password_expired=False,  # SQL Server不直接提供此信息
@@ -641,9 +631,7 @@ class DatabaseService:
                     # 更新现有账户信息
                     existing.account_type = type_desc.lower()
                     existing.password_last_changed = modify_date
-                    existing.is_locked = bool(
-                        is_disabled
-                    )  # SQL Server的is_disabled字段
+                    existing.is_locked = bool(is_disabled)  # SQL Server的is_disabled字段
                     existing.is_active = not is_disabled
                     existing.account_created_at = create_date
                     updated_count += 1
@@ -696,13 +684,13 @@ class DatabaseService:
             "modified_accounts": modified_accounts,
         }
 
-    def _sync_oracle_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
+    def _sync_oracle_accounts(self, instance: Instance, conn) -> dict[str, Any]:
         """同步Oracle账户"""
         cursor = conn.cursor()
-        
+
         # 获取Oracle过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions('oracle', 'username')
-        
+        filter_conditions = database_filter_manager.get_sql_filter_conditions("oracle", "username")
+
         cursor.execute(
             f"""
             SELECT username, user_id, account_status, lock_date, expiry_date, 
@@ -743,13 +731,14 @@ class DatabaseService:
                 "username": username,
                 "user_id": user_id,  # Oracle数据库中的用户ID
                 "host": "localhost",
-                "database_name": instance.database_name or DatabaseTypeUtils.get_database_type_config("oracle").default_schema or "ORCL",
+                "database_name": instance.database_name
+                or DatabaseTypeUtils.get_database_type_config("oracle").default_schema
+                or "ORCL",
                 "account_type": auth_type,  # 使用认证类型作为账户类型
                 "plugin": "oracle",
                 "password_expired": status in ["EXPIRED", "EXPIRED(GRACE)"],
                 "password_last_changed": None,  # Oracle没有密码最后修改时间概念
-                "is_locked": status in ["LOCKED", "LOCKED(TIMED)"]
-                or lock_date is not None,
+                "is_locked": status in ["LOCKED", "LOCKED(TIMED)"] or lock_date is not None,
                 "is_active": status == "OPEN",
                 "created_at": created,  # Oracle的created字段映射到created_at
                 "lock_date": lock_date,  # 锁定日期
@@ -769,13 +758,14 @@ class DatabaseService:
                     instance_id=instance.id,
                     username=username,
                     host="localhost",
-                    database_name=instance.database_name or DatabaseTypeUtils.get_database_type_config("oracle").default_schema or "ORCL",
+                    database_name=instance.database_name
+                    or DatabaseTypeUtils.get_database_type_config("oracle").default_schema
+                    or "ORCL",
                     account_type=auth_type,  # 使用认证类型作为账户类型
                     plugin="oracle",
                     password_expired=status in ["EXPIRED", "EXPIRED(GRACE)"],
                     password_last_changed=None,  # Oracle没有密码最后修改时间概念
-                    is_locked=status in ["LOCKED", "LOCKED(TIMED)"]
-                    or lock_date is not None,  # Oracle的锁定状态
+                    is_locked=status in ["LOCKED", "LOCKED(TIMED)"] or lock_date is not None,  # Oracle的锁定状态
                     is_active=status == "OPEN",
                     created_at=created,  # 使用Oracle的created字段作为创建时间
                     user_id=user_id,  # Oracle数据库中的用户ID
@@ -789,10 +779,8 @@ class DatabaseService:
             else:
                 # 检查是否有变化
                 has_changes = (
-                    existing.password_expired
-                    != (status in ["EXPIRED", "EXPIRED(GRACE)"])
-                    or existing.is_locked
-                    != (status in ["LOCKED", "LOCKED(TIMED)"] or lock_date is not None)
+                    existing.password_expired != (status in ["EXPIRED", "EXPIRED(GRACE)"])
+                    or existing.is_locked != (status in ["LOCKED", "LOCKED(TIMED)"] or lock_date is not None)
                     or existing.is_active != (status == "OPEN")
                     or existing.account_type != auth_type
                     or existing.user_id != user_id
@@ -804,9 +792,7 @@ class DatabaseService:
                 if has_changes:
                     # 更新现有账户信息
                     existing.password_expired = status in ["EXPIRED", "EXPIRED(GRACE)"]
-                    existing.is_locked = (
-                        status in ["LOCKED", "LOCKED(TIMED)"] or lock_date is not None
-                    )
+                    existing.is_locked = status in ["LOCKED", "LOCKED(TIMED)"] or lock_date is not None
                     existing.is_active = status == "OPEN"
                     existing.account_type = auth_type
                     existing.user_id = user_id
@@ -863,11 +849,7 @@ class DatabaseService:
             "modified_accounts": modified_accounts,
         }
 
-
-
-
-
-    def get_connection(self, instance: Instance) -> Optional[Any]:
+    def get_connection(self, instance: Instance) -> Any | None:
         """
         获取数据库连接（改进版本，支持连接池）
 
@@ -884,17 +866,17 @@ class DatabaseService:
                 # 测试连接是否有效
                 if self._test_connection_validity(conn, instance.db_type):
                     return conn
-                else:
-                    # 连接无效，关闭并移除
-                    self.close_connection(instance)
+                # 连接无效，关闭并移除
+                self.close_connection(instance)
 
             # 使用ConnectionFactory创建新连接
             from app.services.connection_factory import ConnectionFactory
+
             connection_obj = ConnectionFactory.create_connection(instance)
             if not connection_obj:
                 log_error(f"不支持的数据库类型: {instance.db_type}")
                 return None
-            
+
             # 建立连接
             if connection_obj.connect():
                 conn = connection_obj.connection
@@ -917,12 +899,10 @@ class DatabaseService:
             return conn
 
         except Exception as e:
-            log_error(
-                e, context={"instance_id": instance.id, "instance_name": instance.name}
-            )
+            log_error(e, context={"instance_id": instance.id, "instance_name": instance.name})
             return None
 
-    def get_database_version(self, instance: Instance, conn) -> Optional[str]:
+    def get_database_version(self, instance: Instance, conn) -> str | None:
         """
         获取数据库版本信息
 
@@ -936,14 +916,13 @@ class DatabaseService:
         try:
             if instance.db_type == "postgresql":
                 return self._get_postgresql_version(conn)
-            elif instance.db_type == "mysql":
+            if instance.db_type == "mysql":
                 return self._get_mysql_version(conn)
-            elif instance.db_type == "sqlserver":
+            if instance.db_type == "sqlserver":
                 return self._get_sqlserver_version(conn)
-            elif instance.db_type == "oracle":
+            if instance.db_type == "oracle":
                 return self._get_oracle_version(conn)
-            else:
-                return None
+            return None
         except Exception as e:
             logging.error(f"获取数据库版本失败: {e}")
             return None
@@ -953,19 +932,13 @@ class DatabaseService:
         try:
             if db_type == "mysql":
                 conn.ping(reconnect=False)
-            elif db_type == "postgresql":
-                conn.execute("SELECT 1")
-            elif db_type == "sqlserver":
+            elif db_type == "postgresql" or db_type == "sqlserver":
                 conn.execute("SELECT 1")
             elif db_type == "oracle":
                 conn.execute("SELECT 1 FROM DUAL")
             return True
         except:
             return False
-
-
-
-
 
     def close_connection(self, instance: Instance):
         """
@@ -1045,7 +1018,7 @@ class DatabaseService:
             except Exception:
                 pass
 
-    def get_connection_status(self, instance: Instance) -> Dict[str, Any]:
+    def get_connection_status(self, instance: Instance) -> dict[str, Any]:
         """
         获取连接状态
 
@@ -1063,12 +1036,11 @@ class DatabaseService:
                 cursor.execute("SELECT 1")
                 cursor.close()
                 return {"connected": True, "status": "active", "message": "连接正常"}
-            else:
-                return {
-                    "connected": False,
-                    "status": "disconnected",
-                    "message": "未连接",
-                }
+            return {
+                "connected": False,
+                "status": "disconnected",
+                "message": "未连接",
+            }
         except Exception as e:
             return {
                 "connected": False,
@@ -1076,9 +1048,7 @@ class DatabaseService:
                 "message": f"连接错误: {str(e)}",
             }
 
-    def execute_query(
-        self, instance: Instance, query: str, params: tuple = None
-    ) -> Dict[str, Any]:
+    def execute_query(self, instance: Instance, query: str, params: tuple = None) -> dict[str, Any]:
         """
         执行SQL查询（安全版本）
 
@@ -1109,11 +1079,7 @@ class DatabaseService:
 
             if query.strip().upper().startswith("SELECT"):
                 results = cursor.fetchall()
-                columns = (
-                    [desc[0] for desc in cursor.description]
-                    if cursor.description
-                    else []
-                )
+                columns = [desc[0] for desc in cursor.description] if cursor.description else []
                 cursor.close()
                 return {
                     "success": True,
@@ -1121,14 +1087,13 @@ class DatabaseService:
                     "columns": columns,
                     "row_count": len(results),
                 }
-            else:
-                conn.commit()
-                cursor.close()
-                return {
-                    "success": True,
-                    "message": "查询执行成功",
-                    "affected_rows": cursor.rowcount,
-                }
+            conn.commit()
+            cursor.close()
+            return {
+                "success": True,
+                "message": "查询执行成功",
+                "affected_rows": cursor.rowcount,
+            }
 
         except Exception as e:
             log_error(
@@ -1189,9 +1154,7 @@ class DatabaseService:
 
         return True
 
-    def get_account_permissions(
-        self, instance: Instance, account: Account
-    ) -> Dict[str, Any]:
+    def get_account_permissions(self, instance: Instance, account: Account) -> dict[str, Any]:
         """
         获取账户权限详情
 
@@ -1205,21 +1168,14 @@ class DatabaseService:
         try:
             # 使用权限查询工厂获取权限
             result = PermissionQueryFactory.get_account_permissions(instance, account)
-            
+
             if result.get("success"):
                 return result
-            else:
-                return {
-                    "global": [],
-                    "database": [],
-                    "error": result.get("error", "获取权限失败")
-                }
+            return {"global": [], "database": [], "error": result.get("error", "获取权限失败")}
         except Exception as e:
             return {"global": [], "database": [], "error": f"获取权限失败: {str(e)}"}
 
-    def _get_mysql_permissions(
-        self, instance: Instance, account: Account
-    ) -> Dict[str, Any]:
+    def _get_mysql_permissions(self, instance: Instance, account: Account) -> dict[str, Any]:
         """获取MySQL账户权限"""
         try:
             # 优先使用本地数据库中已同步的权限数据
@@ -1253,7 +1209,6 @@ class DatabaseService:
                 )
 
                 global_permissions = []
-                can_grant = False
                 for row in cursor.fetchall():
                     privilege, is_grantable = row
                     global_permissions.append(
@@ -1264,7 +1219,7 @@ class DatabaseService:
                         }
                     )
                     if is_grantable:
-                        can_grant = True
+                        pass
 
                 # 检查用户是否真正拥有GRANT OPTION权限
                 cursor.execute(
@@ -1307,9 +1262,7 @@ class DatabaseService:
                 # 转换为前端需要的格式
                 database_permissions = []
                 for schema, privileges in db_permissions.items():
-                    database_permissions.append(
-                        {"database": schema, "privileges": privileges}
-                    )
+                    database_permissions.append({"database": schema, "privileges": privileges})
 
                 return {"global": global_permissions, "database": database_permissions}
 
@@ -1319,9 +1272,7 @@ class DatabaseService:
         except Exception as e:
             return {"global": [], "database": [], "error": f"获取权限失败: {str(e)}"}
 
-    def _get_postgresql_permissions(
-        self, instance: Instance, account: Account
-    ) -> Dict[str, Any]:
+    def _get_postgresql_permissions(self, instance: Instance, account: Account) -> dict[str, Any]:
         """获取PostgreSQL账户权限 - 根据新的权限配置结构"""
         try:
             print(f"DEBUG: 获取PostgreSQL权限 - 账户: {account.username}")
@@ -1339,9 +1290,7 @@ class DatabaseService:
                     "predefined_roles": permissions.get("predefined_roles", []),
                     "role_attributes": permissions.get("role_attributes", []),
                     "database_privileges": permissions.get("database_privileges", []),
-                    "tablespace_privileges": permissions.get(
-                        "tablespace_privileges", []
-                    ),
+                    "tablespace_privileges": permissions.get("tablespace_privileges", []),
                 }
                 print(f"DEBUG: 返回的权限结果: {result}")
                 return result
@@ -1362,9 +1311,7 @@ class DatabaseService:
             from app.services.account_sync_service import AccountSyncService
 
             sync_service = AccountSyncService()
-            permissions = sync_service._get_postgresql_account_permissions(
-                instance, conn, account.username
-            )
+            permissions = sync_service._get_postgresql_account_permissions(instance, conn, account.username)
             print(f"DEBUG: 实时查询的权限数据: {permissions}")
 
             if permissions:
@@ -1380,21 +1327,18 @@ class DatabaseService:
                     "predefined_roles": permissions.get("predefined_roles", []),
                     "role_attributes": permissions.get("role_attributes", []),
                     "database_privileges": permissions.get("database_privileges", []),
-                    "tablespace_privileges": permissions.get(
-                        "tablespace_privileges", []
-                    ),
+                    "tablespace_privileges": permissions.get("tablespace_privileges", []),
                 }
                 print(f"DEBUG: 实时查询返回的权限结果: {result}")
                 return result
-            else:
-                print("DEBUG: 实时查询返回空权限数据")
-                return {
-                    "predefined_roles": [],
-                    "role_attributes": [],
-                    "database_privileges": [],
-                    "tablespace_privileges": [],
-                    "error": "权限数据未同步，请先同步账户",
-                }
+            print("DEBUG: 实时查询返回空权限数据")
+            return {
+                "predefined_roles": [],
+                "role_attributes": [],
+                "database_privileges": [],
+                "tablespace_privileges": [],
+                "error": "权限数据未同步，请先同步账户",
+            }
 
         except Exception as e:
             return {
@@ -1405,9 +1349,7 @@ class DatabaseService:
                 "error": f"获取权限失败: {str(e)}",
             }
 
-    def _get_sqlserver_permissions(
-        self, instance: Instance, account: Account
-    ) -> Dict[str, Any]:
+    def _get_sqlserver_permissions(self, instance: Instance, account: Account) -> dict[str, Any]:
         """获取SQL Server账户权限"""
         conn = self.get_connection(instance)
         if not conn:
@@ -1511,16 +1453,12 @@ class DatabaseService:
                 if db_name:
                     if db_name not in database_roles:
                         database_roles[db_name] = []
-                    database_roles[db_name].append(
-                        {"role": role_name, "type": role_type}
-                    )
+                    database_roles[db_name].append({"role": role_name, "type": role_type})
 
             database_permissions = []
             for db_name, privileges in db_permissions.items():
                 if privileges:
-                    database_permissions.append(
-                        {"database": db_name, "privileges": privileges}
-                    )
+                    database_permissions.append({"database": db_name, "privileges": privileges})
 
             return {
                 "global": global_permissions,
@@ -1540,9 +1478,7 @@ class DatabaseService:
         finally:
             cursor.close()
 
-    def _get_oracle_permissions(
-        self, instance: Instance, account: Account
-    ) -> Dict[str, Any]:
+    def _get_oracle_permissions(self, instance: Instance, account: Account) -> dict[str, Any]:
         """获取Oracle账户权限 - 根据新的权限配置结构"""
         try:
             # 优先使用本地数据库中已同步的权限数据
@@ -1555,9 +1491,7 @@ class DatabaseService:
                 return {
                     "roles": permissions.get("roles", []),
                     "system_privileges": permissions.get("system_privileges", []),
-                    "tablespace_privileges": permissions.get(
-                        "tablespace_privileges", []
-                    ),
+                    "tablespace_privileges": permissions.get("tablespace_privileges", []),
                     "tablespace_quotas": permissions.get("tablespace_quotas", []),
                 }
 
@@ -1576,9 +1510,7 @@ class DatabaseService:
             from app.services.account_sync_service import AccountSyncService
 
             sync_service = AccountSyncService()
-            permissions_info = sync_service._get_oracle_account_permissions(
-                conn, account.username
-            )
+            permissions_info = sync_service._get_oracle_account_permissions(conn, account.username)
 
             if permissions_info and "permissions_json" in permissions_info:
                 import json
@@ -1594,19 +1526,16 @@ class DatabaseService:
                 return {
                     "roles": permissions.get("roles", []),
                     "system_privileges": permissions.get("system_privileges", []),
-                    "tablespace_privileges": permissions.get(
-                        "tablespace_privileges", []
-                    ),
+                    "tablespace_privileges": permissions.get("tablespace_privileges", []),
                     "tablespace_quotas": permissions.get("tablespace_quotas", []),
                 }
-            else:
-                return {
-                    "roles": [],
-                    "system_privileges": [],
-                    "tablespace_privileges": [],
-                    "tablespace_quotas": [],
-                    "error": "权限数据未同步，请先同步账户",
-                }
+            return {
+                "roles": [],
+                "system_privileges": [],
+                "tablespace_privileges": [],
+                "tablespace_quotas": [],
+                "error": "权限数据未同步，请先同步账户",
+            }
 
         except Exception as e:
             return {
@@ -1617,7 +1546,7 @@ class DatabaseService:
                 "error": f"获取权限失败: {str(e)}",
             }
 
-    def _get_mysql_version(self, conn) -> Optional[str]:
+    def _get_mysql_version(self, conn) -> str | None:
         """获取MySQL版本"""
         try:
             cursor = conn.cursor()
@@ -1629,7 +1558,7 @@ class DatabaseService:
             logging.error(f"获取MySQL版本失败: {e}")
             return None
 
-    def _get_postgresql_version(self, conn) -> Optional[str]:
+    def _get_postgresql_version(self, conn) -> str | None:
         """获取PostgreSQL版本"""
         try:
             cursor = conn.cursor()
@@ -1645,7 +1574,7 @@ class DatabaseService:
             logging.error(f"获取PostgreSQL版本失败: {e}")
             return None
 
-    def _get_sqlserver_version(self, conn) -> Optional[str]:
+    def _get_sqlserver_version(self, conn) -> str | None:
         """获取SQL Server版本"""
         try:
             cursor = conn.cursor()
@@ -1661,7 +1590,7 @@ class DatabaseService:
             logging.error(f"获取SQL Server版本失败: {e}")
             return None
 
-    def _get_oracle_version(self, conn) -> Optional[str]:
+    def _get_oracle_version(self, conn) -> str | None:
         """获取Oracle版本"""
         try:
             cursor = conn.cursor()

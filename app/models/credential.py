@@ -3,10 +3,11 @@
 """
 
 from datetime import datetime
-from app.utils.timezone import now
-from app import db, bcrypt
+
+from app import bcrypt, db
 from app.utils.enhanced_logger import log_operation
 from app.utils.password_manager import password_manager
+from app.utils.timezone import now
 
 
 class Credential(db.Model):
@@ -25,9 +26,7 @@ class Credential(db.Model):
     category_id = db.Column(db.Integer, nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     def __init__(
@@ -118,12 +117,9 @@ class Credential(db.Model):
             # 对于旧格式，我们需要从环境变量或其他地方获取密码
             # 这里使用硬编码的密码作为临时解决方案
             # TODO: 实现更安全的密码管理机制
-            if self.db_type == "mysql":
+            if self.db_type == "mysql" or self.db_type == "sqlserver":
                 return "MComnyistqolr#@2222"
-            elif self.db_type == "sqlserver":
-                return "MComnyistqolr#@2222"
-            else:
-                return ""
+            return ""
 
         # 如果是我们的加密格式，尝试解密
         if password_manager.is_encrypted(self.password):
@@ -165,17 +161,13 @@ class Credential(db.Model):
         """软删除凭据"""
         self.deleted_at = now()
         db.session.commit()
-        log_operation(
-            "credential_delete", details={"credential_id": self.id, "name": self.name}
-        )
+        log_operation("credential_delete", details={"credential_id": self.id, "name": self.name})
 
     def restore(self):
         """恢复凭据"""
         self.deleted_at = None
         db.session.commit()
-        log_operation(
-            "credential_restore", details={"credential_id": self.id, "name": self.name}
-        )
+        log_operation("credential_restore", details={"credential_id": self.id, "name": self.name})
 
     @staticmethod
     def get_active_credentials():
@@ -185,9 +177,7 @@ class Credential(db.Model):
     @staticmethod
     def get_by_type(credential_type):
         """根据类型获取凭据"""
-        return Credential.query.filter_by(
-            credential_type=credential_type, deleted_at=None
-        ).all()
+        return Credential.query.filter_by(credential_type=credential_type, deleted_at=None).all()
 
     @staticmethod
     def get_by_db_type(db_type):

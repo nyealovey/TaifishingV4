@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 输入验证和清理工具
 """
 
-import re
 import html
-from typing import Any, Dict, List, Optional, Union
-from urllib.parse import quote, unquote
+import re
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import bleach
 from flask import request
 
@@ -46,7 +44,7 @@ class InputValidator:
         min_length: int = 0,
         max_length: int = 255,
         allow_empty: bool = True,
-        pattern: str = None,
+        pattern: Optional[str] = None,
     ) -> Optional[str]:
         """
         验证字符串输入
@@ -83,9 +81,7 @@ class InputValidator:
         return html.escape(str_value)
 
     @staticmethod
-    def validate_integer(
-        value: Any, min_val: int = None, max_val: int = None
-    ) -> Optional[int]:
+    def validate_integer(value: Any, min_val: Optional[int] = None, max_val: Optional[int] = None) -> Optional[int]:
         """
         验证整数输入
 
@@ -127,7 +123,7 @@ class InputValidator:
         return None
 
     @staticmethod
-    def validate_email(email: str) -> Optional[str]:
+    def validate_email(email: str) -> str | None:
         """
         验证邮箱地址
 
@@ -147,7 +143,7 @@ class InputValidator:
         return email.lower().strip()
 
     @staticmethod
-    def validate_url(url: str) -> Optional[str]:
+    def validate_url(url: str) -> str | None:
         """
         验证URL
 
@@ -167,15 +163,16 @@ class InputValidator:
         return url.strip()
 
     @staticmethod
-    def get_allowed_db_types() -> List[str]:
+    def get_allowed_db_types() -> list[str]:
         """
         获取允许的数据库类型列表（从数据库类型配置中动态获取）
-        
+
         Returns:
             List[str]: 启用的数据库类型名称列表
         """
         try:
             from app.utils.database_type_utils import DatabaseTypeUtils
+
             active_types = DatabaseTypeUtils.get_all_active_types()
             return [config.name for config in active_types]
         except Exception:
@@ -183,7 +180,7 @@ class InputValidator:
             return InputValidator.ALLOWED_DB_TYPES
 
     @staticmethod
-    def validate_db_type(db_type: str) -> Optional[str]:
+    def validate_db_type(db_type: str) -> str | None:
         """
         验证数据库类型
 
@@ -195,17 +192,17 @@ class InputValidator:
         """
         if not db_type:
             return None
-        
+
         # 使用动态获取的数据库类型列表
         allowed_types = InputValidator.get_allowed_db_types()
         db_type_lower = db_type.lower()
-        
+
         if db_type_lower not in allowed_types:
             return None
         return db_type_lower
 
     @staticmethod
-    def validate_task_type(task_type: str) -> Optional[str]:
+    def validate_task_type(task_type: str) -> str | None:
         """
         验证任务类型
 
@@ -220,7 +217,7 @@ class InputValidator:
         return task_type.lower()
 
     @staticmethod
-    def validate_role(role: str) -> Optional[str]:
+    def validate_role(role: str) -> str | None:
         """
         验证用户角色
 
@@ -270,9 +267,7 @@ class InputValidator:
         allowed_attributes = {}
 
         # 使用bleach清理HTML
-        cleaned = bleach.clean(
-            html_content, tags=allowed_tags, attributes=allowed_attributes
-        )
+        cleaned = bleach.clean(html_content, tags=allowed_tags, attributes=allowed_attributes)
 
         return cleaned
 
@@ -317,7 +312,7 @@ class InputValidator:
         return True
 
     @staticmethod
-    def validate_json(json_data: Union[str, dict]) -> Optional[dict]:
+    def validate_json(json_data: str | dict) -> dict | None:
         """
         验证JSON数据
 
@@ -341,7 +336,7 @@ class InputValidator:
         return None
 
     @staticmethod
-    def validate_pagination(page: Any, per_page: Any, max_per_page: int = 100) -> tuple:
+    def validate_pagination(page: Any, per_page: Any, max_per_page: int = 100) -> Tuple[int, int]:
         """
         验证分页参数
 
@@ -354,16 +349,13 @@ class InputValidator:
             tuple: (page, per_page) 验证后的分页参数
         """
         page = InputValidator.validate_integer(page, min_val=1) or 1
-        per_page = (
-            InputValidator.validate_integer(per_page, min_val=1, max_val=max_per_page)
-            or 10
-        )
+        per_page = InputValidator.validate_integer(per_page, min_val=1, max_val=max_per_page) or 10
 
         return page, per_page
 
     @staticmethod
     def validate_request_data(
-        required_fields: List[str], optional_fields: List[str] = None
+        required_fields: List[str], optional_fields: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
         验证请求数据
@@ -380,11 +372,7 @@ class InputValidator:
 
         # 验证必需字段
         for field in required_fields:
-            value = (
-                request.form.get(field) or request.json.get(field)
-                if request.is_json
-                else request.form.get(field)
-            )
+            value = request.form.get(field) or request.json.get(field) if request.is_json else request.form.get(field)
             if not value:
                 errors.append(f"缺少必需字段: {field}")
             else:
@@ -394,9 +382,7 @@ class InputValidator:
         if optional_fields:
             for field in optional_fields:
                 value = (
-                    request.form.get(field) or request.json.get(field)
-                    if request.is_json
-                    else request.form.get(field)
+                    request.form.get(field) or request.json.get(field) if request.is_json else request.form.get(field)
                 )
                 if value:
                     data[field] = value
@@ -407,7 +393,7 @@ class InputValidator:
         return data
 
 
-def validate_instance_data(data: Dict[str, Any]) -> Dict[str, Any]:
+def validate_instance_data(data: dict[str, Any]) -> dict[str, Any]:
     """
     验证实例数据
 
@@ -420,9 +406,7 @@ def validate_instance_data(data: Dict[str, Any]) -> Dict[str, Any]:
     validated = {}
 
     # 验证名称
-    name = InputValidator.validate_string(
-        data.get("name"), min_length=1, max_length=100, allow_empty=False
-    )
+    name = InputValidator.validate_string(data.get("name"), min_length=1, max_length=100, allow_empty=False)
     if not name:
         raise ValueError("实例名称无效")
     validated["name"] = name
@@ -464,9 +448,7 @@ def validate_instance_data(data: Dict[str, Any]) -> Dict[str, Any]:
     validated["database_name"] = database_name
 
     # 验证描述
-    description = InputValidator.validate_string(
-        data.get("description"), max_length=500, allow_empty=True
-    )
+    description = InputValidator.validate_string(data.get("description"), max_length=500, allow_empty=True)
     validated["description"] = description or ""
 
     # 验证是否激活
@@ -476,7 +458,7 @@ def validate_instance_data(data: Dict[str, Any]) -> Dict[str, Any]:
     return validated
 
 
-def validate_credential_data(data: Dict[str, Any]) -> Dict[str, Any]:
+def validate_credential_data(data: dict[str, Any]) -> dict[str, Any]:
     """
     验证凭据数据
 
@@ -489,9 +471,7 @@ def validate_credential_data(data: Dict[str, Any]) -> Dict[str, Any]:
     validated = {}
 
     # 验证名称
-    name = InputValidator.validate_string(
-        data.get("name"), min_length=1, max_length=100, allow_empty=False
-    )
+    name = InputValidator.validate_string(data.get("name"), min_length=1, max_length=100, allow_empty=False)
     if not name:
         raise ValueError("凭据名称无效")
     validated["name"] = name
@@ -515,9 +495,7 @@ def validate_credential_data(data: Dict[str, Any]) -> Dict[str, Any]:
     validated["password"] = password
 
     # 验证描述
-    description = InputValidator.validate_string(
-        data.get("description"), max_length=500, allow_empty=True
-    )
+    description = InputValidator.validate_string(data.get("description"), max_length=500, allow_empty=True)
     validated["description"] = description or ""
 
     # 验证是否激活

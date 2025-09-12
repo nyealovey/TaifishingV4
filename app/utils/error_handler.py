@@ -5,10 +5,10 @@ from app.utils.timezone import now
 """
 
 import logging
-from flask import current_app, request, jsonify, render_template
-from werkzeug.exceptions import HTTPException
-from sqlalchemy.exc import SQLAlchemyError
 import traceback
+
+from flask import current_app, jsonify, render_template, request
+from sqlalchemy.exc import SQLAlchemyError
 
 
 def register_error_handlers(app):
@@ -60,12 +60,11 @@ def register_error_handlers(app):
         # 根据错误类型返回不同的错误信息
         if "connection" in str(error).lower():
             return _handle_error(error, 503, "数据库连接失败，请稍后重试")
-        elif "constraint" in str(error).lower():
+        if "constraint" in str(error).lower():
             return _handle_error(error, 400, "数据约束错误，请检查输入数据")
-        elif "timeout" in str(error).lower():
+        if "timeout" in str(error).lower():
             return _handle_error(error, 504, "数据库操作超时，请稍后重试")
-        else:
-            return _handle_error(error, 500, "数据库操作错误")
+        return _handle_error(error, 500, "数据库操作错误")
 
     @app.errorhandler(Exception)
     def handle_generic_error(error):
@@ -102,13 +101,10 @@ def _handle_error(error, status_code, message):
             ),
             status_code,
         )
-    else:
-        return (
-            render_template(
-                "errors/error.html", error_code=status_code, error_message=message
-            ),
-            status_code,
-        )
+    return (
+        render_template("errors/error.html", error_code=status_code, error_message=message),
+        status_code,
+    )
 
 
 def _log_error(error, status_code):
@@ -148,7 +144,6 @@ def _get_timestamp():
     Returns:
         str: ISO格式时间戳
     """
-    from datetime import datetime
 
     return now().isoformat()
 
@@ -188,19 +183,13 @@ def validate_error_response(response_data):
 class SecurityError(Exception):
     """安全相关错误"""
 
-    pass
-
 
 class ValidationError(Exception):
     """验证错误"""
 
-    pass
-
 
 class BusinessLogicError(Exception):
     """业务逻辑错误"""
-
-    pass
 
 
 def handle_security_error(error):

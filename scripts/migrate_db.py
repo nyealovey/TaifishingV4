@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 泰摸鱼吧 - 数据库迁移管理脚本
@@ -17,13 +16,15 @@ sys.path.insert(0, str(project_root))
 # 设置环境变量
 os.environ.setdefault('FLASK_APP', 'app')
 
-from flask_migrate import upgrade, downgrade, migrate, init, stamp, current, history
+from flask_migrate import current, downgrade, history, init, migrate, stamp, upgrade
+
 from app import create_app, db
+
 
 def init_migration():
     """初始化迁移环境"""
     print("🔧 初始化数据库迁移环境...")
-    
+
     # 创建migrations目录
     migrations_dir = project_root / 'migrations'
     if not migrations_dir.exists():
@@ -35,46 +36,46 @@ def init_migration():
 def create_migration(message):
     """创建新的迁移文件"""
     print(f"📝 创建迁移: {message}")
-    
+
     try:
         migrate(message=message)
         print("✅ 迁移文件创建成功")
     except Exception as e:
         print(f"❌ 创建迁移失败: {e}")
         return False
-    
+
     return True
 
 def upgrade_database(revision='head'):
     """升级数据库到指定版本"""
     print(f"⬆️  升级数据库到: {revision}")
-    
+
     try:
         upgrade(revision)
         print("✅ 数据库升级成功")
     except Exception as e:
         print(f"❌ 数据库升级失败: {e}")
         return False
-    
+
     return True
 
 def downgrade_database(revision):
     """降级数据库到指定版本"""
     print(f"⬇️  降级数据库到: {revision}")
-    
+
     try:
         downgrade(revision)
         print("✅ 数据库降级成功")
     except Exception as e:
         print(f"❌ 数据库降级失败: {e}")
         return False
-    
+
     return True
 
 def show_current():
     """显示当前数据库版本"""
     print("📊 当前数据库版本:")
-    
+
     try:
         with create_app().app_context():
             current_rev = current()
@@ -85,7 +86,7 @@ def show_current():
 def show_history():
     """显示迁移历史"""
     print("📚 迁移历史:")
-    
+
     try:
         with create_app().app_context():
             history_data = history()
@@ -98,28 +99,28 @@ def reset_database():
     """重置数据库（危险操作）"""
     print("⚠️  重置数据库（将删除所有数据）")
     confirm = input("确认继续？(yes/no): ")
-    
+
     if confirm.lower() != 'yes':
         print("❌ 操作已取消")
         return False
-    
+
     try:
         with create_app().app_context():
             # 删除所有表
             db.drop_all()
             print("✅ 所有表已删除")
-            
+
             # 重新创建表
             db.create_all()
             print("✅ 表结构已重新创建")
-            
+
             # 标记为最新版本
             stamp('head')
             print("✅ 数据库已重置")
     except Exception as e:
         print(f"❌ 重置数据库失败: {e}")
         return False
-    
+
     return True
 
 def main():
@@ -142,9 +143,9 @@ def main():
         print("  python scripts/migrate_db.py upgrade")
         print("  python scripts/migrate_db.py downgrade -1")
         return
-    
+
     command = sys.argv[1]
-    
+
     with create_app().app_context():
         if command == 'init':
             init_migration()

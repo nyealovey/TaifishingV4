@@ -1,18 +1,15 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 数据备份管理工具
 """
 
-import os
-import shutil
 import gzip
 import json
-import sqlite3
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-from pathlib import Path
 import logging
+import os
+import shutil
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +22,7 @@ class BackupManager:
         self.max_backups = max_backups
         self.backup_dir.mkdir(exist_ok=True)
 
-    def create_database_backup(
-        self, db_path: str, backup_name: str = None
-    ) -> Optional[str]:
+    def create_database_backup(self, db_path: str, backup_name: str = None) -> str | None:
         """
         创建数据库备份
 
@@ -55,9 +50,8 @@ class BackupManager:
 
             # 压缩备份文件
             compressed_path = f"{backup_path}.gz"
-            with open(backup_path, "rb") as f_in:
-                with gzip.open(compressed_path, "wb") as f_out:
-                    shutil.copyfileobj(f_in, f_out)
+            with open(backup_path, "rb") as f_in, gzip.open(compressed_path, "wb") as f_out:
+                shutil.copyfileobj(f_in, f_out)
 
             # 删除未压缩的文件
             os.remove(backup_path)
@@ -69,9 +63,7 @@ class BackupManager:
             logger.error(f"创建数据库备份失败: {e}")
             return None
 
-    def create_data_backup(
-        self, data: Dict[str, Any], backup_name: str = None
-    ) -> Optional[str]:
+    def create_data_backup(self, data: dict[str, Any], backup_name: str = None) -> str | None:
         """
         创建数据备份
 
@@ -103,9 +95,8 @@ class BackupManager:
 
             # 压缩备份文件
             compressed_path = f"{backup_path}.gz"
-            with open(backup_path, "rb") as f_in:
-                with gzip.open(compressed_path, "wb") as f_out:
-                    shutil.copyfileobj(f_in, f_out)
+            with open(backup_path, "rb") as f_in, gzip.open(compressed_path, "wb") as f_out:
+                shutil.copyfileobj(f_in, f_out)
 
             # 删除未压缩的文件
             os.remove(backup_path)
@@ -136,9 +127,8 @@ class BackupManager:
             # 解压备份文件
             if backup_path.endswith(".gz"):
                 temp_path = backup_path[:-3]  # 移除.gz扩展名
-                with gzip.open(backup_path, "rb") as f_in:
-                    with open(temp_path, "wb") as f_out:
-                        shutil.copyfileobj(f_in, f_out)
+                with gzip.open(backup_path, "rb") as f_in, open(temp_path, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
                 backup_path = temp_path
 
             # 恢复数据库文件
@@ -155,7 +145,7 @@ class BackupManager:
             logger.error(f"恢复数据库备份失败: {e}")
             return False
 
-    def restore_data_backup(self, backup_path: str) -> Optional[Dict[str, Any]]:
+    def restore_data_backup(self, backup_path: str) -> dict[str, Any] | None:
         """
         恢复数据备份
 
@@ -173,13 +163,12 @@ class BackupManager:
             # 解压备份文件
             if backup_path.endswith(".gz"):
                 temp_path = backup_path[:-3]
-                with gzip.open(backup_path, "rb") as f_in:
-                    with open(temp_path, "wb") as f_out:
-                        shutil.copyfileobj(f_in, f_out)
+                with gzip.open(backup_path, "rb") as f_in, open(temp_path, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
                 backup_path = temp_path
 
             # 读取备份数据
-            with open(backup_path, "r", encoding="utf-8") as f:
+            with open(backup_path, encoding="utf-8") as f:
                 backup_data = json.load(f)
 
             # 清理临时文件
@@ -193,7 +182,7 @@ class BackupManager:
             logger.error(f"恢复数据备份失败: {e}")
             return None
 
-    def list_backups(self, backup_type: str = None) -> List[Dict[str, Any]]:
+    def list_backups(self, backup_type: str = None) -> list[dict[str, Any]]:
         """
         列出备份文件
 
@@ -231,10 +220,9 @@ class BackupManager:
         """获取备份类型"""
         if "db_" in filename or filename.endswith(".sqlite.gz"):
             return "database"
-        elif "data_" in filename or filename.endswith(".json.gz"):
+        if "data_" in filename or filename.endswith(".json.gz"):
             return "data"
-        else:
-            return "unknown"
+        return "unknown"
 
     def cleanup_old_backups(self) -> int:
         """
@@ -268,7 +256,7 @@ class BackupManager:
             logger.error(f"清理旧备份失败: {e}")
             return 0
 
-    def get_backup_info(self, backup_path: str) -> Optional[Dict[str, Any]]:
+    def get_backup_info(self, backup_path: str) -> dict[str, Any] | None:
         """
         获取备份信息
 
@@ -334,19 +322,16 @@ backup_manager = BackupManager()
 def create_automatic_backup():
     """创建自动备份"""
     try:
-        from app import db
-        from app.models.user import User
-        from app.models.instance import Instance
         from app.models.credential import Credential
+        from app.models.instance import Instance
         from app.models.task import Task
+        from app.models.user import User
 
         # 收集所有数据
         data = {
             "users": [user.to_dict() for user in User.query.all()],
             "instances": [instance.to_dict() for instance in Instance.query.all()],
-            "credentials": [
-                credential.to_dict() for credential in Credential.query.all()
-            ],
+            "credentials": [credential.to_dict() for credential in Credential.query.all()],
             "tasks": [task.to_dict() for task in Task.query.all()],
         }
 
@@ -356,9 +341,8 @@ def create_automatic_backup():
         if backup_path:
             logger.info(f"自动备份创建成功: {backup_path}")
             return True
-        else:
-            logger.error("自动备份创建失败")
-            return False
+        logger.error("自动备份创建失败")
+        return False
 
     except Exception as e:
         logger.error(f"自动备份失败: {e}")

@@ -4,21 +4,22 @@
 
 from app import db
 
-# 导入所有模型
-from .user import User
-from .instance import Instance
-from .credential import Credential
 from .account import Account
-from .task import Task
-from .log import Log
-from .sync_data import SyncData
 from .account_change import AccountChange
 from .account_classification import (
     AccountClassification,
-    ClassificationRule,
     AccountClassificationAssignment,
+    ClassificationRule,
 )
+from .credential import Credential
+from .instance import Instance
+from .log import Log
 from .permission_config import PermissionConfig
+from .sync_data import SyncData
+from .task import Task
+
+# 导入所有模型
+from .user import User
 
 # 导出所有模型
 __all__ = [

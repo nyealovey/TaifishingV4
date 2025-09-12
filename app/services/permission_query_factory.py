@@ -1,47 +1,42 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 权限查询工厂
 提供统一的数据库权限查询功能
 """
 
-import logging
-from typing import Dict, Any, Optional, List
 from abc import ABC, abstractmethod
-from app.models.instance import Instance
+from typing import Any
+
 from app.models.account import Account
+from app.models.instance import Instance
 from app.services.connection_factory import ConnectionFactory
-from app.utils.enhanced_logger import log_error, log_operation
+from app.utils.enhanced_logger import log_error
 
 
 class PermissionQuery(ABC):
     """权限查询抽象基类"""
-    
+
     def __init__(self, instance: Instance):
         self.instance = instance
         self.connection = None
-    
+
     @abstractmethod
-    def get_account_permissions(self, account: Account) -> Dict[str, Any]:
+    def get_account_permissions(self, account: Account) -> dict[str, Any]:
         """获取账户权限"""
-        pass
-    
+
     @abstractmethod
-    def get_global_permissions(self, account: Account) -> List[Dict[str, Any]]:
+    def get_global_permissions(self, account: Account) -> list[dict[str, Any]]:
         """获取全局权限"""
-        pass
-    
+
     @abstractmethod
-    def get_database_permissions(self, account: Account) -> List[Dict[str, Any]]:
+    def get_database_permissions(self, account: Account) -> list[dict[str, Any]]:
         """获取数据库权限"""
-        pass
-    
+
     @abstractmethod
-    def get_table_permissions(self, account: Account, database: str) -> List[Dict[str, Any]]:
+    def get_table_permissions(self, account: Account, database: str) -> list[dict[str, Any]]:
         """获取表权限"""
-        pass
-    
+
     def _get_connection(self):
         """获取数据库连接"""
         if not self.connection:
@@ -51,29 +46,26 @@ class PermissionQuery(ABC):
 
 class MySQLPermissionQuery(PermissionQuery):
     """MySQL权限查询"""
-    
-    def get_account_permissions(self, account: Account) -> Dict[str, Any]:
+
+    def get_account_permissions(self, account: Account) -> dict[str, Any]:
         """获取MySQL账户权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return {"success": False, "error": "无法建立数据库连接"}
-            
+
             global_perms = self.get_global_permissions(account)
             database_perms = self.get_database_permissions(account)
-            
+
             return {
                 "success": True,
                 "account": {
                     "id": account.id,
                     "username": account.username,
                     "host": account.host,
-                    "plugin": account.plugin
+                    "plugin": account.plugin,
                 },
-                "permissions": {
-                    "global_privileges": global_perms,
-                    "database_privileges": database_perms
-                }
+                "permissions": {"global_privileges": global_perms, "database_privileges": database_perms},
             }
         except Exception as e:
             log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
@@ -81,14 +73,14 @@ class MySQLPermissionQuery(PermissionQuery):
         finally:
             if connection:
                 connection.disconnect()
-    
-    def get_global_permissions(self, account: Account) -> List[Dict[str, Any]]:
+
+    def get_global_permissions(self, account: Account) -> list[dict[str, Any]]:
         """获取MySQL全局权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return []
-            
+
             # 查询全局权限
             query = """
                 SELECT 
@@ -98,34 +90,27 @@ class MySQLPermissionQuery(PermissionQuery):
                 WHERE GRANTEE = %s
                 ORDER BY PRIVILEGE_TYPE
             """
-            
+
             # 处理host字段为空的情况
-            host = account.host if account.host and account.host.strip() else ''
+            host = account.host if account.host and account.host.strip() else ""
             grantee = f"'{account.username}'@'{host}'"
             results = connection.execute_query(query, (grantee,))
-            
-            return [
-                {
-                    "privilege": row[0],
-                    "granted": True,
-                    "grantable": row[1]
-                }
-                for row in results
-            ]
+
+            return [{"privilege": row[0], "granted": True, "grantable": row[1]} for row in results]
         except Exception as e:
             log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
             return []
         finally:
             if connection:
                 connection.disconnect()
-    
-    def get_database_permissions(self, account: Account) -> List[Dict[str, Any]]:
+
+    def get_database_permissions(self, account: Account) -> list[dict[str, Any]]:
         """获取MySQL数据库权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return []
-            
+
             # 查询数据库权限
             query = """
                 SELECT 
@@ -136,33 +121,27 @@ class MySQLPermissionQuery(PermissionQuery):
                 GROUP BY TABLE_SCHEMA
                 ORDER BY TABLE_SCHEMA
             """
-            
+
             # 处理host字段为空的情况
-            host = account.host if account.host and account.host.strip() else ''
+            host = account.host if account.host and account.host.strip() else ""
             grantee = f"'{account.username}'@'{host}'"
             results = connection.execute_query(query, (grantee,))
-            
-            return [
-                {
-                    "database": row[0],
-                    "privileges": row[1].split(',') if row[1] else []
-                }
-                for row in results
-            ]
+
+            return [{"database": row[0], "privileges": row[1].split(",") if row[1] else []} for row in results]
         except Exception as e:
             log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
             return []
         finally:
             if connection:
                 connection.disconnect()
-    
-    def get_table_permissions(self, account: Account, database: str) -> List[Dict[str, Any]]:
+
+    def get_table_permissions(self, account: Account, database: str) -> list[dict[str, Any]]:
         """获取MySQL表权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return []
-            
+
             # 查询表权限
             query = """
                 SELECT 
@@ -173,19 +152,13 @@ class MySQLPermissionQuery(PermissionQuery):
                 GROUP BY TABLE_NAME
                 ORDER BY TABLE_NAME
             """
-            
+
             # 处理host字段为空的情况
-            host = account.host if account.host and account.host.strip() else ''
+            host = account.host if account.host and account.host.strip() else ""
             grantee = f"'{account.username}'@'{host}'"
             results = connection.execute_query(query, (grantee, database))
-            
-            return [
-                {
-                    "table": row[0],
-                    "privileges": row[1].split(',') if row[1] else []
-                }
-                for row in results
-            ]
+
+            return [{"table": row[0], "privileges": row[1].split(",") if row[1] else []} for row in results]
         except Exception as e:
             log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
             return []
@@ -196,39 +169,36 @@ class MySQLPermissionQuery(PermissionQuery):
 
 class PostgreSQLPermissionQuery(PermissionQuery):
     """PostgreSQL权限查询"""
-    
-    def get_account_permissions(self, account: Account) -> Dict[str, Any]:
+
+    def get_account_permissions(self, account: Account) -> dict[str, Any]:
         """获取PostgreSQL账户权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return {"success": False, "error": "无法建立数据库连接"}
-            
+
             global_perms = self.get_global_permissions(account)
             database_perms = self.get_database_permissions(account)
-            
+
             # 分离角色属性和数据库权限
             role_attributes = []
             database_privileges = []
-            
+
             for perm in global_perms:
                 role_attributes.append(perm["privilege"])
-            
+
             for perm in database_perms:
                 database_privileges.append(perm)
-            
+
             return {
                 "success": True,
                 "account": {
                     "id": account.id,
                     "username": account.username,
                     "host": account.host,
-                    "plugin": account.plugin
+                    "plugin": account.plugin,
                 },
-                "permissions": {
-                    "role_attributes": role_attributes,
-                    "database_privileges": database_privileges
-                }
+                "permissions": {"role_attributes": role_attributes, "database_privileges": database_privileges},
             }
         except Exception as e:
             log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
@@ -236,16 +206,16 @@ class PostgreSQLPermissionQuery(PermissionQuery):
         finally:
             if connection:
                 connection.disconnect()
-    
-    def get_global_permissions(self, account: Account) -> List[Dict[str, Any]]:
+
+    def get_global_permissions(self, account: Account) -> list[dict[str, Any]]:
         """获取PostgreSQL全局权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return []
-            
+
             permissions = []
-            
+
             # 查询角色属性（全局权限）
             query = """
                 SELECT 
@@ -259,12 +229,12 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                 FROM pg_roles 
                 WHERE rolname = %s
             """
-            
+
             results = connection.execute_query(query, (account.username,))
-            
+
             if results:
                 row = results[0]
-                
+
                 if row[1]:  # is_superuser
                     permissions.append({"privilege": "SUPERUSER", "granted": True, "grantable": False})
                 if row[3]:  # can_create_role
@@ -273,7 +243,7 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                     permissions.append({"privilege": "CREATEDB", "granted": True, "grantable": False})
                 if row[6]:  # can_replicate
                     permissions.append({"privilege": "REPLICATION", "granted": True, "grantable": False})
-            
+
             # 查询预定义角色
             predefined_roles_query = """
                 SELECT 
@@ -284,12 +254,12 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                 WHERE u.rolname = %s
                 AND r.rolname IN ('pg_read_all_data', 'pg_write_all_data', 'pg_monitor', 'pg_read_all_settings', 'pg_read_all_stats', 'pg_stat_scan_tables', 'pg_signal_backend', 'pg_read_server_files', 'pg_write_server_files', 'pg_execute_server_program')
             """
-            
+
             predefined_results = connection.execute_query(predefined_roles_query, (account.username,))
-            
+
             for row in predefined_results:
                 permissions.append({"privilege": row[0], "granted": True, "grantable": False})
-            
+
             return permissions
         except Exception as e:
             log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
@@ -297,14 +267,14 @@ class PostgreSQLPermissionQuery(PermissionQuery):
         finally:
             if connection:
                 connection.disconnect()
-    
-    def get_database_permissions(self, account: Account) -> List[Dict[str, Any]]:
+
+    def get_database_permissions(self, account: Account) -> list[dict[str, Any]]:
         """获取PostgreSQL数据库权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return []
-            
+
             # 查询数据库权限
             query = """
                 SELECT 
@@ -316,19 +286,17 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                 WHERE datistemplate = false
                 ORDER BY datname
             """
-            
+
             results = connection.execute_query(query, (account.username, account.username, account.username))
-            
+
             return [
                 {
                     "database": row[0],
                     "privileges": [
-                        perm for perm, granted in [
-                            ("CONNECT", row[1]),
-                            ("CREATE", row[2]),
-                            ("TEMPORARY", row[3])
-                        ] if granted
-                    ]
+                        perm
+                        for perm, granted in [("CONNECT", row[1]), ("CREATE", row[2]), ("TEMPORARY", row[3])]
+                        if granted
+                    ],
                 }
                 for row in results
                 if any([row[1], row[2], row[3]])  # 只返回有权限的数据库
@@ -339,14 +307,14 @@ class PostgreSQLPermissionQuery(PermissionQuery):
         finally:
             if connection:
                 connection.disconnect()
-    
-    def get_table_permissions(self, account: Account, database: str) -> List[Dict[str, Any]]:
+
+    def get_table_permissions(self, account: Account, database: str) -> list[dict[str, Any]]:
         """获取PostgreSQL表权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return []
-            
+
             # 查询表权限
             query = """
                 SELECT 
@@ -360,20 +328,24 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                 WHERE schemaname NOT IN ('information_schema', 'pg_catalog')
                 ORDER BY schemaname, tablename
             """
-            
-            results = connection.execute_query(query, (account.username, account.username, account.username, account.username))
-            
+
+            results = connection.execute_query(
+                query, (account.username, account.username, account.username, account.username)
+            )
+
             return [
                 {
                     "table": f"{row[0]}.{row[1]}",
                     "privileges": [
-                        perm for perm, granted in [
+                        perm
+                        for perm, granted in [
                             ("SELECT", row[2]),
                             ("INSERT", row[3]),
                             ("UPDATE", row[4]),
-                            ("DELETE", row[5])
-                        ] if granted
-                    ]
+                            ("DELETE", row[5]),
+                        ]
+                        if granted
+                    ],
                 }
                 for row in results
                 if any([row[2], row[3], row[4], row[5]])  # 只返回有权限的表
@@ -388,63 +360,63 @@ class PostgreSQLPermissionQuery(PermissionQuery):
 
 class SQLServerPermissionQuery(PermissionQuery):
     """SQL Server权限查询"""
-    
-    def get_account_permissions(self, account: Account) -> Dict[str, Any]:
+
+    def get_account_permissions(self, account: Account) -> dict[str, Any]:
         """获取SQL Server账户权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return {"success": False, "error": "无法建立数据库连接"}
-            
+
             global_perms = self.get_global_permissions(account)
             database_perms = self.get_database_permissions(account)
-            
+
             # 分离SQL Server权限类型
             server_roles = []
             database_roles = {}
             server_permissions = []
             database_privileges = {}
-            
+
             for perm in global_perms:
                 if perm.get("type") == "SERVER_ROLE":
                     server_roles.append(perm["name"])
                 else:
                     server_permissions.append(perm["name"])
-            
+
             for perm in database_perms:
                 db_name = perm.get("database", "default")
                 if db_name not in database_roles:
                     database_roles[db_name] = []
                     database_privileges[db_name] = []
-                
+
                 roles = perm.get("roles", [])
                 for role in roles:
                     if isinstance(role, dict):
                         database_roles[db_name].append(role["name"])
                     else:
                         database_roles[db_name].append(role)
-                
+
                 privileges = perm.get("privileges", [])
                 for priv in privileges:
                     if isinstance(priv, dict):
                         database_privileges[db_name].append(priv.get("name", str(priv)))
                     else:
                         database_privileges[db_name].append(priv)
-            
+
             return {
                 "success": True,
                 "account": {
                     "id": account.id,
                     "username": account.username,
                     "host": account.host,
-                    "plugin": account.plugin
+                    "plugin": account.plugin,
                 },
                 "permissions": {
                     "server_roles": server_roles,
                     "database_roles": database_roles,
                     "server_permissions": server_permissions,
-                    "database_privileges": database_privileges
-                }
+                    "database_privileges": database_privileges,
+                },
             }
         except Exception as e:
             log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
@@ -452,14 +424,14 @@ class SQLServerPermissionQuery(PermissionQuery):
         finally:
             if connection:
                 connection.disconnect()
-    
-    def get_global_permissions(self, account: Account) -> List[Dict[str, Any]]:
+
+    def get_global_permissions(self, account: Account) -> list[dict[str, Any]]:
         """获取SQL Server全局权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return []
-            
+
             # 查询服务器角色
             query = """
                 SELECT 
@@ -470,17 +442,11 @@ class SQLServerPermissionQuery(PermissionQuery):
                 JOIN sys.server_principals p ON rm.member_principal_id = p.principal_id
                 WHERE p.name = %s
             """
-            
+
             results = connection.execute_query(query, (account.username,))
-            
+
             return [
-                {
-                    "name": row[0],
-                    "type": "SERVER_ROLE",
-                    "type_desc": row[1],
-                    "granted": True,
-                    "grantable": False
-                }
+                {"name": row[0], "type": "SERVER_ROLE", "type_desc": row[1], "granted": True, "grantable": False}
                 for row in results
             ]
         except Exception as e:
@@ -489,27 +455,27 @@ class SQLServerPermissionQuery(PermissionQuery):
         finally:
             if connection:
                 connection.disconnect()
-    
-    def get_database_permissions(self, account: Account) -> List[Dict[str, Any]]:
+
+    def get_database_permissions(self, account: Account) -> list[dict[str, Any]]:
         """获取SQL Server数据库权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return []
-            
+
             # 获取所有数据库列表
             db_query = "SELECT name FROM sys.databases WHERE state = 0"  # 只获取在线数据库
             db_results = connection.execute_query(db_query, ())
             databases = [row[0] for row in db_results]
-            
+
             db_permissions = {}
-            
+
             # 遍历每个数据库查询角色
             for db_name in databases:
                 try:
                     # 切换到目标数据库
                     connection.execute_query(f"USE [{db_name}]", ())
-                    
+
                     # 查询该数据库的角色
                     role_query = """
                         SELECT r.name as role_name
@@ -518,45 +484,37 @@ class SQLServerPermissionQuery(PermissionQuery):
                         JOIN sys.database_principals p ON rm.member_principal_id = p.principal_id
                         WHERE p.name = %s
                     """
-                    
+
                     role_results = connection.execute_query(role_query, (account.username,))
-                    
+
                     if role_results:
                         db_permissions[db_name] = []
                         for row in role_results:
                             role_name = row[0]
-                            db_permissions[db_name].append({
-                                "name": role_name,
-                                "type": "DATABASE_ROLE",
-                                "type_desc": "DATABASE_ROLE"
-                            })
-                            
+                            db_permissions[db_name].append(
+                                {"name": role_name, "type": "DATABASE_ROLE", "type_desc": "DATABASE_ROLE"}
+                            )
+
                 except Exception as e:
                     # 如果某个数据库查询失败，记录日志但继续处理其他数据库
                     print(f"DEBUG: 查询数据库 {db_name} 的角色失败: {e}")
                     continue
-            
-            return [
-                {
-                    "database": db_name,
-                    "roles": roles
-                }
-                for db_name, roles in db_permissions.items()
-            ]
+
+            return [{"database": db_name, "roles": roles} for db_name, roles in db_permissions.items()]
         except Exception as e:
             log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
             return []
         finally:
             if connection:
                 connection.disconnect()
-    
-    def get_table_permissions(self, account: Account, database: str) -> List[Dict[str, Any]]:
+
+    def get_table_permissions(self, account: Account, database: str) -> list[dict[str, Any]]:
         """获取SQL Server表权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return []
-            
+
             # 查询表权限
             query = """
                 SELECT 
@@ -569,24 +527,21 @@ class SQLServerPermissionQuery(PermissionQuery):
                 WHERE pr.name = %s AND p.state = 'G'
                 ORDER BY SCHEMA_NAME(t.schema_id), t.name
             """
-            
+
             results = connection.execute_query(query, (account.username,))
-            
+
             # 按表分组
             table_permissions = {}
             for row in results:
                 table_name = f"{row[0]}.{row[1]}"
                 permission = row[2]
-                
+
                 if table_name not in table_permissions:
                     table_permissions[table_name] = []
                 table_permissions[table_name].append(permission)
-            
+
             return [
-                {
-                    "table": table_name,
-                    "privileges": permissions
-                }
+                {"table": table_name, "privileges": permissions}
                 for table_name, permissions in table_permissions.items()
             ]
         except Exception as e:
@@ -599,23 +554,23 @@ class SQLServerPermissionQuery(PermissionQuery):
 
 class OraclePermissionQuery(PermissionQuery):
     """Oracle权限查询"""
-    
-    def get_account_permissions(self, account: Account) -> Dict[str, Any]:
+
+    def get_account_permissions(self, account: Account) -> dict[str, Any]:
         """获取Oracle账户权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return {"success": False, "error": "无法建立数据库连接"}
-            
+
             global_perms = self.get_global_permissions(account)
             database_perms = self.get_database_permissions(account)
-            
+
             # 分离Oracle权限类型
             roles = []
             system_privileges = []
             tablespace_privileges = []
             tablespace_quotas = []
-            
+
             for perm in global_perms:
                 if perm["privilege"].startswith("ROLE_"):
                     roles.append(perm["privilege"].replace("ROLE_", ""))
@@ -623,26 +578,26 @@ class OraclePermissionQuery(PermissionQuery):
                     tablespace_privileges.append(perm["privilege"])
                 else:
                     system_privileges.append(perm["privilege"])
-            
+
             # 处理表空间配额
             for perm in database_perms:
                 if "quota" in perm:
                     tablespace_quotas.append(perm["quota"])
-            
+
             return {
                 "success": True,
                 "account": {
                     "id": account.id,
                     "username": account.username,
                     "host": account.host,
-                    "plugin": account.plugin
+                    "plugin": account.plugin,
                 },
                 "permissions": {
                     "roles": roles,
                     "system_privileges": system_privileges,
                     "tablespace_privileges": tablespace_privileges,
-                    "tablespace_quotas": tablespace_quotas
-                }
+                    "tablespace_quotas": tablespace_quotas,
+                },
             }
         except Exception as e:
             log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
@@ -650,17 +605,17 @@ class OraclePermissionQuery(PermissionQuery):
         finally:
             if connection:
                 connection.disconnect()
-    
-    def get_global_permissions(self, account: Account) -> List[Dict[str, Any]]:
+
+    def get_global_permissions(self, account: Account) -> list[dict[str, Any]]:
         """获取Oracle全局权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return []
-            
+
             permissions = []
             print(f"DEBUG: 开始查询Oracle用户 {account.username} 的全局权限")
-            
+
             # 查询系统权限 - 使用dba_sys_privs查询指定用户的权限
             sys_privs_query = """
                 SELECT 
@@ -670,18 +625,14 @@ class OraclePermissionQuery(PermissionQuery):
                 WHERE grantee = :username
                 ORDER BY privilege
             """
-            
+
             print(f"DEBUG: 执行系统权限查询，用户名: {account.username.upper()}")
             sys_results = connection.execute_query(sys_privs_query, {"username": account.username.upper()})
             print(f"DEBUG: 系统权限查询结果: {list(sys_results)}")
-            
+
             for row in sys_results:
-                permissions.append({
-                    "privilege": row[0],
-                    "granted": True,
-                    "grantable": row[1] == 'YES'
-                })
-            
+                permissions.append({"privilege": row[0], "granted": True, "grantable": row[1] == "YES"})
+
             # 查询角色权限 - 使用dba_role_privs查询指定用户的角色
             roles_query = """
                 SELECT 
@@ -691,18 +642,14 @@ class OraclePermissionQuery(PermissionQuery):
                 WHERE grantee = :username
                 ORDER BY granted_role
             """
-            
+
             print(f"DEBUG: 执行角色权限查询，用户名: {account.username.upper()}")
             role_results = connection.execute_query(roles_query, {"username": account.username.upper()})
             print(f"DEBUG: 角色权限查询结果: {list(role_results)}")
-            
+
             for row in role_results:
-                permissions.append({
-                    "privilege": f"ROLE_{row[0]}",
-                    "granted": True,
-                    "grantable": row[1] == 'YES'
-                })
-            
+                permissions.append({"privilege": f"ROLE_{row[0]}", "granted": True, "grantable": row[1] == "YES"})
+
             print(f"DEBUG: 最终权限列表: {permissions}")
             return permissions
         except Exception as e:
@@ -711,17 +658,17 @@ class OraclePermissionQuery(PermissionQuery):
         finally:
             if connection:
                 connection.disconnect()
-    
-    def get_database_permissions(self, account: Account) -> List[Dict[str, Any]]:
+
+    def get_database_permissions(self, account: Account) -> list[dict[str, Any]]:
         """获取Oracle数据库权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return []
-            
+
             permissions = []
             print(f"DEBUG: 开始查询Oracle用户 {account.username} 的数据库权限")
-            
+
             # 查询表空间配额 - 使用user_ts_quotas查询指定用户的配额
             quota_query = """
                 SELECT 
@@ -731,25 +678,25 @@ class OraclePermissionQuery(PermissionQuery):
                 FROM user_ts_quotas
                 ORDER BY tablespace_name
             """
-            
+
             print(f"DEBUG: 执行表空间配额查询，用户名: {account.username.upper()}")
             quota_results = connection.execute_query(quota_query, ())
             print(f"DEBUG: 表空间配额查询结果: {list(quota_results)}")
-            
+
             for row in quota_results:
                 tablespace_name = row[0]
                 current_bytes = row[1] if row[1] else 0
                 max_bytes = row[2] if row[2] else 0
-                
+
                 if max_bytes > 0:
-                    quota_info = f"{tablespace_name}: {self._format_bytes(current_bytes)}/{self._format_bytes(max_bytes)}"
+                    quota_info = (
+                        f"{tablespace_name}: {self._format_bytes(current_bytes)}/{self._format_bytes(max_bytes)}"
+                    )
                 else:
                     quota_info = f"{tablespace_name}: {self._format_bytes(current_bytes)}/UNLIMITED"
-                
-                permissions.append({
-                    "quota": quota_info
-                })
-            
+
+                permissions.append({"quota": quota_info})
+
             print(f"DEBUG: 数据库权限列表: {permissions}")
             return permissions
         except Exception as e:
@@ -758,25 +705,25 @@ class OraclePermissionQuery(PermissionQuery):
         finally:
             if connection:
                 connection.disconnect()
-    
+
     def _format_bytes(self, bytes_value):
         """格式化字节数"""
         if bytes_value is None:
             return "0B"
-        
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+
+        for unit in ["B", "KB", "MB", "GB", "TB"]:
             if bytes_value < 1024.0:
                 return f"{bytes_value:.1f}{unit}"
             bytes_value /= 1024.0
         return f"{bytes_value:.1f}PB"
-    
-    def get_table_permissions(self, account: Account, database: str) -> List[Dict[str, Any]]:
+
+    def get_table_permissions(self, account: Account, database: str) -> list[dict[str, Any]]:
         """获取Oracle表权限"""
         try:
             connection = self._get_connection()
             if not connection or not connection.connect():
                 return []
-            
+
             # 查询表权限
             query = """
                 SELECT 
@@ -788,24 +735,21 @@ class OraclePermissionQuery(PermissionQuery):
                 WHERE grantee = :username
                 ORDER BY owner, table_name, privilege
             """
-            
+
             results = connection.execute_query(query, {"username": account.username.upper()})
-            
+
             # 按表分组
             table_permissions = {}
             for row in results:
                 table_name = f"{row[0]}.{row[1]}"
                 privilege = row[2]
-                
+
                 if table_name not in table_permissions:
                     table_permissions[table_name] = []
                 table_permissions[table_name].append(privilege)
-            
+
             return [
-                {
-                    "table": table_name,
-                    "privileges": permissions
-                }
+                {"table": table_name, "privileges": permissions}
                 for table_name, permissions in table_permissions.items()
             ]
         except Exception as e:
@@ -818,7 +762,7 @@ class OraclePermissionQuery(PermissionQuery):
 
 class PermissionQueryFactory:
     """权限查询工厂"""
-    
+
     # 数据库类型到权限查询类的映射
     QUERY_CLASSES = {
         "mysql": MySQLPermissionQuery,
@@ -826,69 +770,63 @@ class PermissionQueryFactory:
         "sqlserver": SQLServerPermissionQuery,
         "oracle": OraclePermissionQuery,
     }
-    
+
     @staticmethod
-    def create_query(instance: Instance) -> Optional[PermissionQuery]:
+    def create_query(instance: Instance) -> PermissionQuery | None:
         """
         创建权限查询对象
-        
+
         Args:
             instance: 数据库实例
-            
+
         Returns:
             权限查询对象，如果类型不支持则返回None
         """
         db_type = instance.db_type.lower()
-        
+
         if db_type not in PermissionQueryFactory.QUERY_CLASSES:
-            log_error(
-                f"不支持的数据库类型: {db_type}",
-                context={"instance_id": instance.id, "db_type": db_type}
-            )
+            log_error(f"不支持的数据库类型: {db_type}", context={"instance_id": instance.id, "db_type": db_type})
             return None
-        
+
         query_class = PermissionQueryFactory.QUERY_CLASSES[db_type]
         return query_class(instance)
-    
+
     @staticmethod
-    def get_account_permissions(instance: Instance, account: Account) -> Dict[str, Any]:
+    def get_account_permissions(instance: Instance, account: Account) -> dict[str, Any]:
         """
         获取账户权限
-        
+
         Args:
             instance: 数据库实例
             account: 账户对象
-            
+
         Returns:
             权限信息字典
         """
         query = PermissionQueryFactory.create_query(instance)
         if not query:
-            return {
-                "success": False,
-                "error": f"不支持的数据库类型: {instance.db_type}"
-            }
-        
+            return {"success": False, "error": f"不支持的数据库类型: {instance.db_type}"}
+
         return query.get_account_permissions(account)
-    
+
     @staticmethod
     def get_supported_types() -> list:
         """
         获取支持的数据库类型列表
-        
+
         Returns:
             支持的数据库类型列表
         """
         return list(PermissionQueryFactory.QUERY_CLASSES.keys())
-    
+
     @staticmethod
     def is_type_supported(db_type: str) -> bool:
         """
         检查数据库类型是否支持
-        
+
         Args:
             db_type: 数据库类型名称
-            
+
         Returns:
             是否支持该数据库类型
         """

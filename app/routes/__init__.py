@@ -6,4 +6,4 @@ from flask import Blueprint
 main_bp = Blueprint("main", __name__)
 
 # 导入所有路由模块
-from . import main, auth, instances, credentials, logs, dashboard
+from . import auth, credentials, dashboard, instances, logs, main

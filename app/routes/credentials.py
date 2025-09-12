@@ -1,26 +1,25 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 凭据管理路由
 """
 
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
-from flask_login import login_required, current_user
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.utils.decorators import view_required, create_required, update_required, delete_required
+import logging
+
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask_login import current_user, login_required
+
+from app import db
 from app.models.credential import Credential
 from app.models.instance import Instance
-from app import db
+from app.utils.decorators import create_required, delete_required, update_required, view_required
 from app.utils.enhanced_logger import log_operation
 from app.utils.security import (
     sanitize_form_data,
+    validate_credential_type,
+    validate_db_type,
+    validate_password,
     validate_required_fields,
     validate_username,
-    validate_password,
-    validate_db_type,
-    validate_credential_type,
 )
-import logging
 
 # 创建蓝图
 credentials_bp = Blueprint("credentials", __name__)
@@ -37,9 +36,9 @@ def index():
     credential_type = request.args.get("credential_type", "", type=str)
 
     # 构建查询，包含实例数量统计
-    query = db.session.query(
-        Credential, db.func.count(Instance.id).label("instance_count")
-    ).outerjoin(Instance, Credential.id == Instance.credential_id)
+    query = db.session.query(Credential, db.func.count(Instance.id).label("instance_count")).outerjoin(
+        Instance, Credential.id == Instance.credential_id
+    )
 
     if search:
         query = query.filter(
@@ -196,9 +195,7 @@ def create():
 
             if request.is_json:
                 return (
-                    jsonify(
-                        {"message": "凭据创建成功", "credential": credential.to_dict()}
-                    ),
+                    jsonify({"message": "凭据创建成功", "credential": credential.to_dict()}),
                     201,
                 )
 
@@ -312,9 +309,7 @@ def edit(credential_id):
         try:
             # 更新凭据信息
             credential.name = data.get("name", credential.name).strip()
-            credential.credential_type = data.get(
-                "credential_type", credential.credential_type
-            )
+            credential.credential_type = data.get("credential_type", credential.credential_type)
             credential.db_type = data.get("db_type", credential.db_type)
             credential.username = data.get("username", credential.username).strip()
             credential.description = data.get("description", credential.description)
@@ -335,9 +330,7 @@ def edit(credential_id):
             db.session.commit()
 
             if request.is_json:
-                return jsonify(
-                    {"message": "凭据更新成功", "credential": credential.to_dict()}
-                )
+                return jsonify({"message": "凭据更新成功", "credential": credential.to_dict()})
 
             flash("凭据更新成功！", "success")
             return redirect(url_for("credentials.detail", credential_id=credential_id))
@@ -445,7 +438,7 @@ def delete(credential_id):
 @view_required
 def test_credential(credential_id):
     """测试凭据"""
-    credential = Credential.query.get_or_404(credential_id)
+    Credential.query.get_or_404(credential_id)
 
     try:
         # 这里可以实现凭据测试逻辑

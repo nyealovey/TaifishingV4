@@ -1,24 +1,22 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 账户分类管理路由
 """
 
-from flask import Blueprint, render_template, request, jsonify, current_app
-from flask_login import login_required, current_user
-from app.utils.decorators import view_required, create_required, update_required, delete_required
+import json
+
+from flask import Blueprint, current_app, jsonify, render_template, request
+from flask_login import current_user, login_required
+
 from app import db
 from app.models.account_classification import (
     AccountClassification,
-    ClassificationRule,
     AccountClassificationAssignment,
+    ClassificationRule,
 )
 from app.services.account_classification_service import AccountClassificationService
-import json
+from app.utils.decorators import create_required, delete_required, update_required, view_required
 
-account_classification_bp = Blueprint(
-    "account_classification", __name__, url_prefix="/account-classification"
-)
+account_classification_bp = Blueprint("account_classification", __name__, url_prefix="/account-classification")
 
 
 @account_classification_bp.route("/")
@@ -69,16 +67,8 @@ def get_classifications():
                     "priority": classification.priority,
                     "is_system": classification.is_system,
                     "rules_count": rules_count,
-                    "created_at": (
-                        classification.created_at.isoformat()
-                        if classification.created_at
-                        else None
-                    ),
-                    "updated_at": (
-                        classification.updated_at.isoformat()
-                        if classification.updated_at
-                        else None
-                    ),
+                    "created_at": (classification.created_at.isoformat() if classification.created_at else None),
+                    "updated_at": (classification.updated_at.isoformat() if classification.updated_at else None),
                 }
             )
 
@@ -149,16 +139,8 @@ def get_classification(classification_id):
                     "color": classification.color,
                     "priority": classification.priority,
                     "is_system": classification.is_system,
-                    "created_at": (
-                        classification.created_at.isoformat()
-                        if classification.created_at
-                        else None
-                    ),
-                    "updated_at": (
-                        classification.updated_at.isoformat()
-                        if classification.updated_at
-                        else None
-                    ),
+                    "created_at": (classification.created_at.isoformat() if classification.created_at else None),
+                    "updated_at": (classification.updated_at.isoformat() if classification.updated_at else None),
                 },
             }
         )
@@ -168,9 +150,7 @@ def get_classification(classification_id):
         return jsonify({"success": False, "error": str(e)})
 
 
-@account_classification_bp.route(
-    "/classifications/<int:classification_id>", methods=["PUT"]
-)
+@account_classification_bp.route("/classifications/<int:classification_id>", methods=["PUT"])
 @login_required
 @update_required
 def update_classification(classification_id):
@@ -195,9 +175,7 @@ def update_classification(classification_id):
         return jsonify({"success": False, "error": str(e)})
 
 
-@account_classification_bp.route(
-    "/classifications/<int:classification_id>", methods=["DELETE"]
-)
+@account_classification_bp.route("/classifications/<int:classification_id>", methods=["DELETE"])
 @login_required
 @delete_required
 def delete_classification(classification_id):
@@ -246,18 +224,12 @@ def get_rules():
                     "id": rule.id,
                     "rule_name": rule.rule_name,
                     "classification_id": rule.classification_id,
-                    "classification_name": (
-                        rule.classification.name if rule.classification else None
-                    ),
+                    "classification_name": (rule.classification.name if rule.classification else None),
                     "db_type": rule.db_type,
                     "rule_expression": rule.rule_expression,
                     "is_active": rule.is_active,
-                    "created_at": (
-                        rule.created_at.isoformat() if rule.created_at else None
-                    ),
-                    "updated_at": (
-                        rule.updated_at.isoformat() if rule.updated_at else None
-                    ),
+                    "created_at": (rule.created_at.isoformat() if rule.created_at else None),
+                    "updated_at": (rule.updated_at.isoformat() if rule.updated_at else None),
                 }
             )
 
@@ -275,11 +247,7 @@ def list_rules():
     """获取所有规则列表（按数据库类型分组）"""
     try:
         # 获取所有规则
-        rules = (
-            ClassificationRule.query.filter_by(is_active=True)
-            .order_by(ClassificationRule.created_at.desc())
-            .all()
-        )
+        rules = ClassificationRule.query.filter_by(is_active=True).order_by(ClassificationRule.created_at.desc()).all()
 
         # 获取匹配账户数量
         service = AccountClassificationService()
@@ -291,19 +259,13 @@ def list_rules():
                     "id": rule.id,
                     "rule_name": rule.rule_name,
                     "classification_id": rule.classification_id,
-                    "classification_name": (
-                        rule.classification.name if rule.classification else None
-                    ),
+                    "classification_name": (rule.classification.name if rule.classification else None),
                     "db_type": rule.db_type,
                     "rule_expression": rule.rule_expression,
                     "is_active": rule.is_active,
                     "matched_accounts_count": matched_count,
-                    "created_at": (
-                        rule.created_at.isoformat() if rule.created_at else None
-                    ),
-                    "updated_at": (
-                        rule.updated_at.isoformat() if rule.updated_at else None
-                    ),
+                    "created_at": (rule.created_at.isoformat() if rule.created_at else None),
+                    "updated_at": (rule.updated_at.isoformat() if rule.updated_at else None),
                 }
             )
 
@@ -362,9 +324,7 @@ def get_rule(rule_id):
 
         # 解析规则表达式JSON字符串为对象
         try:
-            rule_expression_obj = (
-                json.loads(rule.rule_expression) if rule.rule_expression else {}
-            )
+            rule_expression_obj = json.loads(rule.rule_expression) if rule.rule_expression else {}
         except (json.JSONDecodeError, TypeError):
             rule_expression_obj = {}
 
@@ -372,9 +332,7 @@ def get_rule(rule_id):
             "id": rule.id,
             "rule_name": rule.rule_name,
             "classification_id": rule.classification_id,
-            "classification_name": (
-                rule.classification.name if rule.classification else None
-            ),
+            "classification_name": (rule.classification.name if rule.classification else None),
             "db_type": rule.db_type,
             "rule_expression": rule_expression_obj,  # 返回解析后的对象
             "is_active": rule.is_active,
@@ -416,9 +374,7 @@ def update_rule(rule_id):
         return jsonify({"success": False, "error": str(e)})
 
 
-@account_classification_bp.route(
-    "/rules/<int:rule_id>/matched-accounts", methods=["GET"]
-)
+@account_classification_bp.route("/rules/<int:rule_id>/matched-accounts", methods=["GET"])
 @login_required
 @view_required
 def get_matched_accounts(rule_id):
@@ -445,12 +401,12 @@ def get_matched_accounts(rule_id):
 
         matched_accounts = []
         seen_accounts = set()  # 用于去重
-        
+
         for account in all_accounts:
             # 检查账户是否匹配规则
             if classification_service.evaluate_rule(rule, account):
                 # 对于MySQL，显示用户名@主机名
-                if rule.db_type == 'mysql' and account.host:
+                if rule.db_type == "mysql" and account.host:
                     display_name = f"{account.username}@{account.host}"
                     # 使用用户名@主机名作为唯一标识
                     unique_key = f"{account.username}@{account.host}"
@@ -458,44 +414,34 @@ def get_matched_accounts(rule_id):
                     display_name = account.username
                     # 对于其他数据库类型，使用用户名作为唯一标识
                     unique_key = account.username
-                
+
                 # 避免重复显示
                 if unique_key not in seen_accounts:
                     seen_accounts.add(unique_key)
-                    
+
                     # 获取账户的分类信息
                     account_classifications = []
-                    if hasattr(account, 'classifications') and account.classifications:
+                    if hasattr(account, "classifications") and account.classifications:
                         for classification in account.classifications:
-                            account_classifications.append({
-                                "id": classification.id,
-                                "name": classification.name,
-                                "color": classification.color
-                            })
-                    
+                            account_classifications.append(
+                                {"id": classification.id, "name": classification.name, "color": classification.color}
+                            )
+
                     matched_accounts.append(
                         {
                             "id": account.id,
                             "username": account.username,  # 使用原始用户名
                             "display_name": display_name,  # 显示名称
-                            "instance_name": (
-                                account.instance.name if account.instance else "未知实例"
-                            ),
-                            "instance_host": (
-                                account.instance.host if account.instance else "未知IP"
-                            ),
-                            "instance_environment": (
-                                account.instance.environment if account.instance else "unknown"
-                            ),
+                            "instance_name": (account.instance.name if account.instance else "未知实例"),
+                            "instance_host": (account.instance.host if account.instance else "未知IP"),
+                            "instance_environment": (account.instance.environment if account.instance else "unknown"),
                             "db_type": rule.db_type,
-                            "is_locked": getattr(account, 'is_locked', False),
-                            "classifications": account_classifications
+                            "is_locked": getattr(account, "is_locked", False),
+                            "classifications": account_classifications,
                         }
                     )
 
-        return jsonify(
-            {"success": True, "accounts": matched_accounts, "rule_name": rule.rule_name}
-        )
+        return jsonify({"success": True, "accounts": matched_accounts, "rule_name": rule.rule_name})
 
     except Exception as e:
         current_app.logger.error(f"获取匹配账户失败: {e}")
@@ -530,9 +476,7 @@ def assign_classification():
         data = request.get_json()
 
         service = AccountClassificationService()
-        result = service.classify_account(
-            data["account_id"], data["classification_id"], current_user.id
-        )
+        result = service.classify_account(data["account_id"], data["classification_id"], current_user.id)
 
         return jsonify({"success": True, "assignment_id": result})
 
@@ -571,10 +515,9 @@ def get_assignments():
             db.session.query(AccountClassificationAssignment, AccountClassification)
             .join(
                 AccountClassification,
-                AccountClassificationAssignment.classification_id
-                == AccountClassification.id,
+                AccountClassificationAssignment.classification_id == AccountClassification.id,
             )
-            .filter(AccountClassificationAssignment.is_active == True)
+            .filter(AccountClassificationAssignment.is_active)
             .all()
         )
 
@@ -586,11 +529,7 @@ def get_assignments():
                     "account_id": assignment.assigned_by,
                     "classification_id": assignment.classification_id,
                     "classification_name": classification.name,
-                    "assigned_at": (
-                        assignment.assigned_at.isoformat()
-                        if assignment.assigned_at
-                        else None
-                    ),
+                    "assigned_at": (assignment.assigned_at.isoformat() if assignment.assigned_at else None),
                 }
             )
 

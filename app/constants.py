@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 常量定义模块
 统一管理所有魔法数字、硬编码值和配置常量
@@ -7,7 +5,6 @@
 
 # 移除循环导入
 from enum import Enum
-from typing import Dict, List
 
 
 class LogLevel(Enum):
@@ -158,8 +155,8 @@ class DefaultConfig:
     REDIS_URL = "redis://localhost:6379/0"
 
     # 应用配置
-    SECRET_KEY = "dev-secret-key-change-in-production"
-    JWT_SECRET_KEY = "dev-jwt-secret-change-in-production"
+    SECRET_KEY = None  # 从环境变量获取
+    JWT_SECRET_KEY = None  # 从环境变量获取
     DEBUG = True
     TESTING = False
 

@@ -1,14 +1,14 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 数据库连接上下文管理器
 """
 
 import logging
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Optional, Any, Generator
-from app.services.database_service import DatabaseService
+from typing import Any
+
 from app.models.instance import Instance
+from app.services.database_service import DatabaseService
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +20,7 @@ class DatabaseContextManager:
         self.db_service = DatabaseService()
 
     @contextmanager
-    def get_connection(
-        self, instance: Instance
-    ) -> Generator[Optional[Any], None, None]:
+    def get_connection(self, instance: Instance) -> Generator[Any | None]:
         """
         获取数据库连接的上下文管理器
 
@@ -55,9 +53,7 @@ class DatabaseContextManager:
                     logger.warning(f"关闭数据库连接失败: {e}")
 
     @contextmanager
-    def execute_query(
-        self, instance: Instance, query: str, params: tuple = None
-    ) -> Generator[dict, None, None]:
+    def execute_query(self, instance: Instance, query: str, params: tuple = None) -> Generator[dict]:
         """
         执行查询的上下文管理器
 
@@ -77,7 +73,7 @@ class DatabaseContextManager:
             yield {"success": False, "error": str(e)}
 
     @contextmanager
-    def transaction(self, instance: Instance) -> Generator[Optional[Any], None, None]:
+    def transaction(self, instance: Instance) -> Generator[Any | None]:
         """
         数据库事务上下文管理器
 
@@ -138,23 +134,21 @@ db_context = DatabaseContextManager()
 
 # 便捷函数
 @contextmanager
-def get_db_connection(instance: Instance) -> Generator[Optional[Any], None, None]:
+def get_db_connection(instance: Instance) -> Generator[Any | None]:
     """获取数据库连接的便捷函数"""
     with db_context.get_connection(instance) as conn:
         yield conn
 
 
 @contextmanager
-def execute_db_query(
-    instance: Instance, query: str, params: tuple = None
-) -> Generator[dict, None, None]:
+def execute_db_query(instance: Instance, query: str, params: tuple = None) -> Generator[dict]:
     """执行数据库查询的便捷函数"""
     with db_context.execute_query(instance, query, params) as result:
         yield result
 
 
 @contextmanager
-def db_transaction(instance: Instance) -> Generator[Optional[Any], None, None]:
+def db_transaction(instance: Instance) -> Generator[Any | None]:
     """数据库事务的便捷函数"""
     with db_context.transaction(instance) as conn:
         yield conn

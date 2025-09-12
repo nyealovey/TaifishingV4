@@ -1,21 +1,17 @@
-# -*- coding: utf-8 -*-
-
 """
 泰摸鱼吧 - 操作日志管理路由
 """
 
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
-from flask_login import login_required, current_user
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.utils.decorators import view_required, delete_required
-from app.models.log import Log
-from app.models.user import User
-from app import db
-from app.utils.api_response import APIResponse
 import logging
 from datetime import datetime, timedelta
-from app.utils.timezone import now
-import pytz
+
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask_login import current_user, login_required
+
+from app import db
+from app.models.log import Log
+from app.models.user import User
+from app.utils.decorators import delete_required, view_required
 
 # 创建蓝图
 logs_bp = Blueprint("logs", __name__)
@@ -24,65 +20,43 @@ logs_bp = Blueprint("logs", __name__)
 def get_merged_request_logs(query, page=1, per_page=20):
     """
     获取日志列表（过滤中间状态日志，只显示合并后的完整日志）
-    
+
     Args:
         query: SQLAlchemy查询对象
         page: 页码
         per_page: 每页数量
-        
+
     Returns:
         Pagination: 分页对象
     """
     try:
         import re
-        
-        # 过滤掉中间状态的日志
+
+        # 简化过滤逻辑，只过滤掉明显的中间状态日志
         # 1. 过滤掉"请求开始"和"请求结束"的中间日志
-        query = query.filter(
-            ~Log.message.like('%请求开始%'),
-            ~Log.message.like('%请求结束%')
-        )
-        
-        # 2. 过滤掉只有开始时间没有结束时间的日志（未完成的请求）
-        query = query.filter(
-            ~(
-                Log.details.like('%开始时间:%') & 
-                ~Log.details.like('%结束时间:%')
-            )
-        )
-        
-        # 3. 对于HTTP请求日志，只显示有完整信息的日志（包含状态码）
-        # 对于其他日志（如错误日志），不要求包含状态码
-        query = query.filter(
-            (Log.details.like('%状态码:%')) |  # HTTP请求日志必须有状态码
-            (~Log.message.like('%请求:%'))     # 非HTTP请求日志不需要状态码
-        )
-        
+        query = query.filter(~Log.message.like("%请求开始%"), ~Log.message.like("%请求结束%"))
+
         # 查询过滤后的日志，按ID排序
-        logs = query.order_by(Log.id.desc()).paginate(
-            page=page, per_page=per_page, error_out=False
-        )
-        
+        logs = query.order_by(Log.id.desc()).paginate(page=page, per_page=per_page, error_out=False)
+
         # 为每个日志添加类型标识和状态码
         for log in logs.items:
             # 判断是否为HTTP请求日志
-            if (log.log_type == 'request' and 
-                '请求:' in log.message and 
-                log.module == 'request_handler'):
+            if log.log_type == "request" and "请求:" in log.message and log.module == "request_handler":
                 log.is_merged = True  # HTTP请求日志（已合并）
-                log.log_category = 'http_request'
-                
+                log.log_category = "http_request"
+
                 # 提取状态码（从详情信息中获取）
                 log.status_code = None
                 if log.details:
-                    status_match = re.search(r'状态码:\s+(\d+)', log.details)
+                    status_match = re.search(r"状态码:\s+(\d+)", log.details)
                     if status_match:
                         log.status_code = int(status_match.group(1))
             else:
                 log.is_merged = False  # 其他类型日志
-                log.log_category = 'other'
+                log.log_category = "other"
                 log.status_code = None
-        
+
         return logs
     except Exception as e:
         logging.error(f"获取日志列表失败: {e}")
@@ -96,110 +70,119 @@ def index():
     """日志管理首页"""
     try:
         # 获取查询参数
-        level = request.args.get('level', '')
-        module = request.args.get('module', '')
-        start_date = request.args.get('start_date', '')
-        end_date = request.args.get('end_date', '')
-        search = request.args.get('search', '')
-        page = int(request.args.get('page', 1))
-        
+        level = request.args.get("level", "")
+        module = request.args.get("module", "")
+        start_date = request.args.get("start_date", "")
+        end_date = request.args.get("end_date", "")
+        search = request.args.get("search", "")
+        page = int(request.args.get("page", 1))
+
         # 构建查询
         query = Log.query
-        
+
         # 按级别过滤
         if level:
             query = query.filter(Log.level == level)
-        
+
         # 按模块过滤
         if module:
             query = query.filter(Log.module == module)
-        
+
         # 按时间范围过滤
         if start_date:
             try:
-                start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
+                start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
                 query = query.filter(Log.created_at >= start_datetime)
             except ValueError:
                 pass
-        
+
         if end_date:
             try:
-                end_datetime = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
+                end_datetime = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
                 query = query.filter(Log.created_at < end_datetime)
             except ValueError:
                 pass
-        
+
         # 按消息内容搜索
         if search:
-            query = query.filter(Log.message.like(f'%{search}%'))
-        
+            query = query.filter(Log.message.like(f"%{search}%"))
+
         # 获取合并后的日志
         merged_logs = get_merged_request_logs(query, page, 20)
-        
+
         if not merged_logs:
             flash("获取日志列表失败", "error")
             # 获取所有可用的模块列表
             from sqlalchemy import distinct
-            available_modules = Log.query.with_entities(distinct(Log.module)).filter(
-                Log.module.isnot(None)
-            ).order_by(Log.module).all()
+
+            available_modules = (
+                Log.query.with_entities(distinct(Log.module)).filter(Log.module.isnot(None)).order_by(Log.module).all()
+            )
             module_list = [m[0] for m in available_modules if m[0]]
-            
-            return render_template("logs/system_logs.html", 
-                                 merged_logs=None, 
-                                 level=level, 
-                                 module=module, 
-                                 start_date=start_date,
-                                 end_date=end_date,
-                                 search=search,
-                                 module_list=module_list)
+
+            return render_template(
+                "logs/system_logs.html",
+                merged_logs=None,
+                level=level,
+                module=module,
+                start_date=start_date,
+                end_date=end_date,
+                search=search,
+                module_list=module_list,
+            )
 
         # 获取统计信息
         total_logs = Log.query.count()
-        error_logs = Log.query.filter(Log.level == 'ERROR').count()
-        warning_logs = Log.query.filter(Log.level == 'WARNING').count()
-        info_logs = Log.query.filter(Log.level == 'INFO').count()
-        
+        error_logs = Log.query.filter(Log.level == "ERROR").count()
+        warning_logs = Log.query.filter(Log.level == "WARNING").count()
+        info_logs = Log.query.filter(Log.level == "INFO").count()
+
         # 获取所有可用的模块列表
         from sqlalchemy import distinct
-        available_modules = Log.query.with_entities(distinct(Log.module)).filter(
-            Log.module.isnot(None)
-        ).order_by(Log.module).all()
+
+        available_modules = (
+            Log.query.with_entities(distinct(Log.module)).filter(Log.module.isnot(None)).order_by(Log.module).all()
+        )
         module_list = [m[0] for m in available_modules if m[0]]
-        
-        return render_template("logs/system_logs.html", 
-                             merged_logs=merged_logs, 
-                             level=level, 
-                             module=module, 
-                             start_date=start_date, 
-                             end_date=end_date, 
-                             search=search,
-                             total_logs=total_logs,
-                             error_logs=error_logs,
-                             warning_logs=warning_logs,
-                             info_logs=info_logs,
-                             module_list=module_list)
+
+        return render_template(
+            "logs/system_logs.html",
+            merged_logs=merged_logs,
+            level=level,
+            module=module,
+            start_date=start_date,
+            end_date=end_date,
+            search=search,
+            total_logs=total_logs,
+            error_logs=error_logs,
+            warning_logs=warning_logs,
+            info_logs=info_logs,
+            module_list=module_list,
+        )
     except Exception as e:
         logging.error(f"日志管理首页加载失败: {e}")
         flash("页面加载失败", "error")
         # 获取所有可用的模块列表
         from sqlalchemy import distinct
+
         try:
-            available_modules = Log.query.with_entities(distinct(Log.module)).filter(
-                Log.module.isnot(None)
-            ).order_by(Log.module).all()
+            available_modules = (
+                Log.query.with_entities(distinct(Log.module)).filter(Log.module.isnot(None)).order_by(Log.module).all()
+            )
             module_list = [m[0] for m in available_modules if m[0]]
         except:
             module_list = []
-        
-        return render_template("logs/system_logs.html", 
-                             merged_logs=None, 
-                             level='', 
-                             module='', 
-                             start_date='', 
-                             end_date='', 
-                             search='',
-                             module_list=module_list)
+
+        return render_template(
+            "logs/system_logs.html",
+            merged_logs=None,
+            level="",
+            module="",
+            start_date="",
+            end_date="",
+            search="",
+            module_list=module_list,
+        )
 
 
 @logs_bp.route("/api/export")
@@ -210,79 +193,82 @@ def export_logs():
     try:
         import csv
         import io
+
         from flask import make_response
-        
+
         # 获取查询参数
-        level = request.args.get('level', '')
-        module = request.args.get('module', '')
-        start_date = request.args.get('start_date', '')
-        end_date = request.args.get('end_date', '')
-        search = request.args.get('search', '')
-        
+        level = request.args.get("level", "")
+        module = request.args.get("module", "")
+        start_date = request.args.get("start_date", "")
+        end_date = request.args.get("end_date", "")
+        search = request.args.get("search", "")
+
         # 构建查询
         query = Log.query
-        
+
         # 按级别过滤
         if level:
             query = query.filter(Log.level == level)
-        
+
         # 按模块过滤
         if module:
             query = query.filter(Log.module == module)
-        
+
         # 按时间范围过滤
         if start_date:
             try:
-                start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
+                start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
                 query = query.filter(Log.created_at >= start_datetime)
             except ValueError:
                 pass
-        
+
         if end_date:
             try:
-                end_datetime = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
+                end_datetime = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
                 query = query.filter(Log.created_at < end_datetime)
             except ValueError:
                 pass
-        
+
         # 按消息内容搜索
         if search:
-            query = query.filter(Log.message.like(f'%{search}%'))
-        
+            query = query.filter(Log.message.like(f"%{search}%"))
+
         # 获取所有日志
         logs = query.order_by(Log.id.desc()).all()
-        
+
         # 创建CSV
         output = io.StringIO()
         writer = csv.writer(output)
-        
+
         # 写入标题行
-        writer.writerow(['ID', '时间', '级别', '模块', '消息', '用户', 'IP地址'])
-        
+        writer.writerow(["ID", "时间", "级别", "模块", "消息", "用户", "IP地址"])
+
         # 写入数据行
         for log in logs:
-            writer.writerow([
-                log.id,
-                log.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-                log.level,
-                log.module,
-                log.message,
-                log.user_id or '未知',
-                log.ip_address or '未知'
-            ])
-        
+            writer.writerow(
+                [
+                    log.id,
+                    log.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    log.level,
+                    log.module,
+                    log.message,
+                    log.user_id or "未知",
+                    log.ip_address or "未知",
+                ]
+            )
+
         # 创建响应
         output.seek(0)
         response = make_response(output.getvalue())
-        response.headers['Content-Type'] = 'text/csv; charset=utf-8'
-        response.headers['Content-Disposition'] = 'attachment; filename=logs.csv'
-        
+        response.headers["Content-Type"] = "text/csv; charset=utf-8"
+        response.headers["Content-Disposition"] = "attachment; filename=logs.csv"
+
         return response
     except Exception as e:
         logging.error(f"导出日志失败: {e}")
-        return jsonify({'success': False, 'message': '导出失败'}), 500
+        return jsonify({"success": False, "message": "导出失败"}), 500
         flash("导出失败", "error")
-        return redirect(url_for('logs.index'))
+        return redirect(url_for("logs.index"))
 
 
 @logs_bp.route("/api/log/<int:log_id>")
@@ -292,25 +278,27 @@ def get_log_detail(log_id):
     """获取日志详情"""
     try:
         log = Log.query.get_or_404(log_id)
-        
-        return jsonify({
-            'success': True,
-            'log': {
-                'id': log.id,
-                'level': log.level,
-                'log_type': log.log_type,
-                'module': log.module,
-                'message': log.message,
-                'details': log.details,
-                'user_id': log.user_id,
-                'ip_address': log.ip_address,
-                'user_agent': log.user_agent,
-                'created_at': log.created_at.isoformat()
+
+        return jsonify(
+            {
+                "success": True,
+                "log": {
+                    "id": log.id,
+                    "level": log.level,
+                    "log_type": log.log_type,
+                    "module": log.module,
+                    "message": log.message,
+                    "details": log.details,
+                    "user_id": log.user_id,
+                    "ip_address": log.ip_address,
+                    "user_agent": log.user_agent,
+                    "created_at": log.created_at.isoformat(),
+                },
             }
-        })
+        )
     except Exception as e:
         logging.error(f"获取日志详情失败: {e}")
-        return jsonify({'success': False, 'message': '获取日志详情失败'})
+        return jsonify({"success": False, "message": "获取日志详情失败"})
 
 
 @logs_bp.route("/api/merged-info/<int:log_id>")
@@ -320,218 +308,212 @@ def get_merged_info(log_id):
     """获取合并日志的详细信息"""
     try:
         log = Log.query.get_or_404(log_id)
-        
+
         # 解析日志详情
         merged_info = {
-            'path': None,
-            'status_code': None,
-            'duration': None,
-            'start_time': None,
-            'end_time': None,
-            'request_method': None,
-            'user_info': None,
-            'ip_info': None,
-            'log_level': log.level,  # 使用合并后的日志级别
-            'response_size': None,
-            'response_headers': None,
-            'response_body': None,
-            'request_headers': None,
-            'request_body': None
+            "path": None,
+            "status_code": None,
+            "duration": None,
+            "start_time": None,
+            "end_time": None,
+            "request_method": None,
+            "user_info": None,
+            "ip_info": None,
+            "log_level": log.level,  # 使用合并后的日志级别
+            "response_size": None,
+            "response_headers": None,
+            "response_body": None,
+            "request_headers": None,
+            "request_body": None,
         }
-        
+
         # 如果是请求日志，解析消息
-        if log.log_type == 'request' and '请求:' in log.message:
+        if log.log_type == "request" and "请求:" in log.message:
             # 解析路径（新格式：请求: GET /path）
             import re
-            match = re.search(r'请求:\s+(\w+)\s+(.+)', log.message)
+
+            match = re.search(r"请求:\s+(\w+)\s+(.+)", log.message)
             if match:
-                merged_info['request_method'] = match.group(1)
-                merged_info['path'] = match.group(2)
-        
+                merged_info["request_method"] = match.group(1)
+                merged_info["path"] = match.group(2)
+
         # 解析详情信息
         if log.details:
-            import re
             import json
-            from datetime import datetime
-            
+            import re
+
             # 首先尝试解析响应内容中的JSON数据
-            response_body_match = re.search(r'响应内容:\s+({.*})', log.details, re.DOTALL)
+            response_body_match = re.search(r"响应内容:\s+({.*})", log.details, re.DOTALL)
             if response_body_match:
                 try:
                     response_json = response_body_match.group(1)
                     # 尝试解析JSON响应
                     response_data = json.loads(response_json)
-                    
+
                     # 如果响应包含merged_info，直接使用它
-                    if 'merged_info' in response_data and isinstance(response_data['merged_info'], dict):
-                        nested_info = response_data['merged_info']
-                        
+                    if "merged_info" in response_data and isinstance(response_data["merged_info"], dict):
+                        nested_info = response_data["merged_info"]
+
                         # 提取嵌套的merged_info中的信息
-                        if 'path' in nested_info:
-                            merged_info['path'] = nested_info['path']
-                        if 'status_code' in nested_info:
-                            merged_info['status_code'] = nested_info['status_code']
-                        if 'duration' in nested_info:
-                            merged_info['duration'] = nested_info['duration']
-                        if 'start_time' in nested_info:
-                            merged_info['start_time'] = nested_info['start_time']
-                        if 'end_time' in nested_info:
-                            merged_info['end_time'] = nested_info['end_time']
-                        if 'request_method' in nested_info:
-                            merged_info['request_method'] = nested_info['request_method']
-                        if 'user_info' in nested_info:
-                            merged_info['user_info'] = nested_info['user_info']
-                        if 'ip_info' in nested_info:
-                            merged_info['ip_info'] = nested_info['ip_info']
-                        if 'response_size' in nested_info:
-                            merged_info['response_size'] = nested_info['response_size']
-                        if 'response_headers' in nested_info:
-                            merged_info['response_headers'] = nested_info['response_headers']
-                        if 'response_body' in nested_info:
-                            merged_info['response_body'] = nested_info['response_body']
-                        if 'request_headers' in nested_info:
-                            merged_info['request_headers'] = nested_info['request_headers']
-                        if 'request_body' in nested_info:
-                            merged_info['request_body'] = nested_info['request_body']
-                        
+                        if "path" in nested_info:
+                            merged_info["path"] = nested_info["path"]
+                        if "status_code" in nested_info:
+                            merged_info["status_code"] = nested_info["status_code"]
+                        if "duration" in nested_info:
+                            merged_info["duration"] = nested_info["duration"]
+                        if "start_time" in nested_info:
+                            merged_info["start_time"] = nested_info["start_time"]
+                        if "end_time" in nested_info:
+                            merged_info["end_time"] = nested_info["end_time"]
+                        if "request_method" in nested_info:
+                            merged_info["request_method"] = nested_info["request_method"]
+                        if "user_info" in nested_info:
+                            merged_info["user_info"] = nested_info["user_info"]
+                        if "ip_info" in nested_info:
+                            merged_info["ip_info"] = nested_info["ip_info"]
+                        if "response_size" in nested_info:
+                            merged_info["response_size"] = nested_info["response_size"]
+                        if "response_headers" in nested_info:
+                            merged_info["response_headers"] = nested_info["response_headers"]
+                        if "response_body" in nested_info:
+                            merged_info["response_body"] = nested_info["response_body"]
+                        if "request_headers" in nested_info:
+                            merged_info["request_headers"] = nested_info["request_headers"]
+                        if "request_body" in nested_info:
+                            merged_info["request_body"] = nested_info["request_body"]
+
                         # 添加调试信息
-                        if 'debug' in nested_info:
-                            merged_info['debug'] = nested_info['debug']
-                        
+                        if "debug" in nested_info:
+                            merged_info["debug"] = nested_info["debug"]
+
                         # 如果成功解析了嵌套信息，跳过后续的字符串解析
-                        return jsonify({'success': True, 'merged_info': merged_info})
-                    
-                except (json.JSONDecodeError, KeyError) as e:
+                        return jsonify({"success": True, "merged_info": merged_info})
+
+                except (json.JSONDecodeError, KeyError):
                     # JSON解析失败，继续使用字符串解析
                     pass
-            
+
             # 如果JSON解析失败，使用原来的字符串解析方法
             # 解析时间信息
-            start_match = re.search(r'开始时间:\s+([^,]+)', log.details)
-            end_match = re.search(r'结束时间:\s+([^,]+)', log.details)
-            duration_match = re.search(r'持续时间:\s+([^,]+)', log.details)
-            
+            start_match = re.search(r"开始时间:\s+([^,]+)", log.details)
+            end_match = re.search(r"结束时间:\s+([^,]+)", log.details)
+            duration_match = re.search(r"持续时间:\s+([^,]+)", log.details)
+
             if start_match:
                 try:
                     # 解析开始时间
                     start_time_str = start_match.group(1).strip()
                     # 处理格式: 2025-09-11 06:32:19.401751
-                    start_time = datetime.strptime(start_time_str, '%Y-%m-%d %H:%M:%S.%f')
-                    merged_info['start_time'] = start_time.isoformat()
+                    start_time = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S.%f")
+                    merged_info["start_time"] = start_time.isoformat()
                 except:
                     try:
                         # 尝试不带微秒的格式
-                        start_time = datetime.strptime(start_time_str, '%Y-%m-%d %H:%M:%S')
-                        merged_info['start_time'] = start_time.isoformat()
+                        start_time = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S")
+                        merged_info["start_time"] = start_time.isoformat()
                     except:
-                        merged_info['start_time'] = start_time_str
-                    
+                        merged_info["start_time"] = start_time_str
+
             if end_match:
                 try:
                     # 解析结束时间
                     end_time_str = end_match.group(1).strip()
                     # 处理格式: 2025-09-11 06:32:20.413840
-                    end_time = datetime.strptime(end_time_str, '%Y-%m-%d %H:%M:%S.%f')
-                    merged_info['end_time'] = end_time.isoformat()
+                    end_time = datetime.strptime(end_time_str, "%Y-%m-%d %H:%M:%S.%f")
+                    merged_info["end_time"] = end_time.isoformat()
                 except:
                     try:
                         # 尝试不带微秒的格式
-                        end_time = datetime.strptime(end_time_str, '%Y-%m-%d %H:%M:%S')
-                        merged_info['end_time'] = end_time.isoformat()
+                        end_time = datetime.strptime(end_time_str, "%Y-%m-%d %H:%M:%S")
+                        merged_info["end_time"] = end_time.isoformat()
                     except:
-                        merged_info['end_time'] = end_time_str
-                    
+                        merged_info["end_time"] = end_time_str
+
             if duration_match:
-                merged_info['duration'] = float(duration_match.group(1).replace('ms', ''))
-            
+                merged_info["duration"] = float(duration_match.group(1).replace("ms", ""))
+
             # 解析状态码
-            status_code_match = re.search(r'状态码:\s+(\d+)', log.details)
+            status_code_match = re.search(r"状态码:\s+(\d+)", log.details)
             if status_code_match:
-                merged_info['status_code'] = int(status_code_match.group(1))
-            
+                merged_info["status_code"] = int(status_code_match.group(1))
+
             # 解析响应信息
-            response_size_match = re.search(r'响应大小:\s+([^,]+)', log.details)
+            response_size_match = re.search(r"响应大小:\s+([^,]+)", log.details)
             if response_size_match:
                 try:
                     size_str = response_size_match.group(1).strip()
                     # 去掉"bytes"后缀
-                    if size_str.endswith(' bytes'):
+                    if size_str.endswith(" bytes"):
                         size_str = size_str[:-6]
-                    merged_info['response_size'] = int(size_str)
+                    merged_info["response_size"] = int(size_str)
                 except:
-                    merged_info['response_size'] = response_size_match.group(1).strip()
-            
+                    merged_info["response_size"] = response_size_match.group(1).strip()
+
             # 解析请求头
-            request_headers_match = re.search(r'请求头:\s+({[^}]+})', log.details)
+            request_headers_match = re.search(r"请求头:\s+({[^}]+})", log.details)
             if request_headers_match:
                 try:
                     import ast
+
                     headers_str = request_headers_match.group(1)
-                    merged_info['request_headers'] = ast.literal_eval(headers_str)
+                    merged_info["request_headers"] = ast.literal_eval(headers_str)
                 except:
-                    merged_info['request_headers'] = request_headers_match.group(1)
-            
+                    merged_info["request_headers"] = request_headers_match.group(1)
+
             # 解析响应头
-            response_headers_match = re.search(r'响应头:\s+({[^}]+})', log.details)
+            response_headers_match = re.search(r"响应头:\s+({[^}]+})", log.details)
             if response_headers_match:
                 try:
                     import ast
+
                     headers_str = response_headers_match.group(1)
-                    merged_info['response_headers'] = ast.literal_eval(headers_str)
+                    merged_info["response_headers"] = ast.literal_eval(headers_str)
                 except:
-                    merged_info['response_headers'] = response_headers_match.group(1)
-            
+                    merged_info["response_headers"] = response_headers_match.group(1)
+
             # 解析响应内容
-            response_body_match = re.search(r'响应内容:\s+({.*})', log.details, re.DOTALL)
+            response_body_match = re.search(r"响应内容:\s+({.*})", log.details, re.DOTALL)
             if response_body_match:
                 response_body = response_body_match.group(1).strip()
                 # 如果响应内容为空或只有括号，显示为空
-                if response_body in ['(空)', '(获取失败:', '']:
-                    merged_info['response_body'] = None
+                if response_body in ["(空)", "(获取失败:", ""]:
+                    merged_info["response_body"] = None
                 else:
-                    merged_info['response_body'] = response_body
-        
+                    merged_info["response_body"] = response_body
+
         # 用户信息
         if log.user_id:
             user = User.query.get(log.user_id)
             if user:
-                merged_info['user_info'] = {
-                    'id': user.id,
-                    'username': user.username,
-                    'email': getattr(user, 'email', 'N/A')
+                merged_info["user_info"] = {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": getattr(user, "email", "N/A"),
                 }
-        
+
         # IP信息
         if log.ip_address:
-            merged_info['ip_info'] = {
-                'address': log.ip_address,
-                'user_agent': log.user_agent
-            }
-        
+            merged_info["ip_info"] = {"address": log.ip_address, "user_agent": log.user_agent}
+
         # 添加调试信息
-        merged_info['debug'] = {
-            'log_id': log.id,
-            'log_type': log.log_type,
-            'message': log.message,
-            'details': log.details,
-            'parsed_successfully': any([
-                merged_info['path'],
-                merged_info['status_code'],
-                merged_info['duration']
-            ])
+        merged_info["debug"] = {
+            "log_id": log.id,
+            "log_type": log.log_type,
+            "message": log.message,
+            "details": log.details,
+            "parsed_successfully": any([merged_info["path"], merged_info["status_code"], merged_info["duration"]]),
         }
-        
-        return jsonify({'success': True, 'merged_info': merged_info})
+
+        return jsonify({"success": True, "merged_info": merged_info})
     except Exception as e:
         logging.error(f"获取合并日志信息失败: {e}")
-        return jsonify({
-            'success': False, 
-            'message': f'获取合并日志信息失败: {str(e)}',
-            'debug': {
-                'log_id': log_id,
-                'error': str(e)
+        return jsonify(
+            {
+                "success": False,
+                "message": f"获取合并日志信息失败: {str(e)}",
+                "debug": {"log_id": log_id, "error": str(e)},
             }
-        })
+        )
 
 
 @logs_bp.route("/api/stats")
@@ -541,13 +523,13 @@ def get_log_stats():
     """获取日志统计信息"""
     try:
         # 统计所有日志（不限制时间范围）
-        
+
         # 按级别统计
         level_stats = {}
-        for level in ['ERROR', 'WARNING', 'INFO', 'DEBUG']:
+        for level in ["ERROR", "WARNING", "INFO", "DEBUG"]:
             count = Log.query.filter(Log.level == level).count()
             level_stats[level] = count
-        
+
         # 按模块统计
         module_stats = {}
         modules = db.session.query(Log.module).distinct().all()
@@ -555,19 +537,21 @@ def get_log_stats():
             if module[0]:
                 count = Log.query.filter(Log.module == module[0]).count()
                 module_stats[module[0]] = count
-        
-        return jsonify({
-            'success': True,
-            'stats': {
-                'level_stats': level_stats,
-                'level_distribution': level_stats,  # 添加前端期望的字段
-                'module_stats': module_stats,
-                'total_logs': Log.query.count()  # 统计所有日志
+
+        return jsonify(
+            {
+                "success": True,
+                "stats": {
+                    "level_stats": level_stats,
+                    "level_distribution": level_stats,  # 添加前端期望的字段
+                    "module_stats": module_stats,
+                    "total_logs": Log.query.count(),  # 统计所有日志
+                },
             }
-        })
+        )
     except Exception as e:
         logging.error(f"获取日志统计失败: {e}")
-        return jsonify({'success': False, 'message': '获取日志统计失败'})
+        return jsonify({"success": False, "message": "获取日志统计失败"})
 
 
 @logs_bp.route("/api/clear")
@@ -578,16 +562,16 @@ def clear_logs():
     try:
         # 只允许管理员清空日志
         if not current_user.is_admin:
-            return jsonify({'success': False, 'message': '权限不足'})
-        
+            return jsonify({"success": False, "message": "权限不足"})
+
         # 清空所有日志
         Log.query.delete()
         db.session.commit()
-        
-        return jsonify({'success': True, 'message': '日志已清空'})
+
+        return jsonify({"success": True, "message": "日志已清空"})
     except Exception as e:
         logging.error(f"清空日志失败: {e}")
-        return jsonify({'success': False, 'message': '清空日志失败'})
+        return jsonify({"success": False, "message": "清空日志失败"})
 
 
 @logs_bp.route("/api/delete/<int:log_id>")
@@ -598,13 +582,13 @@ def delete_log(log_id):
     try:
         # 只允许管理员删除日志
         if not current_user.is_admin:
-            return jsonify({'success': False, 'message': '权限不足'})
-        
+            return jsonify({"success": False, "message": "权限不足"})
+
         log = Log.query.get_or_404(log_id)
         db.session.delete(log)
         db.session.commit()
-        
-        return jsonify({'success': True, 'message': '日志已删除'})
+
+        return jsonify({"success": True, "message": "日志已删除"})
     except Exception as e:
         logging.error(f"删除日志失败: {e}")
-        return jsonify({'success': False, 'message': '删除日志失败'})
+        return jsonify({"success": False, "message": "删除日志失败"})

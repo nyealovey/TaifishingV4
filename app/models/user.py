@@ -3,9 +3,11 @@
 """
 
 from datetime import datetime
-from app.utils.timezone import now
-from app import db, bcrypt
+
 from flask_login import UserMixin
+
+from app import bcrypt, db
+from app.utils.timezone import now
 
 
 class User(UserMixin, db.Model):
@@ -54,9 +56,7 @@ class User(UserMixin, db.Model):
         if not any(c.isdigit() for c in password):
             raise ValueError("密码必须包含数字")
 
-        self.password = bcrypt.generate_password_hash(password, rounds=12).decode(
-            "utf-8"
-        )
+        self.password = bcrypt.generate_password_hash(password, rounds=12).decode("utf-8")
 
     def check_password(self, password):
         """

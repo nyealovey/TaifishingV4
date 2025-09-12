@@ -6,52 +6,49 @@
 
 import os
 import sys
-import json
-import logging
-from datetime import datetime
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import create_app, db
-from app.models import User, Instance, Credential, Account, Task, Log, GlobalParam, SyncData
-from app.utils.logger import setup_logger
+from app.models import Account, Credential, GlobalParam, Instance, Log, SyncData, Task, User
+
 
 def init_all_data():
     """初始化所有数据"""
     app = create_app()
-    
+
     with app.app_context():
         try:
             print("🚀 开始初始化泰摸鱼吧数据...")
-            
+
             # 1. 初始化数据库
             print("\n1️⃣ 初始化数据库...")
             init_database()
-            
+
             # 2. 初始化全局参数
             print("\n2️⃣ 初始化全局参数...")
             init_global_params()
-            
+
             # 3. 初始化示例实例（需要真实连接信息）
             print("\n3️⃣ 初始化示例实例...")
             init_sample_instances()
-            
+
             # 4. 初始化示例凭据
             print("\n4️⃣ 初始化示例凭据...")
             init_sample_credentials()
-            
+
             # 5. 初始化管理员用户
             print("\n5️⃣ 初始化管理员用户...")
             init_admin_user()
-            
+
             print("\n✅ 所有数据初始化完成！")
             print("\n📋 初始化摘要:")
             print(f"   - 用户数量: {User.query.count()}")
             print(f"   - 实例数量: {Instance.query.count()}")
             print(f"   - 凭据数量: {Credential.query.count()}")
             print(f"   - 全局参数数量: {GlobalParam.query.count()}")
-            
+
         except Exception as e:
             print(f"❌ 数据初始化失败: {e}")
             raise
@@ -103,7 +100,7 @@ def init_global_params():
             }
         }
     ]
-    
+
     # 凭据类型参数
     cred_types = [
         {
@@ -127,7 +124,7 @@ def init_global_params():
             }
         }
     ]
-    
+
     # 同步类型参数
     sync_types = [
         {
@@ -141,7 +138,7 @@ def init_global_params():
             }
         }
     ]
-    
+
     # 角色类型参数
     role_types = [
         {
@@ -161,15 +158,15 @@ def init_global_params():
             }
         }
     ]
-    
+
     all_params = db_types + cred_types + sync_types + role_types
-    
+
     for param_data in all_params:
         existing = GlobalParam.query.filter_by(
             param_type=param_data['param_type'],
             name=param_data['name']
         ).first()
-        
+
         if not existing:
             param = GlobalParam(
                 param_type=param_data['param_type'],
@@ -177,7 +174,7 @@ def init_global_params():
                 config=param_data['config']
             )
             db.session.add(param)
-    
+
     db.session.commit()
     print("✅ 全局参数初始化完成")
 
@@ -210,7 +207,7 @@ def init_sample_instances():
             'tags': ['开发', 'Oracle']
         }
     ]
-    
+
     for instance_data in instances_config:
         existing = Instance.query.filter_by(name=instance_data['name']).first()
         if not existing:
@@ -223,7 +220,7 @@ def init_sample_instances():
                 tags=instance_data['tags']
             )
             db.session.add(instance)
-    
+
     db.session.commit()
     print("✅ 示例实例初始化完成")
 
@@ -255,7 +252,7 @@ def init_sample_credentials():
             'description': 'Oracle管理员凭据'
         }
     ]
-    
+
     for cred_data in credentials_config:
         existing = Credential.query.filter_by(name=cred_data['name']).first()
         if not existing:
@@ -267,7 +264,7 @@ def init_sample_credentials():
                 password=cred_data['password']
             )
             db.session.add(credential)
-    
+
     db.session.commit()
     print("✅ 示例凭据初始化完成")
 
@@ -289,7 +286,7 @@ def init_admin_user():
 def validate_connections():
     """验证数据库连接"""
     print("🔍 验证数据库连接...")
-    
+
     instances = Instance.query.all()
     for instance in instances:
         print(f"   - 测试实例: {instance.name} ({instance.db_type})")
@@ -302,11 +299,11 @@ def validate_connections():
 def clean_all_data():
     """清理所有数据"""
     app = create_app()
-    
+
     with app.app_context():
         try:
             print("🗑️ 清理所有数据...")
-            
+
             # 删除所有数据（按依赖关系顺序）
             SyncData.query.delete()
             Task.query.delete()
@@ -316,17 +313,17 @@ def clean_all_data():
             Credential.query.delete()
             User.query.delete()
             GlobalParam.query.delete()
-            
+
             db.session.commit()
             print("✅ 所有数据已清理")
-            
+
         except Exception as e:
             print(f"❌ 数据清理失败: {e}")
             raise
 
 if __name__ == '__main__':
     import argparse
-    
+
     parser = argparse.ArgumentParser(description='泰摸鱼吧数据初始化工具')
     parser.add_argument('--init-all', action='store_true', help='初始化所有数据')
     parser.add_argument('--init-global-params', action='store_true', help='初始化全局参数')
@@ -335,9 +332,9 @@ if __name__ == '__main__':
     parser.add_argument('--init-accounts', action='store_true', help='初始化账户数据')
     parser.add_argument('--validate-all', action='store_true', help='验证所有连接')
     parser.add_argument('--clean-all', action='store_true', help='清理所有数据')
-    
+
     args = parser.parse_args()
-    
+
     if args.init_all:
         init_all_data()
     elif args.init_global_params:
