@@ -10,6 +10,9 @@
         <a href="{{ url_for('instances.statistics') }}" class="btn btn-outline-info me-2">
             <i class="fas fa-chart-bar me-2"></i>实例统计
         </a>
+        <a href="{{ url_for('instances.export_instances', search=search, db_type=db_type, environment=environment) }}" class="btn btn-outline-success me-2">
+            <i class="fas fa-download me-2"></i>导出CSV
+        </a>
         <a href="{{ url_for('instances.create') }}" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>添加实例
         </a>

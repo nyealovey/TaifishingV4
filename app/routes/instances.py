@@ -861,6 +861,96 @@ def _process_instances_data(instances_data):
         )
 
 
+@instances_bp.route("/export")
+@login_required
+def export_instances():
+    """导出实例数据为CSV"""
+    import csv
+    import io
+    from flask import Response
+    from datetime import datetime
+
+    # 获取查询参数（与index方法保持一致）
+    search = request.args.get("search", "", type=str)
+    db_type = request.args.get("db_type", "", type=str)
+    environment = request.args.get("environment", "", type=str)
+
+    # 构建查询（与index方法保持一致）
+    query = Instance.query
+
+    if search:
+        query = query.filter(
+            db.or_(
+                Instance.name.contains(search),
+                Instance.host.contains(search),
+                Instance.description.contains(search),
+            )
+        )
+
+    if db_type:
+        query = query.filter(Instance.db_type == db_type)
+
+    if environment:
+        query = query.filter(Instance.environment == environment)
+
+    # 获取所有实例数据
+    instances = query.all()
+
+    # 创建CSV内容
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # 写入表头
+    writer.writerow([
+        "ID",
+        "实例名称",
+        "数据库类型",
+        "主机地址",
+        "端口",
+        "数据库名",
+        "环境",
+        "状态",
+        "描述",
+        "凭据ID",
+        "同步次数",
+        "最后连接时间",
+        "创建时间",
+        "更新时间"
+    ])
+
+    # 写入实例数据
+    for instance in instances:
+        writer.writerow([
+            instance.id,
+            instance.name,
+            instance.db_type,
+            instance.host,
+            instance.port,
+            instance.database_name or "",
+            instance.environment,
+            "启用" if instance.is_active else "禁用",
+            instance.description or "",
+            instance.credential_id or "",
+            instance.sync_count or 0,
+            instance.last_connected.strftime("%Y-%m-%d %H:%M:%S") if instance.last_connected else "",
+            instance.created_at.strftime("%Y-%m-%d %H:%M:%S") if instance.created_at else "",
+            instance.updated_at.strftime("%Y-%m-%d %H:%M:%S") if instance.updated_at else ""
+        ])
+
+    # 创建响应
+    output.seek(0)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"instances_export_{timestamp}.csv"
+    
+    response = Response(
+        output.getvalue(),
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+    return response
+
+
 @instances_bp.route("/template/download")
 @login_required
 def download_template():
