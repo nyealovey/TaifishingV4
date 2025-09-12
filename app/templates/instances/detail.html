@@ -770,25 +770,6 @@ function showPermissionsModal(permissions, account) {
                             return '';
                         })()}
                         <div class="mb-3">
-                            <h6><i class="fas fa-users-cog text-danger me-2"></i>预定义角色</h6>
-                            ${(() => {
-                                console.log('PostgreSQL predefined_roles:', permissions.predefined_roles);
-                                console.log('predefined_roles type:', typeof permissions.predefined_roles);
-                                console.log('predefined_roles is array:', Array.isArray(permissions.predefined_roles));
-                                return permissions.predefined_roles && permissions.predefined_roles.length > 0 ? `
-                                    <div class="row">
-                                        ${permissions.predefined_roles.map(role => `
-                                            <div class="col-md-6 mb-2">
-                                                <span class="badge bg-danger me-2">
-                                                    <i class="fas fa-users-cog me-1"></i>${role}
-                                                </span>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                ` : '<p class="text-muted">无预定义角色</p>';
-                            })()}
-                        </div>
-                        <div class="mb-3">
                             <h6><i class="fas fa-user-shield text-primary me-2"></i>角色属性</h6>
                             ${(() => {
                                 console.log('PostgreSQL role_attributes:', permissions.role_attributes);
