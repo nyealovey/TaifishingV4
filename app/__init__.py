@@ -379,7 +379,6 @@ def register_blueprints(app):
     from app.routes.account_list import account_list_bp
     from app.routes.account_sync import account_sync_bp
     from app.routes.account_static import account_static_bp
-    from app.routes.tasks import tasks_bp
     from app.routes.logs import logs_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.health import health_bp
@@ -402,7 +401,6 @@ def register_blueprints(app):
     # 保留旧的accounts_bp，等测试通过后删除
     # app.register_blueprint(accounts_bp, url_prefix="/accounts")
     
-    app.register_blueprint(tasks_bp, url_prefix="/tasks")
     app.register_blueprint(logs_bp, url_prefix="/logs")
     app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
     app.register_blueprint(health_bp, url_prefix="/health")
