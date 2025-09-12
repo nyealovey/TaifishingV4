@@ -763,7 +763,7 @@ function updateJob() {
 function disableJob(jobId) {
     if (confirm('确定要禁用此任务吗？')) {
         $.ajax({
-            url: `{{ url_for("scheduler.disable_job", job_id="") }}${jobId}`,
+            url: `{{ url_for("scheduler.disable_job", job_id="PLACEHOLDER") }}`.replace('PLACEHOLDER', jobId),
             method: 'POST',
             headers: {
                 'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
@@ -786,7 +786,7 @@ function disableJob(jobId) {
 
 function enableJob(jobId) {
     $.ajax({
-        url: `{{ url_for("scheduler.enable_job", job_id="") }}${jobId}`,
+        url: `{{ url_for("scheduler.enable_job", job_id="PLACEHOLDER") }}`.replace('PLACEHOLDER', jobId),
         method: 'POST',
         headers: {
             'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
