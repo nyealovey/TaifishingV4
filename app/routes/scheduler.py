@@ -34,7 +34,7 @@ def get_jobs():
     try:
         scheduler = get_scheduler()
         if not scheduler.running:
-            return APIResponse.error("调度器未启动", status_code=500)
+            return APIResponse.error("调度器未启动", code=500)
         jobs = scheduler.get_jobs()
         logger.info(f"获取到 {len(jobs)} 个任务")
         jobs_data = []
@@ -145,9 +145,17 @@ def update_job(job_id):
         data = request.get_json()
         
         # 检查任务是否存在
-        job = get_scheduler().get_job(job_id)
+        scheduler = get_scheduler()
+        if not scheduler.running:
+            return APIResponse.error("调度器未启动", code=500)
+            
+        job = scheduler.get_job(job_id)
         if not job:
             return APIResponse.error("任务不存在", status_code=404)
+        
+        # 检查是否为内置任务
+        builtin_tasks = ['sync_accounts', 'cleanup_logs', 'backup_database', 'generate_reports']
+        is_builtin = job_id in builtin_tasks
         
         # 构建新的触发器
         if 'trigger_type' in data:
@@ -155,22 +163,32 @@ def update_job(job_id):
             if not trigger:
                 return APIResponse.error("无效的触发器配置", status_code=400)
             
-            # 更新任务
-            get_scheduler().modify_job(
-                job_id,
-                trigger=trigger,
-                name=data.get('name', job.name),
-                args=data.get('args', job.args),
-                kwargs=data.get('kwargs', job.kwargs)
-            )
+            if is_builtin:
+                # 内置任务：只能更新触发器
+                scheduler.modify_job(job_id, trigger=trigger)
+                logger.info(f"内置任务触发器更新成功: {job_id}")
+                return APIResponse.success("触发器更新成功")
+            else:
+                # 自定义任务：可以更新所有属性
+                scheduler.modify_job(
+                    job_id,
+                    trigger=trigger,
+                    name=data.get('name', job.name),
+                    args=data.get('args', job.args),
+                    kwargs=data.get('kwargs', job.kwargs)
+                )
         else:
-            # 只更新其他属性
-            get_scheduler().modify_job(
-                job_id,
-                name=data.get('name', job.name),
-                args=data.get('args', job.args),
-                kwargs=data.get('kwargs', job.kwargs)
-            )
+            if is_builtin:
+                # 内置任务：不允许更新其他属性
+                return APIResponse.error("内置任务只能修改触发器", code=403)
+            else:
+                # 只更新其他属性
+                scheduler.modify_job(
+                    job_id,
+                    name=data.get('name', job.name),
+                    args=data.get('args', job.args),
+                    kwargs=data.get('kwargs', job.kwargs)
+                )
         
         logger.info(f"任务更新成功: {job_id}")
         return APIResponse.success("任务更新成功")
@@ -186,7 +204,16 @@ def update_job(job_id):
 def delete_job(job_id):
     """删除定时任务"""
     try:
-        get_scheduler().remove_job(job_id)
+        # 检查是否为内置任务
+        builtin_tasks = ['sync_accounts', 'cleanup_logs', 'backup_database', 'generate_reports']
+        if job_id in builtin_tasks:
+            return APIResponse.error("内置任务无法删除", code=403)
+        
+        scheduler = get_scheduler()
+        if not scheduler.running:
+            return APIResponse.error("调度器未启动", code=500)
+            
+        scheduler.remove_job(job_id)
         logger.info(f"任务删除成功: {job_id}")
         return APIResponse.success("任务删除成功")
         
@@ -233,7 +260,7 @@ def run_job(job_id):
     try:
         scheduler = get_scheduler()
         if not scheduler.running:
-            return APIResponse.error("调度器未启动", status_code=500)
+            return APIResponse.error("调度器未启动", code=500)
             
         job = scheduler.get_job(job_id)
         if not job:

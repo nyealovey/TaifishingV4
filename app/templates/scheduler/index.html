@@ -276,12 +276,56 @@ function createJobCard(job) {
     const status = job.next_run_time ? 'active' : 'paused';
     const statusText = job.next_run_time ? '运行中' : '已暂停';
     
+    // 定义内置任务列表
+    const builtinTasks = ['sync_accounts', 'cleanup_logs', 'backup_database', 'generate_reports'];
+    const isBuiltin = builtinTasks.includes(job.id);
+    
+    // 为内置任务添加特殊标识
+    const builtinBadge = isBuiltin ? '<span class="badge bg-info ms-2">内置任务</span>' : '';
+    
+    // 根据是否为内置任务生成不同的按钮
+    let actionButtons = '';
+    if (isBuiltin) {
+        // 内置任务：只能编辑触发器和立即执行
+        actionButtons = `
+            <div class="btn-group-vertical w-100">
+                <button class="btn btn-sm btn-outline-primary" onclick="runJob('${job.id}')">
+                    <i class="fas fa-play me-1"></i>立即执行
+                </button>
+                <button class="btn btn-sm btn-outline-warning" onclick="pauseJob('${job.id}')">
+                    <i class="fas fa-pause me-1"></i>暂停
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="editTrigger('${job.id}')">
+                    <i class="fas fa-edit me-1"></i>编辑触发器
+                </button>
+            </div>
+        `;
+    } else {
+        // 自定义任务：完整功能
+        actionButtons = `
+            <div class="btn-group-vertical w-100">
+                <button class="btn btn-sm btn-outline-primary" onclick="runJob('${job.id}')">
+                    <i class="fas fa-play me-1"></i>立即执行
+                </button>
+                <button class="btn btn-sm btn-outline-warning" onclick="pauseJob('${job.id}')">
+                    <i class="fas fa-pause me-1"></i>暂停
+                </button>
+                <button class="btn btn-sm btn-outline-info" onclick="editJob('${job.id}')">
+                    <i class="fas fa-edit me-1"></i>编辑
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteJob('${job.id}')">
+                    <i class="fas fa-trash me-1"></i>删除
+                </button>
+            </div>
+        `;
+    }
+    
     return $(`
         <div class="col-md-6 col-lg-4">
             <div class="card job-card ${status}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h6 class="card-title mb-0">${job.name}</h6>
+                        <h6 class="card-title mb-0">${job.name}${builtinBadge}</h6>
                         <span class="job-status status-${status}">${statusText}</span>
                     </div>
                     <p class="card-text">
@@ -293,17 +337,7 @@ function createJobCard(job) {
                         <strong>触发器:</strong><br>
                         ${job.trigger}
                     </div>
-                    <div class="btn-group-vertical w-100">
-                        <button class="btn btn-sm btn-outline-primary" onclick="runJob('${job.id}')">
-                            <i class="fas fa-play me-1"></i>立即执行
-                        </button>
-                        <button class="btn btn-sm btn-outline-warning" onclick="pauseJob('${job.id}')">
-                            <i class="fas fa-pause me-1"></i>暂停
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteJob('${job.id}')">
-                            <i class="fas fa-trash me-1"></i>删除
-                        </button>
-                    </div>
+                    ${actionButtons}
                 </div>
             </div>
         </div>
@@ -410,6 +444,13 @@ function pauseJob(jobId) {
 }
 
 function deleteJob(jobId) {
+    // 检查是否为内置任务
+    const builtinTasks = ['sync_accounts', 'cleanup_logs', 'backup_database', 'generate_reports'];
+    if (builtinTasks.includes(jobId)) {
+        showAlert('内置任务无法删除！', 'warning');
+        return;
+    }
+    
     if (confirm('确定要删除此任务吗？此操作不可逆！')) {
         $.ajax({
             url: `{{ url_for("scheduler.delete_job", job_id="") }}${jobId}`,
@@ -435,6 +476,72 @@ function deleteJob(jobId) {
 
 function refreshJobs() {
     loadJobs();
+}
+
+function editTrigger(jobId) {
+    // 获取任务详情
+    $.ajax({
+        url: `{{ url_for("scheduler.get_job", job_id="") }}${jobId}`,
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success === true) {
+                const job = response.data;
+                
+                // 填充触发器编辑表单
+                $('#editJobId').val(job.id);
+                $('#editJobName').val(job.name);
+                $('#editJobFunc').val(job.func);
+                
+                // 解析触发器类型
+                let triggerType = 'interval';
+                if (job.trigger.includes('cron')) {
+                    triggerType = 'cron';
+                } else if (job.trigger.includes('date')) {
+                    triggerType = 'date';
+                }
+                
+                // 设置触发器类型
+                $(`input[name="editTriggerType"][value="${triggerType}"]`).prop('checked', true);
+                $('.edit-trigger-config').hide();
+                $(`#edit${triggerType.charAt(0).toUpperCase() + triggerType.slice(1)}Config`).show();
+                
+                // 解析触发器参数
+                if (triggerType === 'cron') {
+                    // 解析cron表达式
+                    const cronMatch = job.trigger.match(/cron\[(.*?)\]/);
+                    if (cronMatch) {
+                        const params = cronMatch[1];
+                        // 这里可以添加更复杂的cron解析逻辑
+                        // 暂时使用默认值
+                    }
+                } else if (triggerType === 'interval') {
+                    // 解析间隔时间
+                    const intervalMatch = job.trigger.match(/interval\[(\d+):(\d+):(\d+)\]/);
+                    if (intervalMatch) {
+                        const hours = parseInt(intervalMatch[1]);
+                        const minutes = parseInt(intervalMatch[2]);
+                        const seconds = parseInt(intervalMatch[3]);
+                        
+                        if (hours > 0) $('#editHours').val(hours);
+                        if (minutes > 0) $('#editMinutes').val(minutes);
+                        if (seconds > 0) $('#editSeconds').val(seconds);
+                    }
+                }
+                
+                // 显示编辑模态框
+                $('#editJobModal').modal('show');
+            } else {
+                showAlert('获取任务详情失败: ' + response.message, 'danger');
+            }
+        },
+        error: function(xhr) {
+            const error = xhr.responseJSON;
+            showAlert('获取任务详情失败: ' + (error ? error.message : '未知错误'), 'danger');
+        }
+    });
 }
 
 function showAlert(message, type) {
