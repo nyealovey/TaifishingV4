@@ -71,8 +71,8 @@ class MySQLPermissionQuery(PermissionQuery):
                     "plugin": account.plugin
                 },
                 "permissions": {
-                    "global": global_perms,
-                    "database": database_perms
+                    "global_privileges": global_perms,
+                    "database_privileges": database_perms
                 }
             }
         except Exception as e:
@@ -207,15 +207,15 @@ class PostgreSQLPermissionQuery(PermissionQuery):
             global_perms = self.get_global_permissions(account)
             database_perms = self.get_database_permissions(account)
             
-            # 分离预定义角色和角色属性
-            predefined_roles = []
+            # 分离角色属性和数据库权限
             role_attributes = []
+            database_privileges = []
             
             for perm in global_perms:
-                if perm["privilege"] in ["SUPERUSER", "CREATEROLE", "CREATEDB", "REPLICATION"]:
-                    role_attributes.append(perm["privilege"])
-                else:
-                    predefined_roles.append(perm["privilege"])
+                role_attributes.append(perm["privilege"])
+            
+            for perm in database_perms:
+                database_privileges.append(perm)
             
             return {
                 "success": True,
@@ -226,9 +226,8 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                     "plugin": account.plugin
                 },
                 "permissions": {
-                    "predefined_roles": predefined_roles,
                     "role_attributes": role_attributes,
-                    "database": database_perms
+                    "database_privileges": database_privileges
                 }
             }
         except Exception as e:
@@ -403,25 +402,28 @@ class SQLServerPermissionQuery(PermissionQuery):
             # 分离SQL Server权限类型
             server_roles = []
             database_roles = {}
+            server_permissions = []
+            database_privileges = {}
             
             for perm in global_perms:
                 if perm.get("type") == "SERVER_ROLE":
-                    server_roles.append({
-                        "role": perm["name"],
-                        "type": perm.get("type_desc", "SERVER_ROLE")
-                    })
+                    server_roles.append(perm["name"])
+                else:
+                    server_permissions.append(perm["name"])
             
             for perm in database_perms:
                 db_name = perm.get("database", "default")
                 if db_name not in database_roles:
                     database_roles[db_name] = []
+                    database_privileges[db_name] = []
                 
                 roles = perm.get("roles", [])
                 for role in roles:
-                    database_roles[db_name].append({
-                        "role": role["name"],
-                        "type": role.get("type_desc", "DATABASE_ROLE")
-                    })
+                    database_roles[db_name].append(role["name"])
+                
+                privileges = perm.get("privileges", [])
+                for priv in privileges:
+                    database_privileges[db_name].append(priv)
             
             return {
                 "success": True,
@@ -433,7 +435,9 @@ class SQLServerPermissionQuery(PermissionQuery):
                 },
                 "permissions": {
                     "server_roles": server_roles,
-                    "database_roles": database_roles
+                    "database_roles": database_roles,
+                    "server_permissions": server_permissions,
+                    "database_privileges": database_privileges
                 }
             }
         except Exception as e:
@@ -596,7 +600,7 @@ class OraclePermissionQuery(PermissionQuery):
             
             for perm in global_perms:
                 if perm["privilege"].startswith("ROLE_"):
-                    roles.append(perm["privilege"])
+                    roles.append(perm["privilege"].replace("ROLE_", ""))
                 elif perm["privilege"].startswith("TABLESPACE_"):
                     tablespace_privileges.append(perm["privilege"])
                 else:

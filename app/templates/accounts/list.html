@@ -772,35 +772,30 @@ function showPermissionsModal(permissions, account) {
                         </div>
                         <div class="mb-3">
                             <h6><i class="fas fa-database text-success me-2"></i>数据库权限</h6>
-                            ${(() => {
-                                console.log('PostgreSQL database permissions:', permissions.database);
-                                console.log('database type:', typeof permissions.database);
-                                console.log('database is array:', Array.isArray(permissions.database));
-                                return permissions.database && permissions.database.length > 0 ? `
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead>
+                            ${permissions.database_privileges && permissions.database_privileges.length > 0 ? `
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>数据库</th>
+                                                <th>权限</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${permissions.database_privileges.map(db => `
                                                 <tr>
-                                                    <th>数据库</th>
-                                                    <th>权限</th>
+                                                    <td>${db.database}</td>
+                                                    <td>
+                                                        ${db.privileges.map(priv => `
+                                                            <span class="badge bg-success me-1">${priv}</span>
+                                                        `).join('')}
+                                                    </td>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${permissions.database.map(db => `
-                                                    <tr>
-                                                        <td>${db.database}</td>
-                                                        <td>
-                                                            ${db.privileges.map(priv => `
-                                                                <span class="badge bg-success me-1">${priv}</span>
-                                                            `).join('')}
-                                                        </td>
-                                                    </tr>
-                                                `).join('')}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ` : '<p class="text-muted">无数据库权限</p>';
-                            })()}
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : '<p class="text-muted">无数据库权限</p>'}
                         </div>
                         <div class="mb-3">
                             <h6><i class="fas fa-hdd text-info me-2"></i>表空间权限</h6>
@@ -866,11 +861,11 @@ function showPermissionsModal(permissions, account) {
                             ` : '<p class="text-muted">无数据库级别角色</p>'}
                         </div>
                         ` : ''}
-                        ${dbType === 'mysql' || dbType === 'sqlserver' ? `
+                        ${dbType === 'mysql' ? `
                         <div class="mb-3">
-                            <h6>${dbType === 'sqlserver' ? '服务器权限' : '全局权限'}</h6>
+                            <h6><i class="fas fa-shield-alt text-primary me-2"></i>全局权限</h6>
                             <div class="row">
-                                ${permissions.global && permissions.global.map ? permissions.global.map(perm => `
+                                ${permissions.global_privileges && permissions.global_privileges.map ? permissions.global_privileges.map(perm => `
                                     <div class="col-md-6 mb-2">
                                         <span class="badge ${perm.granted ? 'bg-success' : 'bg-secondary'} me-2">
                                             ${perm.granted ? '✓' : '✗'}
@@ -881,8 +876,8 @@ function showPermissionsModal(permissions, account) {
                             </div>
                         </div>
                         <div class="mb-3">
-                            <h6>数据库权限</h6>
-                            ${permissions.database && permissions.database.length > 0 ? `
+                            <h6><i class="fas fa-database text-success me-2"></i>数据库权限</h6>
+                            ${permissions.database_privileges && permissions.database_privileges.length > 0 ? `
                                 <div class="table-responsive">
                                     <table class="table table-sm">
                                         <thead>
@@ -892,12 +887,12 @@ function showPermissionsModal(permissions, account) {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            ${permissions.database.map(db => `
+                                            ${permissions.database_privileges.map(db => `
                                                 <tr>
                                                     <td>${db.database}</td>
                                                     <td>
                                                         ${db.privileges.map(priv => `
-                                                            <span class="badge bg-info me-1">${priv}</span>
+                                                            <span class="badge bg-success me-1">${priv}</span>
                                                         `).join('')}
                                                     </td>
                                                 </tr>
@@ -905,7 +900,50 @@ function showPermissionsModal(permissions, account) {
                                         </tbody>
                                     </table>
                                 </div>
-                            ` : '<p class="text-muted">无特定数据库权限</p>'}
+                            ` : '<p class="text-muted">无数据库权限</p>'}
+                        </div>
+                        ` : ''}
+                        ${dbType === 'sqlserver' ? `
+                        <div class="mb-3">
+                            <h6><i class="fas fa-crown text-primary me-2"></i>服务器角色</h6>
+                            ${permissions.server_roles && permissions.server_roles.length > 0 ? `
+                                <div class="row">
+                                    ${permissions.server_roles.map(role => `
+                                        <div class="col-md-6 mb-2">
+                                            <span class="badge bg-primary me-2">
+                                                <i class="fas fa-crown me-1"></i>${role}
+                                            </span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : '<p class="text-muted">无服务器角色</p>'}
+                        </div>
+                        <div class="mb-3">
+                            <h6><i class="fas fa-database text-info me-2"></i>数据库角色</h6>
+                            ${permissions.database_roles && Object.keys(permissions.database_roles).length > 0 ? `
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>数据库</th>
+                                                <th>角色</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${Object.entries(permissions.database_roles).map(([dbName, roles]) => `
+                                                <tr>
+                                                    <td>${dbName}</td>
+                                                    <td>
+                                                        ${roles.map(role => `
+                                                            <span class="badge bg-info me-1">${role}</span>
+                                                        `).join('')}
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ` : '<p class="text-muted">无数据库角色</p>'}
                         </div>
                         ` : ''}
                         ${dbType === 'postgresql' && permissions.tablespace_privileges && permissions.tablespace_privileges.length > 0 ? `
