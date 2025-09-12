@@ -1,0 +1,23 @@
+# 定时任务配置
+# 这个文件定义了默认的定时任务，用户可以通过界面修改触发器参数
+# 修改后会自动保存到数据库，重启应用时会从数据库加载，不会重置
+
+default_tasks:
+  - id: sync_accounts
+    name: 账户同步
+    function: sync_accounts
+    trigger_type: interval
+    trigger_params:
+      minutes: 30
+    enabled: true
+    description: 同步所有数据库实例的账户信息
+    
+  - id: cleanup_logs
+    name: 清理旧日志
+    function: cleanup_old_logs
+    trigger_type: cron
+    trigger_params:
+      hour: 2
+      minute: 0
+    enabled: true
+    description: 清理30天前的日志和临时文件
