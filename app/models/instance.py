@@ -18,7 +18,7 @@ class Instance(db.Model):
     db_type = db.Column(db.String(50), nullable=False, index=True)
     host = db.Column(db.String(255), nullable=False)
     port = db.Column(db.Integer, nullable=False)
-    database_name = db.Column(db.String(255), nullable=True, default="")  # 默认空字符串
+    database_name = db.Column(db.String(255), nullable=True)
     database_version = db.Column(db.String(100), nullable=True)
     environment = db.Column(
         db.String(20), default="production", nullable=False, index=True

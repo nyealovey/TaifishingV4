@@ -90,10 +90,20 @@
                         </div>
                     </div>
                     
-                    <!-- Oracle SID字段 -->
-                    <div class="row" id="oracle-sid-row" style="display: none;">
+                    <!-- 数据库名称字段 -->
+                    <div class="row" id="database-name-row">
                         <div class="col-md-12">
-                            <!-- database_name 字段已移除 -->
+                            <div class="mb-3">
+                                <label for="database_name" class="form-label">数据库名称</label>
+                                <input type="text" class="form-control" id="database_name" name="database_name" 
+                                       placeholder="例如: production, development, test">
+                                <div class="form-text">
+                                    <strong>MySQL</strong>: 数据库名称 (如: production, development)<br>
+                                    <strong>PostgreSQL</strong>: 数据库名称 (如: postgres, myapp)<br>
+                                    <strong>SQL Server</strong>: 数据库名称 (如: master, mydb)<br>
+                                    <strong>Oracle</strong>: 服务名或SID (如: ORCL, PROD)
+                                </div>
+                            </div>
                         </div>
                     </div>
                     

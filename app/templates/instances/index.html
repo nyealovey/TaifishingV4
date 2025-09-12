@@ -303,7 +303,7 @@
                             <li><code>db_type*</code> - 数据库类型 (mysql, postgresql, sqlserver, oracle)</li>
                             <li><code>host*</code> - 主机地址</li>
                             <li><code>port*</code> - 端口号</li>
-                            <!-- database_name 字段已移除 -->
+                            <li><code>database_name</code> - 数据库名称（可选）</li>
                             <li><code>environment</code> - 环境类型 (production, development, testing)</li>
                             <li><code>description</code> - 描述（可选）</li>
                             <li><code>credential_id</code> - 凭据ID（可选）</li>
@@ -322,6 +322,7 @@
     "db_type": "mysql",
     "host": "192.168.1.100",
     "port": 3306,
+    "database_name": "production",
     "environment": "production",
     "description": "生产环境MySQL主库",
     "credential_id": 1

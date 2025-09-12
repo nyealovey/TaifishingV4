@@ -163,6 +163,7 @@ def create():
                 db_type=data.get("db_type"),
                 host=data.get("host").strip(),
                 port=int(data.get("port")),
+                database_name=data.get("database_name", "").strip() or None,
                 credential_id=(
                     int(data.get("credential_id"))
                     if data.get("credential_id")
@@ -461,6 +462,9 @@ def edit(instance_id):
             instance.db_type = data.get("db_type", instance.db_type)
             instance.host = data.get("host", instance.host).strip()
             instance.port = int(data.get("port", instance.port))
+            instance.database_name = data.get("database_name", instance.database_name)
+            if instance.database_name:
+                instance.database_name = instance.database_name.strip() or None
             instance.environment = data.get("environment", instance.environment)
             instance.credential_id = (
                 int(data.get("credential_id")) if data.get("credential_id") else None
@@ -803,7 +807,7 @@ def _process_instances_data(instances_data):
                 db_type=instance_data["db_type"],
                 host=instance_data["host"],
                 port=port,
-                database_name="",  # 使用默认空字符串
+                database_name=instance_data.get("database_name"),
                 environment=instance_data.get("environment", "production"),
                 description=instance_data.get("description"),
                 credential_id=credential_id,
@@ -870,6 +874,7 @@ def download_template():
             "db_type",
             "host",
             "port",
+            "database_name",
             "environment",
             "description",
             "credential_id",
@@ -884,6 +889,7 @@ def download_template():
             "192.168.1.100",
             "3306",
             "production",
+            "production",
             "生产环境MySQL主库",
             "1",
         ]
@@ -895,6 +901,7 @@ def download_template():
             "192.168.1.101",
             "3306",
             "development",
+            "development",
             "开发环境MySQL",
             "2",
         ]
@@ -905,6 +912,7 @@ def download_template():
             "postgresql",
             "192.168.1.102",
             "5432",
+            "testing",
             "testing",
             "测试环境PostgreSQL",
             "3",
