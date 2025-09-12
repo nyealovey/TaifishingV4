@@ -7,6 +7,7 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import login_required, current_user
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.utils.decorators import view_required, create_required, update_required, delete_required
 from app.models.instance import Instance
 from app.models.credential import Credential
 from app.models.account import Account
@@ -27,6 +28,7 @@ instances_bp = Blueprint("instances", __name__)
 
 @instances_bp.route("/")
 @login_required
+@view_required
 def index():
     """实例管理首页"""
     page = request.args.get("page", 1, type=int)
@@ -93,6 +95,7 @@ def index():
 
 @instances_bp.route("/create", methods=["GET", "POST"])
 @login_required
+@create_required
 def create():
     """创建实例"""
     if request.method == "POST":
@@ -247,6 +250,7 @@ def create():
 
 @instances_bp.route("/test-connection", methods=["POST"])
 @login_required
+@view_required
 def test_instance_connection():
     """测试数据库连接"""
     try:
@@ -357,6 +361,7 @@ def test_instance_connection():
 
 @instances_bp.route("/<int:instance_id>")
 @login_required
+@view_required
 def detail(instance_id):
     """实例详情"""
     instance = Instance.query.get_or_404(instance_id)
@@ -369,6 +374,7 @@ def detail(instance_id):
 
 @instances_bp.route("/statistics")
 @login_required
+@view_required
 def statistics():
     """实例统计页面"""
     stats = get_instance_statistics()
@@ -381,6 +387,7 @@ def statistics():
 
 @instances_bp.route("/api/statistics")
 @login_required
+@view_required
 def api_statistics():
     """获取实例统计API"""
     stats = get_instance_statistics()
@@ -389,6 +396,7 @@ def api_statistics():
 
 @instances_bp.route("/<int:instance_id>/edit", methods=["GET", "POST"])
 @login_required
+@update_required
 def edit(instance_id):
     """编辑实例"""
     instance = Instance.query.get_or_404(instance_id)
@@ -562,6 +570,7 @@ def edit(instance_id):
 
 @instances_bp.route("/<int:instance_id>/delete", methods=["POST"])
 @login_required
+@delete_required
 def delete(instance_id):
     """删除实例"""
     instance = Instance.query.get_or_404(instance_id)
@@ -626,6 +635,7 @@ def delete(instance_id):
 
 @instances_bp.route("/batch-delete", methods=["POST"])
 @login_required
+@delete_required
 def batch_delete():
     """批量删除实例"""
     try:
@@ -710,6 +720,7 @@ def batch_delete():
 
 @instances_bp.route("/batch-create", methods=["POST"])
 @login_required
+@create_required
 def batch_create():
     """批量创建实例"""
     try:
@@ -863,6 +874,7 @@ def _process_instances_data(instances_data):
 
 @instances_bp.route("/export")
 @login_required
+@view_required
 def export_instances():
     """导出实例数据为CSV"""
     import csv
@@ -953,6 +965,7 @@ def export_instances():
 
 @instances_bp.route("/template/download")
 @login_required
+@view_required
 def download_template():
     """下载CSV模板"""
     import csv
@@ -1028,6 +1041,7 @@ def download_template():
 
 @instances_bp.route("/<int:instance_id>/test", methods=["POST"])
 @login_required
+@view_required
 def test_connection(instance_id):
     """测试数据库连接"""
     instance = Instance.query.get_or_404(instance_id)
@@ -1065,6 +1079,7 @@ def test_connection(instance_id):
 
 @instances_bp.route("/<int:instance_id>/sync", methods=["POST"])
 @login_required
+@update_required
 def sync_accounts(instance_id):
     """同步账户信息"""
     instance = Instance.query.get_or_404(instance_id)
@@ -1185,6 +1200,7 @@ def api_test_connection(instance_id):
 
 @instances_bp.route("/api/test-connection", methods=["POST"])
 @login_required
+@view_required
 def api_test_instance_connection():
     """测试数据库连接API（无需CSRF）"""
     try:
@@ -1391,6 +1407,7 @@ def get_default_version(db_type):
 
 @instances_bp.route("/<int:instance_id>/accounts/<int:account_id>/permissions")
 @login_required
+@view_required
 def get_account_permissions(instance_id, account_id):
     """获取账户权限详情"""
     instance = Instance.query.get_or_404(instance_id)
