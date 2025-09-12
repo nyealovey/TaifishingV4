@@ -39,8 +39,10 @@ function viewAccountPermissions(accountId, options = {}) {
     fetch(finalApiUrl, {
         method: 'GET',
         headers: {
-            'X-CSRFToken': csrfToken
-        }
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'  // 包含认证cookie
     })
     .then(response => response.json())
     .then(data => {
@@ -113,8 +115,10 @@ function fetchAccountPermissions(accountId, apiUrl = `/account-list/${accountId}
     return fetch(finalApiUrl, {
         method: 'GET',
         headers: {
-            'X-CSRFToken': csrfToken
-        }
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'  // 包含认证cookie
     })
     .then(response => response.json())
     .then(data => {
