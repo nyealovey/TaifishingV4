@@ -377,7 +377,7 @@ function runJob(jobId) {
 
 function pauseJob(jobId) {
     $.ajax({
-        url: `{{ url_for("scheduler.pause_job") }}/${jobId}/pause`,
+        url: `{{ url_for("scheduler.pause_job", job_id="") }}${jobId}/pause`,
         method: 'POST',
         headers: {
             'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
@@ -400,7 +400,7 @@ function pauseJob(jobId) {
 function deleteJob(jobId) {
     if (confirm('确定要删除此任务吗？此操作不可逆！')) {
         $.ajax({
-            url: `{{ url_for("scheduler.get_jobs") }}/${jobId}`,
+            url: `{{ url_for("scheduler.delete_job", job_id="") }}${jobId}`,
             method: 'DELETE',
             headers: {
                 'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
