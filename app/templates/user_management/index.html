@@ -4,25 +4,6 @@
 
 {% block extra_css %}
 <style>
-    .stats-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    
-    .stats-card h3 {
-        margin: 0;
-        font-size: 2rem;
-        font-weight: bold;
-    }
-    
-    .stats-card p {
-        margin: 5px 0 0 0;
-        opacity: 0.9;
-    }
     
     .user-avatar {
         width: 40px;
@@ -81,12 +62,6 @@
         font-size: 12px;
     }
     
-    .search-filters {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
     
     .table-responsive {
         border-radius: 10px;
@@ -142,75 +117,7 @@
         </div>
     </div>
 
-    <!-- 统计卡片 -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="stats-card">
-                <h3 id="totalUsers">{{ stats.total or 0 }}</h3>
-                <p><i class="fas fa-users me-1"></i>总用户数</p>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stats-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                <h3 id="activeUsers">{{ stats.active or 0 }}</h3>
-                <p><i class="fas fa-user-check me-1"></i>活跃用户</p>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stats-card" style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
-                <h3 id="adminUsers">{{ stats.admin or 0 }}</h3>
-                <p><i class="fas fa-user-shield me-1"></i>管理员</p>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stats-card" style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);">
-                <h3 id="regularUsers">{{ stats.user or 0 }}</h3>
-                <p><i class="fas fa-user me-1"></i>普通用户</p>
-            </div>
-        </div>
-    </div>
 
-    <!-- 搜索和筛选 -->
-    <div class="search-filters">
-        <div class="row">
-            <div class="col-md-4">
-                <div class="mb-3">
-                    <label for="searchInput" class="form-label">搜索用户</label>
-                    <input type="text" class="form-control" id="searchInput" placeholder="输入用户名搜索..." value="{{ search }}">
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="mb-3">
-                    <label for="roleFilter" class="form-label">角色筛选</label>
-                    <select class="form-select" id="roleFilter">
-                        <option value="">全部角色</option>
-                        <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>管理员</option>
-                        <option value="user" {% if role_filter == 'user' %}selected{% endif %}>普通用户</option>
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="mb-3">
-                    <label for="statusFilter" class="form-label">状态筛选</label>
-                    <select class="form-select" id="statusFilter">
-                        <option value="">全部状态</option>
-                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>活跃</option>
-                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>禁用</option>
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="mb-3">
-                    <label class="form-label">&nbsp;</label>
-                    <div>
-                        <button class="btn btn-primary w-100" onclick="searchUsers()">
-                            <i class="fas fa-search me-1"></i>搜索
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- 用户列表 -->
     <div class="table-responsive">
@@ -255,7 +162,7 @@
                                 <i class="fas fa-edit"></i>
                             </button>
                             <button class="btn btn-sm btn-outline-{% if user.is_active %}warning{% else %}success{% endif %}" 
-                                    onclick="toggleUserStatus({{ user.id }}, {{ user.is_active|lower }})" 
+                                    onclick="toggleUserStatus({{ user.id }}, {{ 'true' if user.is_active else 'false' }})" 
                                     title="{% if user.is_active %}禁用{% else %}启用{% endif %}">
                                 <i class="fas fa-{% if user.is_active %}ban{% else %}check{% endif %}"></i>
                             </button>
@@ -423,19 +330,6 @@
 
 {% block extra_js %}
 <script>
-// 搜索用户
-function searchUsers() {
-    const search = document.getElementById('searchInput').value;
-    const role = document.getElementById('roleFilter').value;
-    const status = document.getElementById('statusFilter').value;
-    
-    const params = new URLSearchParams();
-    if (search) params.append('search', search);
-    if (role) params.append('role', role);
-    if (status) params.append('status', status);
-    
-    window.location.href = `{{ url_for('user_management.index') }}?${params.toString()}`;
-}
 
 // 添加用户
 document.getElementById('addUserForm').addEventListener('submit', function(e) {
@@ -618,11 +512,5 @@ function showAlert(type, message) {
     }, 3000);
 }
 
-// 回车键搜索
-document.getElementById('searchInput').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        searchUsers();
-    }
-});
 </script>
 {% endblock %}

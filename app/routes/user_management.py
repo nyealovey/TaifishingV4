@@ -23,53 +23,14 @@ def index():
         # 获取分页参数
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
-        search = request.args.get('search', '', type=str)
-        role_filter = request.args.get('role', '', type=str)
-        status_filter = request.args.get('status', '', type=str)
-        
-        # 构建查询
-        query = User.query
-        
-        # 搜索功能
-        if search:
-            query = query.filter(User.username.contains(search))
-        
-        # 角色筛选
-        if role_filter:
-            query = query.filter(User.role == role_filter)
-        
-        # 状态筛选
-        if status_filter:
-            if status_filter == 'active':
-                query = query.filter(User.is_active == True)
-            elif status_filter == 'inactive':
-                query = query.filter(User.is_active == False)
         
         # 分页查询
-        users = query.order_by(User.created_at.desc()).paginate(
+        users = User.query.order_by(User.created_at.desc()).paginate(
             page=page, per_page=per_page, error_out=False
         )
         
-        # 获取统计信息
-        total_users = User.query.count()
-        active_users = User.query.filter_by(is_active=True).count()
-        admin_users = User.query.filter_by(role='admin').count()
-        user_users = User.query.filter_by(role='user').count()
-        
-        stats = {
-            'total': total_users,
-            'active': active_users,
-            'inactive': total_users - active_users,
-            'admin': admin_users,
-            'user': user_users
-        }
-        
         return render_template('user_management/index.html', 
-                             users=users, 
-                             stats=stats,
-                             search=search,
-                             role_filter=role_filter,
-                             status_filter=status_filter)
+                             users=users)
     
     except Exception as e:
         flash(f'获取用户列表失败: {str(e)}', 'error')
