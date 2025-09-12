@@ -78,7 +78,7 @@ def get_job(job_id):
     try:
         job = get_scheduler().get_job(job_id)
         if not job:
-            return APIResponse.error("任务不存在", status_code=404)
+            return APIResponse.error("任务不存在", code=404)
         
         job_info = {
             'id': job.id,
@@ -174,7 +174,7 @@ def update_job(job_id):
             
         job = scheduler.get_job(job_id)
         if not job:
-            return APIResponse.error("任务不存在", status_code=404)
+            return APIResponse.error("任务不存在", code=404)
         
         # 检查是否为内置任务
         builtin_tasks = ['sync_accounts', 'cleanup_logs']
@@ -184,7 +184,7 @@ def update_job(job_id):
         if 'trigger_type' in data:
             trigger = _build_trigger(data)
             if not trigger:
-                return APIResponse.error("无效的触发器配置", status_code=400)
+                return APIResponse.error("无效的触发器配置", code=400)
             
             if is_builtin:
                 # 内置任务：只能更新触发器
@@ -335,7 +335,7 @@ def run_job(job_id):
             
         job = scheduler.get_job(job_id)
         if not job:
-            return APIResponse.error("任务不存在", status_code=404)
+            return APIResponse.error("任务不存在", code=404)
         
         logger.info(f"开始立即执行任务: {job_id} - {job.name}")
         
