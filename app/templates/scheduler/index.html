@@ -425,7 +425,7 @@ function createJobCard(job) {
     const isPaused = job.is_paused || status === 'paused';
     
     // 定义内置任务列表
-    const builtinTasks = ['sync_accounts', 'cleanup_logs', 'backup_database', 'generate_reports'];
+    const builtinTasks = ['sync_accounts', 'cleanup_logs'];
     const isBuiltin = job.is_builtin || builtinTasks.includes(job.id);
     
     // 为内置任务添加特殊标识
@@ -614,7 +614,7 @@ function pauseJob(jobId) {
 
 function deleteJob(jobId) {
     // 检查是否为内置任务
-    const builtinTasks = ['sync_accounts', 'cleanup_logs', 'backup_database', 'generate_reports'];
+    const builtinTasks = ['sync_accounts', 'cleanup_logs'];
     if (builtinTasks.includes(jobId)) {
         showAlert('内置任务无法删除！', 'warning');
         return;

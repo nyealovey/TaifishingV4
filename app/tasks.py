@@ -17,74 +17,80 @@ logger = logging.getLogger(__name__)
 
 
 def cleanup_old_logs():
-    """清理旧日志任务"""
+    """清理旧日志任务 - 清理30天前的日志和临时文件"""
     from app import create_app
+    from app.utils.enhanced_logger import sync_logger, log_operation
     app = create_app()
     with app.app_context():
         try:
             # 删除30天前的日志
             cutoff_date = datetime.utcnow() - timedelta(days=30)
-            deleted_count = Log.query.filter(Log.created_at < cutoff_date).delete()
+            deleted_logs = Log.query.filter(Log.created_at < cutoff_date).delete()
+            
+            # 清理临时文件
+            cleaned_files = _cleanup_temp_files()
+            
+            # 清理旧的同步记录（保留最近30天）
+            from app.models.sync_data import SyncData
+            deleted_sync = SyncData.query.filter(SyncData.sync_time < cutoff_date).delete()
+            
             db.session.commit()
             
-            logger.info(f"清理旧日志完成，删除了 {deleted_count} 条记录")
-            return f"清理了 {deleted_count} 条旧日志"
+            # 记录操作日志
+            log_operation(
+                operation_type="TASK_CLEANUP_COMPLETE",
+                user_id=None,  # 定时任务没有用户ID
+                details={
+                    "deleted_logs": deleted_logs,
+                    "deleted_sync_records": deleted_sync,
+                    "cleaned_temp_files": cleaned_files,
+                    "cutoff_date": cutoff_date.isoformat()
+                },
+            )
+            
+            sync_logger.info(f"定时任务清理完成，删除了 {deleted_logs} 条日志，{deleted_sync} 条同步记录，{cleaned_files} 个临时文件", 
+                           "scheduler", source="定时任务")
+            
+            return f"清理完成：{deleted_logs} 条日志，{deleted_sync} 条同步记录，{cleaned_files} 个临时文件"
+            
         except Exception as e:
-            logger.error(f"清理旧日志失败: {e}")
+            sync_logger.error(f"定时任务清理失败: {e}", "scheduler", source="定时任务")
             db.session.rollback()
-            return f"清理旧日志失败: {e}"
+            return f"清理失败: {e}"
 
 
-def backup_database():
-    """数据库备份任务"""
-    from app import create_app
-    app = create_app()
-    with app.app_context():
-        try:
-            # 创建备份目录
-            backup_dir = "userdata/backups"
-            os.makedirs(backup_dir, exist_ok=True)
-            
-            # 生成备份文件名
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_file = os.path.join(backup_dir, f"taifish_backup_{timestamp}.db")
-            
-            # 复制数据库文件
-            db_path = "userdata/taifish_dev.db"
-            if os.path.exists(db_path):
-                shutil.copy2(db_path, backup_file)
-                
-                # 清理旧备份（保留最近10个）
-                _cleanup_old_backups(backup_dir)
-                
-                logger.info(f"数据库备份完成: {backup_file}")
-                return f"数据库备份完成: {backup_file}"
-            else:
-                logger.warning("数据库文件不存在，跳过备份")
-                return "数据库文件不存在，跳过备份"
-                
-        except Exception as e:
-            logger.error(f"数据库备份失败: {e}")
-            return f"数据库备份失败: {e}"
-
-
-def _cleanup_old_backups(backup_dir, keep_count=10):
-    """清理旧备份文件"""
+def _cleanup_temp_files():
+    """清理临时文件"""
     try:
-        backup_files = []
-        for file in os.listdir(backup_dir):
-            if file.startswith("taifish_backup_") and file.endswith(".db"):
-                file_path = os.path.join(backup_dir, file)
-                backup_files.append((file_path, os.path.getmtime(file_path)))
+        temp_dirs = [
+            "userdata/temp",
+            "userdata/exports", 
+            "userdata/logs",
+            "userdata/dynamic_tasks"
+        ]
         
-        # 按修改时间排序，删除最旧的文件
-        backup_files.sort(key=lambda x: x[1], reverse=True)
-        for file_path, _ in backup_files[keep_count:]:
-            os.remove(file_path)
-            logger.info(f"删除旧备份文件: {file_path}")
-            
+        cleaned_files = 0
+        cutoff_time = datetime.now() - timedelta(days=7)  # 清理7天前的临时文件
+        
+        for temp_dir in temp_dirs:
+            if os.path.exists(temp_dir):
+                for file in os.listdir(temp_dir):
+                    file_path = os.path.join(temp_dir, file)
+                    if os.path.isfile(file_path):
+                        # 删除7天前的临时文件
+                        file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+                        if file_mtime < cutoff_time:
+                            os.remove(file_path)
+                            cleaned_files += 1
+                            logger.info(f"删除临时文件: {file_path}")
+        
+        return cleaned_files
+        
     except Exception as e:
-        logger.error(f"清理旧备份失败: {e}")
+        logger.error(f"清理临时文件失败: {e}")
+        return 0
+
+
 
 
 def sync_accounts():
@@ -227,40 +233,6 @@ def sync_accounts():
             return f"定时任务同步失败: {e}"
 
 
-def generate_reports():
-    """生成报告任务"""
-    from app import create_app
-    app = create_app()
-    with app.app_context():
-        try:
-            # 生成系统统计报告
-            report_data = {
-                'timestamp': datetime.now().isoformat(),
-                'total_users': User.query.count(),
-                'total_accounts': Account.query.count(),
-                'active_accounts': Account.query.filter_by(is_active=True).count(),
-                'total_logs': Log.query.count(),
-                'recent_logs': Log.query.filter(
-                    Log.created_at >= datetime.utcnow() - timedelta(days=7)
-                ).count()
-            }
-            
-            # 保存报告到文件
-            reports_dir = "userdata/reports"
-            os.makedirs(reports_dir, exist_ok=True)
-            
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            report_file = os.path.join(reports_dir, f"weekly_report_{timestamp}.json")
-            
-            with open(report_file, 'w', encoding='utf-8') as f:
-                json.dump(report_data, f, ensure_ascii=False, indent=2)
-            
-            logger.info(f"周报生成完成: {report_file}")
-            return f"周报生成完成: {report_file}"
-            
-        except Exception as e:
-            logger.error(f"生成报告失败: {e}")
-            return f"生成报告失败: {e}"
 
 
 def health_check():

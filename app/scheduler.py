@@ -129,9 +129,7 @@ def _add_default_jobs():
     """添加默认任务"""
     from app.tasks import (
         cleanup_old_logs,
-        backup_database,
-        sync_accounts,
-        generate_reports
+        sync_accounts
     )
     
     # 清理旧日志 - 每天凌晨2点执行
@@ -145,17 +143,6 @@ def _add_default_jobs():
         replace_existing=True
     )
     
-    # 数据库备份 - 每天凌晨3点执行
-    scheduler.add_job(
-        backup_database,
-        'cron',
-        hour=3,
-        minute=0,
-        id='backup_database',
-        name='数据库备份',
-        replace_existing=True
-    )
-    
     # 账户同步 - 每30分钟执行
     scheduler.add_job(
         sync_accounts,
@@ -163,18 +150,6 @@ def _add_default_jobs():
         minutes=30,
         id='sync_accounts',
         name='账户同步',
-        replace_existing=True
-    )
-    
-    # 生成报告 - 每周一上午9点执行
-    scheduler.add_job(
-        generate_reports,
-        'cron',
-        day_of_week='mon',
-        hour=9,
-        minute=0,
-        id='generate_reports',
-        name='生成周报',
         replace_existing=True
     )
     

@@ -44,7 +44,7 @@ def get_jobs():
         for job in jobs:
             # 检查任务状态
             is_paused = job.next_run_time is None
-            is_builtin = job.id in ['sync_accounts', 'cleanup_logs', 'backup_database', 'generate_reports']
+            is_builtin = job.id in ['sync_accounts', 'cleanup_logs']
             
             job_info = {
                 'id': job.id,
@@ -177,7 +177,7 @@ def update_job(job_id):
             return APIResponse.error("任务不存在", status_code=404)
         
         # 检查是否为内置任务
-        builtin_tasks = ['sync_accounts', 'cleanup_logs', 'backup_database', 'generate_reports']
+        builtin_tasks = ['sync_accounts', 'cleanup_logs']
         is_builtin = job_id in builtin_tasks
         
         # 构建新的触发器
@@ -228,7 +228,7 @@ def delete_job(job_id):
     """删除定时任务"""
     try:
         # 检查是否为内置任务
-        builtin_tasks = ['sync_accounts', 'cleanup_logs', 'backup_database', 'generate_reports']
+        builtin_tasks = ['sync_accounts', 'cleanup_logs']
         if job_id in builtin_tasks:
             return APIResponse.error("内置任务无法删除", code=403)
         
