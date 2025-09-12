@@ -621,7 +621,7 @@ function viewAccountPermissions(accountId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showPermissionsModal(data.permissions, data.account);
+            showPermissionsModal(data.permissions.permissions, data.account);
         } else {
             showAlert('danger', data.error || '获取权限信息失败');
         }

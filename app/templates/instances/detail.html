@@ -657,7 +657,7 @@ function viewAccountPermissions(accountId) {
         console.log('权限API响应:', data);
         if (data.success) {
             console.log('权限获取成功，显示模态框');
-            showPermissionsModal(data.permissions, data.account);
+            showPermissionsModal(data.permissions.permissions, data.account);
         } else {
             console.log('权限获取失败:', data.error);
             showAlert('danger', data.error || '获取权限信息失败');
