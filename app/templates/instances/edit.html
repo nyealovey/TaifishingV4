@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'macros/environment_macro.html' import environment_options %}
 
 {% block title %}编辑实例 - 泰摸鱼吧{% endblock %}
 
@@ -45,10 +46,7 @@
                             <div class="mb-3">
                                 <label for="environment" class="form-label">环境 <span class="text-danger">*</span></label>
                                 <select class="form-select" id="environment" name="environment" required>
-                                    <option value="">请选择环境</option>
-                                    <option value="production" {% if instance.environment == 'production' %}selected{% endif %}>生产环境</option>
-                                    <option value="development" {% if instance.environment == 'development' %}selected{% endif %}>开发环境</option>
-                                    <option value="testing" {% if instance.environment == 'testing' %}selected{% endif %}>测试环境</option>
+                                    {{ environment_options(instance.environment) }}
                                 </select>
                                 <div class="form-text">选择此实例的部署环境</div>
                             </div>

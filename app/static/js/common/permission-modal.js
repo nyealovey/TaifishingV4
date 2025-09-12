@@ -115,16 +115,17 @@ function renderMySQLPermissions(permissions) {
     return `
         <div class="mb-3">
             <h6><i class="fas fa-shield-alt text-primary me-2"></i>全局权限</h6>
-            <div class="row">
-                ${permissions.global_privileges && permissions.global_privileges.map ? permissions.global_privileges.map(perm => `
-                    <div class="col-md-6 mb-2">
-                        <span class="badge ${perm.granted ? 'bg-success' : 'bg-secondary'} me-2">
-                            ${perm.granted ? '✓' : '✗'}
-                        </span>
-                        ${perm.privilege}
-                    </div>
-                `).join('') : '<p class="text-muted">无全局权限</p>'}
-            </div>
+            ${permissions.global_privileges && permissions.global_privileges.length > 0 ? `
+                <div class="row">
+                    ${permissions.global_privileges.map(perm => `
+                        <div class="col-md-6 mb-2">
+                            <span class="badge bg-primary me-2">
+                                <i class="fas fa-shield-alt me-1"></i>${perm.privilege}
+                            </span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p class="text-muted">无全局权限</p>'}
         </div>
         <div class="mb-3">
             <h6><i class="fas fa-database text-success me-2"></i>数据库权限</h6>

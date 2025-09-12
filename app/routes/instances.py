@@ -1325,6 +1325,7 @@ def get_account_permissions(instance_id, account_id):
                 "username": account.username,
                 "host": account.host,
                 "plugin": account.plugin,
+                "db_type": instance.db_type,
             },
             "permissions": permissions,
         }

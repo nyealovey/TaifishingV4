@@ -389,6 +389,7 @@ def update_rule(rule_id):
         rule_expression_json = json.dumps(data["rule_expression"], ensure_ascii=False)
 
         rule.rule_name = data["rule_name"]
+        rule.classification_id = data["classification_id"]
         rule.rule_expression = rule_expression_json
         rule.is_active = data.get("is_active", True)
 
@@ -447,16 +448,34 @@ def get_matched_accounts(rule_id):
                 # 避免重复显示
                 if unique_key not in seen_accounts:
                     seen_accounts.add(unique_key)
+                    
+                    # 获取账户的分类信息
+                    account_classifications = []
+                    if hasattr(account, 'classifications') and account.classifications:
+                        for classification in account.classifications:
+                            account_classifications.append({
+                                "id": classification.id,
+                                "name": classification.name,
+                                "color": classification.color
+                            })
+                    
                     matched_accounts.append(
                         {
                             "id": account.id,
-                            "username": display_name,
+                            "username": account.username,  # 使用原始用户名
+                            "display_name": display_name,  # 显示名称
                             "instance_name": (
                                 account.instance.name if account.instance else "未知实例"
                             ),
                             "instance_host": (
                                 account.instance.host if account.instance else "未知IP"
                             ),
+                            "instance_environment": (
+                                account.instance.environment if account.instance else "unknown"
+                            ),
+                            "db_type": rule.db_type,
+                            "is_locked": getattr(account, 'is_locked', False),
+                            "classifications": account_classifications
                         }
                     )
 

@@ -495,8 +495,9 @@ class AccountClassificationService:
         try:
             rule_expression = rule.get_rule_expression()
             if not rule_expression:
-                return False
-
+                # 处理旧格式的规则表达式（字符串格式）
+                return self._evaluate_legacy_rule(account, rule)
+            
             # 根据规则类型进行不同的匹配逻辑
             if rule_expression.get("type") == "mysql_permissions":
                 return self._evaluate_mysql_rule(account, rule_expression)
@@ -512,6 +513,76 @@ class AccountClassificationService:
 
         except Exception as e:
             self.logger.error(f"评估规则失败: {e}")
+            return False
+
+    def _evaluate_legacy_rule(self, account: Account, rule: ClassificationRule) -> bool:
+        """评估旧格式规则（字符串格式）"""
+        try:
+            import json
+            
+            # 从本地数据库获取权限信息
+            if not account.permissions:
+                self.logger.debug(f"账户 {account.username} 没有权限信息")
+                return False
+
+            permissions = json.loads(account.permissions)
+            rule_expression = rule.rule_expression  # 直接使用字符串格式
+            
+            # 根据数据库类型和规则表达式进行匹配
+            if rule.db_type == "sqlserver":
+                if rule_expression == "server_roles.sysadmin":
+                    # 检查是否有sysadmin角色
+                    server_roles = permissions.get("server_roles", [])
+                    if isinstance(server_roles, list) and "sysadmin" in server_roles:
+                        self.logger.info(f"账户 {account.username} 匹配SQL Server规则: {rule_expression}")
+                        return True
+                elif rule_expression == "database_roles.db_owner":
+                    # 检查是否有db_owner角色
+                    database_roles = permissions.get("database_roles", {})
+                    if isinstance(database_roles, dict):
+                        for db_name, roles in database_roles.items():
+                            if isinstance(roles, list) and "db_owner" in roles:
+                                self.logger.info(f"账户 {account.username} 匹配SQL Server规则: {rule_expression}")
+                                return True
+                elif rule_expression.startswith("server_permissions."):
+                    # 检查服务器权限
+                    perm_name = rule_expression.split(".", 1)[1]
+                    server_permissions = permissions.get("server_permissions", [])
+                    if isinstance(server_permissions, list) and perm_name in server_permissions:
+                        self.logger.info(f"账户 {account.username} 匹配SQL Server规则: {rule_expression}")
+                        return True
+                        
+            elif rule.db_type == "mysql":
+                if rule_expression == "global_privileges.SUPER":
+                    # 检查是否有SUPER权限
+                    global_privileges = permissions.get("global_privileges", [])
+                    if isinstance(global_privileges, list):
+                        for perm in global_privileges:
+                            if isinstance(perm, dict) and perm.get("privilege") == "SUPER" and perm.get("granted", False):
+                                self.logger.info(f"账户 {account.username} 匹配MySQL规则: {rule_expression}")
+                                return True
+                                
+            elif rule.db_type == "postgresql":
+                if rule_expression == "role_attributes.CREATEROLE":
+                    # 检查是否有CREATEROLE属性
+                    role_attributes = permissions.get("role_attributes", [])
+                    if isinstance(role_attributes, list) and "CREATEROLE" in role_attributes:
+                        self.logger.info(f"账户 {account.username} 匹配PostgreSQL规则: {rule_expression}")
+                        return True
+                        
+            elif rule.db_type == "oracle":
+                if rule_expression == "system_privileges.GRANT ANY PRIVILEGE":
+                    # 检查是否有GRANT ANY PRIVILEGE权限
+                    system_privileges = permissions.get("system_privileges", [])
+                    if isinstance(system_privileges, list) and "GRANT ANY PRIVILEGE" in system_privileges:
+                        self.logger.info(f"账户 {account.username} 匹配Oracle规则: {rule_expression}")
+                        return True
+            
+            self.logger.debug(f"账户 {account.username} 不匹配规则: {rule_expression}")
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"评估旧格式规则失败: {e}")
             return False
 
     def _evaluate_mysql_rule(self, account: Account, rule_expression: dict) -> bool:
@@ -531,7 +602,7 @@ class AccountClassificationService:
             if required_global:
                 actual_global = [
                     p["privilege"]
-                    for p in permissions.get("global", [])
+                    for p in permissions.get("global_privileges", [])
                     if p.get("granted", False)
                 ]
                 if not all(perm in actual_global for perm in required_global):
@@ -545,7 +616,7 @@ class AccountClassificationService:
             if required_db:
                 # 获取所有数据库的权限
                 all_db_permissions = set()
-                for db_perm in permissions.get("database", []):
+                for db_perm in permissions.get("database_privileges", []):
                     all_db_permissions.update(db_perm.get("privileges", []))
 
                 if not all(perm in all_db_permissions for perm in required_db):
@@ -572,67 +643,131 @@ class AccountClassificationService:
                 return False
 
             permissions = json.loads(account.permissions)
+            operator = rule_expression.get("operator", "OR")  # 默认为OR逻辑
+
+            # 收集所有匹配结果
+            match_results = []
 
             # 检查服务器权限
             required_server_perms = rule_expression.get("server_permissions", [])
             if required_server_perms:
-                actual_server_perms = [
-                    p["permission"]
-                    for p in permissions.get("server_permissions", [])
-                    if p.get("granted", False)
-                ]
-                if not all(
-                    perm in actual_server_perms for perm in required_server_perms
-                ):
-                    self.logger.debug(
-                        f"账户 {account.username} 不满足服务器权限要求: 需要 {required_server_perms}, 实际 {actual_server_perms}"
-                    )
-                    return False
+                # 处理两种格式：字符串数组或对象数组
+                server_perms_data = permissions.get("server_permissions", [])
+                if server_perms_data and isinstance(server_perms_data[0], str):
+                    # 字符串数组格式
+                    actual_server_perms = server_perms_data
+                else:
+                    # 对象数组格式
+                    actual_server_perms = [
+                        p["permission"] if isinstance(p, dict) else p
+                        for p in server_perms_data
+                        if isinstance(p, dict) and p.get("granted", False)
+                    ]
+                
+                server_perms_match = all(perm in actual_server_perms for perm in required_server_perms)
+                match_results.append(server_perms_match)
+                
+                if server_perms_match:
+                    self.logger.debug(f"账户 {account.username} 满足服务器权限要求: {required_server_perms}")
+                else:
+                    self.logger.debug(f"账户 {account.username} 不满足服务器权限要求: 需要 {required_server_perms}, 实际 {actual_server_perms}")
 
             # 检查服务器角色
             required_server_roles = rule_expression.get("server_roles", [])
             if required_server_roles:
-                actual_server_roles = [
-                    r["role"] for r in permissions.get("server_roles", [])
-                ]
-                if not all(
-                    role in actual_server_roles for role in required_server_roles
-                ):
-                    self.logger.debug(
-                        f"账户 {account.username} 不满足服务器角色要求: 需要 {required_server_roles}, 实际 {actual_server_roles}"
-                    )
-                    return False
+                # 处理两种格式：字符串数组或对象数组
+                server_roles_data = permissions.get("server_roles", [])
+                if server_roles_data and isinstance(server_roles_data[0], str):
+                    # 字符串数组格式
+                    actual_server_roles = server_roles_data
+                else:
+                    # 对象数组格式
+                    actual_server_roles = [
+                        r["role"] if isinstance(r, dict) else r
+                        for r in server_roles_data
+                    ]
+                
+                server_roles_match = all(role in actual_server_roles for role in required_server_roles)
+                match_results.append(server_roles_match)
+                
+                if server_roles_match:
+                    self.logger.debug(f"账户 {account.username} 满足服务器角色要求: {required_server_roles}")
+                else:
+                    self.logger.debug(f"账户 {account.username} 不满足服务器角色要求: 需要 {required_server_roles}, 实际 {actual_server_roles}")
 
             # 检查数据库角色
             required_db_roles = rule_expression.get("database_roles", [])
             if required_db_roles:
                 # 获取所有数据库的角色
                 all_db_roles = set()
-                for db_role in permissions.get("database_roles", []):
-                    all_db_roles.update(db_role.get("roles", []))
+                database_roles_data = permissions.get("database_roles", {})
+                
+                # 处理字典格式：{database: [roles]}
+                if isinstance(database_roles_data, dict):
+                    for db_name, roles in database_roles_data.items():
+                        if isinstance(roles, list):
+                            all_db_roles.update(roles)
+                # 处理数组格式：[{database: db_name, roles: [roles]}]
+                elif isinstance(database_roles_data, list):
+                    for db_role in database_roles_data:
+                        if isinstance(db_role, dict):
+                            all_db_roles.update(db_role.get("roles", []))
 
-                if not all(role in all_db_roles for role in required_db_roles):
-                    self.logger.debug(
-                        f"账户 {account.username} 不满足数据库角色要求: 需要 {required_db_roles}, 实际 {list(all_db_roles)}"
-                    )
-                    return False
+                db_roles_match = all(role in all_db_roles for role in required_db_roles)
+                match_results.append(db_roles_match)
+                
+                if db_roles_match:
+                    self.logger.debug(f"账户 {account.username} 满足数据库角色要求: {required_db_roles}")
+                else:
+                    self.logger.debug(f"账户 {account.username} 不满足数据库角色要求: 需要 {required_db_roles}, 实际 {list(all_db_roles)}")
 
             # 检查数据库权限
             required_db_privs = rule_expression.get("database_privileges", [])
             if required_db_privs:
                 # 获取所有数据库的权限
                 all_db_permissions = set()
-                for db_perm in permissions.get("database", []):
-                    all_db_permissions.update(db_perm.get("privileges", []))
+                database_privileges_data = permissions.get("database_privileges", {})
+                
+                # 处理字典格式：{database: [privileges]}
+                if isinstance(database_privileges_data, dict):
+                    for db_name, privileges in database_privileges_data.items():
+                        if isinstance(privileges, list):
+                            all_db_permissions.update(privileges)
+                # 处理数组格式：[{database: db_name, privileges: [privileges]}]
+                elif isinstance(database_privileges_data, list):
+                    for db_perm in database_privileges_data:
+                        if isinstance(db_perm, dict):
+                            all_db_permissions.update(db_perm.get("privileges", []))
 
-                if not all(perm in all_db_permissions for perm in required_db_privs):
-                    self.logger.debug(
-                        f"账户 {account.username} 不满足数据库权限要求: 需要 {required_db_privs}, 实际 {list(all_db_permissions)}"
-                    )
-                    return False
+                db_privs_match = all(perm in all_db_permissions for perm in required_db_privs)
+                match_results.append(db_privs_match)
+                
+                if db_privs_match:
+                    self.logger.debug(f"账户 {account.username} 满足数据库权限要求: {required_db_privs}")
+                else:
+                    self.logger.debug(f"账户 {account.username} 不满足数据库权限要求: 需要 {required_db_privs}, 实际 {list(all_db_permissions)}")
 
-            self.logger.info(f"账户 {account.username} 满足SQL Server规则要求")
-            return True
+            # 根据操作符决定匹配逻辑
+            if not match_results:
+                # 如果没有任何要求，默认匹配
+                self.logger.debug(f"账户 {account.username} 匹配SQL Server规则（无特定要求）")
+                return True
+
+            if operator.upper() == "AND":
+                # AND逻辑：所有条件都必须满足
+                result = all(match_results)
+                self.logger.debug(f"账户 {account.username} SQL Server规则AND匹配结果: {result}")
+            else:
+                # OR逻辑：任一条件满足即可
+                result = any(match_results)
+                self.logger.debug(f"账户 {account.username} SQL Server规则OR匹配结果: {result}")
+
+            if result:
+                self.logger.info(f"账户 {account.username} 满足SQL Server规则要求")
+            else:
+                self.logger.debug(f"账户 {account.username} 不满足SQL Server规则要求")
+
+            return result
 
         except Exception as e:
             self.logger.error(f"评估SQL Server规则失败: {e}")

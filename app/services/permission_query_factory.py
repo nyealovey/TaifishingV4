@@ -419,11 +419,17 @@ class SQLServerPermissionQuery(PermissionQuery):
                 
                 roles = perm.get("roles", [])
                 for role in roles:
-                    database_roles[db_name].append(role["name"])
+                    if isinstance(role, dict):
+                        database_roles[db_name].append(role["name"])
+                    else:
+                        database_roles[db_name].append(role)
                 
                 privileges = perm.get("privileges", [])
                 for priv in privileges:
-                    database_privileges[db_name].append(priv)
+                    if isinstance(priv, dict):
+                        database_privileges[db_name].append(priv.get("name", str(priv)))
+                    else:
+                        database_privileges[db_name].append(priv)
             
             return {
                 "success": True,
@@ -491,32 +497,44 @@ class SQLServerPermissionQuery(PermissionQuery):
             if not connection or not connection.connect():
                 return []
             
-            # 查询数据库角色
-            query = """
-                SELECT 
-                    db_name() as database_name,
-                    r.name as role_name
-                FROM sys.database_role_members rm
-                JOIN sys.database_principals r ON rm.role_principal_id = r.principal_id
-                JOIN sys.database_principals p ON rm.member_principal_id = p.principal_id
-                WHERE p.name = %s
-            """
+            # 获取所有数据库列表
+            db_query = "SELECT name FROM sys.databases WHERE state = 0"  # 只获取在线数据库
+            db_results = connection.execute_query(db_query, ())
+            databases = [row[0] for row in db_results]
             
-            results = connection.execute_query(query, (account.username,))
-            
-            # 按数据库分组
             db_permissions = {}
-            for row in results:
-                db_name = row[0]
-                role_name = row[1]
-                
-                if db_name not in db_permissions:
-                    db_permissions[db_name] = []
-                db_permissions[db_name].append({
-                    "name": role_name,
-                    "type": "DATABASE_ROLE",
-                    "type_desc": "DATABASE_ROLE"
-                })
+            
+            # 遍历每个数据库查询角色
+            for db_name in databases:
+                try:
+                    # 切换到目标数据库
+                    connection.execute_query(f"USE [{db_name}]", ())
+                    
+                    # 查询该数据库的角色
+                    role_query = """
+                        SELECT r.name as role_name
+                        FROM sys.database_role_members rm
+                        JOIN sys.database_principals r ON rm.role_principal_id = r.principal_id
+                        JOIN sys.database_principals p ON rm.member_principal_id = p.principal_id
+                        WHERE p.name = %s
+                    """
+                    
+                    role_results = connection.execute_query(role_query, (account.username,))
+                    
+                    if role_results:
+                        db_permissions[db_name] = []
+                        for row in role_results:
+                            role_name = row[0]
+                            db_permissions[db_name].append({
+                                "name": role_name,
+                                "type": "DATABASE_ROLE",
+                                "type_desc": "DATABASE_ROLE"
+                            })
+                            
+                except Exception as e:
+                    # 如果某个数据库查询失败，记录日志但继续处理其他数据库
+                    print(f"DEBUG: 查询数据库 {db_name} 的角色失败: {e}")
+                    continue
             
             return [
                 {
@@ -641,17 +659,21 @@ class OraclePermissionQuery(PermissionQuery):
                 return []
             
             permissions = []
+            print(f"DEBUG: 开始查询Oracle用户 {account.username} 的全局权限")
             
-            # 查询系统权限
+            # 查询系统权限 - 使用dba_sys_privs查询指定用户的权限
             sys_privs_query = """
                 SELECT 
                     privilege,
                     admin_option
-                FROM user_sys_privs
+                FROM dba_sys_privs
+                WHERE grantee = :username
                 ORDER BY privilege
             """
             
-            sys_results = connection.execute_query(sys_privs_query, ())
+            print(f"DEBUG: 执行系统权限查询，用户名: {account.username.upper()}")
+            sys_results = connection.execute_query(sys_privs_query, {"username": account.username.upper()})
+            print(f"DEBUG: 系统权限查询结果: {list(sys_results)}")
             
             for row in sys_results:
                 permissions.append({
@@ -660,16 +682,19 @@ class OraclePermissionQuery(PermissionQuery):
                     "grantable": row[1] == 'YES'
                 })
             
-            # 查询角色权限
+            # 查询角色权限 - 使用dba_role_privs查询指定用户的角色
             roles_query = """
                 SELECT 
                     granted_role,
                     admin_option
-                FROM user_role_privs
+                FROM dba_role_privs
+                WHERE grantee = :username
                 ORDER BY granted_role
             """
             
-            role_results = connection.execute_query(roles_query, ())
+            print(f"DEBUG: 执行角色权限查询，用户名: {account.username.upper()}")
+            role_results = connection.execute_query(roles_query, {"username": account.username.upper()})
+            print(f"DEBUG: 角色权限查询结果: {list(role_results)}")
             
             for row in role_results:
                 permissions.append({
@@ -678,6 +703,7 @@ class OraclePermissionQuery(PermissionQuery):
                     "grantable": row[1] == 'YES'
                 })
             
+            print(f"DEBUG: 最终权限列表: {permissions}")
             return permissions
         except Exception as e:
             log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
@@ -694,8 +720,9 @@ class OraclePermissionQuery(PermissionQuery):
                 return []
             
             permissions = []
+            print(f"DEBUG: 开始查询Oracle用户 {account.username} 的数据库权限")
             
-            # 查询表空间配额
+            # 查询表空间配额 - 使用user_ts_quotas查询指定用户的配额
             quota_query = """
                 SELECT 
                     tablespace_name,
@@ -705,7 +732,9 @@ class OraclePermissionQuery(PermissionQuery):
                 ORDER BY tablespace_name
             """
             
+            print(f"DEBUG: 执行表空间配额查询，用户名: {account.username.upper()}")
             quota_results = connection.execute_query(quota_query, ())
+            print(f"DEBUG: 表空间配额查询结果: {list(quota_results)}")
             
             for row in quota_results:
                 tablespace_name = row[0]
@@ -721,6 +750,7 @@ class OraclePermissionQuery(PermissionQuery):
                     "quota": quota_info
                 })
             
+            print(f"DEBUG: 数据库权限列表: {permissions}")
             return permissions
         except Exception as e:
             log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
@@ -755,11 +785,11 @@ class OraclePermissionQuery(PermissionQuery):
                     privilege,
                     grantable
                 FROM user_tab_privs
-                WHERE grantee = :1
+                WHERE grantee = :username
                 ORDER BY owner, table_name, privilege
             """
             
-            results = connection.execute_query(query, (account.username,))
+            results = connection.execute_query(query, {"username": account.username.upper()})
             
             # 按表分组
             table_permissions = {}

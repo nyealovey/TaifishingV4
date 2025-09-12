@@ -1,0 +1,173 @@
+/* 账户分类管理页面样式 */
+
+/* 分类列表样式 */
+.classification-item {
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.classification-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+/* 规则卡片样式 */
+.rule-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.rule-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* 权限配置区域样式 */
+.permission-section {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+.permission-section::-webkit-scrollbar {
+    width: 6px;
+}
+
+.permission-section::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.permission-section::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.permission-section::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 表单样式增强 */
+.form-check-label {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.form-check-label:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+    border-radius: 0.25rem;
+    padding: 0.25rem;
+}
+
+/* 按钮组样式 */
+.btn-group-sm .btn {
+    border-radius: 0.25rem;
+    margin-right: 0.25rem;
+}
+
+.btn-group-sm .btn:last-child {
+    margin-right: 0;
+}
+
+/* 徽章样式 */
+.badge {
+    font-size: 0.75em;
+    font-weight: 500;
+}
+
+/* 模态框内容样式 */
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* 表格样式 */
+.table-responsive {
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* 加载状态样式 */
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .permission-section {
+        max-height: 200px;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* 自定义滚动条样式 */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* 规则管理中的分类标签颜色 - 与左侧分类列表保持一致 */
+.rule-classification-badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* 特权账户 - 红色 */
+.rule-classification-badge.privileged {
+    background-color: #dc3545;
+}
+
+/* 敏感账户 - 橙色 */
+.rule-classification-badge.sensitive {
+    background-color: #fd7e14;
+}
+
+/* 风险账户 - 紫色 */
+.rule-classification-badge.risk {
+    background-color: #6f42c1;
+}
+
+/* 普通账户 - 蓝色 */
+.rule-classification-badge.normal {
+    background-color: #0d6efd;
+}
+
+/* 只读用户 - 绿色 */
+.rule-classification-badge.readonly {
+    background-color: #198754;
+}

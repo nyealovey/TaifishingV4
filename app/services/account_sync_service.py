@@ -178,80 +178,23 @@ class AccountSyncService:
             }
     
     def _get_connection(self, instance: Instance):
-        """获取数据库连接"""
+        """获取数据库连接 - 使用统一的连接工厂"""
         try:
-            if instance.db_type == "mysql":
-                return pymysql.connect(
-                    host=instance.host,
-                    port=instance.port,
-                    database=instance.database_name or "mysql",
-                    user=instance.credential.username,
-                    password=instance.credential.get_plain_password(),
-                )
-            elif instance.db_type == "postgresql":
-                if psycopg is None:
-                    raise ImportError("psycopg模块未安装，无法连接PostgreSQL")
-                return psycopg.connect(
-                    host=instance.host,
-                    port=instance.port,
-                    dbname=instance.database_name or "postgres",
-                    user=instance.credential.username,
-                    password=instance.credential.get_plain_password(),
-                )
-            elif instance.db_type == "sqlserver":
-                # 优先使用pymssql连接SQL Server
-                try:
-                    import pymssql
-
-                    return pymssql.connect(
-                        server=instance.host,
-                        port=instance.port,
-                        database=instance.database_name or "master",
-                        user=instance.credential.username,
-                        password=instance.credential.get_plain_password(),
-                    )
-                except ImportError:
-                    # 如果pymssql不可用，尝试pyodbc
-                    if pyodbc is None:
-                        raise ImportError("SQL Server驱动未安装，请安装pymssql或pyodbc")
-                    
-                    # 尝试pyodbc连接
-                    conn_str = self._get_sqlserver_pyodbc_connection(instance)
-                    if conn_str:
-                        return pyodbc.connect(conn_str)
-                    else:
-                        raise ImportError("SQL Server驱动配置错误")
-                
-            elif instance.db_type == "oracle":
-                if oracledb is None:
-                    raise ImportError("oracledb模块未安装，无法连接Oracle")
-
-                # 优先使用Thick模式连接（适用于所有Oracle版本，包括11g）
-                try:
-                    # 初始化Thick模式（需要Oracle Instant Client）
-                    oracledb.init_oracle_client()
-                    return oracledb.connect(
-                        user=instance.credential.username,
-                        password=instance.credential.get_plain_password(),
-                        dsn=f"{instance.host}:{instance.port}/{instance.database_name or 'ORCL'}",
-                    )
-                except oracledb.DatabaseError as e:
-                    # 如果Thick模式失败，尝试Thin模式（适用于Oracle 12c+）
-                    if "DPI-1047" in str(e) or "Oracle Client library" in str(e):
-                        # Thick模式失败，尝试Thin模式
-                        try:
-                            return oracledb.connect(
-                                user=instance.credential.username,
-                                password=instance.credential.get_plain_password(),
-                                dsn=f"{instance.host}:{instance.port}/{instance.database_name or 'ORCL'}",
-                            )
-                        except oracledb.DatabaseError as thin_error:
-                            # 如果Thin模式也失败，抛出原始错误
-                            raise e
-                    else:
-                        raise
-            else:
+            # 使用统一的连接工厂创建连接
+            from app.services.connection_factory import ConnectionFactory
+            connection_obj = ConnectionFactory.create_connection(instance)
+            
+            if not connection_obj:
+                self.logger.error(f"不支持的数据库类型: {instance.db_type}")
                 return None
+            
+            # 建立连接
+            if connection_obj.connect():
+                return connection_obj.connection
+            else:
+                self.logger.error(f"无法建立{instance.db_type}连接")
+                return None
+                
         except Exception as e:
             self.logger.error(f"数据库连接失败: {str(e)}")
             return None
@@ -728,10 +671,10 @@ class AccountSyncService:
                     JOIN pg_auth_members m ON r.oid = m.roleid
                     JOIN pg_roles u ON m.member = u.oid
                     WHERE u.rolname = %s
-                    AND r.rolname LIKE 'pg_%'
+                    AND r.rolname LIKE %s
                     ORDER BY r.rolname
                 """,
-                    (username,),
+                    (username, 'pg_%'),
                 )
 
                 predefined_roles = cursor.fetchall()
@@ -786,34 +729,47 @@ class AccountSyncService:
             except Exception as e:
                 self.logger.warning(f"获取PostgreSQL用户 {username} 角色属性失败: {e}")
 
-            # 获取数据库权限（简化版本）
+            # 获取数据库权限（多数据库版本）
             try:
-                # PostgreSQL默认使用'postgres'数据库进行权限查询
-                # 因为PostgreSQL实例创建时没有要求填写database_name字段
-                current_db = "postgres"
-                self.logger.info(
-                    f"PostgreSQL用户 {username} 权限查询使用默认数据库: {current_db}"
-                )
+                # 获取所有数据库列表
+                cursor.execute("SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname")
+                databases = [row[0] for row in cursor.fetchall()]
+                
+                self.logger.info(f"PostgreSQL用户 {username} 权限查询使用默认数据库: postgres")
+                
+                # 为每个数据库查询权限
+                for db_name in databases:
+                    try:
+                        cursor.execute(
+                            """
+                            SELECT 
+                                CASE WHEN has_database_privilege(%s, %s, 'CONNECT') THEN 'CONNECT' END,
+                                CASE WHEN has_database_privilege(%s, %s, 'CREATE') THEN 'CREATE' END,
+                                CASE WHEN has_database_privilege(%s, %s, 'TEMPORARY') THEN 'TEMPORARY' END
+                            """,
+                            (username, db_name, username, db_name, username, db_name),
+                        )
 
-                cursor.execute(
-                    """
-                    SELECT 
-                        CASE WHEN has_database_privilege(%s, %s, 'CONNECT') THEN 'CONNECT' END,
-                        CASE WHEN has_database_privilege(%s, %s, 'CREATE') THEN 'CREATE' END,
-                        CASE WHEN has_database_privilege(%s, %s, 'TEMPORARY') THEN 'TEMPORARY' END
-                """,
-                    (username, current_db, username, current_db, username, current_db),
-                )
-
-                row = cursor.fetchone()
-                if row:
-                    connect, create, temp = row
-                    if connect:
-                        permissions["database_privileges"].append("CONNECT")
-                    if create:
-                        permissions["database_privileges"].append("CREATE")
-                    if temp:
-                        permissions["database_privileges"].append("TEMPORARY")
+                        row = cursor.fetchone()
+                        if row:
+                            connect, create, temp = row
+                            db_privileges = []
+                            if connect:
+                                db_privileges.append("CONNECT")
+                            if create:
+                                db_privileges.append("CREATE")
+                            if temp:
+                                db_privileges.append("TEMPORARY")
+                            
+                            if db_privileges:
+                                permissions["database_privileges"].append({
+                                    "database": db_name,
+                                    "privileges": db_privileges
+                                })
+                    except Exception as db_error:
+                        self.logger.debug(f"查询数据库 {db_name} 的权限失败: {db_error}")
+                        continue
+                        
             except Exception as e:
                 self.logger.warning(
                     f"获取PostgreSQL用户 {username} 数据库权限失败: {e}"
@@ -1164,49 +1120,75 @@ class AccountSyncService:
         cursor = conn.cursor()
 
         try:
-            # 获取全局权限
+            # 获取全局权限 - 使用mysql.user表获取更完整的权限信息
             cursor.execute(
                 """
-                SELECT PRIVILEGE_TYPE, IS_GRANTABLE
-                FROM INFORMATION_SCHEMA.USER_PRIVILEGES
-                WHERE GRANTEE = %s
+                SELECT 
+                    User, Host, Select_priv, Insert_priv, Update_priv, Delete_priv,
+                    Create_priv, Drop_priv, Reload_priv, Shutdown_priv, Process_priv,
+                    File_priv, Grant_priv, References_priv, Index_priv, Alter_priv,
+                    Show_db_priv, Super_priv, Create_tmp_table_priv, Lock_tables_priv,
+                    Execute_priv, Repl_slave_priv, Repl_client_priv, Create_view_priv,
+                    Show_view_priv, Create_routine_priv, Alter_routine_priv, Create_user_priv,
+                    Event_priv, Trigger_priv, Create_tablespace_priv
+                FROM mysql.user 
+                WHERE User = %s AND Host = %s
             """,
-                (f"'{username}'@'{host}'",),
+                (username, host),
             )
 
             global_permissions = []
             can_grant = False
             is_superuser = False
 
-            for row in cursor.fetchall():
-                privilege, is_grantable = row
-                global_permissions.append(
-                    {
-                        "privilege": privilege,
-                        "granted": True,
-                        "grantable": bool(is_grantable),
-                    }
-                )
-                if is_grantable:
-                    can_grant = True
-                if privilege == "SUPER":
-                    is_superuser = True
-
-            # 检查用户是否真正拥有GRANT OPTION权限
-            cursor.execute(
-                """
-                SELECT Grant_priv FROM mysql.user 
-                WHERE User = %s AND Host = %s
-            """,
-                (username, host),
-            )
-
-            grant_result = cursor.fetchone()
-            if grant_result and grant_result[0] == "Y":
-                # 用户真正拥有GRANT OPTION权限
-                global_permissions.append(
-                    {"privilege": "GRANT OPTION", "granted": True, "grantable": False}
-                )
+            user_row = cursor.fetchone()
+            if user_row:
+                # 定义权限映射
+                privilege_map = {
+                    'Select_priv': 'SELECT',
+                    'Insert_priv': 'INSERT', 
+                    'Update_priv': 'UPDATE',
+                    'Delete_priv': 'DELETE',
+                    'Create_priv': 'CREATE',
+                    'Drop_priv': 'DROP',
+                    'Reload_priv': 'RELOAD',
+                    'Shutdown_priv': 'SHUTDOWN',
+                    'Process_priv': 'PROCESS',
+                    'File_priv': 'FILE',
+                    'Grant_priv': 'GRANT OPTION',
+                    'References_priv': 'REFERENCES',
+                    'Index_priv': 'INDEX',
+                    'Alter_priv': 'ALTER',
+                    'Show_db_priv': 'SHOW DATABASES',
+                    'Super_priv': 'SUPER',
+                    'Create_tmp_table_priv': 'CREATE TEMPORARY TABLES',
+                    'Lock_tables_priv': 'LOCK TABLES',
+                    'Execute_priv': 'EXECUTE',
+                    'Repl_slave_priv': 'REPLICATION SLAVE',
+                    'Repl_client_priv': 'REPLICATION CLIENT',
+                    'Create_view_priv': 'CREATE VIEW',
+                    'Show_view_priv': 'SHOW VIEW',
+                    'Create_routine_priv': 'CREATE ROUTINE',
+                    'Alter_routine_priv': 'ALTER ROUTINE',
+                    'Create_user_priv': 'CREATE USER',
+                    'Event_priv': 'EVENT',
+                    'Trigger_priv': 'TRIGGER',
+                    'Create_tablespace_priv': 'CREATE TABLESPACE'
+                }
+                
+                # 检查每个权限
+                for i, (field_name, privilege_name) in enumerate(privilege_map.items()):
+                    if i + 2 < len(user_row) and user_row[i + 2] == 'Y':  # +2 因为前两个字段是User和Host
+                        global_permissions.append({
+                            "privilege": privilege_name,
+                            "granted": True,
+                            "grantable": False
+                        })
+                        
+                        if privilege_name == "SUPER":
+                            is_superuser = True
+                        if privilege_name == "GRANT OPTION":
+                            can_grant = True
 
             # 获取数据库权限
             cursor.execute(
@@ -1234,8 +1216,8 @@ class AccountSyncService:
                 )
 
             permissions_data = {
-                "global": global_permissions,
-                "database": database_permissions,
+                "global_privileges": global_permissions,
+                "database_privileges": database_permissions,
             }
             
             return {
@@ -1247,7 +1229,7 @@ class AccountSyncService:
         except Exception as e:
             self.logger.error(f"获取MySQL权限失败: {e}")
             return {
-                "permissions_json": json.dumps({"global": [], "database": []}),
+                "permissions_json": json.dumps({"global_privileges": [], "database_privileges": []}),
                 "is_superuser": False,
                 "can_grant": False,
             }
@@ -1299,47 +1281,120 @@ class AccountSyncService:
                     {"permission": permission, "granted": state == "GRANT"}
                 )
 
-            # 简化数据库权限获取 - 只获取基本权限
+            # 获取数据库角色和权限
             database_roles = []
             database_permissions = []
 
-            # 尝试获取数据库角色（简化版本）
+            # 获取所有数据库的角色
             try:
-                cursor.execute(
-                    """
-                    SELECT 
-                        db.name as database_name,
-                        r.name as role_name
-                    FROM sys.databases db
-                    CROSS APPLY (
-                        SELECT r.name as role_name
-                        FROM sys.database_role_members rm
-                        JOIN sys.database_principals r ON rm.role_principal_id = r.principal_id
-                        JOIN sys.database_principals p ON rm.member_principal_id = p.principal_id
-                        WHERE p.name = %s
-                    ) roles
-                    WHERE roles.role_name IS NOT NULL
-                """,
-                    (username,),
-                )
-
+                # 首先获取所有数据库列表
+                cursor.execute("SELECT name FROM sys.databases WHERE state = 0")
+                databases = [row[0] for row in cursor.fetchall()]
+                
                 db_roles = {}
-                for row in cursor.fetchall():
-                    db_name, role_name = row
-                    if db_name not in db_roles:
-                        db_roles[db_name] = []
-                    db_roles[db_name].append(role_name)
-
+                
+                # 遍历每个数据库查询角色
+                for db_name in databases:
+                    try:
+                        # 切换到目标数据库
+                        cursor.execute(f"USE [{db_name}]")
+                        
+                        # 查询该数据库的角色
+                        cursor.execute(
+                            """
+                            SELECT r.name as role_name
+                            FROM sys.database_role_members rm
+                            JOIN sys.database_principals r ON rm.role_principal_id = r.principal_id
+                            JOIN sys.database_principals p ON rm.member_principal_id = p.principal_id
+                            WHERE p.name = %s
+                            """,
+                            (username,),
+                        )
+                        
+                        roles = cursor.fetchall()
+                        if roles:
+                            db_roles[db_name] = [row[0] for row in roles]
+                            
+                    except Exception as db_error:
+                        # 如果某个数据库查询失败，记录日志但继续处理其他数据库
+                        self.logger.debug(f"查询数据库 {db_name} 的角色失败: {db_error}")
+                        continue
+                
+                # 转换格式
                 for db_name, roles in db_roles.items():
                     database_roles.append({"database": db_name, "roles": roles})
+                    
             except Exception as e:
                 self.logger.debug(f"获取数据库角色失败: {e}")
+            
+            # 获取数据库权限
+            try:
+                db_permissions = {}
+                
+                # 遍历每个数据库查询权限
+                for db_name in databases:
+                    try:
+                        # 切换到目标数据库
+                        cursor.execute(f"USE [{db_name}]")
+                        
+                        # 查询该数据库的权限
+                        cursor.execute(
+                            """
+                            SELECT 
+                                p.permission_name,
+                                p.state_desc
+                            FROM sys.database_permissions p
+                            JOIN sys.database_principals dp ON p.grantee_principal_id = dp.principal_id
+                            WHERE dp.name = %s
+                            """,
+                            (username,),
+                        )
+                        
+                        permissions = cursor.fetchall()
+                        if permissions:
+                            db_permissions[db_name] = []
+                            for perm_row in permissions:
+                                perm_name, state = perm_row
+                                db_permissions[db_name].append({
+                                    "permission": perm_name,
+                                    "granted": state == "GRANT"
+                                })
+                                
+                    except Exception as db_error:
+                        # 如果某个数据库查询失败，记录日志但继续处理其他数据库
+                        self.logger.debug(f"查询数据库 {db_name} 的权限失败: {db_error}")
+                        continue
+                
+                # 转换格式
+                for db_name, perms in db_permissions.items():
+                    database_permissions.append({"database": db_name, "permissions": perms})
+                    
+            except Exception as e:
+                self.logger.debug(f"获取数据库权限失败: {e}")
 
+            # 转换数据格式以匹配前端期望的格式
+            server_roles_list = [role["role"] for role in server_roles]
+            server_permissions_list = [perm["permission"] for perm in server_permissions]
+            
+            # 转换数据库角色格式
+            database_roles_dict = {}
+            for db_role in database_roles:
+                db_name = db_role["database"]
+                roles = db_role["roles"]
+                database_roles_dict[db_name] = roles
+            
+            # 转换数据库权限格式
+            database_privileges_dict = {}
+            for db_perm in database_permissions:
+                db_name = db_perm["database"]
+                permissions = db_perm["permissions"]
+                database_privileges_dict[db_name] = [perm["permission"] for perm in permissions if perm["granted"]]
+            
             permissions_data = {
-                "server_roles": server_roles,
-                "server_permissions": server_permissions,
-                "database_roles": database_roles,
-                "database": database_permissions,
+                "server_roles": server_roles_list,
+                "server_permissions": server_permissions_list,
+                "database_roles": database_roles_dict,
+                "database_privileges": database_privileges_dict,
             }
             
             return {
@@ -1366,131 +1421,103 @@ class AccountSyncService:
             cursor.close()
 
     def _get_oracle_account_permissions(self, conn, username: str) -> Dict[str, Any]:
-        """获取Oracle账户权限信息 - 根据新的权限配置结构"""
+        """获取Oracle账户权限信息 - 使用统一的权限查询工厂"""
         import json
-
-        cursor = conn.cursor()
-        permissions = {
-            "roles": [],
-            "system_privileges": [],
-            "tablespace_privileges": [],
-            "tablespace_quotas": [],
-        }
-
+        
         try:
-            # 对所有账户进行统一的权限查询，包括SYS和SYSTEM
+            # 使用统一的权限查询工厂
+            from app.services.permission_query_factory import PermissionQueryFactory
+            from app.models.account import Account
+            
+            # 创建临时账户对象用于权限查询
+            temp_account = Account()
+            temp_account.username = username
+            temp_account.instance_id = None  # 这里不需要实例ID，因为我们直接使用连接
+            
+            # 直接使用连接查询权限，不使用权限查询工厂
+            cursor = conn.cursor()
+            permissions = {
+                "roles": [],
+                "system_privileges": [],
+                "tablespace_privileges": [],
+                "tablespace_quotas": [],
+            }
+            
             try:
-                # 获取角色权限 - 统一使用dba_role_privs查询
-                cursor.execute(
-                    """
-                    SELECT granted_role, admin_option
-                    FROM dba_role_privs
-                    WHERE grantee = :username
-                    ORDER BY granted_role
-                """,
-                    {"username": username.upper()},
-                )
-                
-                for row in cursor.fetchall():
-                    role, admin_option = row
-                    permissions["roles"].append(role)
-            except Exception as e:
-                self.logger.debug(f"无法查询角色权限: {e}")
-
-            try:
-                # 获取系统权限 - 统一使用dba_sys_privs查询
-                cursor.execute(
-                    """
+                # 查询系统权限
+                cursor.execute("""
                     SELECT privilege, admin_option
                     FROM dba_sys_privs
                     WHERE grantee = :username
                     ORDER BY privilege
-                """,
-                    {"username": username.upper()},
-                )
-
+                """, {"username": username.upper()})
+                
                 for row in cursor.fetchall():
                     privilege, admin_option = row
                     permissions["system_privileges"].append(privilege)
-            except Exception as e:
-                self.logger.debug(f"无法查询系统权限: {e}")
-
-            try:
-                # 获取表空间权限 - 统一查询
-                cursor.execute(
-                    """
-                    SELECT privilege
-                    FROM dba_tab_privs
+                
+                # 查询角色权限
+                cursor.execute("""
+                    SELECT granted_role, admin_option
+                    FROM dba_role_privs
                     WHERE grantee = :username
-                    AND table_name IN (SELECT tablespace_name FROM dba_tablespaces)
-                    ORDER BY privilege
-                """,
-                    {"username": username.upper()},
-                )
-
-                for row in cursor.fetchall():
-                    privilege = row[0]
-                    permissions["tablespace_privileges"].append(privilege)
-            except Exception as e:
-                self.logger.debug(f"无法查询表空间权限: {e}")
-
-            try:
-                # 获取表空间配额 - 统一查询
-                cursor.execute(
-                    """
-                    SELECT 
-                        CASE 
-                            WHEN max_bytes = -1 THEN 'UNLIMITED'
-                            WHEN max_bytes = 0 THEN 'NO QUOTA'
-                            ELSE 'QUOTA'
-                        END as quota_type
-                    FROM dba_ts_quotas
-                    WHERE username = :username
-                    ORDER BY tablespace_name
-                """,
-                    {"username": username.upper()},
-                )
+                    ORDER BY granted_role
+                """, {"username": username.upper()})
                 
                 for row in cursor.fetchall():
-                    quota_type = row[0]
-                    permissions["tablespace_quotas"].append(quota_type)
-            except Exception as e:
-                self.logger.debug(f"无法查询表空间配额: {e}")
-
-            # 确定是否为超级用户和是否可以授权
-            is_superuser = any(
-                role in ["DBA", "SYSDBA", "SYSOPER"] for role in permissions["roles"]
-            )
-            can_grant = is_superuser or any(
-                priv in ["GRANT ANY PRIVILEGE", "GRANT ANY ROLE"]
-                for priv in permissions["system_privileges"]
-            )
-
-            permissions["is_superuser"] = is_superuser
-            permissions["can_grant"] = can_grant
-
-            return {
-                "permissions_json": json.dumps(permissions),
-                "is_superuser": is_superuser,
-                "can_grant": can_grant,
-            }
-
+                    role, admin_option = row
+                    permissions["roles"].append(role)
+                
+                # 查询表空间配额（使用user_ts_quotas，因为当前连接用户是SYS）
+                try:
+                    cursor.execute("""
+                        SELECT tablespace_name, bytes, max_bytes
+                        FROM user_ts_quotas
+                        ORDER BY tablespace_name
+                    """)
+                    
+                    for row in cursor.fetchall():
+                        tablespace_name = row[0]
+                        current_bytes = row[1] if row[1] else 0
+                        max_bytes = row[2] if row[2] else 0
+                        
+                        if max_bytes > 0:
+                            quota_info = f"{tablespace_name}: {current_bytes}/{max_bytes} bytes"
+                        else:
+                            quota_info = f"{tablespace_name}: {current_bytes}/UNLIMITED"
+                        
+                        permissions["tablespace_quotas"].append(quota_info)
+                except Exception as e:
+                    print(f"DEBUG: 表空间配额查询失败: {e}")
+                
+                # 确定是否为超级用户和是否可以授权
+                is_superuser = any(role in ["DBA", "SYSDBA", "SYSOPER"] for role in permissions["roles"])
+                can_grant = is_superuser or any(
+                    priv in ["GRANT ANY PRIVILEGE", "GRANT ANY ROLE"]
+                    for priv in permissions["system_privileges"]
+                )
+                
+                return {
+                    "permissions_json": json.dumps(permissions),
+                    "is_superuser": is_superuser,
+                    "can_grant": can_grant,
+                }
+                
+            finally:
+                cursor.close()
+                
         except Exception as e:
             self.logger.error(f"获取Oracle权限失败: {e}")
             return {
-                "permissions_json": json.dumps(
-                    {
-                        "roles": [],
-                        "system_privileges": [],
-                        "tablespace_privileges": [],
-                        "tablespace_quotas": [],
-                    }
-                ),
+                "permissions_json": json.dumps({
+                    "roles": [],
+                    "system_privileges": [],
+                    "tablespace_privileges": [],
+                    "tablespace_quotas": [],
+                }),
                 "is_superuser": False,
                 "can_grant": False,
             }
-        finally:
-            cursor.close()
 
 
 # 全局实例

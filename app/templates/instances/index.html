@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'macros/environment_macro.html' import environment_badge %}
 
 {% block title %}实例管理 - 泰摸鱼吧{% endblock %}
 
@@ -132,12 +133,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <span class="badge bg-{{ 'danger' if instance.environment == 'production' else 'warning' if instance.environment == 'development' else 'info' }}">
-                                {% if instance.environment == 'production' %}生产环境
-                                {% elif instance.environment == 'development' %}开发环境
-                                {% elif instance.environment == 'testing' %}测试环境
-                                {% else %}{{ instance.environment }}{% endif %}
-                            </span>
+                            {{ environment_badge(instance.environment) }}
                         </td>
                         <td>{{ instance.host }}</td>
                         <td>{{ instance.port }}</td>

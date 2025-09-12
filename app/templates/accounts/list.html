@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from 'macros/environment_macro.html' import environment_badge %}
 
 {% block title %}账户管理 - 泰摸鱼吧{% endblock %}
 
@@ -194,12 +195,7 @@
                             <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
                         </td>
                         <td>
-                            {% set env_label = {
-                                'production': '生产',
-                                'development': '开发', 
-                                'testing': '测试'
-                            }.get(account.instance.environment, account.instance.environment) %}
-                            <span class="badge bg-{{ 'danger' if account.instance.environment == 'production' else 'warning' if account.instance.environment == 'development' else 'info' }}" style="font-size: 0.7rem;">{{ env_label }}</span>
+                            {{ environment_badge(account.instance.environment, 'small') }}
                         </td>
                         <td>
                             {% if classifications.get(account.id) %}
@@ -245,12 +241,7 @@
                             <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
                         </td>
                         <td>
-                            {% set env_label = {
-                                'production': '生产',
-                                'development': '开发', 
-                                'testing': '测试'
-                            }.get(account.instance.environment, account.instance.environment) %}
-                            <span class="badge bg-{{ 'danger' if account.instance.environment == 'production' else 'warning' if account.instance.environment == 'development' else 'info' }}" style="font-size: 0.7rem;">{{ env_label }}</span>
+                            {{ environment_badge(account.instance.environment, 'small') }}
                         </td>
                         <td>
                             {% if classifications.get(account.id) %}
@@ -296,12 +287,7 @@
                             <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
                         </td>
                         <td>
-                            {% set env_label = {
-                                'production': '生产',
-                                'development': '开发', 
-                                'testing': '测试'
-                            }.get(account.instance.environment, account.instance.environment) %}
-                            <span class="badge bg-{{ 'danger' if account.instance.environment == 'production' else 'warning' if account.instance.environment == 'development' else 'info' }}" style="font-size: 0.7rem;">{{ env_label }}</span>
+                            {{ environment_badge(account.instance.environment, 'small') }}
                         </td>
                         <td>
                             {% if classifications.get(account.id) %}
@@ -347,12 +333,7 @@
                             <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
                         </td>
                         <td>
-                            {% set env_label = {
-                                'production': '生产',
-                                'development': '开发', 
-                                'testing': '测试'
-                            }.get(account.instance.environment, account.instance.environment) %}
-                            <span class="badge bg-{{ 'danger' if account.instance.environment == 'production' else 'warning' if account.instance.environment == 'development' else 'info' }}" style="font-size: 0.7rem;">{{ env_label }}</span>
+                            {{ environment_badge(account.instance.environment, 'small') }}
                         </td>
                         <td>
                             {% if classifications.get(account.id) %}
@@ -402,12 +383,7 @@
                             <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
                         </td>
                         <td>
-                            {% set env_label = {
-                                'production': '生产',
-                                'development': '开发', 
-                                'testing': '测试'
-                            }.get(account.instance.environment, account.instance.environment) %}
-                            <span class="badge bg-{{ 'danger' if account.instance.environment == 'production' else 'warning' if account.instance.environment == 'development' else 'info' }}" style="font-size: 0.7rem;">{{ env_label }}</span>
+                            {{ environment_badge(account.instance.environment, 'small') }}
                         </td>
                         <td>
                             <span class="badge bg-{{ 'primary' if account.instance.db_type == 'postgresql' else 'success' if account.instance.db_type == 'mysql' else 'warning' if account.instance.db_type == 'sqlserver' else 'info' if account.instance.db_type == 'oracle' else 'secondary' }}" style="font-size: 0.7rem;">
