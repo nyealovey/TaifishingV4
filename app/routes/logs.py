@@ -7,6 +7,7 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import login_required, current_user
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.utils.decorators import view_required, delete_required
 from app.models.log import Log
 from app.models.user import User
 from app import db
@@ -90,6 +91,7 @@ def get_merged_request_logs(query, page=1, per_page=20):
 
 @logs_bp.route("/")
 @login_required
+@view_required
 def index():
     """日志管理首页"""
     try:
@@ -202,6 +204,7 @@ def index():
 
 @logs_bp.route("/api/export")
 @login_required
+@view_required
 def export_logs():
     """导出日志为CSV"""
     try:
@@ -284,6 +287,7 @@ def export_logs():
 
 @logs_bp.route("/api/log/<int:log_id>")
 @login_required
+@view_required
 def get_log_detail(log_id):
     """获取日志详情"""
     try:
@@ -311,6 +315,7 @@ def get_log_detail(log_id):
 
 @logs_bp.route("/api/merged-info/<int:log_id>")
 @login_required
+@view_required
 def get_merged_info(log_id):
     """获取合并日志的详细信息"""
     try:
@@ -531,6 +536,7 @@ def get_merged_info(log_id):
 
 @logs_bp.route("/api/stats")
 @login_required
+@view_required
 def get_log_stats():
     """获取日志统计信息"""
     try:
@@ -566,6 +572,7 @@ def get_log_stats():
 
 @logs_bp.route("/api/clear")
 @login_required
+@delete_required
 def clear_logs():
     """清空日志"""
     try:
@@ -585,6 +592,7 @@ def clear_logs():
 
 @logs_bp.route("/api/delete/<int:log_id>")
 @login_required
+@delete_required
 def delete_log(log_id):
     """删除单个日志"""
     try:

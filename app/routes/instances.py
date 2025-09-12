@@ -1169,7 +1169,8 @@ def sync_accounts(instance_id):
 
 # API路由
 @instances_bp.route("/api/instances")
-@jwt_required()
+@login_required
+@view_required
 def api_list():
     """获取实例列表API"""
     instances = Instance.query.filter_by(is_active=True).all()
@@ -1177,7 +1178,8 @@ def api_list():
 
 
 @instances_bp.route("/api/instances/<int:instance_id>")
-@jwt_required()
+@login_required
+@view_required
 def api_detail(instance_id):
     """获取实例详情API"""
     instance = Instance.query.get_or_404(instance_id)
@@ -1186,6 +1188,7 @@ def api_detail(instance_id):
 
 @instances_bp.route("/api/instances/<int:instance_id>/test")
 @login_required
+@view_required
 def api_test_connection(instance_id):
     """测试连接API"""
     instance = Instance.query.get_or_404(instance_id)

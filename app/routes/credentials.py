@@ -473,7 +473,8 @@ def test_credential(credential_id):
 
 # API路由
 @credentials_bp.route("/api/credentials")
-@jwt_required()
+@login_required
+@view_required
 def api_list():
     """获取凭据列表API"""
     credentials = Credential.query.filter_by(is_active=True).all()
@@ -481,7 +482,8 @@ def api_list():
 
 
 @credentials_bp.route("/api/credentials/<int:credential_id>")
-@jwt_required()
+@login_required
+@view_required
 def api_detail(credential_id):
     """获取凭据详情API"""
     credential = Credential.query.get_or_404(credential_id)

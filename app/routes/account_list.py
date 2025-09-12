@@ -7,6 +7,7 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import login_required, current_user
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.utils.decorators import view_required, update_required
 from app.models.instance import Instance
 from app.models.credential import Credential
 from app.models.sync_data import SyncData
@@ -25,6 +26,7 @@ account_list_bp = Blueprint("account_list", __name__)
 @account_list_bp.route("/")
 @account_list_bp.route("/<db_type>")
 @login_required
+@view_required
 def list_accounts(db_type=None):
     """账户列表页面"""
     # 获取查询参数
@@ -156,6 +158,7 @@ def list_accounts(db_type=None):
 
 @account_list_bp.route("/export")
 @login_required
+@view_required
 def export_accounts():
     """导出账户数据为CSV"""
     import csv
@@ -294,6 +297,7 @@ def export_accounts():
 
 @account_list_bp.route("/sync/<int:instance_id>", methods=["POST"])
 @login_required
+@update_required
 def sync_accounts(instance_id):
     """同步单个实例的账户"""
     try:
@@ -364,6 +368,7 @@ def sync_accounts(instance_id):
 
 @account_list_bp.route("/<int:account_id>/permissions")
 @login_required
+@view_required
 def get_account_permissions(account_id):
     """获取账户权限详情"""
     try:
@@ -401,6 +406,7 @@ def get_account_permissions(account_id):
 
 @account_list_bp.route("/api/sync/<int:instance_id>")
 @login_required
+@update_required
 def api_sync_accounts(instance_id):
     """API: 同步单个实例的账户"""
     try:
