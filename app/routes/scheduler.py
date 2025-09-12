@@ -231,15 +231,24 @@ def resume_job(job_id):
 def run_job(job_id):
     """立即执行任务"""
     try:
-        job = get_scheduler().get_job(job_id)
+        scheduler = get_scheduler()
+        if not scheduler.running:
+            return APIResponse.error("调度器未启动", status_code=500)
+            
+        job = scheduler.get_job(job_id)
         if not job:
             return APIResponse.error("任务不存在", status_code=404)
         
-        # 立即执行任务
-        job.func(*job.args, **job.kwargs)
+        logger.info(f"开始立即执行任务: {job_id} - {job.name}")
         
-        logger.info(f"任务立即执行成功: {job_id}")
-        return APIResponse.success("任务执行成功")
+        # 立即执行任务
+        try:
+            result = job.func(*job.args, **job.kwargs)
+            logger.info(f"任务立即执行成功: {job_id} - 结果: {result}")
+            return APIResponse.success(data={"result": str(result)}, message="任务执行成功")
+        except Exception as func_error:
+            logger.error(f"任务函数执行失败: {job_id} - {func_error}")
+            return APIResponse.error(f"任务执行失败: {str(func_error)}")
         
     except Exception as e:
         logger.error(f"执行任务失败: {e}")

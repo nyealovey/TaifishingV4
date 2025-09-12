@@ -88,30 +88,37 @@ def _cleanup_old_backups(backup_dir, keep_count=10):
 
 
 def sync_accounts():
-    """账户同步任务"""
+    """账户同步任务 - 同步所有数据库实例的账户"""
     from app import create_app
+    from app.models.instance import Instance
+    
     app = create_app()
     with app.app_context():
         try:
             # 获取所有活跃的数据库实例
-            instances = db.session.query(Account.instance_id).distinct().all()
+            instances = Instance.query.filter_by(is_active=True).all()
             sync_count = 0
+            total_instances = len(instances)
             
-            for (instance_id,) in instances:
+            logger.info(f"开始同步所有账户，共 {total_instances} 个实例")
+            
+            for instance in instances:
                 try:
+                    logger.info(f"开始同步实例: {instance.name} (ID: {instance.id})")
                     # 执行账户同步
-                    result = account_sync_service.sync_accounts(instance_id)
+                    result = account_sync_service.sync_accounts(instance)
                     if result.get('success'):
-                        sync_count += result.get('synced_count', 0)
-                        logger.info(f"实例 {instance_id} 同步完成，同步了 {result.get('synced_count', 0)} 个账户")
+                        instance_sync_count = result.get('synced_count', 0)
+                        sync_count += instance_sync_count
+                        logger.info(f"实例 {instance.name} 同步完成，同步了 {instance_sync_count} 个账户")
                     else:
-                        logger.warning(f"实例 {instance_id} 同步失败: {result.get('message', '未知错误')}")
+                        logger.warning(f"实例 {instance.name} 同步失败: {result.get('message', '未知错误')}")
                         
                 except Exception as e:
-                    logger.error(f"实例 {instance_id} 同步异常: {e}")
+                    logger.error(f"实例 {instance.name} 同步异常: {e}")
             
-            logger.info(f"账户同步任务完成，总共同步了 {sync_count} 个账户")
-            return f"同步了 {sync_count} 个账户"
+            logger.info(f"账户同步任务完成，总共同步了 {sync_count} 个账户，涉及 {total_instances} 个实例")
+            return f"同步了 {sync_count} 个账户，涉及 {total_instances} 个实例"
             
         except Exception as e:
             logger.error(f"账户同步任务失败: {e}")
