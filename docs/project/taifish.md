@@ -172,10 +172,10 @@
 
 ### 权限配置脚本
 - `scripts/init_permission_config.py` - 权限配置初始化
-- `scripts/setup_mysql_monitor_user.sql` - MySQL监控用户设置
-- `scripts/setup_postgresql_monitor_user.sql` - PostgreSQL监控用户设置
-- `scripts/setup_sqlserver_monitor_user.sql` - SQL Server监控用户设置
-- `scripts/setup_oracle_monitor_user.sql` - Oracle监控用户设置
+- `sql/setup_mysql_monitor_user.sql` - MySQL监控用户设置
+- `sql/setup_postgresql_monitor_user.sql` - PostgreSQL监控用户设置
+- `sql/setup_sqlserver_monitor_user.sql` - SQL Server监控用户设置
+- `sql/setup_oracle_monitor_user.sql` - Oracle监控用户设置
 
 ### 测试脚本
 - `scripts/test_mysql_permissions.sql` - MySQL权限测试

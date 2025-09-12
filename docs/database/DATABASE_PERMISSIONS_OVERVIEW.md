@@ -17,7 +17,7 @@
 
 ### 1. MySQL 权限要求
 - **文档**: [MYSQL_PERMISSIONS.md](MYSQL_PERMISSIONS.md)
-- **设置脚本**: [setup_mysql_monitor_user.sql](../scripts/setup_mysql_monitor_user.sql)
+- **设置脚本**: [setup_mysql_monitor_user.sql](../sql/setup_mysql_monitor_user.sql)
 - **测试脚本**: [test_mysql_permissions.sql](../scripts/test_mysql_permissions.sql)
 
 **最低权限：**
@@ -29,7 +29,7 @@ GRANT SELECT ON INFORMATION_SCHEMA.* TO 'monitor_user'@'%';
 
 ### 2. PostgreSQL 权限要求
 - **文档**: [POSTGRESQL_PERMISSIONS.md](POSTGRESQL_PERMISSIONS.md)
-- **设置脚本**: [setup_postgresql_monitor_user.sql](../scripts/setup_postgresql_monitor_user.sql)
+- **设置脚本**: [setup_postgresql_monitor_user.sql](../sql/setup_postgresql_monitor_user.sql)
 - **测试脚本**: [test_postgresql_permissions.sql](../scripts/test_postgresql_permissions.sql)
 
 **最低权限：**
@@ -42,7 +42,7 @@ GRANT SELECT ON ALL TABLES IN SCHEMA information_schema TO monitor_user;
 
 ### 3. SQL Server 权限要求
 - **文档**: [SQL_SERVER_PERMISSIONS.md](SQL_SERVER_PERMISSIONS.md)
-- **设置脚本**: [setup_sqlserver_monitor_user.sql](../scripts/setup_sqlserver_monitor_user.sql)
+- **设置脚本**: [setup_sqlserver_monitor_user.sql](../sql/setup_sqlserver_monitor_user.sql)
 - **测试脚本**: [test_sqlserver_permissions.sql](../scripts/test_sqlserver_permissions.sql)
 
 **最低权限：**
@@ -54,7 +54,7 @@ GRANT VIEW DEFINITION TO monitor_user;
 
 ### 4. Oracle 权限要求
 - **文档**: [ORACLE_PERMISSIONS.md](ORACLE_PERMISSIONS.md)
-- **设置脚本**: [setup_oracle_monitor_user.sql](../scripts/setup_oracle_monitor_user.sql)
+- **设置脚本**: [setup_oracle_monitor_user.sql](../sql/setup_oracle_monitor_user.sql)
 - **测试脚本**: [test_oracle_permissions.sql](../scripts/test_oracle_permissions.sql)
 
 **最低权限：**
@@ -147,16 +147,16 @@ sqlplus current_user/password@database @scripts/test_oracle_permissions.sql
 运行相应的设置脚本：
 ```bash
 # MySQL
-mysql -u root -p < scripts/setup_mysql_monitor_user.sql
+mysql -u root -p < sql/setup_mysql_monitor_user.sql
 
 # PostgreSQL
-psql -U postgres -d postgres -f scripts/setup_postgresql_monitor_user.sql
+psql -U postgres -d postgres -f sql/setup_postgresql_monitor_user.sql
 
 # SQL Server
-sqlcmd -S server -U sa -P password -i scripts/setup_sqlserver_monitor_user.sql
+sqlcmd -S server -U sa -P password -i sql/setup_sqlserver_monitor_user.sql
 
 # Oracle
-sqlplus sys/password@database as sysdba @scripts/setup_oracle_monitor_user.sql
+sqlplus sys/password@database as sysdba @sql/setup_oracle_monitor_user.sql
 ```
 
 ### 4. 配置泰摸鱼吧
