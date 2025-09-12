@@ -12,23 +12,20 @@ dependencies = [
     # 数据库
     "Flask-SQLAlchemy==3.0.5",
     "Flask-Migrate==4.0.7",
-    "psycopg[binary]>=3.0.0,<4.0.0", # 使用psycopg3，对Python 3.13支持更好
+    "psycopg[binary]==3.2.10", # 使用psycopg3，对Python 3.13支持更好
     "SQLAlchemy==1.4.54",
     "alembic==1.16.5",
     # 数据库驱动
     "PyMySQL==1.1.1",
-    "pymssql>=2.2.0,<3.0.0",
-    "pyodbc>=5.0.0,<6.0.0",
+    "pymssql==2.3.7",
+    "pyodbc==5.2.0",
     "oracledb==3.3.0",
     # 缓存
     "redis==5.0.7",
     "Flask-Caching==2.1.0",
     "cachelib==0.9.0",
-    # 异步任务
-    "Celery==5.5.3",
-    "kombu==5.5.4",
-    "billiard==4.2.1",
-    "vine==5.1.0",
+    # 定时任务调度
+    "APScheduler==3.10.4",
     # 认证和安全
     "Flask-JWT-Extended==4.6.0",
     "Flask-Bcrypt==1.0.1",
@@ -85,7 +82,6 @@ dependencies = [
     "pycparser==2.22",
     "cffi==1.17.1",
     "blinker==1.9.0",
-    "apscheduler==3.10.4",
     "bleach>=6.2.0",
     "pyyaml>=6.0.2",
 ]

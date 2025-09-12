@@ -57,18 +57,15 @@ def status():
     except Exception as e:
         status_info["redis"] = f"error: {str(e)}"
 
-    # 检查Celery状态
+    # 检查APScheduler状态
     try:
-        from app import celery
-
-        inspect = celery.control.inspect()
-        stats = inspect.stats()
-        if stats:
-            status_info["celery"] = "running"
+        from app import scheduler
+        if scheduler.running:
+            status_info["scheduler"] = "running"
         else:
-            status_info["celery"] = "no workers"
+            status_info["scheduler"] = "stopped"
     except Exception as e:
-        status_info["celery"] = f"error: {str(e)}"
+        status_info["scheduler"] = f"error: {str(e)}"
 
     # 系统资源状态
     try:

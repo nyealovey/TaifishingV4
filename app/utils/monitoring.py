@@ -293,27 +293,27 @@ class HealthChecker:
             }
 
     @staticmethod
-    def check_celery_health() -> Dict[str, Any]:
-        """检查Celery健康状态"""
+    def check_scheduler_health() -> Dict[str, Any]:
+        """检查APScheduler健康状态"""
         try:
-            from app import celery
+            from app import scheduler
 
             start_time = time.time()
-            inspect = celery.control.inspect()
-            stats = inspect.stats()
+            is_running = scheduler.running
             response_time = (time.time() - start_time) * 1000
 
-            if stats:
+            if is_running:
+                jobs = scheduler.get_jobs()
                 return {
                     "status": "healthy",
                     "response_time_ms": response_time,
-                    "workers": len(stats),
+                    "jobs_count": len(jobs),
                     "timestamp": datetime.now().isoformat(),
                 }
             else:
                 return {
                     "status": "unhealthy",
-                    "error": "No workers available",
+                    "error": "Scheduler not running",
                     "timestamp": datetime.now().isoformat(),
                 }
         except Exception as e:
@@ -329,7 +329,7 @@ class HealthChecker:
         checks = {
             "database": HealthChecker.check_database_health(),
             "redis": HealthChecker.check_redis_health(),
-            "celery": HealthChecker.check_celery_health(),
+            "scheduler": HealthChecker.check_scheduler_health(),
         }
 
         # 判断整体状态
