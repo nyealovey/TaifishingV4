@@ -559,6 +559,25 @@ class OraclePermissionQuery(PermissionQuery):
             global_perms = self.get_global_permissions(account)
             database_perms = self.get_database_permissions(account)
             
+            # 分离Oracle权限类型
+            roles = []
+            system_privileges = []
+            tablespace_privileges = []
+            tablespace_quotas = []
+            
+            for perm in global_perms:
+                if perm["privilege"].startswith("ROLE_"):
+                    roles.append(perm["privilege"])
+                elif perm["privilege"].startswith("TABLESPACE_"):
+                    tablespace_privileges.append(perm["privilege"])
+                else:
+                    system_privileges.append(perm["privilege"])
+            
+            # 处理表空间配额
+            for perm in database_perms:
+                if "quota" in perm:
+                    tablespace_quotas.append(perm["quota"])
+            
             return {
                 "success": True,
                 "account": {
@@ -568,8 +587,10 @@ class OraclePermissionQuery(PermissionQuery):
                     "plugin": account.plugin
                 },
                 "permissions": {
-                    "global": global_perms,
-                    "database": database_perms
+                    "roles": roles,
+                    "system_privileges": system_privileges,
+                    "tablespace_privileges": tablespace_privileges,
+                    "tablespace_quotas": tablespace_quotas
                 }
             }
         except Exception as e:
@@ -586,26 +607,45 @@ class OraclePermissionQuery(PermissionQuery):
             if not connection or not connection.connect():
                 return []
             
+            permissions = []
+            
             # 查询系统权限
-            query = """
+            sys_privs_query = """
                 SELECT 
                     privilege,
                     admin_option
                 FROM user_sys_privs
-                WHERE username = :1
                 ORDER BY privilege
             """
             
-            results = connection.execute_query(query, (account.username,))
+            sys_results = connection.execute_query(sys_privs_query, ())
             
-            return [
-                {
+            for row in sys_results:
+                permissions.append({
                     "privilege": row[0],
                     "granted": True,
                     "grantable": row[1] == 'YES'
-                }
-                for row in results
-            ]
+                })
+            
+            # 查询角色权限
+            roles_query = """
+                SELECT 
+                    granted_role,
+                    admin_option
+                FROM user_role_privs
+                ORDER BY granted_role
+            """
+            
+            role_results = connection.execute_query(roles_query, ())
+            
+            for row in role_results:
+                permissions.append({
+                    "privilege": f"ROLE_{row[0]}",
+                    "granted": True,
+                    "grantable": row[1] == 'YES'
+                })
+            
+            return permissions
         except Exception as e:
             log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
             return []
@@ -620,30 +660,52 @@ class OraclePermissionQuery(PermissionQuery):
             if not connection or not connection.connect():
                 return []
             
-            # 查询角色权限
-            query = """
+            permissions = []
+            
+            # 查询表空间配额
+            quota_query = """
                 SELECT 
-                    granted_role,
-                    admin_option
-                FROM user_role_privs
-                WHERE username = :1
-                ORDER BY granted_role
+                    tablespace_name,
+                    bytes,
+                    max_bytes
+                FROM user_ts_quotas
+                ORDER BY tablespace_name
             """
             
-            results = connection.execute_query(query, (account.username,))
+            quota_results = connection.execute_query(quota_query, ())
             
-            return [
-                {
-                    "database": "SYSTEM",
-                    "privileges": [row[0] for row in results]
-                }
-            ]
+            for row in quota_results:
+                tablespace_name = row[0]
+                current_bytes = row[1] if row[1] else 0
+                max_bytes = row[2] if row[2] else 0
+                
+                if max_bytes > 0:
+                    quota_info = f"{tablespace_name}: {self._format_bytes(current_bytes)}/{self._format_bytes(max_bytes)}"
+                else:
+                    quota_info = f"{tablespace_name}: {self._format_bytes(current_bytes)}/UNLIMITED"
+                
+                permissions.append({
+                    "quota": quota_info
+                })
+            
+            return permissions
         except Exception as e:
             log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
             return []
         finally:
             if connection:
                 connection.disconnect()
+    
+    def _format_bytes(self, bytes_value):
+        """格式化字节数"""
+        if bytes_value is None:
+            return "0B"
+        
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if bytes_value < 1024.0:
+                return f"{bytes_value:.1f}{unit}"
+            bytes_value /= 1024.0
+        return f"{bytes_value:.1f}PB"
     
     def get_table_permissions(self, account: Account, database: str) -> List[Dict[str, Any]]:
         """获取Oracle表权限"""
