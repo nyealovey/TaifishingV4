@@ -111,7 +111,7 @@ scheduler = TaskScheduler()
 # 确保scheduler实例可以被正确访问
 def get_scheduler():
     """获取调度器实例"""
-    return scheduler
+    return scheduler.scheduler
 
 
 def init_scheduler(app):

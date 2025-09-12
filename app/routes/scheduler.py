@@ -33,6 +33,8 @@ def get_jobs():
     """获取所有定时任务"""
     try:
         scheduler = get_scheduler()
+        if not scheduler.running:
+            return APIResponse.error("调度器未启动", status_code=500)
         jobs = scheduler.get_jobs()
         logger.info(f"获取到 {len(jobs)} 个任务")
         jobs_data = []

@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 def cleanup_old_logs():
     """清理旧日志任务"""
+    from app import create_app
     app = create_app()
     with app.app_context():
         try:
@@ -36,6 +37,7 @@ def cleanup_old_logs():
 
 def backup_database():
     """数据库备份任务"""
+    from app import create_app
     app = create_app()
     with app.app_context():
         try:
@@ -87,6 +89,7 @@ def _cleanup_old_backups(backup_dir, keep_count=10):
 
 def sync_accounts():
     """账户同步任务"""
+    from app import create_app
     app = create_app()
     with app.app_context():
         try:
@@ -117,6 +120,7 @@ def sync_accounts():
 
 def generate_reports():
     """生成报告任务"""
+    from app import create_app
     app = create_app()
     with app.app_context():
         try:
@@ -152,6 +156,7 @@ def generate_reports():
 
 def health_check():
     """健康检查任务"""
+    from app import create_app
     app = create_app()
     with app.app_context():
         try:
@@ -186,6 +191,7 @@ def health_check():
 
 def cleanup_temp_files():
     """清理临时文件任务"""
+    from app import create_app
     app = create_app()
     with app.app_context():
         try:
