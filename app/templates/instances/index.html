@@ -28,10 +28,11 @@
                 <label for="db_type" class="form-label">数据库类型</label>
                 <select class="form-select" id="db_type" name="db_type">
                     <option value="">全部类型</option>
-                    <option value="postgresql" {% if db_type == 'postgresql' %}selected{% endif %}>PostgreSQL</option>
-                    <option value="mysql" {% if db_type == 'mysql' %}selected{% endif %}>MySQL</option>
-                    <option value="sqlserver" {% if db_type == 'sqlserver' %}selected{% endif %}>SQL Server</option>
-                    <option value="oracle" {% if db_type == 'oracle' %}selected{% endif %}>Oracle</option>
+                    {% for db_type_config in database_types %}
+                    <option value="{{ db_type_config.name }}" {% if db_type == db_type_config.name %}selected{% endif %}>
+                        {{ db_type_config.display_name }}
+                    </option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="col-md-2">
@@ -119,9 +120,16 @@
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-{{ 'primary' if instance.db_type == 'postgresql' else 'success' if instance.db_type == 'mysql' else 'warning' if instance.db_type == 'sqlserver' else 'info' }}">
-                                {{ instance.db_type.upper() }}
+                            {% set db_type_config = database_types | selectattr('name', 'equalto', instance.db_type) | first %}
+                            {% if db_type_config %}
+                            <span class="badge bg-{{ db_type_config.color }}">
+                                <i class="fas {{ db_type_config.icon }} me-1"></i>{{ db_type_config.display_name }}
                             </span>
+                            {% else %}
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-database me-1"></i>{{ instance.db_type.upper() }}
+                            </span>
+                            {% endif %}
                         </td>
                         <td>
                             <span class="badge bg-{{ 'danger' if instance.environment == 'production' else 'warning' if instance.environment == 'development' else 'info' }}">

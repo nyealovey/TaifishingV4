@@ -58,6 +58,10 @@ def index():
 
     # 获取所有可用的凭据
     credentials = Credential.query.filter_by(is_active=True).all()
+    
+    # 获取数据库类型配置
+    from app.services.database_type_service import DatabaseTypeService
+    database_types = DatabaseTypeService.get_active_types()
 
     if request.is_json:
         return jsonify(
@@ -72,6 +76,7 @@ def index():
                     "has_prev": instances.has_prev,
                 },
                 "credentials": [cred.to_dict() for cred in credentials],
+                "database_types": [db_type.to_dict() for db_type in database_types],
             }
         )
 
@@ -79,6 +84,7 @@ def index():
         "instances/index.html",
         instances=instances,
         credentials=credentials,
+        database_types=database_types,
         search=search,
         db_type=db_type,
         environment=environment,
