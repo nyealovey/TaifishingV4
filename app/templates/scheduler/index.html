@@ -110,16 +110,41 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="jobFunc" class="form-label">任务函数</label>
-                        <select class="form-select" id="jobFunc" required>
-                            <option value="">请选择任务函数</option>
-                            <option value="cleanup_old_logs">清理旧日志</option>
-                            <option value="backup_database">数据库备份</option>
-                            <option value="sync_accounts">账户同步</option>
-                            <option value="generate_reports">生成报告</option>
-                            <option value="health_check">健康检查</option>
-                            <option value="cleanup_temp_files">清理临时文件</option>
-                        </select>
+                        <label for="jobCode" class="form-label">任务代码</label>
+                        <textarea class="form-control" id="jobCode" rows="8" placeholder="请输入Python代码..." required></textarea>
+                        <div class="form-text">
+                            <strong>代码规范：</strong><br>
+                            • 必须定义一个名为 <code>execute_task()</code> 的函数作为入口点<br>
+                            • 函数不能接受任何参数<br>
+                            • 函数应该返回字符串结果或None<br>
+                            • 可以使用 <code>from app import create_app, db</code> 来访问应用上下文<br>
+                            • 可以使用 <code>logger = logging.getLogger(__name__)</code> 来记录日志<br>
+                            <br>
+                            <strong>示例：</strong><br>
+                            <pre class="bg-light p-2 rounded"><code>from app import create_app, db
+import logging
+
+logger = logging.getLogger(__name__)
+
+def execute_task():
+    app = create_app()
+    with app.app_context():
+        try:
+            # 在这里编写你的任务逻辑
+            logger.info("任务开始执行")
+            
+            # 示例：查询用户数量
+            from app.models.user import User
+            user_count = User.query.count()
+            
+            result = f"当前用户数量: {user_count}"
+            logger.info(result)
+            return result
+            
+        except Exception as e:
+            logger.error(f"任务执行失败: {e}")
+            return f"任务执行失败: {e}"</code></pre>
+                        </div>
                     </div>
                     
                     <div class="mb-3">
@@ -348,7 +373,7 @@ function createJob() {
     const formData = {
         id: $('#jobId').val(),
         name: $('#jobName').val(),
-        func: $('#jobFunc').val(),
+        code: $('#jobCode').val(),
         trigger_type: $('input[name="triggerType"]:checked').val()
     };
     

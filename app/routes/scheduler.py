@@ -11,6 +11,8 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
 import logging
+import importlib.util
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -101,30 +103,44 @@ def create_job():
         logger.info(f"创建任务请求数据: {data}")
         
         # 验证必需字段
-        required_fields = ['id', 'name', 'func', 'trigger_type']
+        required_fields = ['id', 'name', 'code', 'trigger_type']
         for field in required_fields:
             if field not in data:
                 logger.error(f"缺少必需字段: {field}")
-                return APIResponse.error(f"缺少必需字段: {field}", status_code=400)
+                return APIResponse.error(f"缺少必需字段: {field}", code=400)
         
         # 构建触发器
         trigger = _build_trigger(data)
         if not trigger:
-            return APIResponse.error("无效的触发器配置", status_code=400)
+            return APIResponse.error("无效的触发器配置", code=400)
         
-        # 获取任务函数
-        task_func = _get_task_function(data['func'])
+        # 验证代码格式
+        code = data['code'].strip()
+        if not code:
+            return APIResponse.error("任务代码不能为空", code=400)
+        
+        # 检查代码是否包含execute_task函数
+        if 'def execute_task():' not in code:
+            return APIResponse.error("代码必须包含 'def execute_task():' 函数", code=400)
+        
+        # 创建动态任务函数
+        task_func = _create_dynamic_task_function(data['id'], code)
         if not task_func:
-            return APIResponse.error(f"未找到任务函数: {data['func']}", status_code=400)
+            return APIResponse.error("代码格式错误，请检查语法", code=400)
         
         # 添加任务
-        job = get_scheduler().add_job(
+        scheduler = get_scheduler()
+        if not scheduler.running:
+            return APIResponse.error("调度器未启动", code=500)
+        
+        # 直接使用函数对象
+        job = scheduler.add_job(
             func=task_func,
             trigger=trigger,
             id=data['id'],
             name=data['name'],
-            args=data.get('args', []),
-            kwargs=data.get('kwargs', {}),
+            args=[],
+            kwargs={},
             replace_existing=True
         )
         
@@ -302,6 +318,67 @@ def _get_task_function(func_name):
     return task_functions.get(func_name)
 
 
+def _create_dynamic_task_function(job_id, code):
+    """创建动态任务函数"""
+    try:
+        import os
+        import sys
+        
+        # 创建动态任务目录
+        dynamic_tasks_dir = "userdata/dynamic_tasks"
+        os.makedirs(dynamic_tasks_dir, exist_ok=True)
+        
+        # 生成任务文件路径
+        task_file = os.path.join(dynamic_tasks_dir, f"{job_id}.py")
+        
+        # 创建完整的任务代码
+        full_code = f'''"""
+动态任务: {job_id}
+创建时间: {datetime.now().isoformat()}
+"""
+
+from app import create_app, db
+import logging
+
+logger = logging.getLogger(__name__)
+
+{code}
+
+def task_wrapper():
+    """任务包装器"""
+    try:
+        logger.info(f"开始执行动态任务: {job_id}")
+        result = execute_task()
+        logger.info(f"动态任务 {job_id} 执行完成: {{result}}")
+        return result
+    except Exception as e:
+        logger.error(f"动态任务 {job_id} 执行失败: {{e}}")
+        return f"任务执行失败: {{e}}"
+'''
+        
+        # 保存任务文件
+        with open(task_file, 'w', encoding='utf-8') as f:
+            f.write(full_code)
+        
+        # 将动态任务目录添加到Python路径
+        if dynamic_tasks_dir not in sys.path:
+            sys.path.insert(0, dynamic_tasks_dir)
+        
+        # 动态导入模块
+        module_name = job_id
+        spec = importlib.util.spec_from_file_location(module_name, task_file)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        
+        # 返回模块中的task_wrapper函数
+        return module.task_wrapper
+        
+    except Exception as e:
+        logger.error(f"创建动态任务函数失败: {e}")
+        return None
+
+
 def _build_trigger(data):
     """构建触发器"""
     trigger_type = data.get('trigger_type')
@@ -318,13 +395,17 @@ def _build_trigger(data):
             second=data.get('second')
         )
     elif trigger_type == 'interval':
-        return IntervalTrigger(
-            weeks=data.get('weeks'),
-            days=data.get('days'),
-            hours=data.get('hours'),
-            minutes=data.get('minutes'),
-            seconds=data.get('seconds')
-        )
+        # 过滤掉None值
+        kwargs = {}
+        for key in ['weeks', 'days', 'hours', 'minutes', 'seconds']:
+            value = data.get(key)
+            if value is not None and value > 0:
+                kwargs[key] = value
+        
+        if not kwargs:
+            return None
+            
+        return IntervalTrigger(**kwargs)
     elif trigger_type == 'date':
         run_date = data.get('run_date')
         if run_date:
