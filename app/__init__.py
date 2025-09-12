@@ -416,6 +416,14 @@ def register_blueprints(app):
     # 注册用户管理蓝图
     from app.routes.user_management import user_management_bp
     app.register_blueprint(user_management_bp)
+    
+    # 注册定时任务管理蓝图
+    from app.routes.scheduler import scheduler_bp
+    app.register_blueprint(scheduler_bp)
+    
+    # 初始化定时任务调度器
+    from app.scheduler import init_scheduler
+    init_scheduler(app)
 
 
 def configure_logging(app):

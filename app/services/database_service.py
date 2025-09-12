@@ -10,6 +10,7 @@ from app.models.account import Account
 from app import db
 from app.utils.enhanced_logger import log_operation, log_error
 from app.utils.enhanced_logger import db_logger, log_database_error, log_database_operation
+from app.services.database_filter_manager import database_filter_manager
 
 
 class DatabaseService:
@@ -227,11 +228,15 @@ class DatabaseService:
     def _sync_mysql_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
         """同步MySQL账户"""
         cursor = conn.cursor()
+        
+        # 获取MySQL过滤规则
+        filter_conditions = database_filter_manager.get_sql_filter_conditions('mysql', 'User')
+        
         cursor.execute(
-            """
+            f"""
             SELECT User, Host, authentication_string, plugin, account_locked, password_expired, password_last_changed
             FROM mysql.user
-            WHERE User != 'mysql.sys'
+            WHERE {filter_conditions}
         """
         )
 
@@ -381,8 +386,12 @@ class DatabaseService:
                 return False
         
         cursor = conn.cursor()
+        
+        # 获取PostgreSQL过滤规则
+        filter_conditions = database_filter_manager.get_sql_filter_conditions('postgresql', 'rolname')
+        
         cursor.execute(
-            """
+            f"""
             SELECT 
                 rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb, 
                 rolcanlogin, rolconnlimit, 
@@ -392,8 +401,7 @@ class DatabaseService:
                 END as rolvaliduntil,
                 rolbypassrls, rolreplication
             FROM pg_roles
-            WHERE rolname NOT LIKE 'pg_%' 
-            AND rolname NOT IN ('postgres', 'rdsadmin', 'rds_superuser')
+            WHERE {filter_conditions}
         """
         )
 
@@ -556,16 +564,16 @@ class DatabaseService:
     def _sync_sqlserver_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
         """同步SQL Server账户"""
         cursor = conn.cursor()
+        
+        # 获取SQL Server过滤规则
+        filter_conditions = database_filter_manager.get_sql_filter_conditions('sqlserver', 'name')
+        
         cursor.execute(
-            """
+            f"""
             SELECT name, type_desc, is_disabled, create_date, modify_date
             FROM sys.server_principals
             WHERE type IN ('S', 'U', 'G')
-            AND name NOT LIKE '##%'
-            AND name NOT LIKE 'NT SERVICE\%'
-            AND name NOT LIKE 'NT AUTHORITY\%'
-            AND name NOT LIKE 'BUILTIN\%'
-            AND name NOT IN ('public', 'guest', 'dbo')
+            AND {filter_conditions}
             AND (name = 'sa' OR name NOT LIKE 'NT %')
         """
         )
@@ -698,32 +706,16 @@ class DatabaseService:
     def _sync_oracle_accounts(self, instance: Instance, conn) -> Dict[str, Any]:
         """同步Oracle账户"""
         cursor = conn.cursor()
+        
+        # 获取Oracle过滤规则
+        filter_conditions = database_filter_manager.get_sql_filter_conditions('oracle', 'username')
+        
         cursor.execute(
-            """
+            f"""
             SELECT username, user_id, account_status, lock_date, expiry_date, 
                    default_tablespace, created, authentication_type
             FROM dba_users
-            WHERE username NOT IN (
-                -- Oracle示例账户
-                'SCOTT',
-                -- Oracle功能账户（根据官方文档）
-                'CTXSYS', 'EXFSYS', 'MDDATA', 'APPQOSSYS', 'OUTLN', 'DIP', 'TSMSYS', 'WMSYS', 
-                'XDB', 'ANONYMOUS', 'ORDPLUGINS', 'ORDSYS', 'SI_INFORMTN_SCHEMA', 'MDSYS', 
-                'OLAPSYS', 'SPATIAL_CSW_ADMIN_USR', 'SPATIAL_WFS_ADMIN_USR', 'APEX_PUBLIC_USER', 
-                'APEX_030200', 'FLOWS_FILES', 'HR', 'OE', 'PM', 'IX', 'SH', 'BI', 'DEMO', 
-                'ADMIN', 'AUDSYS', 'GSMADMIN_INTERNAL', 'GSMCATUSER', 'GSMUSER', 'LBACSYS', 
-                'OJVMSYS', 'ORACLE_OCM', 'ORDDATA', 'ORDPLUGINS', 'ORDS_METADATA', 
-                'ORDS_PUBLIC_USER', 'PDBADMIN', 'RDSADMIN', 'REMOTE_SCHEDULER_AGENT', 
-                'SYSBACKUP', 'SYSDG', 'SYSKM', 'SYSRAC', 'SYS$UMF', 'XS$NULL', 'OWBSYS', 
-                'OWBSYS_AUDIT'
-            )
-            -- 排除系统模式账户
-            AND username NOT LIKE 'SYS$%'
-            AND username NOT LIKE 'GSM%'
-            AND username NOT LIKE 'XDB%'
-            AND username NOT LIKE 'APEX%'
-            AND username NOT LIKE 'ORD%'
-            AND username NOT LIKE 'SPATIAL_%'
+            WHERE {filter_conditions}
             ORDER BY username
         """
         )

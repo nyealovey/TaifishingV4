@@ -28,6 +28,7 @@ from app import db
 from datetime import datetime
 from app.utils.timezone import now
 from app.utils.enhanced_logger import sync_logger, log_sync_error, log_exception
+from app.services.database_filter_manager import database_filter_manager
 
 
 class AccountSyncService:
@@ -330,9 +331,12 @@ class AccountSyncService:
         """同步MySQL账户"""
         cursor = conn.cursor()
         
+        # 获取MySQL过滤规则
+        filter_conditions = database_filter_manager.get_sql_filter_conditions('mysql', 'User')
+        
         # 查询用户信息 - 包含完整的账户信息
         cursor.execute(
-            """
+            f"""
             SELECT 
                 User as username,
                 Host as host,
@@ -351,7 +355,7 @@ class AccountSyncService:
                 Drop_priv as can_drop,
                 Super_priv as is_superuser
             FROM mysql.user
-            WHERE User != 'mysql.sys'
+            WHERE {filter_conditions}
             ORDER BY User, Host
         """
         )
@@ -406,7 +410,7 @@ class AccountSyncService:
             
             # 获取完整权限信息
             permissions_info = self._get_mysql_account_permissions(conn, username, host)
-
+            
             if not account:
                 account = Account(
                     instance_id=instance.id,
@@ -460,7 +464,7 @@ class AccountSyncService:
                 if account.can_grant != permissions_info["can_grant"]:
                     account.can_grant = permissions_info["can_grant"]
                     has_changes = True
-
+                
                 if has_changes:
                     account.updated_at = now()
                     modified_count += 1
@@ -530,9 +534,12 @@ class AccountSyncService:
         """同步PostgreSQL账户"""
         cursor = conn.cursor()
         
+        # 获取PostgreSQL过滤规则
+        filter_conditions = database_filter_manager.get_sql_filter_conditions('postgresql', 'rolname')
+        
         # 查询角色信息（PostgreSQL中用户和角色是同一个概念）
         cursor.execute(
-                """
+                f"""
             SELECT 
                     rolname as username,
                     rolsuper as is_superuser,
@@ -548,8 +555,7 @@ class AccountSyncService:
                     rolbypassrls as can_bypass_rls,
                     rolreplication as can_replicate
                 FROM pg_roles
-                WHERE rolname NOT LIKE 'pg_%' 
-                AND rolname NOT IN ('postgres', 'rdsadmin', 'rds_superuser')
+                WHERE {filter_conditions}
                 ORDER BY rolname
             """
             )
@@ -677,7 +683,7 @@ class AccountSyncService:
             if (account.username, account.host) not in server_accounts:
                 db.session.delete(account)
                 removed_count += 1
-
+        
         db.session.commit()
         cursor.close()
         
@@ -856,9 +862,12 @@ class AccountSyncService:
         """同步SQL Server账户"""
         cursor = conn.cursor()
         
+        # 获取SQL Server过滤规则
+        filter_conditions = database_filter_manager.get_sql_filter_conditions('sqlserver', 'name')
+        
         # 查询用户信息 - 只同步sa和用户创建的账户，排除内置账户
         cursor.execute(
-            """
+            f"""
             SELECT 
                 name as username,
                 type_desc as account_type,
@@ -868,11 +877,7 @@ class AccountSyncService:
                 modify_date as modified_date
             FROM sys.server_principals
             WHERE type IN ('S', 'U', 'G')
-            AND name NOT LIKE '##%'
-            AND name NOT LIKE 'NT SERVICE\\%'
-            AND name NOT LIKE 'NT AUTHORITY\\%'
-            AND name NOT LIKE 'BUILTIN\\%'
-            AND name NOT IN ('public', 'guest', 'dbo')
+            AND {filter_conditions}
             AND (name = 'sa' OR name NOT LIKE 'NT %')
             ORDER BY name
         """
@@ -1010,9 +1015,12 @@ class AccountSyncService:
         print("DEBUG: 开始Oracle账户同步 - 函数被调用")
         cursor = conn.cursor()
         
+        # 获取Oracle过滤规则
+        filter_conditions = database_filter_manager.get_sql_filter_conditions('oracle', 'username')
+        
         # 查询用户信息
         cursor.execute(
-            """
+            f"""
             SELECT 
                 username,
                 authentication_type as account_type,
@@ -1022,27 +1030,7 @@ class AccountSyncService:
                 expiry_date,
                 profile
             FROM dba_users
-            WHERE username NOT IN (
-                -- Oracle示例账户
-                'SCOTT',
-                -- Oracle功能账户（根据官方文档）
-                'CTXSYS', 'EXFSYS', 'MDDATA', 'APPQOSSYS', 'OUTLN', 'DIP', 'TSMSYS', 'WMSYS', 
-                'XDB', 'ANONYMOUS', 'ORDPLUGINS', 'ORDSYS', 'SI_INFORMTN_SCHEMA', 'MDSYS', 
-                'OLAPSYS', 'SPATIAL_CSW_ADMIN_USR', 'SPATIAL_WFS_ADMIN_USR', 'APEX_PUBLIC_USER', 
-                'APEX_030200', 'FLOWS_FILES', 'HR', 'OE', 'PM', 'IX', 'SH', 'BI', 'DEMO', 
-                'ADMIN', 'AUDSYS', 'GSMADMIN_INTERNAL', 'GSMCATUSER', 'GSMUSER', 'LBACSYS', 
-                'OJVMSYS', 'ORACLE_OCM', 'ORDDATA', 'ORDPLUGINS', 'ORDS_METADATA', 
-                'ORDS_PUBLIC_USER', 'PDBADMIN', 'RDSADMIN', 'REMOTE_SCHEDULER_AGENT', 
-                'SYSBACKUP', 'SYSDG', 'SYSKM', 'SYSRAC', 'SYS$UMF', 'XS$NULL', 'OWBSYS', 
-                'OWBSYS_AUDIT'
-            )
-            -- 排除系统模式账户
-            AND username NOT LIKE 'SYS$%'
-            AND username NOT LIKE 'GSM%'
-            AND username NOT LIKE 'XDB%'
-            AND username NOT LIKE 'APEX%'
-            AND username NOT LIKE 'ORD%'
-            AND username NOT LIKE 'SPATIAL_%'
+            WHERE {filter_conditions}
             ORDER BY username
         """
         )
@@ -1155,7 +1143,7 @@ class AccountSyncService:
                 )
                 db.session.delete(local_account)
                 removed_count += 1
-
+        
         db.session.commit()
         cursor.close()
         
@@ -1402,7 +1390,7 @@ class AccountSyncService:
                 """,
                     {"username": username.upper()},
                 )
-
+                
                 for row in cursor.fetchall():
                     role, admin_option = row
                     permissions["roles"].append(role)
@@ -1462,7 +1450,7 @@ class AccountSyncService:
                 """,
                     {"username": username.upper()},
                 )
-
+                
                 for row in cursor.fetchall():
                     quota_type = row[0]
                     permissions["tablespace_quotas"].append(quota_type)

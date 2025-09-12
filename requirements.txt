@@ -653,3 +653,4 @@ wtforms==3.1.2 \
     #   flask-admin
     #   flask-wtf
     #   taifishingv4
+APScheduler==3.10.4
