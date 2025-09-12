@@ -49,6 +49,7 @@ class Instance(db.Model):
         db_type,
         host,
         port,
+        database_name=None,
         credential_id=None,
         description=None,
         tags=None,
@@ -62,6 +63,7 @@ class Instance(db.Model):
             db_type: 数据库类型
             host: 主机地址
             port: 端口号
+            database_name: 数据库名称
             credential_id: 凭据ID
             description: 描述
             tags: 标签
@@ -71,6 +73,7 @@ class Instance(db.Model):
         self.db_type = db_type
         self.host = host
         self.port = port
+        self.database_name = database_name
         self.credential_id = credential_id
         self.description = description
         self.tags = tags or []
