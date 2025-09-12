@@ -408,6 +408,10 @@ def register_blueprints(app):
     app.register_blueprint(
         account_classification_bp, url_prefix="/account-classification"
     )
+    
+    # 注册用户管理蓝图
+    from app.routes.user_management import user_management_bp
+    app.register_blueprint(user_management_bp)
 
 
 def configure_logging(app):
