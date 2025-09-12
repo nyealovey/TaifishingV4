@@ -1,4 +1,0 @@
-name,db_type,host,port,environment,description,credential_id
-mysql-prod-01,mysql,10.10.100.207,3306,production,生产环境MySQL主库,1
-sqlserver-dev-01,sqlserver,10.10.14.142,1433,development,开发环境SQL Server,2
-postgres-test-01,postgresql,10.10.102.180,5432,testing,测试环境PostgreSQL,3
