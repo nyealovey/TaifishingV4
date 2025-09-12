@@ -3,8 +3,9 @@
 """
 
 from collections import defaultdict
+from typing import Any, Dict, List, Optional, Union, Tuple, Generator
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for, Response
 from flask_login import current_user, login_required
 
 from app import db
@@ -19,7 +20,7 @@ account_sync_bp = Blueprint("account_sync", __name__)
 
 @account_sync_bp.route("/")
 @login_required
-def sync_records():
+def sync_records() -> Union[str, Response]:
     """统一的同步记录页面"""
     # 获取查询参数
     page = request.args.get("page", 1, type=int)
@@ -63,7 +64,7 @@ def sync_records():
     manual_records = [r for r in all_records if r.sync_type == "manual"]
 
     # 聚合batch类型的记录（task类型已经是聚合记录，不需要再次聚合）
-    grouped = defaultdict(
+    grouped: Dict[str, Dict[str, Any]] = defaultdict(
         lambda: {
             "total_instances": 0,
             "success_count": 0,
@@ -127,7 +128,7 @@ def sync_records():
 
         # 创建聚合记录对象
         class AggregatedRecord:
-            def __init__(self, data, latest_time, sync_type_display):
+            def __init__(self, data: Dict[str, Any], latest_time: Any, sync_type_display: str) -> None:
                 self.sync_time = latest_time
                 self.sync_type = sync_type_display
                 self.status = "success" if data["failed_count"] == 0 else "failed"
@@ -144,7 +145,7 @@ def sync_records():
                 self.sync_records = data["sync_records"]  # 保存原始记录用于详情查看
                 self.is_aggregated = True
 
-            def get_record_ids(self):
+            def get_record_ids(self) -> List[int]:
                 """获取记录ID列表"""
                 return [record.id for record in self.sync_records]
 
@@ -171,7 +172,7 @@ def sync_records():
 
     # 创建分页对象
     class Pagination:
-        def __init__(self, items, page, per_page, total):
+        def __init__(self, items: List[Any], page: int, per_page: int, total: int) -> None:
             self.items = items
             self.page = page
             self.per_page = per_page
@@ -182,7 +183,7 @@ def sync_records():
             self.prev_num = page - 1 if page > 1 else None
             self.next_num = page + 1 if page < self.pages else None
 
-        def iter_pages(self, left_edge=2, right_edge=2, left_current=2, right_current=3):
+        def iter_pages(self, left_edge: int = 2, right_edge: int = 2, left_current: int = 2, right_current: int = 3) -> Generator[Optional[int], None, None]:
             """生成分页页码迭代器，与Flask-SQLAlchemy的Pagination兼容"""
             last = self.pages
             for num in range(1, last + 1):
@@ -241,7 +242,7 @@ def sync_records():
 
 @account_sync_bp.route("/sync-all", methods=["POST"])
 @login_required
-def sync_all_accounts():
+def sync_all_accounts() -> Union[str, Response, Tuple[Response, int]]:
     """同步所有实例的账户"""
     try:
         # 获取所有活跃实例
@@ -262,7 +263,7 @@ def sync_all_accounts():
                 if result["success"]:
                     success_count += 1
                     # 记录同步成功
-                    sync_record = SyncData(
+                    sync_record = SyncData(  # type: ignore
                         instance_id=instance.id,
                         sync_type="batch",
                         status="success",
@@ -276,7 +277,7 @@ def sync_all_accounts():
                 else:
                     failed_count += 1
                     # 记录同步失败
-                    sync_record = SyncData(
+                    sync_record = SyncData(  # type: ignore
                         instance_id=instance.id,
                         sync_type="batch",
                         status="failed",
@@ -297,7 +298,7 @@ def sync_all_accounts():
             except Exception as e:
                 failed_count += 1
                 # 记录同步失败
-                sync_record = SyncData(
+                sync_record = SyncData(  # type: ignore
                     instance_id=instance.id,
                     sync_type="batch",
                     status="failed",
@@ -360,11 +361,11 @@ def sync_all_accounts():
 
 @account_sync_bp.route("/sync-details-batch", methods=["GET"])
 @login_required
-def sync_details_batch():
+def sync_details_batch() -> Union[str, Response, Tuple[Response, int]]:
     """获取批量同步详情"""
     try:
         record_ids = request.args.get("record_ids", "").split(",")
-        record_ids = [int(rid) for rid in record_ids if rid.strip()]
+        record_ids = [int(rid) for rid in record_ids if rid.strip()]  # type: ignore
 
         if not record_ids:
             return jsonify({"success": False, "error": "没有提供记录ID"}), 400
@@ -436,7 +437,7 @@ def sync_details_batch():
 
 @account_sync_bp.route("/sync-details/<sync_id>")
 @login_required
-def sync_details(sync_id):
+def sync_details(sync_id: int) -> Union[str, Response, Tuple[Response, int]]:
     """同步详情页面"""
     try:
         record = SyncData.query.get_or_404(sync_id)
