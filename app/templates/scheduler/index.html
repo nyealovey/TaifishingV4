@@ -247,7 +247,7 @@ function loadJobs() {
         },
         error: function(xhr) {
             $('#loadingRow').hide();
-            if (xhr.status === 401 || xhr.status === 403) {
+            if (xhr.status === 401 || xhr.status === 403 || xhr.status === 302) {
                 showAlert('请先登录或检查管理员权限', 'warning');
                 // 重定向到登录页面
                 window.location.href = '{{ url_for("auth.login") }}';
@@ -352,7 +352,7 @@ function createJob() {
             }
         },
         error: function(xhr) {
-            if (xhr.status === 401 || xhr.status === 403) {
+            if (xhr.status === 401 || xhr.status === 403 || xhr.status === 302) {
                 showAlert('请先登录或检查管理员权限', 'warning');
                 // 重定向到登录页面
                 window.location.href = '{{ url_for("auth.login") }}';
