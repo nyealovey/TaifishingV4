@@ -38,7 +38,7 @@ class DatabaseConnection(ABC):
         pass
     
     @abstractmethod
-    def execute_query(self, query: str, params: Optional[Dict] = None) -> Any:
+    def execute_query(self, query: str, params: Optional[tuple] = None) -> Any:
         """执行查询"""
         pass
     
@@ -110,7 +110,7 @@ class MySQLConnection(DatabaseConnection):
         finally:
             self.disconnect()
     
-    def execute_query(self, query: str, params: Optional[Dict] = None) -> Any:
+    def execute_query(self, query: str, params: Optional[tuple] = None) -> Any:
         """执行MySQL查询"""
         if not self.is_connected:
             if not self.connect():
@@ -189,7 +189,7 @@ class PostgreSQLConnection(DatabaseConnection):
         finally:
             self.disconnect()
     
-    def execute_query(self, query: str, params: Optional[Dict] = None) -> Any:
+    def execute_query(self, query: str, params: Optional[tuple] = None) -> Any:
         """执行PostgreSQL查询"""
         if not self.is_connected:
             if not self.connect():
@@ -270,7 +270,7 @@ class SQLServerConnection(DatabaseConnection):
         finally:
             self.disconnect()
     
-    def execute_query(self, query: str, params: Optional[Dict] = None) -> Any:
+    def execute_query(self, query: str, params: Optional[tuple] = None) -> Any:
         """执行SQL Server查询"""
         if not self.is_connected:
             if not self.connect():
@@ -380,7 +380,7 @@ class OracleConnection(DatabaseConnection):
         finally:
             self.disconnect()
     
-    def execute_query(self, query: str, params: Optional[Dict] = None) -> Any:
+    def execute_query(self, query: str, params: Optional[tuple] = None) -> Any:
         """执行Oracle查询"""
         if not self.is_connected:
             if not self.connect():

@@ -99,7 +99,9 @@ class MySQLPermissionQuery(PermissionQuery):
                 ORDER BY PRIVILEGE_TYPE
             """
             
-            grantee = f"'{account.username}'@'{account.host or '%'}'"
+            # 处理host字段为空的情况
+            host = account.host if account.host and account.host.strip() else ''
+            grantee = f"'{account.username}'@'{host}'"
             results = connection.execute_query(query, (grantee,))
             
             return [
@@ -135,7 +137,9 @@ class MySQLPermissionQuery(PermissionQuery):
                 ORDER BY TABLE_SCHEMA
             """
             
-            grantee = f"'{account.username}'@'{account.host or '%'}'"
+            # 处理host字段为空的情况
+            host = account.host if account.host and account.host.strip() else ''
+            grantee = f"'{account.username}'@'{host}'"
             results = connection.execute_query(query, (grantee,))
             
             return [
@@ -170,7 +174,9 @@ class MySQLPermissionQuery(PermissionQuery):
                 ORDER BY TABLE_NAME
             """
             
-            grantee = f"'{account.username}'@'{account.host or '%'}'"
+            # 处理host字段为空的情况
+            host = account.host if account.host and account.host.strip() else ''
+            grantee = f"'{account.username}'@'{host}'"
             results = connection.execute_query(query, (grantee, database))
             
             return [
@@ -560,7 +566,7 @@ class OraclePermissionQuery(PermissionQuery):
                     privilege,
                     admin_option
                 FROM user_sys_privs
-                WHERE username = %s
+                WHERE username = :1
                 ORDER BY privilege
             """
             
@@ -594,7 +600,7 @@ class OraclePermissionQuery(PermissionQuery):
                     granted_role,
                     admin_option
                 FROM user_role_privs
-                WHERE username = %s
+                WHERE username = :1
                 ORDER BY granted_role
             """
             
@@ -628,7 +634,7 @@ class OraclePermissionQuery(PermissionQuery):
                     privilege,
                     grantable
                 FROM user_tab_privs
-                WHERE grantee = %s
+                WHERE grantee = :1
                 ORDER BY owner, table_name, privilege
             """
             
