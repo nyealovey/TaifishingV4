@@ -66,10 +66,12 @@ def sync_records():
     all_records = query.order_by(SyncData.sync_time.desc()).all()
     
     # 分离需要聚合的记录和单独显示的记录
-    batch_task_records = [r for r in all_records if r.sync_type in ["batch", "task"]]
+    # task类型的记录已经是聚合记录，不需要再次聚合
+    batch_records = [r for r in all_records if r.sync_type == "batch"]
+    task_records = [r for r in all_records if r.sync_type == "task"]
     manual_records = [r for r in all_records if r.sync_type == "manual"]
     
-    # 聚合batch和task类型的记录
+    # 聚合batch类型的记录（task类型已经是聚合记录，不需要再次聚合）
     grouped = defaultdict(
         lambda: {
             "total_instances": 0,
@@ -86,7 +88,7 @@ def sync_records():
         }
     )
     
-    for record in batch_task_records:
+    for record in batch_records:
         # 使用分钟级精度作为分组键，相同分钟的同步记录为一组
         time_key = record.sync_time.strftime("%Y-%m-%d %H:%M")
         
@@ -168,8 +170,12 @@ def sync_records():
     for record in manual_records:
         record.is_aggregated = False
     
-    # 合并聚合记录和手动记录
-    all_display_records = aggregated_records + manual_records
+    # 处理task记录，直接显示原始值（已经是聚合记录）
+    for record in task_records:
+        record.is_aggregated = False
+    
+    # 合并聚合记录、手动记录和task记录
+    all_display_records = aggregated_records + manual_records + task_records
     
     # 按时间排序
     all_display_records.sort(key=lambda x: x.sync_time, reverse=True)
