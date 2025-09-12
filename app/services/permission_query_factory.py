@@ -400,6 +400,29 @@ class SQLServerPermissionQuery(PermissionQuery):
             global_perms = self.get_global_permissions(account)
             database_perms = self.get_database_permissions(account)
             
+            # 分离SQL Server权限类型
+            server_roles = []
+            database_roles = {}
+            
+            for perm in global_perms:
+                if perm.get("type") == "SERVER_ROLE":
+                    server_roles.append({
+                        "role": perm["name"],
+                        "type": perm.get("type_desc", "SERVER_ROLE")
+                    })
+            
+            for perm in database_perms:
+                db_name = perm.get("database", "default")
+                if db_name not in database_roles:
+                    database_roles[db_name] = []
+                
+                roles = perm.get("roles", [])
+                for role in roles:
+                    database_roles[db_name].append({
+                        "role": role["name"],
+                        "type": role.get("type_desc", "DATABASE_ROLE")
+                    })
+            
             return {
                 "success": True,
                 "account": {
@@ -409,8 +432,8 @@ class SQLServerPermissionQuery(PermissionQuery):
                     "plugin": account.plugin
                 },
                 "permissions": {
-                    "global": global_perms,
-                    "database": database_perms
+                    "server_roles": server_roles,
+                    "database_roles": database_roles
                 }
             }
         except Exception as e:
@@ -442,7 +465,9 @@ class SQLServerPermissionQuery(PermissionQuery):
             
             return [
                 {
-                    "privilege": row[0],
+                    "name": row[0],
+                    "type": "SERVER_ROLE",
+                    "type_desc": row[1],
                     "granted": True,
                     "grantable": False
                 }
@@ -483,12 +508,16 @@ class SQLServerPermissionQuery(PermissionQuery):
                 
                 if db_name not in db_permissions:
                     db_permissions[db_name] = []
-                db_permissions[db_name].append(role_name)
+                db_permissions[db_name].append({
+                    "name": role_name,
+                    "type": "DATABASE_ROLE",
+                    "type_desc": "DATABASE_ROLE"
+                })
             
             return [
                 {
                     "database": db_name,
-                    "privileges": roles
+                    "roles": roles
                 }
                 for db_name, roles in db_permissions.items()
             ]
