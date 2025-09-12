@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+
+{% block title %}数据库类型管理{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-database me-2"></i>数据库类型管理
+                    </h3>
+                    <div>
+                        <button type="button" class="btn btn-outline-primary me-2" onclick="initDefaults()">
+                            <i class="fas fa-download me-1"></i>初始化默认类型
+                        </button>
+                        <a href="{{ url_for('database_types.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>添加类型
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="databaseTypesTable">
+                            <thead>
+                                <tr>
+                                    <th>排序</th>
+                                    <th>图标</th>
+                                    <th>名称</th>
+                                    <th>显示名称</th>
+                                    <th>驱动</th>
+                                    <th>默认端口</th>
+                                    <th>特性</th>
+                                    <th>状态</th>
+                                    <th>类型</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for config in types %}
+                                <tr data-type-id="{{ config.id }}">
+                                    <td>
+                                        <span class="badge bg-secondary">{{ config.sort_order }}</span>
+                                    </td>
+                                    <td>
+                                        <i class="fas {{ config.icon }} text-{{ config.color }}"></i>
+                                    </td>
+                                    <td>
+                                        <code>{{ config.name }}</code>
+                                    </td>
+                                    <td>
+                                        <strong>{{ config.display_name }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ config.driver }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ config.default_port }}</span>
+                                    </td>
+                                    <td>
+                                        {% for feature in config.features_list %}
+                                        <span class="badge bg-light text-dark me-1">{{ feature }}</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if config.is_active else 'danger' }}">
+                                            {{ '启用' if config.is_active else '禁用' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'warning' if config.is_system else 'primary' }}">
+                                            {{ '系统' if config.is_system else '自定义' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    onclick="editType({{ config.id }})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-{{ 'success' if not config.is_active else 'warning' }}" 
+                                                    onclick="toggleStatus({{ config.id }})">
+                                                <i class="fas fa-{{ 'check' if not config.is_active else 'times' }}"></i>
+                                            </button>
+                                            {% if not config.is_system %}
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="deleteType({{ config.id }}, '{{ config.display_name }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑模态框 -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">编辑数据库类型</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editTypeId" name="id">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editName" class="form-label">类型名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editName" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editDisplayName" class="form-label">显示名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editDisplayName" name="display_name" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editDriver" class="form-label">驱动名称 <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editDriver" name="driver" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editPort" class="form-label">默认端口 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="editPort" name="default_port" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editSchema" class="form-label">默认Schema <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editSchema" name="default_schema" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editTimeout" class="form-label">连接超时(秒)</label>
+                                <input type="number" class="form-control" id="editTimeout" name="connection_timeout" value="30">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editIcon" class="form-label">图标类名</label>
+                                <input type="text" class="form-control" id="editIcon" name="icon" placeholder="fa-database">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editColor" class="form-label">主题颜色</label>
+                                <select class="form-select" id="editColor" name="color">
+                                    <option value="primary">Primary</option>
+                                    <option value="secondary">Secondary</option>
+                                    <option value="success">Success</option>
+                                    <option value="info">Info</option>
+                                    <option value="warning">Warning</option>
+                                    <option value="danger">Danger</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">描述信息</label>
+                        <textarea class="form-control" id="editDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editFeatures" class="form-label">特性列表 (每行一个)</label>
+                        <textarea class="form-control" id="editFeatures" name="features" rows="3" 
+                                  placeholder="replication&#10;partitioning&#10;json"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="editActive" name="is_active">
+                                <label class="form-check-label" for="editActive">启用</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editSortOrder" class="form-label">排序顺序</label>
+                                <input type="number" class="form-control" id="editSortOrder" name="sort_order" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveEdit()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 编辑数据库类型
+function editType(typeId) {
+    fetch(`/database-types/api/list`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const config = data.data.find(item => item.id === typeId);
+                if (config) {
+                    // 填充表单
+                    document.getElementById('editTypeId').value = config.id;
+                    document.getElementById('editName').value = config.name;
+                    document.getElementById('editDisplayName').value = config.display_name;
+                    document.getElementById('editDriver').value = config.driver;
+                    document.getElementById('editPort').value = config.default_port;
+                    document.getElementById('editSchema').value = config.default_schema;
+                    document.getElementById('editTimeout').value = config.connection_timeout;
+                    document.getElementById('editIcon').value = config.icon;
+                    document.getElementById('editColor').value = config.color;
+                    document.getElementById('editDescription').value = config.description || '';
+                    document.getElementById('editFeatures').value = config.features.join('\n');
+                    document.getElementById('editActive').checked = config.is_active;
+                    document.getElementById('editSortOrder').value = config.sort_order;
+                    
+                    // 显示模态框
+                    new bootstrap.Modal(document.getElementById('editModal')).show();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('获取数据失败');
+        });
+}
+
+// 保存编辑
+function saveEdit() {
+    const form = document.getElementById('editForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // 处理特性列表
+    data.features = data.features.split('\n').filter(f => f.trim());
+    
+    fetch(`/database-types/${data.id}/edit`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert('保存成功');
+            location.reload();
+        } else {
+            alert('保存失败: ' + result.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('保存失败');
+    });
+}
+
+// 切换状态
+function toggleStatus(typeId) {
+    if (confirm('确定要切换此数据库类型的启用状态吗？')) {
+        fetch(`/database-types/${typeId}/toggle`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert(result.message);
+                location.reload();
+            } else {
+                alert('操作失败: ' + result.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('操作失败');
+        });
+    }
+}
+
+// 删除数据库类型
+function deleteType(typeId, displayName) {
+    if (confirm(`确定要删除数据库类型 "${displayName}" 吗？\n\n注意：如果有实例正在使用此类型，将无法删除。`)) {
+        fetch(`/database-types/${typeId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('删除成功');
+                location.reload();
+            } else {
+                alert('删除失败: ' + result.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('删除失败');
+        });
+    }
+}
+
+// 初始化默认类型
+function initDefaults() {
+    if (confirm('确定要初始化默认数据库类型吗？\n\n这将创建MySQL、PostgreSQL、SQL Server、Oracle等默认类型。')) {
+        fetch('/database-types/init-defaults', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('初始化成功');
+                location.reload();
+            } else {
+                alert('初始化失败: ' + result.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('初始化失败');
+        });
+    }
+}
+</script>
+{% endblock %}

@@ -86,6 +86,7 @@ dependencies = [
     "cffi==1.17.1",
     "blinker==1.9.0",
     "apscheduler==3.10.4",
+    "bleach>=6.2.0",
 ]
 
 [project.optional-dependencies]

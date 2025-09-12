@@ -57,6 +57,150 @@
 | **SQL Server** | pymssql | 2.2.11 | ✅ 完全支持 | 服务器角色、服务器权限、数据库角色、数据库权限 |
 | **Oracle** | python-oracledb | 2.0.0 | ✅ 完全支持 | 系统权限、角色、表空间权限、表空间配额 |
 
+### 数据库类型抽象架构
+
+#### 设计目标
+- **统一管理**: 集中管理所有数据库类型配置
+- **动态扩展**: 支持通过界面动态添加新数据库类型
+- **类型安全**: 使用枚举和验证确保数据一致性
+- **配置复用**: 避免重复配置信息
+- **维护简单**: 修改配置只需在一个地方
+
+#### 核心组件
+
+##### 1. 数据库类型管理器 (DatabaseTypeManager)
+```python
+# 核心功能
+- 数据库类型配置管理
+- 支持状态控制
+- 特性标签管理
+- 排序和显示控制
+- 系统内置类型保护
+```
+
+##### 2. 连接工厂模式 (ConnectionFactory)
+```python
+# 设计模式
+- 抽象连接工厂基类
+- 具体数据库连接实现
+- 统一连接管理接口
+- 连接池管理
+- 连接测试和验证
+```
+
+##### 3. 权限查询抽象 (PermissionQueryFactory)
+```python
+# 权限管理
+- 统一权限查询接口
+- 数据库特定权限实现
+- 权限数据标准化
+- 权限规则管理
+```
+
+#### 数据库类型配置模型
+
+```mermaid
+erDiagram
+    DatabaseTypeConfig {
+        int id PK
+        string name UK "数据库类型名称"
+        string display_name "显示名称"
+        string driver "驱动名称"
+        int default_port "默认端口"
+        string default_schema "默认Schema"
+        int connection_timeout "连接超时"
+        text description "描述信息"
+        string icon "图标类名"
+        string color "主题颜色"
+        text features "特性列表(JSON)"
+        boolean is_active "是否启用"
+        boolean is_system "是否系统内置"
+        int sort_order "排序顺序"
+        datetime created_at "创建时间"
+        datetime updated_at "更新时间"
+    }
+    
+    Instance }o--|| DatabaseTypeConfig : uses
+    Task }o--|| DatabaseTypeConfig : targets
+```
+
+#### 系统架构更新
+
+```mermaid
+graph TB
+    subgraph "前端层"
+        A[Web浏览器] --> B[Bootstrap UI]
+        B --> C[JavaScript/AJAX]
+        C --> D[数据库类型管理界面]
+        C --> E[实例管理界面]
+        C --> F[任务管理界面]
+    end
+    
+    subgraph "应用层"
+        D --> G[Flask应用]
+        E --> G
+        F --> G
+        G --> H[路由控制器]
+        H --> I[业务逻辑层]
+        I --> J[服务层]
+        J --> K[数据库类型服务]
+        J --> L[连接工厂]
+        J --> M[权限查询工厂]
+    end
+    
+    subgraph "数据层"
+        J --> N[SQLAlchemy ORM]
+        N --> O[SQLite/PostgreSQL]
+        J --> P[Redis缓存]
+        J --> Q[文件存储]
+    end
+    
+    subgraph "数据库类型管理"
+        K --> R[DatabaseTypeConfig]
+        R --> S[系统内置类型]
+        R --> T[自定义类型]
+        L --> U[MySQL连接工厂]
+        L --> V[PostgreSQL连接工厂]
+        L --> W[SQL Server连接工厂]
+        L --> X[Oracle连接工厂]
+    end
+    
+    subgraph "外部数据库"
+        Y[PostgreSQL实例]
+        Z[MySQL实例]
+        AA[SQL Server实例]
+        BB[Oracle实例]
+        CC[其他数据库实例]
+    end
+    
+    U --> Z
+    V --> Y
+    W --> AA
+    X --> BB
+    L --> CC
+```
+
+#### 功能特性
+
+##### 数据库类型管理界面
+- **动态管理**: 通过界面添加、编辑、删除数据库类型
+- **系统保护**: 系统内置类型不能删除，只能修改部分字段
+- **状态控制**: 可以启用/禁用数据库类型
+- **排序管理**: 支持自定义排序顺序
+- **特性标识**: 支持为每个数据库类型添加特性标签
+- **使用检查**: 删除前检查是否有实例在使用
+
+##### 连接管理优化
+- **统一接口**: 所有数据库连接通过统一接口创建
+- **连接池**: 支持连接池管理，提高性能
+- **错误处理**: 统一的错误处理和重试机制
+- **连接测试**: 自动连接测试和验证
+
+##### 权限查询标准化
+- **统一格式**: 所有数据库权限查询返回统一格式
+- **类型安全**: 使用强类型确保数据一致性
+- **扩展性**: 易于添加新的数据库类型支持
+
 ### 系统架构图
 
 ```mermaid
