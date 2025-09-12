@@ -13,8 +13,8 @@ python -m venv venv
 source venv/bin/activate  # macOS/Linux
 # venv\Scripts\activate  # Windows
 
-# 3. 安装依赖
-pip install -r requirements.txt
+# 3. 安装依赖 (使用uv)
+uv sync
 
 # 4. 配置环境
 cp env.example .env
@@ -28,7 +28,7 @@ python scripts/create_admin_user.py
 redis-server  # 或使用Docker: docker run -d -p 6379:6379 redis:7.2.5
 
 # 7. 启动应用
-python app.py
+uv run python app.py
 ```
 
 ### Docker环境

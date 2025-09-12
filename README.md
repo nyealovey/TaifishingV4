@@ -24,11 +24,12 @@
   - ⚙️ 规则管理 - 灵活的权限规则配置
   - ✅ 权限准确性 - Oracle权限配置基于SYS账户实际权限，确保100%准确性
 - 🔑 **凭据管理** - 安全的数据库连接凭据存储
-- ⏰ **定时任务管理系统** - 高度可定制化的定时任务调度平台
-  - 🚀 快速创建内置任务 - 一键创建常用同步任务
-  - 📊 批量任务管理 - 支持批量启用/禁用/执行任务
-  - 📈 执行统计监控 - 详细的运行统计和成功率分析
+- ⏰ **定时任务管理系统** - 基于APScheduler的轻量级任务调度
+  - 🚀 内置任务管理 - 同步账户、清理日志等内置任务
+  - 📊 任务监控 - 详细的运行统计和成功率分析
   - 🔄 实时任务执行 - 支持立即执行和定时执行
+  - ⚙️ 任务配置 - 灵活的Cron表达式配置
+  - 💾 任务持久化 - SQLite数据库任务状态存储
 - 📈 **实时监控仪表板** - 系统状态和统计信息
 - 📝 **操作日志记录** - 完整的审计日志
 - 🚀 **RESTful API** - 完整的API接口
@@ -38,9 +39,10 @@
 ### 环境要求
 
 - Python 3.13+ (推荐使用 uv 管理)
-- Redis 6.0+
+- Redis 5.0+
 - SQLite 3.0+ (开发环境)
 - PostgreSQL 12+ (生产环境)
+- APScheduler 3.10+ (定时任务调度)
 
 ### 安装步骤
 
@@ -262,17 +264,41 @@ docker run -p 5001:5001 taifish
 ```
 TaifishV4/
 ├── app/                    # 应用主目录
-│   ├── models/            # 数据模型
-│   ├── routes/            # 路由控制器
+│   ├── models/            # 数据模型 (SQLAlchemy)
+│   ├── routes/            # 路由控制器 (Flask Blueprint)
 │   ├── services/          # 业务服务层
 │   ├── utils/             # 工具类
-│   └── templates/         # 模板文件
-├── doc/                   # 项目文档
+│   ├── templates/         # Jinja2模板文件
+│   ├── blueprints/        # Flask蓝图模块
+│   ├── middleware/        # 中间件
+│   ├── static/            # 静态文件
+│   ├── scheduler.py       # 定时任务调度器
+│   └── tasks.py           # 任务定义
+├── docs/                  # 项目文档 (重新组织)
+│   ├── architecture/      # 架构文档
+│   ├── database/          # 数据库文档
+│   ├── features/          # 功能特性文档
+│   ├── guides/            # 使用指南
+│   ├── project/           # 项目文档
+│   ├── reports/           # 报告文档
+│   ├── deployment/        # 部署文档
+│   ├── development/       # 开发文档
+│   ├── adr/               # 架构决策记录
+│   └── api/               # API文档
+├── sql/                   # SQL脚本目录 (统一管理)
+│   ├── init_postgresql.sql        # PostgreSQL初始化脚本
+│   ├── setup_*_monitor_user.sql   # 监控用户设置脚本
+│   └── README.md                  # SQL目录说明
 ├── docker/                # Docker配置
 ├── scripts/               # 脚本文件
 ├── tests/                 # 测试文件
 ├── userdata/              # 用户数据目录
+│   ├── taifish_dev.db     # 开发数据库
+│   ├── scheduler.db       # 定时任务数据库
+│   ├── logs/              # 日志文件
+│   └── exports/           # 导出文件
 ├── migrations/            # 数据库迁移
+├── config/                # 配置文件
 ├── requirements.txt       # Python依赖
 ├── app.py                 # 应用入口
 └── README.md             # 项目说明

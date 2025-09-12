@@ -7,14 +7,15 @@
 
 ### 主入口文件
 - `app.py` - Flask应用主入口文件
-- `main.py` - 备用主入口文件（可删除）
-- `celery_monitor.py` - Celery监控脚本
 
 ### 配置文件
 - `pyproject.toml` - 项目依赖配置（使用uv包管理器）
-- `requirements.txt` - 传统pip依赖文件（可删除）
+- `requirements.txt` - Python依赖文件
 - `uv.lock` - uv锁定文件
 - `env.example` - 环境变量示例文件
+- `config/` - 配置文件目录
+  - `database_filters.yaml` - 数据库过滤器配置
+  - `scheduler_tasks.yaml` - 定时任务配置
 
 ## 应用核心目录 (app/)
 
@@ -22,7 +23,8 @@
 - `app/__init__.py` - Flask应用初始化，蓝图注册，中间件配置
 - `app/config.py` - 应用配置管理
 - `app/constants.py` - 常量定义
-- `app/celery_config.py` - Celery异步任务配置
+- `app/scheduler.py` - APScheduler定时任务调度器
+- `app/tasks.py` - 任务定义
 
 ### 数据模型 (app/models/)
 - `app/models/__init__.py` - 模型初始化
