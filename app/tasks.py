@@ -91,38 +91,140 @@ def sync_accounts():
     """账户同步任务 - 同步所有数据库实例的账户"""
     from app import create_app
     from app.models.instance import Instance
+    from app.models.sync_data import SyncData
+    from app.utils.enhanced_logger import sync_logger, log_operation
+    from app import db
     
     app = create_app()
     with app.app_context():
         try:
             # 获取所有活跃的数据库实例
             instances = Instance.query.filter_by(is_active=True).all()
-            sync_count = 0
             total_instances = len(instances)
             
-            logger.info(f"开始同步所有账户，共 {total_instances} 个实例")
+            if not instances:
+                sync_logger.warning("没有找到活跃的数据库实例", "scheduler", source="定时任务")
+                return "没有找到活跃的数据库实例"
+            
+            sync_logger.info(f"定时任务开始同步所有账户，共 {total_instances} 个实例", "scheduler", source="定时任务")
+            
+            success_count = 0
+            failed_count = 0
+            total_synced_count = 0
+            total_added_count = 0
+            total_removed_count = 0
+            total_modified_count = 0
+            results = []
             
             for instance in instances:
                 try:
-                    logger.info(f"开始同步实例: {instance.name} (ID: {instance.id})")
-                    # 执行账户同步
-                    result = account_sync_service.sync_accounts(instance)
+                    sync_logger.info(f"开始同步实例: {instance.name} ({instance.db_type})", "scheduler", 
+                                   f"实例ID: {instance.id}", source="定时任务")
+                    
+                    # 执行账户同步，使用task类型
+                    result = account_sync_service.sync_accounts(instance, sync_type="task")
+                    
                     if result.get('success'):
+                        success_count += 1
                         instance_sync_count = result.get('synced_count', 0)
-                        sync_count += instance_sync_count
-                        logger.info(f"实例 {instance.name} 同步完成，同步了 {instance_sync_count} 个账户")
+                        total_synced_count += instance_sync_count
+                        total_added_count += result.get('added_count', 0)
+                        total_removed_count += result.get('removed_count', 0)
+                        total_modified_count += result.get('modified_count', 0)
+                        
+                        sync_logger.info(f"实例 {instance.name} 同步完成，同步了 {instance_sync_count} 个账户", 
+                                       "scheduler", f"实例ID: {instance.id}", source="定时任务")
+                        
+                        results.append({
+                            "instance_name": instance.name,
+                            "success": True,
+                            "message": result.get("message", "同步成功"),
+                            "synced_count": instance_sync_count,
+                        })
                     else:
-                        logger.warning(f"实例 {instance.name} 同步失败: {result.get('message', '未知错误')}")
+                        failed_count += 1
+                        error_msg = result.get('message', result.get('error', '未知错误'))
+                        sync_logger.warning(f"实例 {instance.name} 同步失败: {error_msg}", 
+                                          "scheduler", f"实例ID: {instance.id}", source="定时任务")
+                        
+                        results.append({
+                            "instance_name": instance.name,
+                            "success": False,
+                            "message": error_msg,
+                            "synced_count": 0,
+                        })
                         
                 except Exception as e:
-                    logger.error(f"实例 {instance.name} 同步异常: {e}")
+                    failed_count += 1
+                    sync_logger.error(f"实例 {instance.name} 同步异常: {e}", 
+                                    "scheduler", f"实例ID: {instance.id}", source="定时任务")
+                    
+                    results.append({
+                        "instance_name": instance.name,
+                        "success": False,
+                        "message": f"同步异常: {str(e)}",
+                        "synced_count": 0,
+                    })
             
-            logger.info(f"账户同步任务完成，总共同步了 {sync_count} 个账户，涉及 {total_instances} 个实例")
-            return f"同步了 {sync_count} 个账户，涉及 {total_instances} 个实例"
+            # 记录操作日志
+            log_operation(
+                operation_type="TASK_SYNC_ACCOUNTS_COMPLETE",
+                user_id=None,  # 定时任务没有用户ID
+                details={
+                    "total_instances": total_instances,
+                    "success_count": success_count,
+                    "failed_count": failed_count,
+                    "total_synced_count": total_synced_count,
+                    "total_added_count": total_added_count,
+                    "total_removed_count": total_removed_count,
+                    "total_modified_count": total_modified_count,
+                    "results": results,
+                },
+            )
+            
+            # 创建聚合的同步记录
+            sync_record = SyncData(
+                instance_id=None,  # 聚合记录没有单一实例ID
+                sync_type="task",
+                status="success" if failed_count == 0 else "failed",
+                message=f"定时任务同步完成，成功 {success_count} 个实例，失败 {failed_count} 个实例，总共同步 {total_synced_count} 个账户",
+                synced_count=total_synced_count,
+                added_count=total_added_count,
+                removed_count=total_removed_count,
+                modified_count=total_modified_count,
+                records_count=total_synced_count,
+                data={
+                    "total_instances": total_instances,
+                    "success_count": success_count,
+                    "failed_count": failed_count,
+                    "results": results,
+                }
+            )
+            db.session.add(sync_record)
+            db.session.commit()
+            
+            sync_logger.info(f"定时任务账户同步完成，总共同步了 {total_synced_count} 个账户，涉及 {total_instances} 个实例", 
+                           "scheduler", source="定时任务")
+            
+            return f"定时任务同步完成，成功 {success_count} 个实例，失败 {failed_count} 个实例，总共同步 {total_synced_count} 个账户"
             
         except Exception as e:
-            logger.error(f"账户同步任务失败: {e}")
-            return f"账户同步失败: {e}"
+            sync_logger.error(f"定时任务账户同步失败: {e}", "scheduler", source="定时任务")
+            
+            # 记录失败的同步记录
+            sync_record = SyncData(
+                instance_id=None,
+                sync_type="task",
+                status="failed",
+                message=f"定时任务同步失败: {str(e)}",
+                synced_count=0,
+                records_count=0,
+                data={"error": str(e)}
+            )
+            db.session.add(sync_record)
+            db.session.commit()
+            
+            return f"定时任务同步失败: {e}"
 
 
 def generate_reports():

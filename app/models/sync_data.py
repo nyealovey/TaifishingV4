@@ -13,7 +13,7 @@ class SyncData(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     sync_type = db.Column(db.String(50), nullable=False, index=True)
-    instance_id = db.Column(db.Integer, db.ForeignKey("instances.id"), nullable=False)
+    instance_id = db.Column(db.Integer, db.ForeignKey("instances.id"), nullable=True)
     task_id = db.Column(
         db.Integer, db.ForeignKey("tasks.id"), nullable=True, index=True
     )  # 关联任务ID
