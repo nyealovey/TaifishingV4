@@ -100,12 +100,12 @@
                                 <label for="database_name" class="form-label">数据库名称</label>
                                 <input type="text" class="form-control" id="database_name" name="database_name" 
                                        value="{{ instance.database_name or '' }}"
-                                       placeholder="例如: production, development, test">
+                                       placeholder="例如: mysql, postgres, master, orcl">
                                 <div class="form-text">
-                                    <strong>MySQL</strong>: 数据库名称 (如: production, development)<br>
-                                    <strong>PostgreSQL</strong>: 数据库名称 (如: postgres, myapp)<br>
-                                    <strong>SQL Server</strong>: 数据库名称 (如: master, mydb)<br>
-                                    <strong>Oracle</strong>: 服务名或SID (如: ORCL, PROD)
+                                    <strong>MySQL</strong>: 数据库名称 (默认: mysql)<br>
+                                    <strong>PostgreSQL</strong>: 数据库名称 (默认: postgres)<br>
+                                    <strong>SQL Server</strong>: 数据库名称 (默认: master)<br>
+                                    <strong>Oracle</strong>: 服务名或SID (默认: orcl)
                                 </div>
                             </div>
                         </div>
@@ -154,9 +154,10 @@
 
 {% block extra_js %}
 <script>
-// 根据数据库类型设置默认端口和显示相关字段
+// 根据数据库类型设置默认端口、数据库名称和显示相关字段
 document.getElementById('db_type').addEventListener('change', function() {
     const portInput = document.getElementById('port');
+    const databaseNameInput = document.getElementById('database_name');
     const oracleSidRow = document.getElementById('oracle-sid-row');
     const selectedOption = this.options[this.selectedIndex];
     const dbType = this.value;
@@ -164,6 +165,20 @@ document.getElementById('db_type').addEventListener('change', function() {
     // 使用动态的默认端口
     if (selectedOption && selectedOption.dataset.port) {
         portInput.value = selectedOption.dataset.port;
+    }
+    
+    // 设置默认数据库名称（仅在字段为空时设置）
+    if (!databaseNameInput.value) {
+        const defaultDatabaseNames = {
+            'mysql': 'mysql',
+            'postgresql': 'postgres',
+            'sqlserver': 'master',
+            'oracle': 'orcl'
+        };
+        
+        if (defaultDatabaseNames[dbType]) {
+            databaseNameInput.value = defaultDatabaseNames[dbType];
+        }
     }
     
     // 控制Oracle SID字段的显示
