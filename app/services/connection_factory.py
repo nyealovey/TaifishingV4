@@ -309,35 +309,41 @@ class OracleConnection(DatabaseConnection):
             # 构建连接字符串
             database_name = self.instance.database_name or DatabaseTypeUtils.get_database_type_config("oracle").default_schema or "ORCL"
             
+            # 优先使用服务名格式，因为大多数现代Oracle配置都使用服务名
             if "." in database_name:
-                # 服务名格式
+                # Service Name格式: host:port/service_name
                 dsn = f"{self.instance.host}:{self.instance.port}/{database_name}"
             else:
-                # SID格式
-                dsn = f"{self.instance.host}:{self.instance.port}:{database_name}"
+                # 对于简单名称，优先尝试服务名格式，如果失败再尝试SID格式
+                dsn = f"{self.instance.host}:{self.instance.port}/{database_name}"
             
-            # 尝试使用thin模式连接（不需要Oracle客户端）
+            # 直接使用Thick模式连接（用户已安装Oracle客户端）
             try:
+                # 初始化Thick模式（指定Oracle Instant Client路径）
+                import os
+                current_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                oracle_client_path = os.path.join(current_dir, "oracle_client", "lib")
+                oracledb.init_oracle_client(lib_dir=oracle_client_path)
                 self.connection = oracledb.connect(
                     user=self.instance.credential.username if self.instance.credential else "",
                     password=password,
-                    dsn=dsn,
-                    mode=oracledb.MODE_SYSDBA if self.instance.credential.username.upper() == 'SYS' else oracledb.DEFAULT_AUTH
+                    dsn=dsn
                 )
-            except Exception:
-                # 如果thin模式失败，尝试使用thick模式
-                try:
-                    # 初始化Oracle客户端
-                    oracledb.init_oracle_client()
-                    self.connection = oracledb.connect(
-                        user=self.instance.credential.username if self.instance.credential else "",
-                        password=password,
-                        dsn=dsn,
-                        mode=oracledb.MODE_SYSDBA if self.instance.credential.username.upper() == 'SYS' else oracledb.DEFAULT_AUTH
-                    )
-                except Exception as e2:
-                    # 如果都失败，抛出原始错误
-                    raise e2
+            except Exception as e:
+                # 如果服务名格式失败，尝试SID格式
+                if not dsn.endswith(f":{database_name}") and not "." in database_name:
+                    try:
+                        sid_dsn = f"{self.instance.host}:{self.instance.port}:{database_name}"
+                        self.connection = oracledb.connect(
+                            user=self.instance.credential.username if self.instance.credential else "",
+                            password=password,
+                            dsn=sid_dsn
+                        )
+                    except Exception as sid_error:
+                        # 如果SID格式也失败，抛出原始错误
+                        raise e
+                else:
+                    raise e
             
             self.is_connected = True
             return True
