@@ -207,6 +207,16 @@ class PostgreSQLPermissionQuery(PermissionQuery):
             global_perms = self.get_global_permissions(account)
             database_perms = self.get_database_permissions(account)
             
+            # 分离预定义角色和角色属性
+            predefined_roles = []
+            role_attributes = []
+            
+            for perm in global_perms:
+                if perm["privilege"] in ["SUPERUSER", "CREATEROLE", "CREATEDB", "REPLICATION"]:
+                    role_attributes.append(perm["privilege"])
+                else:
+                    predefined_roles.append(perm["privilege"])
+            
             return {
                 "success": True,
                 "account": {
@@ -216,7 +226,8 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                     "plugin": account.plugin
                 },
                 "permissions": {
-                    "global": global_perms,
+                    "predefined_roles": predefined_roles,
+                    "role_attributes": role_attributes,
                     "database": database_perms
                 }
             }
@@ -234,6 +245,8 @@ class PostgreSQLPermissionQuery(PermissionQuery):
             if not connection or not connection.connect():
                 return []
             
+            permissions = []
+            
             # 查询角色属性（全局权限）
             query = """
                 SELECT 
@@ -250,20 +263,33 @@ class PostgreSQLPermissionQuery(PermissionQuery):
             
             results = connection.execute_query(query, (account.username,))
             
-            if not results:
-                return []
+            if results:
+                row = results[0]
+                
+                if row[1]:  # is_superuser
+                    permissions.append({"privilege": "SUPERUSER", "granted": True, "grantable": False})
+                if row[3]:  # can_create_role
+                    permissions.append({"privilege": "CREATEROLE", "granted": True, "grantable": False})
+                if row[4]:  # can_create_db
+                    permissions.append({"privilege": "CREATEDB", "granted": True, "grantable": False})
+                if row[6]:  # can_replicate
+                    permissions.append({"privilege": "REPLICATION", "granted": True, "grantable": False})
             
-            row = results[0]
-            permissions = []
+            # 查询预定义角色
+            predefined_roles_query = """
+                SELECT 
+                    r.rolname as role_name
+                FROM pg_roles r
+                JOIN pg_auth_members m ON r.oid = m.roleid
+                JOIN pg_roles u ON m.member = u.oid
+                WHERE u.rolname = %s
+                AND r.rolname IN ('pg_read_all_data', 'pg_write_all_data', 'pg_monitor', 'pg_read_all_settings', 'pg_read_all_stats', 'pg_stat_scan_tables', 'pg_signal_backend', 'pg_read_server_files', 'pg_write_server_files', 'pg_execute_server_program')
+            """
             
-            if row[1]:  # is_superuser
-                permissions.append({"privilege": "SUPERUSER", "granted": True, "grantable": False})
-            if row[3]:  # can_create_role
-                permissions.append({"privilege": "CREATEROLE", "granted": True, "grantable": False})
-            if row[4]:  # can_create_db
-                permissions.append({"privilege": "CREATEDB", "granted": True, "grantable": False})
-            if row[6]:  # can_replicate
-                permissions.append({"privilege": "REPLICATION", "granted": True, "grantable": False})
+            predefined_results = connection.execute_query(predefined_roles_query, (account.username,))
+            
+            for row in predefined_results:
+                permissions.append({"privilege": row[0], "granted": True, "grantable": False})
             
             return permissions
         except Exception as e:
