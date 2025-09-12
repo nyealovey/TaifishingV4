@@ -13,6 +13,7 @@ from app.utils.enhanced_logger import db_logger, log_database_error, log_databas
 from app.services.database_filter_manager import database_filter_manager
 from app.utils.database_type_utils import DatabaseTypeUtils
 from app.services.connection_factory import ConnectionFactory
+from app.services.permission_query_factory import PermissionQueryFactory
 
 
 class DatabaseService:
@@ -1941,19 +1942,16 @@ class DatabaseService:
             Dict: 权限信息
         """
         try:
-            if instance.db_type == "mysql":
-                return self._get_mysql_permissions(instance, account)
-            elif instance.db_type == "postgresql":
-                return self._get_postgresql_permissions(instance, account)
-            elif instance.db_type == "sqlserver":
-                return self._get_sqlserver_permissions(instance, account)
-            elif instance.db_type == "oracle":
-                return self._get_oracle_permissions(instance, account)
+            # 使用权限查询工厂获取权限
+            result = PermissionQueryFactory.get_account_permissions(instance, account)
+            
+            if result.get("success"):
+                return result
             else:
                 return {
                     "global": [],
                     "database": [],
-                    "error": f"暂不支持 {instance.db_type} 数据库的权限查询",
+                    "error": result.get("error", "获取权限失败")
                 }
         except Exception as e:
             return {"global": [], "database": [], "error": f"获取权限失败: {str(e)}"}
