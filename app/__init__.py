@@ -385,7 +385,6 @@ def register_blueprints(app):
     from app.routes.admin import admin_bp
     from app.routes.account_classification import account_classification_bp
     from app.routes.database_types import database_types_bp
-    from app.blueprints.config_management import config_management_bp
 
     # 注册蓝图
     app.register_blueprint(main_bp)
@@ -412,8 +411,6 @@ def register_blueprints(app):
     # 注册数据库类型管理蓝图
     app.register_blueprint(database_types_bp)
     
-    # 注册配置管理蓝图
-    app.register_blueprint(config_management_bp)
     
     # 注册用户管理蓝图
     from app.routes.user_management import user_management_bp
@@ -495,7 +492,7 @@ def configure_template_filters(app):
 app = create_app()
 
 # 导入模型（确保模型被注册）
-from app.models import user, instance, credential, account, task, log, global_param, database_type_config
+from app.models import user, instance, credential, account, task, log, database_type_config
 
 if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "False").lower() == "true"

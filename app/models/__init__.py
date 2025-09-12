@@ -11,7 +11,6 @@ from .credential import Credential
 from .account import Account
 from .task import Task
 from .log import Log
-from .global_param import GlobalParam
 from .sync_data import SyncData
 from .account_change import AccountChange
 from .account_classification import (
@@ -29,7 +28,6 @@ __all__ = [
     "Account",
     "Task",
     "Log",
-    "GlobalParam",
     "SyncData",
     "AccountChange",
     "AccountClassification",

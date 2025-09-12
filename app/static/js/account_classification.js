@@ -256,52 +256,71 @@ function displayRules(rulesByDbType) {
     const container = document.getElementById('rulesList');
     
     if (!rulesByDbType || Object.keys(rulesByDbType).length === 0) {
-        container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-info-circle me-2"></i>暂无规则</div>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-info-circle"></i>
+                <h5 class="mb-2">暂无规则</h5>
+                <p class="mb-0">点击"新建规则"按钮创建第一个分类规则</p>
+            </div>
+        `;
         return;
     }
     
     let html = '';
     for (const [dbType, rules] of Object.entries(rulesByDbType)) {
+        // 数据库类型图标映射
+        const dbIcons = {
+            'mysql': 'fas fa-database',
+            'postgresql': 'fas fa-elephant',
+            'sqlserver': 'fas fa-server',
+            'oracle': 'fas fa-database'
+        };
+        
+        const dbIcon = dbIcons[dbType] || 'fas fa-database';
+        
         html += `
-            <div class="mb-4">
+            <div class="rule-group-card">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-database me-2"></i>${dbType.toUpperCase()} 规则
-                            <span class="badge bg-primary ms-2">${rules.length}</span>
+                        <h5>
+                            <i class="${dbIcon} me-2 text-primary"></i>${dbType.toUpperCase()} 规则
+                            <span class="badge bg-primary ms-2 rounded-pill">${rules.length}</span>
                         </h5>
                     </div>
                     <div class="card-body">
                         ${rules.length > 0 ? `
-                            <div class="row">
+                            <div class="rule-list">
                                 ${rules.map(rule => `
-                                    <div class="col-md-6 mb-3">
-                                        <div class="card h-100 rule-card">
+                                    <div class="rule-item">
+                                        <div class="rule-card">
                                             <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-start">
-                                                    <div class="flex-grow-1">
-                                                        <h6 class="card-title">${rule.rule_name}</h6>
-                                                        <p class="card-text small mb-2">
-                                                            <i class="fas fa-tag me-1"></i>
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-4">
+                                                        <h6 class="card-title mb-0">${rule.rule_name}</h6>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="d-flex align-items-center justify-content-center flex-wrap gap-1">
                                                             <span class="rule-classification-badge ${getClassificationClass(rule.classification_name)}">${rule.classification_name || '未分类'}</span>
-                                                        </p>
-                                                        <div class="d-flex align-items-center">
-                                                            <span class="badge bg-secondary me-2">${rule.db_type.toUpperCase()}</span>
-                                                            <button class="btn btn-sm btn-info me-2" onclick="viewMatchedAccounts(${rule.id})" title="查看匹配的账户">
-                                                                <i class="fas fa-users me-1"></i>匹配 ${rule.matched_accounts_count || 0} 个账户
-                                                            </button>
+                                                            <span class="db-type-badge">${rule.db_type.toUpperCase()}</span>
                                                         </div>
                                                     </div>
-                                                    <div class="btn-group btn-group-sm">
-                                                        <button class="btn btn-outline-info" onclick="viewRule(${rule.id})" title="查看">
-                                                            <i class="fas fa-eye"></i>
+                                                    <div class="col-md-2">
+                                                        <button class="btn matched-accounts-btn" onclick="viewMatchedAccounts(${rule.id})" title="查看匹配的账户">
+                                                            <i class="fas fa-users me-1"></i>${rule.matched_accounts_count || 0} 个账户
                                                         </button>
-                                                        <button class="btn btn-outline-primary" onclick="editRule(${rule.id})" title="编辑">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <button class="btn btn-outline-danger" onclick="deleteRule(${rule.id})" title="删除">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="rule-actions">
+                                                            <button class="btn btn-outline-info" onclick="viewRule(${rule.id})" title="查看详情">
+                                                                <i class="fas fa-eye"></i>
+                                                            </button>
+                                                            <button class="btn btn-outline-primary" onclick="editRule(${rule.id})" title="编辑规则">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <button class="btn btn-outline-danger" onclick="deleteRule(${rule.id})" title="删除规则">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -310,8 +329,10 @@ function displayRules(rulesByDbType) {
                                 `).join('')}
                             </div>
                         ` : `
-                            <div class="text-center text-muted py-3">
-                                <i class="fas fa-info-circle me-2"></i>暂无${dbType.toUpperCase()}规则
+                            <div class="text-center text-muted py-5">
+                                <i class="fas fa-info-circle fa-3x mb-3 text-muted"></i>
+                                <p class="mb-0">暂无${dbType.toUpperCase()}规则</p>
+                                <small class="text-muted">点击"新建规则"按钮创建第一个规则</small>
                             </div>
                         `}
                     </div>
