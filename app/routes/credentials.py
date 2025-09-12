@@ -7,6 +7,7 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import login_required, current_user
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.utils.decorators import view_required, create_required, update_required, delete_required
 from app.models.credential import Credential
 from app.models.instance import Instance
 from app import db
@@ -27,6 +28,7 @@ credentials_bp = Blueprint("credentials", __name__)
 
 @credentials_bp.route("/")
 @login_required
+@view_required
 def index():
     """凭据管理首页"""
     page = request.args.get("page", 1, type=int)
@@ -106,6 +108,7 @@ def index():
 
 @credentials_bp.route("/create", methods=["GET", "POST"])
 @login_required
+@create_required
 def create():
     """创建凭据"""
     if request.method == "POST":
@@ -228,6 +231,7 @@ def create():
 
 @credentials_bp.route("/<int:credential_id>")
 @login_required
+@view_required
 def detail(credential_id):
     """凭据详情"""
     credential = Credential.query.get_or_404(credential_id)
@@ -240,6 +244,7 @@ def detail(credential_id):
 
 @credentials_bp.route("/<int:credential_id>/edit", methods=["GET", "POST"])
 @login_required
+@update_required
 def edit(credential_id):
     """编辑凭据"""
     credential = Credential.query.get_or_404(credential_id)
@@ -363,6 +368,7 @@ def edit(credential_id):
 
 @credentials_bp.route("/<int:credential_id>/toggle", methods=["POST"])
 @login_required
+@update_required
 def toggle(credential_id):
     """启用/禁用凭据"""
     credential = Credential.query.get_or_404(credential_id)
@@ -408,6 +414,7 @@ def toggle(credential_id):
 
 @credentials_bp.route("/<int:credential_id>/delete", methods=["POST"])
 @login_required
+@delete_required
 def delete(credential_id):
     """删除凭据"""
     credential = Credential.query.get_or_404(credential_id)
@@ -435,6 +442,7 @@ def delete(credential_id):
 
 @credentials_bp.route("/<int:credential_id>/test", methods=["POST"])
 @login_required
+@view_required
 def test_credential(credential_id):
     """测试凭据"""
     credential = Credential.query.get_or_404(credential_id)
