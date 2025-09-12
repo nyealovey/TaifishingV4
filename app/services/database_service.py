@@ -1631,8 +1631,11 @@ class DatabaseService:
 
             # 优先使用Thick模式连接（适用于所有Oracle版本，包括11g）
             try:
-                # 初始化Thick模式（需要Oracle Instant Client）
-                oracledb.init_oracle_client()
+                # 初始化Thick模式（指定Oracle Instant Client路径）
+                import os
+                current_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                oracle_client_path = os.path.join(current_dir, "oracle_client", "lib")
+                oracledb.init_oracle_client(lib_dir=oracle_client_path)
                 conn = oracledb.connect(
                     user=instance.credential.username if instance.credential else "",
                     password=password,
