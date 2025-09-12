@@ -163,3 +163,104 @@ def validate_json(required_fields=None):
         
         return decorated_function
     return decorator
+
+
+def permission_required(permission):
+    """
+    权限验证装饰器
+    
+    Args:
+        permission: 需要的权限 (view, create, update, delete)
+        
+    Returns:
+        装饰器函数
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated:
+                if request.is_json:
+                    return jsonify({
+                        'success': False,
+                        'message': '请先登录',
+                        'code': 'UNAUTHORIZED'
+                    }), 401
+                else:
+                    from flask import redirect, url_for, flash
+                    flash('请先登录', 'warning')
+                    return redirect(url_for('auth.login'))
+            
+            # 检查权限
+            if not has_permission(current_user, permission):
+                if request.is_json:
+                    return jsonify({
+                        'success': False,
+                        'message': f'需要{permission}权限',
+                        'code': 'FORBIDDEN'
+                    }), 403
+                else:
+                    from flask import redirect, url_for, flash
+                    flash(f'需要{permission}权限', 'error')
+                    return redirect(url_for('main.index'))
+            
+            return f(*args, **kwargs)
+        
+        return decorated_function
+    return decorator
+
+
+def has_permission(user, permission):
+    """
+    检查用户是否有指定权限
+    
+    Args:
+        user: 用户对象
+        permission: 权限名称
+        
+    Returns:
+        bool: 是否有权限
+    """
+    # 权限级别定义
+    PERMISSIONS = {
+        'view': 1,
+        'create': 2,
+        'update': 3,
+        'delete': 4
+    }
+    
+    # 角色权限映射
+    ROLE_PERMISSIONS = {
+        'admin': ['view', 'create', 'update', 'delete'],
+        'user': ['view']  # 普通用户只能查看
+    }
+    
+    if not user or not user.is_authenticated:
+        return False
+    
+    # 管理员拥有所有权限
+    if user.role == 'admin':
+        return True
+    
+    # 检查用户角色是否有该权限
+    user_permissions = ROLE_PERMISSIONS.get(user.role, [])
+    return permission in user_permissions
+
+
+def view_required(f):
+    """查看权限装饰器"""
+    return permission_required('view')(f)
+
+
+def create_required(f):
+    """创建权限装饰器"""
+    return permission_required('create')(f)
+
+
+def update_required(f):
+    """更新权限装饰器"""
+    return permission_required('update')(f)
+
+
+def delete_required(f):
+    """删除权限装饰器"""
+    return permission_required('delete')(f)

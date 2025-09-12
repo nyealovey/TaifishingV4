@@ -108,11 +108,17 @@
                     <h2 class="mb-1">
                         <i class="fas fa-users me-2"></i>用户管理
                     </h2>
+                    {% if current_user.role == 'admin' %}
                     <p class="text-muted mb-0">管理系统用户账户，包括增删改查和权限管理</p>
+                    {% else %}
+                    <p class="text-muted mb-0">查看系统用户账户信息（只读模式）</p>
+                    {% endif %}
                 </div>
+                {% if current_user.role == 'admin' %}
                 <button class="btn btn-add-user" data-bs-toggle="modal" data-bs-target="#addUserModal">
                     <i class="fas fa-plus me-2"></i>添加用户
                 </button>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -158,6 +164,7 @@
                         <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '-' }}</td>
                         <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else '从未登录' }}</td>
                         <td class="action-buttons">
+                            {% if current_user.role == 'admin' %}
                             <button class="btn btn-sm btn-outline-primary" onclick="editUser({{ user.id }})" title="编辑">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -170,6 +177,9 @@
                             <button class="btn btn-sm btn-outline-danger" onclick="deleteUser({{ user.id }})" title="删除">
                                 <i class="fas fa-trash"></i>
                             </button>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-muted">只读模式</span>
                             {% endif %}
                         </td>
                     </tr>
