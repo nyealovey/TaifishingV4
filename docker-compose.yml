@@ -76,49 +76,6 @@ services:
       retries: 3
       start_period: 40s
 
-  # Celery Worker
-  celery_worker:
-    build: .
-    container_name: taifish_celery_worker
-    restart: unless-stopped
-    command: celery -A app.celery worker --loglevel=info --concurrency=2
-    environment:
-      - FLASK_ENV=production
-      - DATABASE_URL=postgresql://taifish_user:${POSTGRES_PASSWORD:-Taifish2024!}@postgres:5432/taifish_prod
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-Taifish2024!}@redis:6379/0
-      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
-    volumes:
-      - app_data:/app/userdata
-      - ./logs:/app/logs
-    networks:
-      - taifish_network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  # Celery Beat (定时任务)
-  celery_beat:
-    build: .
-    container_name: taifish_celery_beat
-    restart: unless-stopped
-    command: celery -A app.celery beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    environment:
-      - FLASK_ENV=production
-      - DATABASE_URL=postgresql://taifish_user:${POSTGRES_PASSWORD:-Taifish2024!}@postgres:5432/taifish_prod
-      - REDIS_URL=redis://:${REDIS_PASSWORD:-Taifish2024!}@redis:6379/0
-      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
-    volumes:
-      - app_data:/app/userdata
-      - ./logs:/app/logs
-    networks:
-      - taifish_network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
 
   # Nginx反向代理
   nginx:

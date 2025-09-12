@@ -16,7 +16,6 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect
-from celery import Celery
 from dotenv import load_dotenv
 
 # 加载环境变量
@@ -42,8 +41,6 @@ login_manager = LoginManager()
 cors = CORS()
 csrf = CSRFProtect()
 
-# 初始化Celery
-celery = Celery()
 
 
 def create_app(config_name=None):
@@ -313,7 +310,7 @@ def initialize_extensions(app):
     # 初始化CSRF保护
     csrf.init_app(app)
 
-    # 初始化Celery (仅在Redis可用时)
+    # 初始化Redis (用于缓存和速率限制)
     redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     try:
         import redis
@@ -325,40 +322,10 @@ def initialize_extensions(app):
 
         init_rate_limiter(redis_client)
         redis_client.ping()
-        # Redis可用，配置Celery
-        celery.conf.update(
-            broker_url=redis_url,
-            result_backend=redis_url,
-            task_serializer="json",
-            accept_content=["json"],
-            result_serializer="json",
-            timezone="UTC",
-            enable_utc=True,
-            task_track_started=True,
-            task_time_limit=30 * 60,  # 30分钟
-            task_soft_time_limit=25 * 60,  # 25分钟
-            worker_prefetch_multiplier=1,
-            worker_max_tasks_per_child=1000,
-        )
-        app.logger.info("Celery配置完成 (Redis可用)")
+        app.logger.info("Redis连接成功")
     except Exception as e:
-        app.logger.warning(f"Redis不可用，跳过Celery配置: {e}")
+        app.logger.warning(f"Redis不可用: {e}")
         redis_client = None
-        # Redis不可用，使用内存作为broker
-        celery.conf.update(
-            broker_url="memory://",
-            result_backend="cache+memory://",
-            task_serializer="json",
-            accept_content=["json"],
-            result_serializer="json",
-            timezone="UTC",
-            enable_utc=True,
-            task_track_started=True,
-            task_time_limit=30 * 60,  # 30分钟
-            task_soft_time_limit=25 * 60,  # 25分钟
-            worker_prefetch_multiplier=1,
-            worker_max_tasks_per_child=1000,
-        )
 
     # 将redis_client添加到应用上下文
     app.redis_client = redis_client

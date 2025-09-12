@@ -74,49 +74,6 @@ services:
       retries: 5
       start_period: 30s
 
-  # Celery Worker服务
-  celery-worker:
-    build: 
-      context: ../..
-      dockerfile: docker/Dockerfile
-    command: celery -A app.celery worker --loglevel=info --concurrency=4
-    environment:
-      - FLASK_ENV=development
-      - DATABASE_URL=postgresql://taifish_user:taifish_pass@postgres:5432/taifish_dev
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://:taifish_redis_pass@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:taifish_redis_pass@redis:6379/0
-    volumes:
-      - ../../:/app
-      - ../../userdata:/app/userdata
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - taifish-network
-    restart: unless-stopped
-
-  # Celery Beat服务
-  celery-beat:
-    build: 
-      context: ../..
-      dockerfile: docker/Dockerfile
-    command: celery -A app.celery beat --loglevel=info
-    environment:
-      - FLASK_ENV=development
-      - DATABASE_URL=postgresql://taifish_user:taifish_pass@postgres:5432/taifish_dev
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://:taifish_redis_pass@redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://:taifish_redis_pass@redis:6379/0
-    volumes:
-      - ../../:/app
-      - ../../userdata:/app/userdata
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - taifish-network
-    restart: unless-stopped
 
   # Nginx反向代理 (已禁用)
   # nginx:
