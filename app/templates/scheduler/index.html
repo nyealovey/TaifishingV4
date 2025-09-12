@@ -239,7 +239,7 @@ function loadJobs() {
         },
         success: function(response) {
             $('#loadingRow').hide();
-            if (response.status === 'success') {
+            if (response.success === true) {
                 displayJobs(response.data);
             } else {
                 showAlert('加载任务失败: ' + response.message, 'danger');
@@ -342,7 +342,7 @@ function createJob() {
             'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
         },
         success: function(response) {
-            if (response.status === 'success') {
+            if (response.success === true) {
                 showAlert('任务创建成功', 'success');
                 $('#addJobModal').modal('hide');
                 $('#addJobForm')[0].reset();
@@ -373,7 +373,7 @@ function runJob(jobId) {
                 'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
             },
             success: function(response) {
-                if (response.status === 'success') {
+                if (response.success === true) {
                     showAlert('任务执行成功', 'success');
                 } else {
                     showAlert('执行任务失败: ' + response.message, 'danger');
@@ -395,7 +395,7 @@ function pauseJob(jobId) {
             'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
         },
         success: function(response) {
-            if (response.status === 'success') {
+            if (response.success === true) {
                 showAlert('任务已暂停', 'success');
                 loadJobs();
             } else {
@@ -418,7 +418,7 @@ function deleteJob(jobId) {
                 'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
             },
             success: function(response) {
-                if (response.status === 'success') {
+                if (response.success === true) {
                     showAlert('任务删除成功', 'success');
                     loadJobs();
                 } else {
