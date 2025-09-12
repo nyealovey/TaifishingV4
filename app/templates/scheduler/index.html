@@ -44,9 +44,10 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="mb-0">定时任务管理</h1>
                 <div>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addJobModal">
+                    <!-- 暂时隐藏添加任务功能 -->
+                    <!-- <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addJobModal">
                         <i class="fas fa-plus me-1"></i>添加任务
-                    </button>
+                    </button> -->
                     <button class="btn btn-outline-secondary" onclick="refreshJobs()">
                         <i class="fas fa-sync-alt me-1"></i>刷新
                     </button>
@@ -83,8 +84,8 @@
     </div>
 </div>
 
-<!-- 添加任务模态框 -->
-<div class="modal fade" id="addJobModal" tabindex="-1" aria-labelledby="addJobModalLabel" aria-hidden="true">
+<!-- 添加任务模态框 - 暂时隐藏 -->
+<!-- <div class="modal fade" id="addJobModal" tabindex="-1" aria-labelledby="addJobModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -231,7 +232,7 @@ def execute_task():
             </div>
         </div>
     </div>
-</div>
+</div> -->
 
 <!-- 编辑任务模态框 -->
 <div class="modal fade" id="editJobModal" tabindex="-1" aria-labelledby="editJobModalLabel" aria-hidden="true">
