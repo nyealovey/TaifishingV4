@@ -810,18 +810,31 @@ function showPermissionsModal(permissions, account) {
                         <div class="mb-3">
                             <h6><i class="fas fa-database text-success me-2"></i>数据库权限</h6>
                             ${(() => {
-                                console.log('PostgreSQL database_privileges:', permissions.database_privileges);
-                                console.log('database_privileges type:', typeof permissions.database_privileges);
-                                console.log('database_privileges is array:', Array.isArray(permissions.database_privileges));
-                                return permissions.database_privileges && permissions.database_privileges.length > 0 ? `
-                                    <div class="row">
-                                        ${permissions.database_privileges.map(priv => `
-                                            <div class="col-md-6 mb-2">
-                                                <span class="badge bg-success me-2">
-                                                    <i class="fas fa-database me-1"></i>${priv}
-                                                </span>
-                                            </div>
-                                        `).join('')}
+                                console.log('PostgreSQL database permissions:', permissions.database);
+                                console.log('database type:', typeof permissions.database);
+                                console.log('database is array:', Array.isArray(permissions.database));
+                                return permissions.database && permissions.database.length > 0 ? `
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>数据库</th>
+                                                    <th>权限</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${permissions.database.map(db => `
+                                                    <tr>
+                                                        <td>${db.database}</td>
+                                                        <td>
+                                                            ${db.privileges.map(priv => `
+                                                                <span class="badge bg-success me-1">${priv}</span>
+                                                            `).join('')}
+                                                        </td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 ` : '<p class="text-muted">无数据库权限</p>';
                             })()}
