@@ -354,9 +354,19 @@ def run_job(job_id):
         
         # 立即执行任务
         try:
-            result = job.func(*job.args, **job.kwargs)
-            logger.info(f"任务立即执行成功: {job_id} - 结果: {result}")
-            return APIResponse.success(data={"result": str(result)}, message="任务执行成功")
+            # 对于内置任务，直接调用任务函数（它们内部有应用上下文管理）
+            if job_id in ['sync_accounts', 'cleanup_logs']:
+                result = job.func(*job.args, **job.kwargs)
+                logger.info(f"任务立即执行成功: {job_id} - 结果: {result}")
+                return APIResponse.success(data={"result": str(result)}, message="任务执行成功")
+            else:
+                # 对于自定义任务，需要手动管理应用上下文
+                from app import create_app
+                app = create_app()
+                with app.app_context():
+                    result = job.func(*job.args, **job.kwargs)
+                    logger.info(f"任务立即执行成功: {job_id} - 结果: {result}")
+                    return APIResponse.success(data={"result": str(result)}, message="任务执行成功")
         except Exception as func_error:
             logger.error(f"任务函数执行失败: {job_id} - {func_error}")
             return APIResponse.error(f"任务执行失败: {str(func_error)}")
