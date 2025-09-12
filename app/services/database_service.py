@@ -11,6 +11,7 @@ from app import db
 from app.utils.enhanced_logger import log_operation, log_error
 from app.utils.enhanced_logger import db_logger, log_database_error, log_database_operation
 from app.services.database_filter_manager import database_filter_manager
+from app.utils.database_type_utils import DatabaseTypeUtils
 
 
 class DatabaseService:
@@ -453,7 +454,7 @@ class DatabaseService:
             account_data = {
                 "username": username,
                 "host": "",  # PostgreSQL没有主机概念
-                "database_name": instance.database_name or "postgres",
+                "database_name": instance.database_name or DatabaseTypeUtils.get_database_type_config("postgresql").default_schema or "postgres",
                 "account_type": account_type,
                 "plugin": "postgresql",
                 "password_expired": password_expired,
@@ -479,7 +480,7 @@ class DatabaseService:
                     instance_id=instance.id,
                     username=username,
                     host="",  # PostgreSQL没有主机概念
-                    database_name="postgres",  # PostgreSQL默认数据库
+                    database_name=DatabaseTypeUtils.get_database_type_config("postgresql").default_schema or "postgres",  # PostgreSQL默认数据库
                     account_type=(
                         "superuser" if is_super else "user"
                     ),  # PostgreSQL有明确的角色概念
@@ -598,7 +599,7 @@ class DatabaseService:
             account_data = {
                 "username": username,
                 "host": None,
-                "database_name": instance.database_name or "master",
+                "database_name": instance.database_name or DatabaseTypeUtils.get_database_type_config("sqlserver").default_schema or "master",
                 "account_type": type_desc.lower(),
                 "plugin": None,
                 "password_expired": False,
@@ -622,7 +623,7 @@ class DatabaseService:
                     instance_id=instance.id,
                     username=username,
                     host=None,  # SQL Server没有主机概念
-                    database_name=instance.database_name or "master",
+                    database_name=instance.database_name or DatabaseTypeUtils.get_database_type_config("sqlserver").default_schema or "master",
                     account_type=type_desc.lower(),  # 直接使用原始type_desc名称
                     plugin=None,  # SQL Server没有插件概念
                     password_expired=False,  # SQL Server不直接提供此信息
@@ -750,7 +751,7 @@ class DatabaseService:
                 "username": username,
                 "user_id": user_id,  # Oracle数据库中的用户ID
                 "host": "localhost",
-                "database_name": instance.database_name or "ORCL",
+                "database_name": instance.database_name or DatabaseTypeUtils.get_database_type_config("oracle").default_schema or "ORCL",
                 "account_type": auth_type,  # 使用认证类型作为账户类型
                 "plugin": "oracle",
                 "password_expired": status in ["EXPIRED", "EXPIRED(GRACE)"],
@@ -776,7 +777,7 @@ class DatabaseService:
                     instance_id=instance.id,
                     username=username,
                     host="localhost",
-                    database_name=instance.database_name or "ORCL",
+                    database_name=instance.database_name or DatabaseTypeUtils.get_database_type_config("oracle").default_schema or "ORCL",
                     account_type=auth_type,  # 使用认证类型作为账户类型
                     plugin="oracle",
                     password_expired=status in ["EXPIRED", "EXPIRED(GRACE)"],
@@ -942,7 +943,7 @@ class DatabaseService:
 
             return {
                 "success": True,
-                "message": f'PostgreSQL连接成功 (主机: {instance.host}:{instance.port}, 数据库: {instance.database_name or "postgres"}, 版本: {database_version or "未知"})',
+                "message": f'PostgreSQL连接成功 (主机: {instance.host}:{instance.port}, 数据库: {instance.database_name or DatabaseTypeUtils.get_database_type_config("postgresql").default_schema or "postgres"}, 版本: {database_version or "未知"})',
                 "database_version": database_version,
             }
 
@@ -984,7 +985,7 @@ class DatabaseService:
                 return {
                     "success": False,
                     "error": "PostgreSQL数据库不存在",
-                    "details": f'数据库 "{instance.database_name or "postgres"}" 不存在',
+                    "details": f'数据库 "{instance.database_name or DatabaseTypeUtils.get_database_type_config("postgresql").default_schema or "postgres"}" 不存在',
                     "solution": "请检查数据库名称是否正确，或创建该数据库",
                     "error_type": "database_not_found",
                 }
@@ -1074,7 +1075,7 @@ class DatabaseService:
 
             return {
                 "success": True,
-                "message": f'MySQL连接成功 (主机: {instance.host}:{instance.port}, 数据库: {instance.database_name or "默认"}, 版本: {database_version or "未知"})',
+                "message": f'MySQL连接成功 (主机: {instance.host}:{instance.port}, 数据库: {instance.database_name or DatabaseTypeUtils.get_database_type_config("mysql").default_schema or "默认"}, 版本: {database_version or "未知"})',
                 "database_version": database_version,
             }
 
@@ -1146,7 +1147,7 @@ class DatabaseService:
             conn = pymssql.connect(
                 server=instance.host,
                 port=instance.port,
-                database=instance.database_name or "master",
+                database=instance.database_name or DatabaseTypeUtils.get_database_type_config("sqlserver").default_schema or "master",
                 user=instance.credential.username,
                 password=password,
                 timeout=10,
@@ -1192,7 +1193,7 @@ class DatabaseService:
 
             return {
                 "success": True,
-                "message": f'SQL Server连接成功 (主机: {instance.host}:{instance.port}, 数据库: {instance.database_name or "master"}, 版本: {database_version or "未知"})',
+                "message": f'SQL Server连接成功 (主机: {instance.host}:{instance.port}, 数据库: {instance.database_name or DatabaseTypeUtils.get_database_type_config("sqlserver").default_schema or "master"}, 版本: {database_version or "未知"})',
                 "database_version": database_version,
             }
 
@@ -1226,7 +1227,7 @@ class DatabaseService:
 
             # 尝试连接Oracle (使用python-oracledb)
             # 构建连接字符串
-            database_name = instance.database_name or "ORCL"
+            database_name = instance.database_name or DatabaseTypeUtils.get_database_type_config("oracle").default_schema or "ORCL"
 
             # 优先使用服务名格式，因为大多数现代Oracle配置都使用服务名
             # 如果包含点号(.)，则认为是Service Name，否则也尝试服务名格式
@@ -1367,7 +1368,7 @@ class DatabaseService:
 
             return {
                 "success": True,
-                "message": f'Oracle连接成功 (主机: {instance.host}:{instance.port}, 服务: {instance.database_name or "ORCL"}, 版本: {database_version or "未知"})',
+                "message": f'Oracle连接成功 (主机: {instance.host}:{instance.port}, 服务: {instance.database_name or DatabaseTypeUtils.get_database_type_config("oracle").default_schema or "ORCL"}, 版本: {database_version or "未知"})',
                 "database_version": database_version,
             }
 
@@ -1409,7 +1410,7 @@ class DatabaseService:
                 return {
                     "success": False,
                     "error": "Oracle服务名不存在",
-                    "details": f'服务名 "{instance.database_name or "ORCL"}" 不存在',
+                    "details": f'服务名 "{instance.database_name or DatabaseTypeUtils.get_database_type_config("oracle").default_schema or "ORCL"}" 不存在',
                     "solution": "请检查服务名是否正确，或使用正确的服务名",
                     "error_type": "service_not_found",
                 }
@@ -1605,7 +1606,7 @@ class DatabaseService:
             conn = pymssql.connect(
                 server=instance.host,
                 port=instance.port,
-                database=instance.database_name or "master",
+                database=instance.database_name or DatabaseTypeUtils.get_database_type_config("sqlserver").default_schema or "master",
                 user=instance.credential.username if instance.credential else "",
                 password=password,
                 timeout=30,
@@ -1621,7 +1622,7 @@ class DatabaseService:
             import oracledb
 
             # 构建连接字符串
-            database_name = instance.database_name or "ORCL"
+            database_name = instance.database_name or DatabaseTypeUtils.get_database_type_config("oracle").default_schema or "ORCL"
 
             # 优先使用服务名格式，因为大多数现代Oracle配置都使用服务名
             # 如果包含点号(.)，则认为是Service Name，否则也尝试服务名格式

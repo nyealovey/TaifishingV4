@@ -175,8 +175,8 @@ class InputValidator:
             List[str]: 启用的数据库类型名称列表
         """
         try:
-            from app.services.database_type_service import DatabaseTypeService
-            active_types = DatabaseTypeService.get_active_types()
+            from app.utils.database_type_utils import DatabaseTypeUtils
+            active_types = DatabaseTypeUtils.get_all_active_types()
             return [config.name for config in active_types]
         except Exception:
             # 如果获取失败，回退到硬编码列表
