@@ -217,7 +217,7 @@ class SQLServerConnection(DatabaseConnection):
     def connect(self) -> bool:
         """建立SQL Server连接"""
         try:
-            import pyodbc
+            import pymssql
             
             # 获取连接信息
             password = (
@@ -225,17 +225,16 @@ class SQLServerConnection(DatabaseConnection):
                 if self.instance.credential else ""
             )
             
-            connection_string = (
-                f"DRIVER={{ODBC Driver 17 for SQL Server}};"
-                f"SERVER={self.instance.host},{self.instance.port};"
-                f"DATABASE={self.instance.database_name or DatabaseTypeUtils.get_database_type_config('sqlserver').default_schema or 'master'};"
-                f"UID={self.instance.credential.username if self.instance.credential else ''};"
-                f"PWD={password};"
-                f"TrustServerCertificate=yes;"
-                f"Connection Timeout=30;"
-            )
+            database_name = self.instance.database_name or DatabaseTypeUtils.get_database_type_config('sqlserver').default_schema or 'master'
             
-            self.connection = pyodbc.connect(connection_string)
+            self.connection = pymssql.connect(
+                server=self.instance.host,
+                port=self.instance.port,
+                user=self.instance.credential.username if self.instance.credential else "",
+                password=password,
+                database=database_name,
+                timeout=30
+            )
             self.is_connected = True
             return True
             
@@ -317,12 +316,29 @@ class OracleConnection(DatabaseConnection):
                 # SID格式
                 dsn = f"{self.instance.host}:{self.instance.port}:{database_name}"
             
-            self.connection = oracledb.connect(
-                user=self.instance.credential.username if self.instance.credential else "",
-                password=password,
-                dsn=dsn,
-                encoding="UTF-8"
-            )
+            # 尝试使用thin模式连接（不需要Oracle客户端）
+            try:
+                self.connection = oracledb.connect(
+                    user=self.instance.credential.username if self.instance.credential else "",
+                    password=password,
+                    dsn=dsn,
+                    mode=oracledb.MODE_SYSDBA if self.instance.credential.username.upper() == 'SYS' else oracledb.DEFAULT_AUTH
+                )
+            except Exception:
+                # 如果thin模式失败，尝试使用thick模式
+                try:
+                    # 初始化Oracle客户端
+                    oracledb.init_oracle_client()
+                    self.connection = oracledb.connect(
+                        user=self.instance.credential.username if self.instance.credential else "",
+                        password=password,
+                        dsn=dsn,
+                        mode=oracledb.MODE_SYSDBA if self.instance.credential.username.upper() == 'SYS' else oracledb.DEFAULT_AUTH
+                    )
+                except Exception as e2:
+                    # 如果都失败，抛出原始错误
+                    raise e2
+            
             self.is_connected = True
             return True
             
