@@ -42,6 +42,10 @@ def get_jobs():
         jobs_data = []
         
         for job in jobs:
+            # 检查任务状态
+            is_paused = job.next_run_time is None
+            is_builtin = job.id in ['sync_accounts', 'cleanup_logs', 'backup_database', 'generate_reports']
+            
             job_info = {
                 'id': job.id,
                 'name': job.name,
@@ -52,7 +56,10 @@ def get_jobs():
                 'kwargs': job.kwargs,
                 'misfire_grace_time': job.misfire_grace_time,
                 'max_instances': job.max_instances,
-                'coalesce': job.coalesce
+                'coalesce': job.coalesce,
+                'is_paused': is_paused,
+                'is_builtin': is_builtin,
+                'status': 'paused' if is_paused else 'active'
             }
             jobs_data.append(job_info)
         
@@ -236,6 +243,54 @@ def delete_job(job_id):
     except Exception as e:
         logger.error(f"删除任务失败: {e}")
         return APIResponse.error(f"删除任务失败: {str(e)}")
+
+
+@scheduler_bp.route('/api/jobs/<job_id>/disable', methods=['POST'])
+@login_required
+@admin_required
+def disable_job(job_id):
+    """禁用定时任务"""
+    try:
+        scheduler = get_scheduler()
+        if not scheduler.running:
+            return APIResponse.error("调度器未启动", code=500)
+        
+        job = scheduler.get_job(job_id)
+        if not job:
+            return APIResponse.error("任务不存在", code=404)
+        
+        # 暂停任务
+        scheduler.pause_job(job_id)
+        logger.info(f"任务已禁用: {job_id}")
+        return APIResponse.success(data={'job_id': job_id}, message="任务已禁用")
+        
+    except Exception as e:
+        logger.error(f"禁用任务失败: {e}")
+        return APIResponse.error(f"禁用任务失败: {str(e)}")
+
+
+@scheduler_bp.route('/api/jobs/<job_id>/enable', methods=['POST'])
+@login_required
+@admin_required
+def enable_job(job_id):
+    """启用定时任务"""
+    try:
+        scheduler = get_scheduler()
+        if not scheduler.running:
+            return APIResponse.error("调度器未启动", code=500)
+        
+        job = scheduler.get_job(job_id)
+        if not job:
+            return APIResponse.error("任务不存在", code=404)
+        
+        # 恢复任务
+        scheduler.resume_job(job_id)
+        logger.info(f"任务已启用: {job_id}")
+        return APIResponse.success(data={'job_id': job_id}, message="任务已启用")
+        
+    except Exception as e:
+        logger.error(f"启用任务失败: {e}")
+        return APIResponse.error(f"启用任务失败: {str(e)}")
 
 
 @scheduler_bp.route('/api/jobs/<job_id>/pause', methods=['POST'])

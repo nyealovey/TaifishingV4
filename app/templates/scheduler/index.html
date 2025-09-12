@@ -232,6 +232,122 @@ def execute_task():
         </div>
     </div>
 </div>
+
+<!-- 编辑任务模态框 -->
+<div class="modal fade" id="editJobModal" tabindex="-1" aria-labelledby="editJobModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editJobModalLabel">编辑触发器</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editJobForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editJobId" class="form-label">任务ID</label>
+                                <input type="text" class="form-control" id="editJobId" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editJobName" class="form-label">任务名称</label>
+                                <input type="text" class="form-control" id="editJobName" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editJobFunc" class="form-label">任务函数</label>
+                        <input type="text" class="form-control" id="editJobFunc" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">触发器类型</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="editTriggerType" id="editTriggerCron" value="cron">
+                            <label class="form-check-label" for="editTriggerCron">
+                                Cron表达式（定时执行）
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="editTriggerType" id="editTriggerInterval" value="interval" checked>
+                            <label class="form-check-label" for="editTriggerInterval">
+                                间隔执行
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="editTriggerType" id="editTriggerDate" value="date">
+                            <label class="form-check-label" for="editTriggerDate">
+                                指定时间执行
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Cron触发器配置 -->
+                    <div id="editCronConfig" class="edit-trigger-config" style="display: none;">
+                        <h6>Cron配置</h6>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="editCronMinute" class="form-label">分钟</label>
+                                <input type="text" class="form-control" id="editCronMinute" placeholder="0-59" value="0">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editCronHour" class="form-label">小时</label>
+                                <input type="text" class="form-control" id="editCronHour" placeholder="0-23" value="2">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editCronDay" class="form-label">日期</label>
+                                <input type="text" class="form-control" id="editCronDay" placeholder="1-31" value="*">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editCronMonth" class="form-label">月份</label>
+                                <input type="text" class="form-control" id="editCronMonth" placeholder="1-12" value="*">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 间隔触发器配置 -->
+                    <div id="editIntervalConfig" class="edit-trigger-config">
+                        <h6>间隔配置</h6>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="editMinutes" class="form-label">分钟</label>
+                                <input type="number" class="form-control" id="editMinutes" min="0" value="30">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editHours" class="form-label">小时</label>
+                                <input type="number" class="form-control" id="editHours" min="0" value="0">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editDays" class="form-label">天</label>
+                                <input type="number" class="form-control" id="editDays" min="0" value="0">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="editWeeks" class="form-label">周</label>
+                                <input type="number" class="form-control" id="editWeeks" min="0" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 日期触发器配置 -->
+                    <div id="editDateConfig" class="edit-trigger-config" style="display: none;">
+                        <h6>执行时间</h6>
+                        <div class="mb-3">
+                            <label for="editRunDate" class="form-label">执行日期时间</label>
+                            <input type="datetime-local" class="form-control" id="editRunDate">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateJob()">更新触发器</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -243,6 +359,12 @@ $(document).ready(function() {
     $('input[name="triggerType"]').change(function() {
         $('.trigger-config').hide();
         $('#' + $(this).val() + 'Config').show();
+    });
+    
+    // 编辑模态框触发器类型切换
+    $('input[name="editTriggerType"]').change(function() {
+        $('.edit-trigger-config').hide();
+        $('#edit' + $(this).val().charAt(0).toUpperCase() + $(this).val().slice(1) + 'Config').show();
     });
     
     // 设置默认日期时间
@@ -298,33 +420,55 @@ function displayJobs(jobs) {
 
 function createJobCard(job) {
     const nextRunTime = job.next_run_time ? new Date(job.next_run_time).toLocaleString() : '未计划';
-    const status = job.next_run_time ? 'active' : 'paused';
-    const statusText = job.next_run_time ? '运行中' : '已暂停';
+    const status = job.status || (job.next_run_time ? 'active' : 'paused');
+    const statusText = status === 'active' ? '运行中' : '已暂停';
+    const isPaused = job.is_paused || status === 'paused';
     
     // 定义内置任务列表
     const builtinTasks = ['sync_accounts', 'cleanup_logs', 'backup_database', 'generate_reports'];
-    const isBuiltin = builtinTasks.includes(job.id);
+    const isBuiltin = job.is_builtin || builtinTasks.includes(job.id);
     
     // 为内置任务添加特殊标识
     const builtinBadge = isBuiltin ? '<span class="badge bg-info ms-2">内置任务</span>' : '';
     
-    // 根据是否为内置任务生成不同的按钮
+    // 状态标识
+    const statusBadge = isPaused ? 
+        '<span class="badge bg-warning ms-2">已禁用</span>' : 
+        '<span class="badge bg-success ms-2">已启用</span>';
+    
+    // 根据是否为内置任务和状态生成不同的按钮
     let actionButtons = '';
     if (isBuiltin) {
-        // 内置任务：只能编辑触发器和立即执行
-        actionButtons = `
-            <div class="btn-group-vertical w-100">
-                <button class="btn btn-sm btn-outline-primary" onclick="runJob('${job.id}')">
-                    <i class="fas fa-play me-1"></i>立即执行
-                </button>
-                <button class="btn btn-sm btn-outline-warning" onclick="pauseJob('${job.id}')">
-                    <i class="fas fa-pause me-1"></i>暂停
-                </button>
-                <button class="btn btn-sm btn-outline-secondary" onclick="editTrigger('${job.id}')">
-                    <i class="fas fa-edit me-1"></i>编辑触发器
-                </button>
-            </div>
-        `;
+        // 内置任务：根据状态显示不同按钮
+        if (isPaused) {
+            actionButtons = `
+                <div class="btn-group-vertical w-100">
+                    <button class="btn btn-sm btn-outline-primary" onclick="runJob('${job.id}')">
+                        <i class="fas fa-play me-1"></i>立即执行
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="enableJob('${job.id}')">
+                        <i class="fas fa-play-circle me-1"></i>启用
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="editTrigger('${job.id}')">
+                        <i class="fas fa-edit me-1"></i>编辑触发器
+                    </button>
+                </div>
+            `;
+        } else {
+            actionButtons = `
+                <div class="btn-group-vertical w-100">
+                    <button class="btn btn-sm btn-outline-primary" onclick="runJob('${job.id}')">
+                        <i class="fas fa-play me-1"></i>立即执行
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="disableJob('${job.id}')">
+                        <i class="fas fa-pause-circle me-1"></i>禁用
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="editTrigger('${job.id}')">
+                        <i class="fas fa-edit me-1"></i>编辑触发器
+                    </button>
+                </div>
+            `;
+        }
     } else {
         // 自定义任务：完整功能
         actionButtons = `
@@ -350,7 +494,7 @@ function createJobCard(job) {
             <div class="card job-card ${status}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h6 class="card-title mb-0">${job.name}${builtinBadge}</h6>
+                        <h6 class="card-title mb-0">${job.name}${builtinBadge}${statusBadge}</h6>
                         <span class="job-status status-${status}">${statusText}</span>
                     </div>
                     <p class="card-text">
@@ -565,6 +709,99 @@ function editTrigger(jobId) {
         error: function(xhr) {
             const error = xhr.responseJSON;
             showAlert('获取任务详情失败: ' + (error ? error.message : '未知错误'), 'danger');
+        }
+    });
+}
+
+function updateJob() {
+    const jobId = $('#editJobId').val();
+    const triggerType = $('input[name="editTriggerType"]:checked').val();
+    
+    // 构建触发器数据
+    let triggerData = {
+        trigger_type: triggerType
+    };
+    
+    if (triggerType === 'cron') {
+        triggerData.cron_minute = $('#editCronMinute').val();
+        triggerData.cron_hour = $('#editCronHour').val();
+        triggerData.cron_day = $('#editCronDay').val();
+        triggerData.cron_month = $('#editCronMonth').val();
+    } else if (triggerType === 'interval') {
+        triggerData.weeks = parseInt($('#editWeeks').val()) || 0;
+        triggerData.days = parseInt($('#editDays').val()) || 0;
+        triggerData.hours = parseInt($('#editHours').val()) || 0;
+        triggerData.minutes = parseInt($('#editMinutes').val()) || 0;
+    } else if (triggerType === 'date') {
+        triggerData.run_date = $('#editRunDate').val();
+    }
+    
+    $.ajax({
+        url: `{{ url_for("scheduler.update_job", job_id="") }}${jobId}`,
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+        },
+        data: JSON.stringify(triggerData),
+        success: function(response) {
+            if (response.success === true) {
+                showAlert('触发器更新成功', 'success');
+                $('#editJobModal').modal('hide');
+                loadJobs();
+            } else {
+                showAlert('更新触发器失败: ' + response.message, 'danger');
+            }
+        },
+        error: function(xhr) {
+            const error = xhr.responseJSON;
+            showAlert('更新触发器失败: ' + (error ? error.message : '未知错误'), 'danger');
+        }
+    });
+}
+
+function disableJob(jobId) {
+    if (confirm('确定要禁用此任务吗？')) {
+        $.ajax({
+            url: `{{ url_for("scheduler.disable_job", job_id="") }}${jobId}`,
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success === true) {
+                    showAlert('任务已禁用', 'success');
+                    loadJobs();
+                } else {
+                    showAlert('禁用任务失败: ' + response.message, 'danger');
+                }
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON;
+                showAlert('禁用任务失败: ' + (error ? error.message : '未知错误'), 'danger');
+            }
+        });
+    }
+}
+
+function enableJob(jobId) {
+    $.ajax({
+        url: `{{ url_for("scheduler.enable_job", job_id="") }}${jobId}`,
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success === true) {
+                showAlert('任务已启用', 'success');
+                loadJobs();
+            } else {
+                showAlert('启用任务失败: ' + response.message, 'danger');
+            }
+        },
+        error: function(xhr) {
+            const error = xhr.responseJSON;
+            showAlert('启用任务失败: ' + (error ? error.message : '未知错误'), 'danger');
         }
     });
 }
