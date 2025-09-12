@@ -33,7 +33,7 @@ def get_jobs():
     """获取所有定时任务"""
     try:
         scheduler = get_scheduler()
-        jobs = get_scheduler().get_jobs()
+        jobs = scheduler.get_jobs()
         logger.info(f"获取到 {len(jobs)} 个任务")
         jobs_data = []
         
@@ -52,7 +52,7 @@ def get_jobs():
             }
             jobs_data.append(job_info)
         
-        return APIResponse.success("任务列表获取成功", data=jobs_data)
+        return APIResponse.success(data=jobs_data, message="任务列表获取成功")
         
     except Exception as e:
         logger.error(f"获取任务列表失败: {e}")
@@ -82,7 +82,7 @@ def get_job(job_id):
             'coalesce': job.coalesce
         }
         
-        return APIResponse.success("任务详情获取成功", data=job_info)
+        return APIResponse.success(data=job_info, message="任务详情获取成功")
         
     except Exception as e:
         logger.error(f"获取任务详情失败: {e}")
@@ -127,7 +127,7 @@ def create_job():
         )
         
         logger.info(f"任务创建成功: {job.id}")
-        return APIResponse.success("任务创建成功", data={'job_id': job.id})
+        return APIResponse.success(data={'job_id': job.id}, message="任务创建成功")
         
     except Exception as e:
         logger.error(f"创建任务失败: {e}")
