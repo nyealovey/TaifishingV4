@@ -23,7 +23,7 @@ auth_bp = Blueprint("auth", __name__)
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
-def login():
+def login() -> "str | Response":
     """用户登录页面"""
     if request.method == "POST":
         data = request.get_json() if request.is_json else request.form
@@ -94,7 +94,7 @@ def login():
 
 @auth_bp.route("/logout", methods=["GET", "POST"])
 @login_required
-def logout():
+def logout() -> "Response":
     """用户登出"""
     # 记录登出日志
     log_operation(
@@ -121,7 +121,7 @@ def logout():
 
 @auth_bp.route("/profile")
 @login_required
-def profile():
+def profile() -> "str | Response":
     """用户资料页面"""
     if request.is_json:
         return jsonify(
@@ -142,7 +142,7 @@ def profile():
 @auth_bp.route("/change-password", methods=["GET", "POST"])
 @login_required
 @password_reset_rate_limit
-def change_password():
+def change_password() -> "str | Response":
     """修改密码页面"""
     if request.method == "POST":
         data = request.get_json() if request.is_json else request.form
@@ -197,7 +197,7 @@ def change_password():
 # API路由
 @auth_bp.route("/api/refresh", methods=["POST"])
 @jwt_required(refresh=True)
-def refresh():
+def refresh() -> "Response":
     """刷新JWT token"""
     current_user_id = get_jwt_identity()
     access_token = create_access_token(identity=current_user_id)
@@ -206,7 +206,7 @@ def refresh():
 
 @auth_bp.route("/api/me")
 @jwt_required()
-def me():
+def me() -> "Response":
     """获取当前用户信息"""
     current_user_id = get_jwt_identity()
     user = User.query.get(current_user_id)

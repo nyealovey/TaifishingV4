@@ -21,7 +21,7 @@ account_static_bp = Blueprint("account_static", __name__)
 
 @account_static_bp.route("/")
 @login_required
-def index():
+def index() -> str:
     """账户统计首页"""
     # 获取统计信息
     stats = get_account_statistics()
@@ -51,7 +51,7 @@ def index():
 
 @account_static_bp.route("/account-statistics")
 @login_required
-def account_statistics():
+def account_statistics() -> "Response":
     """账户统计API"""
     try:
         stats = get_account_statistics()
@@ -67,7 +67,7 @@ def account_statistics():
 
 @account_static_bp.route("/api/statistics")
 @login_required
-def api_statistics():
+def api_statistics() -> "Response":
     """API: 获取账户统计信息"""
     try:
         stats = get_account_statistics()
@@ -76,7 +76,7 @@ def api_statistics():
         return jsonify({"success": False, "error": f"获取统计信息失败: {str(e)}"}), 500
 
 
-def get_account_statistics():
+def get_account_statistics() -> dict:
     """获取账户统计信息"""
     try:
         # 基础统计

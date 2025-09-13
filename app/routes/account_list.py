@@ -23,7 +23,7 @@ account_list_bp = Blueprint("account_list", __name__)
 @account_list_bp.route("/<db_type>")
 @login_required
 @view_required
-def list_accounts(db_type=None):
+def list_accounts(db_type: str | None = None) -> str:
     """账户列表页面"""
     # 获取查询参数
     page = request.args.get("page", 1, type=int)
@@ -157,7 +157,7 @@ def list_accounts(db_type=None):
 @account_list_bp.route("/export")
 @login_required
 @view_required
-def export_accounts():
+def export_accounts() -> "Response":
     """导出账户数据为CSV"""
     import csv
     import io
@@ -290,7 +290,7 @@ def export_accounts():
 @account_list_bp.route("/sync/<int:instance_id>", methods=["POST"])
 @login_required
 @update_required
-def sync_accounts(instance_id):
+def sync_accounts(instance_id: int) -> "Response":
     """同步单个实例的账户"""
     try:
         instance = Instance.query.get_or_404(instance_id)
@@ -376,7 +376,7 @@ def sync_accounts(instance_id):
 @account_list_bp.route("/<int:account_id>/permissions")
 @login_required
 @view_required
-def get_account_permissions(account_id):
+def get_account_permissions(account_id: int) -> "Response":
     """获取账户权限详情"""
     try:
         account = Account.query.get_or_404(account_id)
@@ -409,7 +409,7 @@ def get_account_permissions(account_id):
 @account_list_bp.route("/api/sync/<int:instance_id>")
 @login_required
 @update_required
-def api_sync_accounts(instance_id):
+def api_sync_accounts(instance_id: int) -> "Response":
     """API: 同步单个实例的账户"""
     try:
         instance = Instance.query.get_or_404(instance_id)
