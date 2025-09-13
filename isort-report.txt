@@ -1,0 +1,47 @@
+错误: ERROR: /Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py Imports are incorrectly sorted and/or formatted.
+ERROR: /Users/shiyijiufei/TaifishingV4/app/routes/instances.py Imports are incorrectly sorted and/or formatted.
+ERROR: /Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py Imports are incorrectly sorted and/or formatted.
+
+
+标准输出:
+--- /Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py:before	2025-09-13 07:33:24.808404
++++ /Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py:after	2025-09-13 07:46:00.420891
+@@ -5,7 +5,7 @@
+ 
+ import logging
+ import traceback
+-from typing import Any, Optional, Callable, TypeVar, Dict
++from typing import Any, Callable, Dict, Optional, TypeVar
+ 
+ F = TypeVar('F', bound=Callable[..., Any])
+ 
+--- /Users/shiyijiufei/TaifishingV4/app/routes/instances.py:before	2025-09-13 07:40:53.304581
++++ /Users/shiyijiufei/TaifishingV4/app/routes/instances.py:after	2025-09-13 07:46:00.492406
+@@ -3,9 +3,9 @@
+ """
+ 
+ import logging
+-from typing import Any, Dict, List, Optional, Union, Tuple
+-
+-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for, Response
++from typing import Any, Dict, List, Optional, Tuple, Union
++
++from flask import Blueprint, Response, flash, jsonify, redirect, render_template, request, url_for
+ from flask_login import current_user, login_required
+ 
+ from app import db
+--- /Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py:before	2025-09-13 07:45:52.286781
++++ /Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py:after	2025-09-13 07:46:00.503289
+@@ -3,9 +3,9 @@
+ """
+ 
+ from collections import defaultdict
+-from typing import Any, Dict, List, Optional, Union, Tuple, Generator
+-
+-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for, Response
++from typing import Any, Dict, Generator, List, Optional, Tuple, Union
++
++from flask import Blueprint, Response, flash, jsonify, redirect, render_template, request, url_for
+ from flask_login import current_user, login_required
+ 
+ from app import db

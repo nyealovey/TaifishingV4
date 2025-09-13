@@ -1,0 +1,7 @@
+错误: 
+
+标准输出:
+app/routes/account_sync.py:266:25: error: Unexpected indent  [syntax]
+                            sync_record = SyncData(  # type: ignore  # typ...
+                            ^
+Found 1 error in 1 file (errors prevented further checking)
