@@ -6,9 +6,9 @@
 import logging
 import os
 from logging.handlers import RotatingFileHandler
+from typing import Union
 
 from dotenv import load_dotenv
-from typing import Union
 from flask import Flask, jsonify
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache

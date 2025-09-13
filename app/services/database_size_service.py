@@ -32,7 +32,7 @@ from app.utils.timezone import now
 class DatabaseSizeService:
     """数据库大小同步服务"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
 
     def sync_database_size(self, instance: Instance, sync_type: str = "batch") -> dict[str, Any]:
@@ -83,7 +83,7 @@ class DatabaseSizeService:
                 "database_size": 0,
             }
 
-    def _get_connection(self, instance: Instance):
+    def _get_connection(self, instance: Instance) -> "Any | None":
         """获取数据库连接"""
         try:
             if instance.db_type == "mysql":
@@ -151,7 +151,7 @@ class DatabaseSizeService:
             self.logger.error(f"数据库连接失败: {str(e)}")
             return None
 
-    def _get_mysql_size(self, instance: Instance, conn) -> dict[str, Any]:
+    def _get_mysql_size(self, instance: Instance, conn: "Any") -> dict[str, Any]:
         """获取MySQL数据库大小"""
         cursor = conn.cursor()
 
@@ -184,7 +184,7 @@ class DatabaseSizeService:
             conn.close()
             raise e
 
-    def _get_postgresql_size(self, instance: Instance, conn) -> dict[str, Any]:
+    def _get_postgresql_size(self, instance: Instance, conn: "Any") -> dict[str, Any]:
         """获取PostgreSQL数据库大小"""
         cursor = conn.cursor()
 
@@ -215,7 +215,7 @@ class DatabaseSizeService:
             conn.close()
             raise e
 
-    def _get_sqlserver_size(self, instance: Instance, conn) -> dict[str, Any]:
+    def _get_sqlserver_size(self, instance: Instance, conn: "Any") -> dict[str, Any]:
         """获取SQL Server数据库大小"""
         cursor = conn.cursor()
 
@@ -248,7 +248,7 @@ class DatabaseSizeService:
             conn.close()
             raise e
 
-    def _get_oracle_size(self, instance: Instance, conn) -> dict[str, Any]:
+    def _get_oracle_size(self, instance: Instance, conn: "Any") -> dict[str, Any]:
         """获取Oracle数据库大小"""
         cursor = conn.cursor()
 

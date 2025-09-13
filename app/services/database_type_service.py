@@ -177,7 +177,7 @@ class DatabaseTypeService:
             return {"success": False, "message": f"状态切换失败: {str(e)}"}
 
     @staticmethod
-    def init_default_types():
+    def init_default_types() -> None:
         """初始化默认数据库类型"""
         default_types = [
             {

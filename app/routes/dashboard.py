@@ -35,7 +35,7 @@ dashboard_bp = Blueprint("dashboard", __name__)
 
 @dashboard_bp.route("/")
 @login_required
-def index():
+def index() -> str:
     """系统仪表板首页"""
     import time
 
@@ -81,7 +81,7 @@ def index():
 
 @dashboard_bp.route("/api/overview")
 @login_required
-def api_overview():
+def api_overview() -> "Response":
     """获取系统概览API"""
     import time
 
@@ -105,7 +105,7 @@ def api_overview():
 
 @dashboard_bp.route("/api/charts")
 @login_required
-def api_charts():
+def api_charts() -> "Response":
     """获取图表数据API"""
     import time
 
@@ -130,14 +130,14 @@ def api_charts():
 
 @dashboard_bp.route("/api/activities")
 @login_required
-def api_activities():
+def api_activities() -> "Response":
     """获取最近活动API - 已废弃，返回空数据"""
     return jsonify([])
 
 
 @dashboard_bp.route("/api/status")
 @login_required
-def api_status():
+def api_status() -> "Response":
     """获取系统状态API"""
     import time
 
@@ -160,7 +160,7 @@ def api_status():
 
 
 @cached(timeout=300, key_prefix="dashboard")
-def get_system_overview():
+def get_system_overview() -> dict:
     """获取系统概览数据（缓存版本）"""
     try:
         # 基础统计
@@ -209,7 +209,7 @@ def get_system_overview():
         }
 
 
-def get_chart_data(chart_type="all"):
+def get_chart_data(chart_type: str = "all") -> dict:
     """获取图表数据"""
     try:
         charts = {}
@@ -239,7 +239,7 @@ def get_chart_data(chart_type="all"):
         return {}
 
 
-def get_log_trend_data():
+def get_log_trend_data() -> dict:
     """获取日志趋势数据（分别显示错误和告警日志）"""
     try:
         # 最近7天的日志数据（东八区）
@@ -273,7 +273,7 @@ def get_log_trend_data():
         return []
 
 
-def get_log_level_distribution():
+def get_log_level_distribution() -> dict:
     """获取日志级别分布（只显示错误和告警日志）"""
     try:
         level_stats = (
@@ -289,7 +289,7 @@ def get_log_level_distribution():
         return []
 
 
-def get_instance_type_distribution():
+def get_instance_type_distribution() -> dict:
     """获取实例类型分布"""
     try:
         type_stats = (
@@ -304,7 +304,7 @@ def get_instance_type_distribution():
         return []
 
 
-def get_task_status_distribution():
+def get_task_status_distribution() -> dict:
     """获取任务状态分布"""
     try:
         status_stats = (
@@ -317,7 +317,7 @@ def get_task_status_distribution():
         return []
 
 
-def get_sync_trend_data():
+def get_sync_trend_data() -> dict:
     """获取同步趋势数据"""
     try:
         # 最近7天的同步数据（东八区）
@@ -336,7 +336,7 @@ def get_sync_trend_data():
         return []
 
 
-def get_system_status():
+def get_system_status() -> dict:
     """获取系统状态"""
     try:
         # 系统资源状态
@@ -406,7 +406,7 @@ def get_system_status():
         }
 
 
-def get_system_uptime():
+def get_system_uptime() -> "str | None":
     """获取系统运行时间"""
     try:
         uptime_seconds = psutil.boot_time()

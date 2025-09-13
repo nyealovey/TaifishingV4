@@ -14,20 +14,20 @@ main_bp = Blueprint("main", __name__)
 
 
 @main_bp.route("/")
-def index():
+def index() -> str:
     """首页 - 重定向到登录页面"""
     return redirect(url_for("auth.login"))
 
 
 @main_bp.route("/favicon.ico")
-def favicon():
+def favicon() -> "Response":
     """提供favicon.ico文件"""
     # 返回一个空的响应，避免404错误
     return "", 204
 
 
 @main_bp.route("/.well-known/appspecific/com.chrome.devtools.json")
-def chrome_devtools():
+def chrome_devtools() -> "Response":
     """处理Chrome开发者工具的请求"""
     # 返回一个空的响应，避免404错误
     return "", 204
@@ -35,13 +35,13 @@ def chrome_devtools():
 
 @main_bp.route("/admin")
 @login_required
-def admin():
+def admin() -> str:
     """系统管理页面"""
     return render_template("admin/index.html")
 
 
 @main_bp.route("/api/health")
-def api_health():
+def api_health() -> "Response":
     """健康检查"""
     import time
 
@@ -90,7 +90,7 @@ def api_health():
     return jsonify(result)
 
 
-def get_system_uptime():
+def get_system_uptime() -> "str | None":
     """获取系统运行时间"""
     try:
         from datetime import datetime

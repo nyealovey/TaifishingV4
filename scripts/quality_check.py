@@ -6,6 +6,7 @@
 
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 
@@ -18,7 +19,7 @@ def run_command(cmd: list[str], description: str, output_file: str = None) -> tu
             print(f"✅ {description} 通过")
             # 如果指定了输出文件，保存结果
             if output_file:
-                with open(output_file, 'w', encoding='utf-8') as f:
+                with open(output_file, "w", encoding="utf-8") as f:
                     f.write(result.stdout)
                 print(f"📄 报告已保存到: {output_file}")
             return True, result.stdout
@@ -26,14 +27,14 @@ def run_command(cmd: list[str], description: str, output_file: str = None) -> tu
         print(f"错误: {result.stderr}")
         # 即使失败也保存输出文件
         if output_file:
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(f"错误: {result.stderr}\n\n标准输出:\n{result.stdout}")
             print(f"📄 错误报告已保存到: {output_file}")
         return False, result.stderr
     except Exception as e:
         print(f"❌ {description} 执行失败: {e}")
         if output_file:
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(f"执行失败: {e}")
             print(f"📄 错误报告已保存到: {output_file}")
         return False, str(e)
@@ -43,6 +44,13 @@ def main():
     """主函数"""
     print("🚀 开始代码质量检查...")
     print("=" * 50)
+
+    # 创建报告目录
+    report_dir = Path("reports")
+    report_dir.mkdir(exist_ok=True)
+
+    # 生成时间戳
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # 检查工具是否安装
     tools = ["ruff", "mypy", "bandit", "black", "isort"]
@@ -57,24 +65,35 @@ def main():
     results = []
 
     # 1. Black 格式化检查
-    success, output = run_command(["uv", "run", "black", "app/", "--check", "--diff"], "Black 代码格式化检查", "black-report.txt")
+    black_report = report_dir / f"black-report_{timestamp}.txt"
+    success, output = run_command(
+        ["uv", "run", "black", "app/", "--check", "--diff"], "Black 代码格式化检查", str(black_report)
+    )
     results.append(("Black", success))
 
     # 2. isort 导入排序检查
-    success, output = run_command(["uv", "run", "isort", "app/", "--check-only", "--diff"], "isort 导入排序检查", "isort-report.txt")
+    isort_report = report_dir / f"isort-report_{timestamp}.txt"
+    success, output = run_command(
+        ["uv", "run", "isort", "app/", "--check-only", "--diff"], "isort 导入排序检查", str(isort_report)
+    )
     results.append(("isort", success))
 
     # 3. Ruff 代码检查
-    success, output = run_command(["uv", "run", "ruff", "check", "app/", "--output-format=json"], "Ruff 代码检查", "ruff-report.json")
+    ruff_report = report_dir / f"ruff-report_{timestamp}.json"
+    success, output = run_command(
+        ["uv", "run", "ruff", "check", "app/", "--output-format=json"], "Ruff 代码检查", str(ruff_report)
+    )
     results.append(("Ruff", success))
 
     # 4. Mypy 类型检查
-    success, output = run_command(["uv", "run", "mypy", "app/"], "Mypy 类型检查", "mypy-report.txt")
+    mypy_report = report_dir / f"mypy-report_{timestamp}.txt"
+    success, output = run_command(["uv", "run", "mypy", "app/"], "Mypy 类型检查", str(mypy_report))
     results.append(("Mypy", success))
 
     # 5. Bandit 安全扫描
+    bandit_report = report_dir / f"bandit-report_{timestamp}.json"
     success, output = run_command(
-        ["uv", "run", "bandit", "-r", "app/", "-f", "json", "-o", "bandit-report.json"], "Bandit 安全扫描"
+        ["uv", "run", "bandit", "-r", "app/", "-f", "json", "-o", str(bandit_report)], "Bandit 安全扫描"
     )
     results.append(("Bandit", success))
 
@@ -100,20 +119,16 @@ def main():
     # 显示生成的报告文件
     print("\n📄 生成的报告文件:")
     print("=" * 50)
-    report_files = [
-        "black-report.txt",
-        "isort-report.txt", 
-        "ruff-report.json",
-        "mypy-report.txt",
-        "bandit-report.json"
-    ]
-    
+    report_files = [black_report, isort_report, ruff_report, mypy_report, bandit_report]
+
     for report_file in report_files:
-        if Path(report_file).exists():
-            size = Path(report_file).stat().st_size
-            print(f"✅ {report_file} ({size} bytes)")
+        if report_file.exists():
+            size = report_file.stat().st_size
+            print(f"✅ {report_file.name} ({size} bytes)")
         else:
-            print(f"❌ {report_file} (未生成)")
+            print(f"❌ {report_file.name} (未生成)")
+
+    print(f"\n📁 报告目录: {report_dir.absolute()}")
 
     if failed > 0:
         print("\n💡 修复建议:")

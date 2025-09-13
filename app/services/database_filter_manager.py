@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class DatabaseFilterManager:
     """数据库过滤规则管理器"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.filter_rules = self._load_filter_rules()
 
     def _load_filter_rules(self) -> dict[str, dict[str, Any]]:

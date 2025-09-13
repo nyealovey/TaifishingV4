@@ -19,7 +19,7 @@ user_management_bp = Blueprint("user_management", __name__, url_prefix="/user-ma
 @user_management_bp.route("/")
 @login_required
 @view_required
-def index():
+def index() -> str:
     """用户管理首页"""
     try:
         # 获取分页参数
@@ -39,7 +39,7 @@ def index():
 @user_management_bp.route("/api/users")
 @login_required
 @view_required
-def api_get_users():
+def api_get_users() -> "Response":
     """获取用户列表API"""
     try:
         # 获取分页参数
@@ -98,7 +98,7 @@ def api_get_users():
 @user_management_bp.route("/api/users", methods=["POST"])
 @login_required
 @create_required
-def api_create_user():
+def api_create_user() -> "Response":
     """创建用户API"""
     try:
         data = request.get_json()
@@ -144,7 +144,7 @@ def api_create_user():
 @user_management_bp.route("/api/users/<int:user_id>", methods=["PUT"])
 @login_required
 @update_required
-def api_update_user(user_id):
+def api_update_user(user_id: int) -> "Response":
     """更新用户API"""
     try:
         user = User.query.get_or_404(user_id)
@@ -191,7 +191,7 @@ def api_update_user(user_id):
 @user_management_bp.route("/api/users/<int:user_id>", methods=["DELETE"])
 @login_required
 @delete_required
-def api_delete_user(user_id):
+def api_delete_user(user_id: int) -> "Response":
     """删除用户API"""
     try:
         user = User.query.get_or_404(user_id)
@@ -219,7 +219,7 @@ def api_delete_user(user_id):
 @user_management_bp.route("/api/users/<int:user_id>/toggle-status", methods=["POST"])
 @login_required
 @update_required
-def api_toggle_user_status(user_id):
+def api_toggle_user_status(user_id: int) -> "Response":
     """切换用户状态API"""
     try:
         user = User.query.get_or_404(user_id)
@@ -248,7 +248,7 @@ def api_toggle_user_status(user_id):
 @user_management_bp.route("/api/users/stats")
 @login_required
 @view_required
-def api_get_stats():
+def api_get_stats() -> "Response":
     """获取用户统计信息API"""
     try:
         total_users = User.query.count()

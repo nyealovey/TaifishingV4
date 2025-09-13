@@ -48,7 +48,7 @@ class ErrorSeverity:
 class ErrorContext:
     """错误上下文信息"""
 
-    def __init__(self, error: Exception, request_data: dict[str, Any] = None):
+    def __init__(self, error: Exception, request_data: dict[str, Any] | None = None) -> None:
         self.error_id = str(uuid.uuid4())
         self.timestamp = now()
         self.error_type = type(error).__name__
@@ -66,17 +66,17 @@ class ErrorContext:
 class AdvancedErrorHandler:
     """高级错误处理器"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.error_handlers = {}
         self.recovery_strategies = {}
         self.error_metrics = {}
         self._register_default_handlers()
 
-    def register_error_handler(self, error_type: type, handler: Callable):
+    def register_error_handler(self, error_type: type, handler: Callable) -> None:
         """注册错误处理器"""
         self.error_handlers[error_type] = handler
 
-    def register_recovery_strategy(self, error_category: str, strategy: Callable):
+    def register_recovery_strategy(self, error_category: str, strategy: Callable) -> None:
         """注册恢复策略"""
         self.recovery_strategies[error_category] = strategy
 
@@ -97,7 +97,7 @@ class AdvancedErrorHandler:
         # 生成错误响应
         return self._generate_error_response(error, context, recovery_result)
 
-    def _register_default_handlers(self):
+    def _register_default_handlers(self) -> None:
         """注册默认错误处理器"""
         # 数据库错误处理器
         self.register_error_handler(IntegrityError, self._handle_integrity_error)
@@ -243,7 +243,7 @@ class AdvancedErrorHandler:
             "suggestions": ["联系管理员", "查看错误日志"],
         }
 
-    def _log_error(self, error: Exception, context: ErrorContext):
+    def _log_error(self, error: Exception, context: ErrorContext) -> None:
         """记录错误日志"""
         log_level = self._get_log_level(context)
 
@@ -279,7 +279,7 @@ class AdvancedErrorHandler:
             return LogLevel.WARNING
         return LogLevel.ERROR
 
-    def _update_error_metrics(self, error: Exception, context: ErrorContext):
+    def _update_error_metrics(self, error: Exception, context: ErrorContext) -> None:
         """更新错误指标"""
         error_type = context.error_type
         endpoint = context.endpoint or "unknown"
@@ -365,7 +365,7 @@ class AdvancedErrorHandler:
         """获取错误指标"""
         return self.error_metrics
 
-    def clear_error_metrics(self):
+    def clear_error_metrics(self) -> None:
         """清除错误指标"""
         self.error_metrics.clear()
 
@@ -375,11 +375,11 @@ advanced_error_handler = AdvancedErrorHandler()
 
 
 # 错误处理装饰器
-def handle_advanced_errors(func):
+def handle_advanced_errors(func: Callable) -> Callable:
     """高级错误处理装饰器"""
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: "Any", **kwargs: "Any") -> "Any":
         try:
             return func(*args, **kwargs)
         except Exception as error:
@@ -426,11 +426,11 @@ advanced_error_handler.register_recovery_strategy(ErrorCategory.VALIDATION, vali
 
 
 # 错误监控装饰器
-def monitor_errors(func):
+def monitor_errors(func: Callable) -> Callable:
     """错误监控装饰器"""
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: "Any", **kwargs: "Any") -> "Any":
         try:
             return func(*args, **kwargs)
         except Exception as error:

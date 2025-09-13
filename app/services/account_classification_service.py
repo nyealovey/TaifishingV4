@@ -20,7 +20,7 @@ from app.utils.enhanced_logger import log_operation
 class AccountClassificationService:
     """账户分类管理服务"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
 
     def create_classification(
@@ -820,7 +820,7 @@ class AccountClassificationService:
             self.logger.error(f"移除账户分类分配失败: {e}")
             return {"success": False, "error": f"移除账户分类分配失败: {str(e)}"}
 
-    def get_rule_matched_accounts_count(self, rule_id):
+    def get_rule_matched_accounts_count(self, rule_id: int) -> int:
         """获取规则匹配的账户数量"""
         try:
             from app.models.account import Account

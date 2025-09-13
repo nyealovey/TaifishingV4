@@ -9,7 +9,7 @@ class APIResponse:
     """API响应工具类"""
 
     @staticmethod
-    def success(data=None, message="操作成功"):
+    def success(data: "Any" = None, message: str = "操作成功") -> "Response":
         """
         成功响应
 
@@ -26,7 +26,7 @@ class APIResponse:
         return jsonify(response)
 
     @staticmethod
-    def error(message="操作失败", code=400, data=None):
+    def error(message: str = "操作失败", code: int = 400, data: "Any" = None) -> "Response":
         """
         错误响应
 

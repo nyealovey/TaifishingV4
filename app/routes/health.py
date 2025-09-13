@@ -18,7 +18,7 @@ health_bp = Blueprint("health", __name__)
 
 
 @health_bp.route("/health")
-def health_check():
+def health_check() -> "Response":
     """基础健康检查"""
     try:
         return APIResponse.success(
@@ -31,7 +31,7 @@ def health_check():
 
 
 @health_bp.route("/health/detailed")
-def detailed_health_check():
+def detailed_health_check() -> "Response":
     """详细健康检查"""
     try:
         # 检查数据库连接
@@ -75,7 +75,7 @@ def detailed_health_check():
         return APIResponse.server_error("详细健康检查失败")
 
 
-def check_database_health():
+def check_database_health() -> dict:
     """检查数据库健康状态"""
     try:
         start_time = time.time()
@@ -92,7 +92,7 @@ def check_database_health():
         return {"healthy": False, "error": str(e), "status": "disconnected"}
 
 
-def check_cache_health():
+def check_cache_health() -> dict:
     """检查缓存健康状态"""
     try:
         start_time = time.time()
@@ -110,7 +110,7 @@ def check_cache_health():
         return {"healthy": False, "error": str(e), "status": "disconnected"}
 
 
-def check_system_health():
+def check_system_health() -> dict:
     """检查系统资源健康状态"""
     try:
         # CPU使用率
@@ -146,7 +146,7 @@ def check_system_health():
 
 
 @health_bp.route("/health/readiness")
-def readiness_check():
+def readiness_check() -> "Response":
     """就绪检查 - 用于Kubernetes等容器编排"""
     try:
         # 检查关键服务是否就绪
@@ -162,7 +162,7 @@ def readiness_check():
 
 
 @health_bp.route("/health/liveness")
-def liveness_check():
+def liveness_check() -> "Response":
     """存活检查 - 用于Kubernetes等容器编排"""
     try:
         # 简单的存活检查

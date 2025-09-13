@@ -17,7 +17,7 @@ from app.utils.enhanced_logger import log_error
 class PermissionQuery(ABC):
     """权限查询抽象基类"""
 
-    def __init__(self, instance: Instance):
+    def __init__(self, instance: Instance) -> None:
         self.instance = instance
         self.connection = None
 
@@ -37,7 +37,7 @@ class PermissionQuery(ABC):
     def get_table_permissions(self, account: Account, database: str) -> list[dict[str, Any]]:
         """获取表权限"""
 
-    def _get_connection(self):
+    def _get_connection(self) -> "Any | None":
         """获取数据库连接"""
         if not self.connection:
             self.connection = ConnectionFactory.create_connection(self.instance)
@@ -706,7 +706,7 @@ class OraclePermissionQuery(PermissionQuery):
             if connection:
                 connection.disconnect()
 
-    def _format_bytes(self, bytes_value):
+    def _format_bytes(self, bytes_value: "Any") -> str:
         """格式化字节数"""
         if bytes_value is None:
             return "0B"

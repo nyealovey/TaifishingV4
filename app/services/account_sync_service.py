@@ -33,7 +33,7 @@ from app.utils.timezone import now
 class AccountSyncService:
     """账户同步服务 - 统一处理所有账户同步逻辑"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
 
     def sync_accounts(self, instance: Instance, sync_type: str = "batch") -> dict[str, Any]:
@@ -177,7 +177,7 @@ class AccountSyncService:
                 "synced_count": 0,
             }
 
-    def _get_connection(self, instance: Instance):
+    def _get_connection(self, instance: Instance) -> "Any | None":
         """获取数据库连接 - 使用统一的连接工厂"""
         try:
             # 使用统一的连接工厂创建连接
@@ -199,7 +199,7 @@ class AccountSyncService:
             self.logger.error(f"数据库连接失败: {str(e)}")
             return None
 
-    def _get_sqlserver_pyodbc_connection(self, instance: Instance):
+    def _get_sqlserver_pyodbc_connection(self, instance: Instance) -> "str | None":
         """获取SQL Server pyodbc连接字符串"""
         if pyodbc is None:
             return None
@@ -228,7 +228,7 @@ class AccountSyncService:
 
         return None
 
-    def _get_sqlserver_pymssql_connection(self, instance: Instance):
+    def _get_sqlserver_pymssql_connection(self, instance: Instance) -> "str | None":
         """获取SQL Server pymssql连接参数"""
         try:
             import pymssql  # noqa: F401
@@ -266,7 +266,7 @@ class AccountSyncService:
             }
         return before_accounts
 
-    def _sync_mysql_accounts(self, instance: Instance, conn) -> dict[str, int]:
+    def _sync_mysql_accounts(self, instance: Instance, conn: "Any") -> dict[str, int]:
         """同步MySQL账户"""
         cursor = conn.cursor()
 
@@ -467,7 +467,7 @@ class AccountSyncService:
             "removed_accounts": removed_accounts,
         }
 
-    def _sync_postgresql_accounts(self, instance: Instance, conn) -> dict[str, int]:
+    def _sync_postgresql_accounts(self, instance: Instance, conn: "Any") -> dict[str, int]:
         """同步PostgreSQL账户"""
         cursor = conn.cursor()
 
@@ -627,7 +627,7 @@ class AccountSyncService:
             "modified_count": modified_count,
         }
 
-    def _get_postgresql_account_permissions(self, instance: Instance, conn, username: str) -> dict[str, Any]:
+    def _get_postgresql_account_permissions(self, instance: Instance, conn: "Any", username: str) -> dict[str, Any]:
         """获取PostgreSQL账户权限 - 根据新的权限配置结构"""
 
         cursor = conn.cursor()
@@ -794,7 +794,7 @@ class AccountSyncService:
 
         return permissions
 
-    def _sync_sqlserver_accounts(self, instance: Instance, conn) -> dict[str, int]:
+    def _sync_sqlserver_accounts(self, instance: Instance, conn: "Any") -> dict[str, int]:
         """同步SQL Server账户"""
         cursor = conn.cursor()
 
@@ -944,7 +944,7 @@ class AccountSyncService:
             "removed_accounts": removed_accounts,
         }
 
-    def _sync_oracle_accounts(self, instance: Instance, conn) -> dict[str, int]:
+    def _sync_oracle_accounts(self, instance: Instance, conn: "Any") -> dict[str, int]:
         """同步Oracle账户"""
         print("DEBUG: 开始Oracle账户同步 - 函数被调用")
         cursor = conn.cursor()
@@ -1087,7 +1087,7 @@ class AccountSyncService:
             "removed_accounts": removed_accounts,
         }
 
-    def _get_mysql_account_permissions(self, conn, username: str, host: str) -> dict[str, Any]:
+    def _get_mysql_account_permissions(self, conn: "Any", username: str, host: str) -> dict[str, Any]:
         """获取MySQL账户权限信息"""
         import json
 
@@ -1204,7 +1204,7 @@ class AccountSyncService:
         finally:
             cursor.close()
 
-    def _get_sqlserver_account_permissions(self, conn, username: str) -> dict[str, Any]:
+    def _get_sqlserver_account_permissions(self, conn: "Any", username: str) -> dict[str, Any]:
         """获取SQL Server账户权限信息"""
         import json
 
@@ -1383,7 +1383,7 @@ class AccountSyncService:
         finally:
             cursor.close()
 
-    def _get_oracle_account_permissions(self, conn, username: str) -> dict[str, Any]:
+    def _get_oracle_account_permissions(self, conn: "Any", username: str) -> dict[str, Any]:
         """获取Oracle账户权限信息 - 使用统一的权限查询工厂"""
         import json
 

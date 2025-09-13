@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class CacheManager:
     """缓存管理器"""
 
-    def __init__(self, cache: Cache):
+    def __init__(self, cache: Cache) -> None:
         self.cache = cache
         self.default_timeout = 300  # 5分钟默认超时
 
@@ -94,7 +94,7 @@ class CacheManager:
 cache_manager = None
 
 
-def init_cache_manager(cache: Cache):
+def init_cache_manager(cache: Cache) -> None:
     """初始化缓存管理器"""
     global cache_manager
     cache_manager = CacheManager(cache)
@@ -106,7 +106,7 @@ def cached(
     key_prefix: str = "default",
     unless: Callable | None = None,
     key_func: Callable | None = None,
-):
+) -> Callable:
     """
     缓存装饰器
 
@@ -117,9 +117,9 @@ def cached(
         key_func: 自定义键生成函数
     """
 
-    def cache_decorator(f):
+    def cache_decorator(f: Callable) -> Callable:
         @wraps(f)
-        def decorated_function(*args, **kwargs):
+        def decorated_function(*args: "Any", **kwargs: "Any") -> "Any":
             # 检查是否跳过缓存
             if unless and unless():
                 return f(*args, **kwargs)
@@ -148,12 +148,12 @@ def cached(
     return cache_decorator
 
 
-def cache_invalidate(pattern: str):
+def cache_invalidate(pattern: str) -> Callable:
     """缓存失效装饰器"""
 
-    def cache_decorator(f):
+    def cache_decorator(f: Callable) -> Callable:
         @wraps(f)
-        def decorated_function(*args, **kwargs):
+        def decorated_function(*args: "Any", **kwargs: "Any") -> "Any":
             result = f(*args, **kwargs)
             cache_manager.invalidate_pattern(pattern)
             logger.debug(f"缓存失效: {pattern}")
@@ -165,27 +165,27 @@ def cache_invalidate(pattern: str):
 
 
 # 特定功能的缓存装饰器
-def user_cache(timeout: int = 600):
+def user_cache(timeout: int = 600) -> Callable:
     """用户相关缓存"""
     return cached(timeout=timeout, key_prefix="user")
 
 
-def instance_cache(timeout: int = 300):
+def instance_cache(timeout: int = 300) -> Callable:
     """实例相关缓存"""
     return cached(timeout=timeout, key_prefix="instance")
 
 
-def task_cache(timeout: int = 180):
+def task_cache(timeout: int = 180) -> Callable:
     """任务相关缓存"""
     return cached(timeout=timeout, key_prefix="task")
 
 
-def dashboard_cache(timeout: int = 60):
+def dashboard_cache(timeout: int = 60) -> Callable:
     """仪表板缓存"""
     return cached(timeout=timeout, key_prefix="dashboard")
 
 
-def api_cache(timeout: int = 300):
+def api_cache(timeout: int = 300) -> Callable:
     """API缓存"""
     return cached(timeout=timeout, key_prefix="api")
 
@@ -215,43 +215,43 @@ def dashboard_key_func(*args, **kwargs) -> str:
 
 
 # 仪表板缓存相关函数
-def cache_dashboard_data(data, timeout=300):
+def cache_dashboard_data(data: "Any", timeout: int = 300) -> None:
     """缓存仪表板数据"""
     cache_manager.set("dashboard_data", data, timeout)
 
 
-def get_cached_dashboard_data():
+def get_cached_dashboard_data() -> "Any":
     """获取缓存的仪表板数据"""
     return cache_manager.get("dashboard_data")
 
 
-def invalidate_dashboard_cache():
+def invalidate_dashboard_cache() -> None:
     """使仪表板缓存失效"""
     cache_manager.delete("dashboard_data")
 
 
 # 缓存管理函数
-def clear_user_cache(user_id: int):
+def clear_user_cache(user_id: int) -> None:
     """清除用户相关缓存"""
     cache_manager.invalidate_pattern(f"user:{user_id}*")
 
 
-def clear_instance_cache(instance_id: int):
+def clear_instance_cache(instance_id: int) -> None:
     """清除实例相关缓存"""
     cache_manager.invalidate_pattern(f"instance:{instance_id}*")
 
 
-def clear_task_cache(task_id: int):
+def clear_task_cache(task_id: int) -> None:
     """清除任务相关缓存"""
     cache_manager.invalidate_pattern(f"task:{task_id}*")
 
 
-def clear_dashboard_cache():
+def clear_dashboard_cache() -> None:
     """清除仪表板缓存"""
     cache_manager.invalidate_pattern("dashboard:*")
 
 
-def clear_all_cache():
+def clear_all_cache() -> None:
     """清除所有缓存"""
     cache_manager.clear()
 
@@ -269,7 +269,7 @@ def get_cache_stats() -> dict[str, Any]:
 
 
 # 缓存预热
-def warm_up_cache():
+def warm_up_cache() -> "bool | None":
     """缓存预热"""
     try:
         from app.models.instance import Instance

@@ -18,7 +18,7 @@ from app.utils.enhanced_logger import db_logger, log_database_error, log_error, 
 class DatabaseService:
     """数据库连接管理服务"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.connections = {}
 
     def test_connection(self, instance: Instance) -> dict[str, Any]:
@@ -215,7 +215,7 @@ class DatabaseService:
 
             return {"success": False, "error": f"账户同步失败: {str(e)}"}
 
-    def _sync_mysql_accounts(self, instance: Instance, conn) -> dict[str, Any]:
+    def _sync_mysql_accounts(self, instance: Instance, conn: "Any") -> dict[str, Any]:
         """同步MySQL账户"""
         cursor = conn.cursor()
 
@@ -352,10 +352,10 @@ class DatabaseService:
             "modified_accounts": modified_accounts,
         }
 
-    def _sync_postgresql_accounts(self, instance: Instance, conn) -> dict[str, Any]:
+    def _sync_postgresql_accounts(self, instance: Instance, conn: "Any") -> dict[str, Any]:
         """同步PostgreSQL账户"""
 
-        def is_password_expired(valid_until):
+        def is_password_expired(valid_until: "Any") -> bool:
             """检查PostgreSQL密码是否过期，处理infinity值"""
             if valid_until is None:
                 return False
@@ -542,7 +542,7 @@ class DatabaseService:
             "modified_accounts": modified_accounts,
         }
 
-    def _sync_sqlserver_accounts(self, instance: Instance, conn) -> dict[str, Any]:
+    def _sync_sqlserver_accounts(self, instance: Instance, conn: "Any") -> dict[str, Any]:
         """同步SQL Server账户"""
         cursor = conn.cursor()
 
@@ -684,7 +684,7 @@ class DatabaseService:
             "modified_accounts": modified_accounts,
         }
 
-    def _sync_oracle_accounts(self, instance: Instance, conn) -> dict[str, Any]:
+    def _sync_oracle_accounts(self, instance: Instance, conn: "Any") -> dict[str, Any]:
         """同步Oracle账户"""
         cursor = conn.cursor()
 
@@ -902,7 +902,7 @@ class DatabaseService:
             log_error(e, context={"instance_id": instance.id, "instance_name": instance.name})
             return None
 
-    def get_database_version(self, instance: Instance, conn) -> str | None:
+    def get_database_version(self, instance: Instance, conn: "Any") -> str | None:
         """
         获取数据库版本信息
 
@@ -927,7 +927,7 @@ class DatabaseService:
             logging.error(f"获取数据库版本失败: {e}")
             return None
 
-    def _test_connection_validity(self, conn, db_type: str) -> bool:
+    def _test_connection_validity(self, conn: "Any", db_type: str) -> bool:
         """测试连接有效性"""
         try:
             if db_type == "mysql":
@@ -940,7 +940,7 @@ class DatabaseService:
         except Exception:
             return False
 
-    def close_connection(self, instance: Instance):
+    def close_connection(self, instance: Instance) -> None:
         """
         关闭数据库连接（改进版本）
 
@@ -968,7 +968,7 @@ class DatabaseService:
             if instance.id in self.connections:
                 del self.connections[instance.id]
 
-    def close_all_connections(self):
+    def close_all_connections(self) -> None:
         """关闭所有数据库连接（改进版本）"""
         connection_ids = list(self.connections.keys())
         for instance_id in connection_ids:
@@ -984,7 +984,7 @@ class DatabaseService:
                 log_error(e, context={"instance_id": instance_id})
         self.connections.clear()
 
-    def get_connection_count(self):
+    def get_connection_count(self) -> int:
         """
         获取当前连接数
 
@@ -993,7 +993,7 @@ class DatabaseService:
         """
         return len(self.connections)
 
-    def cleanup_stale_connections(self):
+    def cleanup_stale_connections(self) -> None:
         """
         清理过期的连接
         """
@@ -1547,7 +1547,7 @@ class DatabaseService:
                 "error": f"获取权限失败: {str(e)}",
             }
 
-    def _get_mysql_version(self, conn) -> str | None:
+    def _get_mysql_version(self, conn: "Any") -> str | None:
         """获取MySQL版本"""
         try:
             cursor = conn.cursor()
@@ -1559,7 +1559,7 @@ class DatabaseService:
             logging.error(f"获取MySQL版本失败: {e}")
             return None
 
-    def _get_postgresql_version(self, conn) -> str | None:
+    def _get_postgresql_version(self, conn: "Any") -> str | None:
         """获取PostgreSQL版本"""
         try:
             cursor = conn.cursor()
@@ -1575,7 +1575,7 @@ class DatabaseService:
             logging.error(f"获取PostgreSQL版本失败: {e}")
             return None
 
-    def _get_sqlserver_version(self, conn) -> str | None:
+    def _get_sqlserver_version(self, conn: "Any") -> str | None:
         """获取SQL Server版本"""
         try:
             cursor = conn.cursor()
@@ -1591,7 +1591,7 @@ class DatabaseService:
             logging.error(f"获取SQL Server版本失败: {e}")
             return None
 
-    def _get_oracle_version(self, conn) -> str | None:
+    def _get_oracle_version(self, conn: "Any") -> str | None:
         """获取Oracle版本"""
         try:
             cursor = conn.cursor()

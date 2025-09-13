@@ -28,7 +28,7 @@ credentials_bp = Blueprint("credentials", __name__)
 @credentials_bp.route("/")
 @login_required
 @view_required
-def index():
+def index() -> str:
     """凭据管理首页"""
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 10, type=int)
@@ -108,7 +108,7 @@ def index():
 @credentials_bp.route("/create", methods=["GET", "POST"])
 @login_required
 @create_required
-def create():
+def create() -> "str | Response":
     """创建凭据"""
     if request.method == "POST":
         data = request.get_json() if request.is_json else request.form
@@ -229,7 +229,7 @@ def create():
 @credentials_bp.route("/<int:credential_id>")
 @login_required
 @view_required
-def detail(credential_id):
+def detail(credential_id: int) -> str:
     """凭据详情"""
     credential = Credential.query.get_or_404(credential_id)
 
@@ -242,7 +242,7 @@ def detail(credential_id):
 @credentials_bp.route("/<int:credential_id>/edit", methods=["GET", "POST"])
 @login_required
 @update_required
-def edit(credential_id):
+def edit(credential_id: int) -> "str | Response":
     """编辑凭据"""
     credential = Credential.query.get_or_404(credential_id)
 
@@ -362,7 +362,7 @@ def edit(credential_id):
 @credentials_bp.route("/<int:credential_id>/toggle", methods=["POST"])
 @login_required
 @update_required
-def toggle(credential_id):
+def toggle(credential_id: int) -> "Response":
     """启用/禁用凭据"""
     credential = Credential.query.get_or_404(credential_id)
     data = request.get_json()
@@ -408,7 +408,7 @@ def toggle(credential_id):
 @credentials_bp.route("/<int:credential_id>/delete", methods=["POST"])
 @login_required
 @delete_required
-def delete(credential_id):
+def delete(credential_id: int) -> "Response":
     """删除凭据"""
     credential = Credential.query.get_or_404(credential_id)
 
@@ -436,7 +436,7 @@ def delete(credential_id):
 @credentials_bp.route("/<int:credential_id>/test", methods=["POST"])
 @login_required
 @view_required
-def test_credential(credential_id):
+def test_credential(credential_id: int) -> "Response":
     """测试凭据"""
     Credential.query.get_or_404(credential_id)
 
@@ -468,7 +468,7 @@ def test_credential(credential_id):
 @credentials_bp.route("/api/credentials")
 @login_required
 @view_required
-def api_list():
+def api_list() -> "Response":
     """获取凭据列表API"""
     credentials = Credential.query.filter_by(is_active=True).all()
     return jsonify([cred.to_dict() for cred in credentials])
@@ -477,7 +477,7 @@ def api_list():
 @credentials_bp.route("/api/credentials/<int:credential_id>")
 @login_required
 @view_required
-def api_detail(credential_id):
+def api_detail(credential_id: int) -> "Response":
     """获取凭据详情API"""
     credential = Credential.query.get_or_404(credential_id)
     return jsonify(credential.to_dict())

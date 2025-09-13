@@ -16,7 +16,7 @@ from app.utils.enhanced_logger import log_error
 class DatabaseConnection(ABC):
     """数据库连接抽象基类"""
 
-    def __init__(self, instance: Instance):
+    def __init__(self, instance: Instance) -> None:
         self.instance = instance
         self.connection = None
         self.is_connected = False

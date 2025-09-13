@@ -213,7 +213,9 @@ def register_error_logging_middleware(app: Flask) -> None:
         return {"error": "系统错误", "message": "系统出现错误，请稍后重试", "status_code": 500}, 500
 
 
-def log_database_operation_error(operation: str, error: Exception, module: str | None = None, details: str | None = None) -> None:
+def log_database_operation_error(
+    operation: str, error: Exception, module: str | None = None, details: str | None = None
+) -> None:
     """记录数据库操作错误"""
     try:
         Log.log_error(
@@ -228,7 +230,9 @@ def log_database_operation_error(operation: str, error: Exception, module: str |
         enhanced_logger.critical(f"记录数据库错误日志失败: {log_error}", "database")
 
 
-def log_api_operation_error(endpoint: str, error: Exception, module: str | None = None, details: str | None = None) -> None:
+def log_api_operation_error(
+    endpoint: str, error: Exception, module: str | None = None, details: str | None = None
+) -> None:
     """记录API操作错误"""
     try:
         Log.log_error(
@@ -243,7 +247,9 @@ def log_api_operation_error(endpoint: str, error: Exception, module: str | None 
         enhanced_logger.critical(f"记录API错误日志失败: {log_error}", "api")
 
 
-def log_sync_operation_error(operation: str, error: Exception, module: str | None = None, details: str | None = None) -> None:
+def log_sync_operation_error(
+    operation: str, error: Exception, module: str | None = None, details: str | None = None
+) -> None:
     """记录同步操作错误"""
     try:
         Log.log_error(
@@ -279,7 +285,9 @@ def _find_related_sync_logs(start_time: datetime, end_time: datetime) -> list:
         return []
 
 
-def _merge_batch_sync_logs(start_log: Log, sync_logs: list, end_time: datetime, duration: float, status_code: int, response: Response) -> None:
+def _merge_batch_sync_logs(
+    start_log: Log, sync_logs: list, end_time: datetime, duration: float, status_code: int, response: Response
+) -> None:
     """合并批量同步日志"""
     try:
         # 统计信息
@@ -373,7 +381,9 @@ def _merge_batch_sync_logs(start_log: Log, sync_logs: list, end_time: datetime, 
         return None
 
 
-def _merge_regular_request_logs(start_log: Log, end_time: datetime, duration: float, status_code: int, response: Response) -> None:
+def _merge_regular_request_logs(
+    start_log: Log, end_time: datetime, duration: float, status_code: int, response: Response
+) -> None:
     """合并普通请求日志"""
     try:
         # 创建合并后的日志

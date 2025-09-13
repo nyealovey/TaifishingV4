@@ -15,10 +15,10 @@ from app.utils.timezone import now
 class TaskExecutor:
     """任务执行器"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
 
-    def execute_task(self, task_id, timeout=300):
+    def execute_task(self, task_id: int, timeout: int = 300) -> dict:
         """
         执行指定任务
 
@@ -56,7 +56,7 @@ class TaskExecutor:
             # 使用超时机制执行任务
             result = {"success": False, "error": "任务执行超时"}
 
-            def run_task():
+            def run_task() -> None:
                 nonlocal result
                 try:
                     total_success = 0
@@ -142,7 +142,7 @@ class TaskExecutor:
 
             return result
 
-    def _execute_task_for_instance(self, task, instance):
+    def _execute_task_for_instance(self, task: "Any", instance: "Any") -> dict:
         """
         为指定实例执行任务
 
@@ -207,7 +207,7 @@ class TaskExecutor:
                 self.logger.error(f"执行任务代码时出错: {e}")
                 return {"success": False, "error": f"执行任务代码失败: {str(e)}"}
 
-    def _record_task_execution_summary(self, task, success_count, failed_count, results):
+    def _record_task_execution_summary(self, task: "Any", success_count: int, failed_count: int, results: list) -> None:
         """
         记录任务执行汇总数据
 
@@ -256,7 +256,7 @@ class TaskExecutor:
             except Exception as e:
                 self.logger.error(f"记录任务执行汇总失败: {e}")
 
-    def _update_task_status(self, task, success_count, failed_count, results):
+    def _update_task_status(self, task: "Any", success_count: int, failed_count: int, results: list) -> None:
         """
         更新任务状态
 
@@ -287,7 +287,7 @@ class TaskExecutor:
             self.logger.error(f"更新任务状态失败: {e}")
             db.session.rollback()
 
-    def execute_all_active_tasks(self):
+    def execute_all_active_tasks(self) -> dict:
         """
         执行所有活跃任务
 
@@ -326,7 +326,7 @@ class TaskExecutor:
             "results": results,
         }
 
-    def create_builtin_tasks(self):
+    def create_builtin_tasks(self) -> None:
         """
         创建内置任务
 

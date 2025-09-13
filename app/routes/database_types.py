@@ -13,7 +13,7 @@ database_types_bp = Blueprint("database_types", __name__, url_prefix="/database-
 
 @database_types_bp.route("/")
 @login_required
-def index():
+def index() -> str:
     """数据库类型管理首页"""
     types = DatabaseTypeService.get_all_types()
     return render_template("database_types/index.html", types=types)
@@ -21,7 +21,7 @@ def index():
 
 @database_types_bp.route("/create", methods=["GET", "POST"])
 @login_required
-def create():
+def create() -> "Response":
     """创建数据库类型 - 已禁用"""
     if request.is_json:
         return jsonify({"success": False, "message": "数据库类型管理功能已禁用"}), 403
@@ -31,7 +31,7 @@ def create():
 
 @database_types_bp.route("/<int:type_id>/edit", methods=["GET", "POST"])
 @login_required
-def edit(type_id):
+def edit(type_id: int) -> "Response":
     """编辑数据库类型 - 已禁用"""
     if request.is_json:
         return jsonify({"success": False, "message": "数据库类型管理功能已禁用"}), 403
@@ -41,7 +41,7 @@ def edit(type_id):
 
 @database_types_bp.route("/<int:type_id>/delete", methods=["POST"])
 @login_required
-def delete(type_id):
+def delete(type_id: int) -> "Response":
     """删除数据库类型 - 已禁用"""
     if request.is_json:
         return jsonify({"success": False, "message": "数据库类型管理功能已禁用"}), 403
@@ -51,14 +51,14 @@ def delete(type_id):
 
 @database_types_bp.route("/<int:type_id>/toggle", methods=["POST"])
 @login_required
-def toggle_status(type_id):
+def toggle_status(type_id: int) -> "Response":
     """切换启用状态 - 已禁用"""
     return jsonify({"success": False, "message": "数据库类型管理功能已禁用"}), 403
 
 
 @database_types_bp.route("/api/list")
 @login_required
-def api_list():
+def api_list() -> "Response":
     """API: 获取数据库类型列表"""
     types = DatabaseTypeService.get_all_types()
     return jsonify({"success": True, "data": [config.to_dict() for config in types]})
@@ -66,7 +66,7 @@ def api_list():
 
 @database_types_bp.route("/api/active")
 @login_required
-def api_active():
+def api_active() -> "Response":
     """API: 获取启用的数据库类型"""
     types = DatabaseTypeService.get_active_types()
     return jsonify({"success": True, "data": [config.to_dict() for config in types]})
@@ -74,7 +74,7 @@ def api_active():
 
 @database_types_bp.route("/api/form-options")
 @login_required
-def api_form_options():
+def api_form_options() -> "Response":
     """API: 获取用于表单的数据库类型选项"""
     options = DatabaseTypeService.get_database_types_for_form()
     return jsonify({"success": True, "data": options})
@@ -82,6 +82,6 @@ def api_form_options():
 
 @database_types_bp.route("/init-defaults", methods=["POST"])
 @login_required
-def init_defaults():
+def init_defaults() -> "Response":
     """初始化默认数据库类型 - 已禁用"""
     return jsonify({"success": False, "message": "数据库类型管理功能已禁用"}), 403
