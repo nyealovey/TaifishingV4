@@ -1,11 +1,6 @@
 {
-  "errors": [
-    {
-      "filename": "app/services/account_classification_service.py",
-      "reason": "syntax error while parsing AST from file"
-    }
-  ],
-  "generated_at": "2025-09-13T06:27:13Z",
+  "errors": [],
+  "generated_at": "2025-09-13T06:33:49Z",
   "metrics": {
     "_totals": {
       "CONFIDENCE.HIGH": 5,
@@ -16,7 +11,7 @@
       "SEVERITY.LOW": 10,
       "SEVERITY.MEDIUM": 9,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 16974,
+      "loc": 17093,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -515,7 +510,15 @@
       "skipped_tests": 0
     },
     "app/services/account_classification_service.py": {
-      "loc": 708,
+      "CONFIDENCE.HIGH": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.HIGH": 0,
+      "SEVERITY.LOW": 0,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "loc": 760,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -827,7 +830,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 86,
+      "loc": 84,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -853,7 +856,7 @@
       "SEVERITY.LOW": 1,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 312,
+      "loc": 381,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -1342,7 +1345,7 @@
       "test_name": "exec_used"
     },
     {
-      "code": "229                 db.session.rollback()\n230             except:\n231                 pass\n232             # \u6e05\u7a7a\u7f13\u51b2\u533a\u907f\u514d\u91cd\u590d\u9519\u8bef\n",
+      "code": "233                 db.session.rollback()\n234             except:\n235                 pass\n236             # \u6e05\u7a7a\u7f13\u51b2\u533a\u907f\u514d\u91cd\u590d\u9519\u8bef\n",
       "col_offset": 12,
       "end_col_offset": 20,
       "filename": "app/utils/structlog_config.py",
@@ -1353,10 +1356,10 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Try, Except, Pass detected.",
-      "line_number": 230,
+      "line_number": 234,
       "line_range": [
-        230,
-        231
+        234,
+        235
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
       "test_id": "B110",

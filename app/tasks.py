@@ -2,7 +2,6 @@
 泰摸鱼吧定时任务定义
 """
 
-import logging
 import os
 from datetime import datetime, timedelta
 
@@ -11,14 +10,13 @@ from app.models.account import Account
 from app.models.log import Log
 from app.models.user import User
 from app.services.account_sync_service import account_sync_service
-
-logger = logging.getLogger(__name__)
+from app.utils.structlog_config import get_task_logger, get_sync_logger, log_info, log_error, log_warning
 
 
 def cleanup_old_logs():
     """清理旧日志任务 - 清理30天前的日志和临时文件"""
-    from app.utils.enhanced_logger import log_operation, sync_logger
-
+    task_logger = get_task_logger()
+    
     app = create_app()
     with app.app_context():
         try:
@@ -37,33 +35,36 @@ def cleanup_old_logs():
             db.session.commit()
 
             # 记录操作日志
-            log_operation(
+            task_logger.info(
+                "定时任务清理完成",
+                module="task",
                 operation_type="TASK_CLEANUP_COMPLETE",
-                user_id=None,  # 定时任务没有用户ID
-                details={
-                    "deleted_logs": deleted_logs,
-                    "deleted_sync_records": deleted_sync,
-                    "cleaned_temp_files": cleaned_files,
-                    "cutoff_date": cutoff_date.isoformat(),
-                },
+                deleted_logs=deleted_logs,
+                deleted_sync_records=deleted_sync,
+                cleaned_temp_files=cleaned_files,
+                cutoff_date=cutoff_date.isoformat(),
             )
 
-            sync_logger.info(
-                f"定时任务清理完成，删除了 {deleted_logs} 条日志，{deleted_sync} 条同步记录，{cleaned_files} 个临时文件",
-                "scheduler",
-                source="定时任务",
+            task_logger.info(
+                "定时任务清理完成",
+                module="scheduler",
+                deleted_logs=deleted_logs,
+                deleted_sync_records=deleted_sync,
+                cleaned_temp_files=cleaned_files,
             )
 
             return f"清理完成：{deleted_logs} 条日志，{deleted_sync} 条同步记录，{cleaned_files} 个临时文件"
 
         except Exception as e:
-            sync_logger.error(f"定时任务清理失败: {e}", "scheduler", source="定时任务")
+            task_logger.error("定时任务清理失败", module="scheduler", exception=e)
             db.session.rollback()
             return f"清理失败: {e}"
 
 
 def _cleanup_temp_files():
     """清理临时文件"""
+    task_logger = get_task_logger()
+    
     try:
         temp_dirs = ["userdata/temp", "userdata/exports", "userdata/logs", "userdata/dynamic_tasks"]
 
@@ -80,12 +81,12 @@ def _cleanup_temp_files():
                         if file_mtime < cutoff_time:
                             os.remove(file_path)
                             cleaned_files += 1
-                            logger.info(f"删除临时文件: {file_path}")
+                            task_logger.info("删除临时文件", module="task", file_path=file_path)
 
         return cleaned_files
 
     except Exception as e:
-        logger.error(f"清理临时文件失败: {e}")
+        task_logger.error("清理临时文件失败", module="task", exception=e)
         return 0
 
 
@@ -94,7 +95,9 @@ def sync_accounts():
     from app import db
     from app.models.instance import Instance
     from app.models.sync_data import SyncData
-    from app.utils.enhanced_logger import log_operation, sync_logger
+    
+    sync_logger = get_sync_logger()
+    task_logger = get_task_logger()
 
     app = create_app()
     with app.app_context():
@@ -104,10 +107,10 @@ def sync_accounts():
             total_instances = len(instances)
 
             if not instances:
-                sync_logger.warning("没有找到活跃的数据库实例", "scheduler", source="定时任务")
+                sync_logger.warning("没有找到活跃的数据库实例", module="scheduler")
                 return "没有找到活跃的数据库实例"
 
-            sync_logger.info(f"定时任务开始同步所有账户，共 {total_instances} 个实例", "scheduler", source="定时任务")
+            sync_logger.info("定时任务开始同步所有账户", module="scheduler", total_instances=total_instances)
 
             success_count = 0
             failed_count = 0
@@ -120,10 +123,11 @@ def sync_accounts():
             for instance in instances:
                 try:
                     sync_logger.info(
-                        f"开始同步实例: {instance.name} ({instance.db_type})",
-                        "scheduler",
-                        f"实例ID: {instance.id}",
-                        source="定时任务",
+                        "开始同步实例",
+                        module="scheduler",
+                        instance_name=instance.name,
+                        db_type=instance.db_type,
+                        instance_id=instance.id,
                     )
 
                     # 执行账户同步，使用task类型
@@ -138,10 +142,11 @@ def sync_accounts():
                         total_modified_count += result.get("modified_count", 0)
 
                         sync_logger.info(
-                            f"实例 {instance.name} 同步完成，同步了 {instance_sync_count} 个账户",
-                            "scheduler",
-                            f"实例ID: {instance.id}",
-                            source="定时任务",
+                            "实例同步完成",
+                            module="scheduler",
+                            instance_name=instance.name,
+                            instance_id=instance.id,
+                            synced_count=instance_sync_count,
                         )
 
                         results.append(
@@ -156,10 +161,11 @@ def sync_accounts():
                         failed_count += 1
                         error_msg = result.get("message", result.get("error", "未知错误"))
                         sync_logger.warning(
-                            f"实例 {instance.name} 同步失败: {error_msg}",
-                            "scheduler",
-                            f"实例ID: {instance.id}",
-                            source="定时任务",
+                            "实例同步失败",
+                            module="scheduler",
+                            instance_name=instance.name,
+                            instance_id=instance.id,
+                            error_msg=error_msg,
                         )
 
                         results.append(
@@ -174,7 +180,11 @@ def sync_accounts():
                 except Exception as e:
                     failed_count += 1
                     sync_logger.error(
-                        f"实例 {instance.name} 同步异常: {e}", "scheduler", f"实例ID: {instance.id}", source="定时任务"
+                        "实例同步异常",
+                        module="scheduler",
+                        instance_name=instance.name,
+                        instance_id=instance.id,
+                        exception=e,
                     )
 
                     results.append(
@@ -187,19 +197,18 @@ def sync_accounts():
                     )
 
             # 记录操作日志
-            log_operation(
+            task_logger.info(
+                "定时任务账户同步完成",
+                module="task",
                 operation_type="TASK_SYNC_ACCOUNTS_COMPLETE",
-                user_id=None,  # 定时任务没有用户ID
-                details={
-                    "total_instances": total_instances,
-                    "success_count": success_count,
-                    "failed_count": failed_count,
-                    "total_synced_count": total_synced_count,
-                    "total_added_count": total_added_count,
-                    "total_removed_count": total_removed_count,
-                    "total_modified_count": total_modified_count,
-                    "results": results,
-                },
+                total_instances=total_instances,
+                success_count=success_count,
+                failed_count=failed_count,
+                total_synced_count=total_synced_count,
+                total_added_count=total_added_count,
+                total_removed_count=total_removed_count,
+                total_modified_count=total_modified_count,
+                results=results,
             )
 
             # 创建聚合的同步记录
@@ -224,15 +233,16 @@ def sync_accounts():
             db.session.commit()
 
             sync_logger.info(
-                f"定时任务账户同步完成，总共同步了 {total_synced_count} 个账户，涉及 {total_instances} 个实例",
-                "scheduler",
-                source="定时任务",
+                "定时任务账户同步完成",
+                module="scheduler",
+                total_synced_count=total_synced_count,
+                total_instances=total_instances,
             )
 
             return f"定时任务同步完成，成功 {success_count} 个实例，失败 {failed_count} 个实例，总共同步 {total_synced_count} 个账户"
 
         except Exception as e:
-            sync_logger.error(f"定时任务账户同步失败: {e}", "scheduler", source="定时任务")
+            sync_logger.error("定时任务账户同步失败", module="scheduler", exception=e)
 
             # 记录失败的同步记录
             sync_record = SyncData(
@@ -252,6 +262,8 @@ def sync_accounts():
 
 def health_check():
     """健康检查任务"""
+    task_logger = get_task_logger()
+    
     app = create_app()
     with app.app_context():
         try:
@@ -272,16 +284,18 @@ def health_check():
                 "logs": log_count,
             }
 
-            logger.info(f"健康检查完成: {health_data}")
+            task_logger.info("健康检查完成", module="task", health_data=health_data)
             return health_data
 
         except Exception as e:
-            logger.error(f"健康检查失败: {e}")
+            task_logger.error("健康检查失败", module="task", exception=e)
             return {"timestamp": datetime.now().isoformat(), "status": "unhealthy", "error": str(e)}
 
 
 def cleanup_temp_files():
     """清理临时文件任务"""
+    task_logger = get_task_logger()
+    
     app = create_app()
     with app.app_context():
         try:
@@ -299,9 +313,9 @@ def cleanup_temp_files():
                                 os.remove(file_path)
                                 cleaned_files += 1
 
-            logger.info(f"临时文件清理完成，删除了 {cleaned_files} 个文件")
+            task_logger.info("临时文件清理完成", module="task", cleaned_files=cleaned_files)
             return f"清理了 {cleaned_files} 个临时文件"
 
         except Exception as e:
-            logger.error(f"清理临时文件失败: {e}")
+            task_logger.error("清理临时文件失败", module="task", exception=e)
             return f"清理临时文件失败: {e}"

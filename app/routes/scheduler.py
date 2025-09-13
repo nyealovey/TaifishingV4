@@ -3,7 +3,6 @@
 """
 
 import importlib.util
-import logging
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any
@@ -17,11 +16,13 @@ from flask_login import login_required  # type: ignore
 from app.scheduler import get_scheduler
 from app.utils.api_response import APIResponse
 from app.utils.decorators import scheduler_manage_required, scheduler_view_required
-
-logger = logging.getLogger(__name__)
+from app.utils.structlog_config import get_system_logger
 
 # 创建蓝图
 scheduler_bp = Blueprint("scheduler", __name__, url_prefix="/scheduler")
+
+# 初始化日志记录器
+system_logger = get_system_logger()
 
 
 @scheduler_bp.route("/")
@@ -42,7 +43,7 @@ def get_jobs() -> Response:
         if not scheduler.running:
             return APIResponse.error("调度器未启动", code=500)  # type: ignore
         jobs = scheduler.get_jobs()
-        logger.info(f"获取到 {len(jobs)} 个任务")
+        system_logger.info("获取任务列表", module="scheduler", job_count=len(jobs))
         jobs_data: list[dict[str, Any]] = []
 
         for job in jobs:
@@ -70,7 +71,7 @@ def get_jobs() -> Response:
         return APIResponse.success(data=jobs_data, message="任务列表获取成功")  # type: ignore
 
     except Exception as e:
-        logger.error(f"获取任务列表失败: {e}")
+        system_logger.error("获取任务列表失败", module="scheduler", exception=e)
         return APIResponse.error(f"获取任务列表失败: {str(e)}")  # type: ignore
 
 
@@ -100,7 +101,7 @@ def get_job(job_id: str) -> Response:
         return APIResponse.success(data=job_info, message="任务详情获取成功")  # type: ignore
 
     except Exception as e:
-        logger.error(f"获取任务详情失败: {e}")
+        system_logger.error(f"获取任务详情失败: {e}")
         return APIResponse.error(f"获取任务详情失败: {str(e)}")  # type: ignore
 
 
@@ -111,13 +112,13 @@ def create_job() -> Response:
     """创建新的定时任务"""
     try:
         data = request.get_json()
-        logger.info(f"创建任务请求数据: {data}")
+        system_logger.info(f"创建任务请求数据: {data}")
 
         # 验证必需字段
         required_fields = ["id", "name", "code", "trigger_type"]
         for field in required_fields:
             if field not in data:
-                logger.error(f"缺少必需字段: {field}")
+                system_logger.error(f"缺少必需字段: {field}")
                 return APIResponse.error(f"缺少必需字段: {field}", code=400)  # type: ignore
 
         # 构建触发器
@@ -149,11 +150,11 @@ def create_job() -> Response:
             func=task_func, trigger=trigger, id=data["id"], name=data["name"], args=[], kwargs={}, replace_existing=True
         )
 
-        logger.info(f"任务创建成功: {job.id}")
+        system_logger.info(f"任务创建成功: {job.id}")
         return APIResponse.success(data={"job_id": job.id}, message="任务创建成功")  # type: ignore
 
     except Exception as e:
-        logger.error(f"创建任务失败: {e}")
+        system_logger.error(f"创建任务失败: {e}")
         return APIResponse.error(f"创建任务失败: {str(e)}")  # type: ignore
 
 
@@ -194,7 +195,7 @@ def update_job(job_id: str) -> Response:
                     # 重新调度任务以立即生效
                     scheduler.reschedule_job(job_id, trigger=trigger)
 
-                logger.info(f"内置任务触发器更新成功: {job_id}")
+                system_logger.info(f"内置任务触发器更新成功: {job_id}")
                 return APIResponse.success("触发器更新成功")  # type: ignore
             # 自定义任务：可以更新所有属性
             scheduler.modify_job(
@@ -222,11 +223,11 @@ def update_job(job_id: str) -> Response:
                 kwargs=data.get("kwargs", job.kwargs),
             )
 
-        logger.info(f"任务更新成功: {job_id}")
+        system_logger.info(f"任务更新成功: {job_id}")
         return APIResponse.success("任务更新成功")  # type: ignore
 
     except Exception as e:
-        logger.error(f"更新任务失败: {e}")
+        system_logger.error(f"更新任务失败: {e}")
         return APIResponse.error(f"更新任务失败: {str(e)}")  # type: ignore
 
 
@@ -246,11 +247,11 @@ def delete_job(job_id: str) -> Response:
             return APIResponse.error("调度器未启动", code=500)  # type: ignore
 
         scheduler.remove_job(job_id)
-        logger.info(f"任务删除成功: {job_id}")
+        system_logger.info(f"任务删除成功: {job_id}")
         return APIResponse.success("任务删除成功")  # type: ignore
 
     except Exception as e:
-        logger.error(f"删除任务失败: {e}")
+        system_logger.error(f"删除任务失败: {e}")
         return APIResponse.error(f"删除任务失败: {str(e)}")  # type: ignore
 
 
@@ -270,11 +271,11 @@ def disable_job(job_id: str) -> Response:
 
         # 暂停任务
         scheduler.pause_job(job_id)
-        logger.info(f"任务已禁用: {job_id}")
+        system_logger.info(f"任务已禁用: {job_id}")
         return APIResponse.success(data={"job_id": job_id}, message="任务已禁用")  # type: ignore
 
     except Exception as e:
-        logger.error(f"禁用任务失败: {e}")
+        system_logger.error(f"禁用任务失败: {e}")
         return APIResponse.error(f"禁用任务失败: {str(e)}")  # type: ignore
 
 
@@ -294,11 +295,11 @@ def enable_job(job_id: str) -> Response:
 
         # 恢复任务
         scheduler.resume_job(job_id)
-        logger.info(f"任务已启用: {job_id}")
+        system_logger.info(f"任务已启用: {job_id}")
         return APIResponse.success(data={"job_id": job_id}, message="任务已启用")  # type: ignore
 
     except Exception as e:
-        logger.error(f"启用任务失败: {e}")
+        system_logger.error(f"启用任务失败: {e}")
         return APIResponse.error(f"启用任务失败: {str(e)}")  # type: ignore
 
 
@@ -309,11 +310,11 @@ def pause_job(job_id: str) -> Response:
     """暂停任务"""
     try:
         get_scheduler().pause_job(job_id)  # type: ignore
-        logger.info(f"任务暂停成功: {job_id}")
+        system_logger.info(f"任务暂停成功: {job_id}")
         return APIResponse.success("任务暂停成功")  # type: ignore
 
     except Exception as e:
-        logger.error(f"暂停任务失败: {e}")
+        system_logger.error(f"暂停任务失败: {e}")
         return APIResponse.error(f"暂停任务失败: {str(e)}")  # type: ignore
 
 
@@ -324,11 +325,11 @@ def resume_job(job_id: str) -> Response:
     """恢复任务"""
     try:
         get_scheduler().resume_job(job_id)  # type: ignore
-        logger.info(f"任务恢复成功: {job_id}")
+        system_logger.info(f"任务恢复成功: {job_id}")
         return APIResponse.success("任务恢复成功")  # type: ignore
 
     except Exception as e:
-        logger.error(f"恢复任务失败: {e}")
+        system_logger.error(f"恢复任务失败: {e}")
         return APIResponse.error(f"恢复任务失败: {str(e)}")  # type: ignore
 
 
@@ -346,14 +347,14 @@ def run_job(job_id: str) -> Response:
         if not job:
             return APIResponse.error("任务不存在", code=404)  # type: ignore
 
-        logger.info(f"开始立即执行任务: {job_id} - {job.name}")
+        system_logger.info(f"开始立即执行任务: {job_id} - {job.name}")
 
         # 立即执行任务
         try:
             # 对于内置任务，直接调用任务函数（它们内部有应用上下文管理）
             if job_id in ["sync_accounts", "cleanup_logs"]:
                 result = job.func(*job.args, **job.kwargs)
-                logger.info(f"任务立即执行成功: {job_id} - 结果: {result}")
+                system_logger.info(f"任务立即执行成功: {job_id} - 结果: {result}")
                 return APIResponse.success(data={"result": str(result)}, message="任务执行成功")  # type: ignore
             # 对于自定义任务，需要手动管理应用上下文
             from app import create_app
@@ -361,14 +362,14 @@ def run_job(job_id: str) -> Response:
             app = create_app()  # type: ignore
             with app.app_context():
                 result = job.func(*job.args, **job.kwargs)
-                logger.info(f"任务立即执行成功: {job_id} - 结果: {result}")
+                system_logger.info(f"任务立即执行成功: {job_id} - 结果: {result}")
                 return APIResponse.success(data={"result": str(result)}, message="任务执行成功")  # type: ignore
         except Exception as func_error:
-            logger.error(f"任务函数执行失败: {job_id} - {func_error}")
+            system_logger.error(f"任务函数执行失败: {job_id} - {func_error}")
             return APIResponse.error(f"任务执行失败: {str(func_error)}")  # type: ignore
 
     except Exception as e:
-        logger.error(f"执行任务失败: {e}")
+        system_logger.error(f"执行任务失败: {e}")
         return APIResponse.error(f"执行任务失败: {str(e)}")  # type: ignore
 
 
@@ -405,21 +406,18 @@ def _create_dynamic_task_function(job_id: str, code: str) -> Callable[..., Any] 
 """
 
 from app import create_app, db
-import logging
-
-logger = logging.getLogger(__name__)
 
 {code}
 
 def task_wrapper():
     """任务包装器"""
     try:
-        logger.info(f"开始执行动态任务: {job_id}")
+        system_logger.info(f"开始执行动态任务: {job_id}")
         result = execute_task()
-        logger.info(f"动态任务 {job_id} 执行完成: {{result}}")
+        system_logger.info(f"动态任务 {job_id} 执行完成: {{result}}")
         return result
     except Exception as e:
-        logger.error(f"动态任务 {job_id} 执行失败: {{e}}")
+        system_logger.error(f"动态任务 {job_id} 执行失败: {{e}}")
         return f"任务执行失败: {{e}}"
 '''
 
@@ -435,7 +433,7 @@ def task_wrapper():
         module_name = job_id
         spec = importlib.util.spec_from_file_location(module_name, task_file)
         if spec is None or spec.loader is None:
-            logger.error(f"无法创建模块规范: {module_name}")
+            system_logger.error(f"无法创建模块规范: {module_name}")
             return None
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
@@ -445,7 +443,7 @@ def task_wrapper():
         return getattr(module, "task_wrapper", None)
 
     except Exception as e:
-        logger.error(f"创建动态任务函数失败: {e}")
+        system_logger.error(f"创建动态任务函数失败: {e}")
         return None
 
 

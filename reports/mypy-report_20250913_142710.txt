@@ -1,4 +1,4 @@
-错误: 
+错误:
 
 标准输出:
 app/services/account_classification_service.py:26:6: error: Expected an

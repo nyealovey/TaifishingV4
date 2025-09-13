@@ -12,8 +12,16 @@ from flask_login import current_user
 
 from app import db
 from app.models.log import Log
-from app.utils.enhanced_logger import log_exception
-from app.utils.structlog_config import get_system_logger, log_critical, log_error
+from app.utils.structlog_config import (
+    get_system_logger,
+    get_api_logger,
+    get_db_logger,
+    get_sync_logger,
+    log_critical,
+    log_error,
+    log_warning,
+    log_info,
+)
 
 
 def determine_log_source() -> str:
@@ -75,19 +83,19 @@ def register_error_logging_middleware(app: Flask) -> None:
     @app.errorhandler(400)
     def handle_bad_request(error: Exception) -> None:
         """处理400错误"""
-        log_error("客户端请求错误", exception=error, module="error_handler", level="WARNING")
+        log_warning("客户端请求错误", module="error_handler", exception=error, status_code=400)
         return {"error": "请求参数错误", "message": str(error), "status_code": 400}, 400
 
     @app.errorhandler(401)
     def handle_unauthorized(error: Exception) -> None:
         """处理401错误"""
-        log_error("未授权访问", exception=error, module="error_handler", level="WARNING")
+        log_warning("未授权访问", module="error_handler", exception=error, status_code=401)
         return {"error": "未授权访问", "message": "请先登录", "status_code": 401}, 401
 
     @app.errorhandler(403)
     def handle_forbidden(error: Exception) -> None:
         """处理403错误"""
-        log_error("禁止访问", exception=error, module="error_handler", level="WARNING")
+        log_warning("禁止访问", module="error_handler", exception=error, status_code=403)
         return {"error": "禁止访问", "message": "您没有权限访问此资源", "status_code": 403}, 403
 
     @app.errorhandler(404)
@@ -97,37 +105,30 @@ def register_error_logging_middleware(app: Flask) -> None:
 
         url = request.url if request else "未知URL"
         method = request.method if request else "未知方法"
-        log_exception(error, f"资源未找到 - {method} {url}", "error_handler", "WARNING")
+        log_warning("资源未找到", module="error_handler", exception=error, method=method, url=url, status_code=404)
         return {"error": "资源未找到", "message": "请求的资源不存在", "status_code": 404}, 404
 
     @app.errorhandler(500)
     def handle_internal_server_error(error: Exception) -> None:
         """处理500错误"""
-        log_error("服务器内部错误", exception=error, module="error_handler", level="ERROR")
+        log_error("服务器内部错误", module="error_handler", exception=error, status_code=500)
         return {"error": "服务器内部错误", "message": "系统出现错误，请稍后重试", "status_code": 500}, 500
 
     @app.errorhandler(Exception)
     def handle_unhandled_exception(error: Exception) -> None:
         """处理所有未捕获的异常"""
         # 记录详细的错误信息
-        log_error("未处理的异常", exception=error, module="error_handler", level="ERROR")
-
-        # 记录到数据库
-        try:
-            Log.log_error(
-                message=f"未处理的异常: {type(error).__name__}: {str(error)}",
-                module="error_handler",
-                details=f"请求: {request.method} {request.path}\n"
-                f"用户: {current_user.id if current_user and hasattr(current_user, 'id') else 'anonymous'}\n"
-                f"IP: {request.remote_addr}\n"
-                f"堆栈跟踪:\n{traceback.format_exc()}",
-                user_id=current_user.id if current_user and hasattr(current_user, "id") else None,
-                ip_address=request.remote_addr,
-                user_agent=request.headers.get("User-Agent"),
-            )
-        except Exception:
-            # 如果数据库记录也失败，至少记录到文件
-            log_critical("记录错误日志失败: {log_error}", module="error_handler")
+        log_error(
+            "未处理的异常", 
+            module="error_handler", 
+            exception=error,
+            error_type=type(error).__name__,
+            method=request.method if request else "unknown",
+            path=request.path if request else "unknown",
+            user_id=current_user.id if current_user and hasattr(current_user, "id") else None,
+            ip_address=request.remote_addr if request else None,
+            user_agent=request.headers.get("User-Agent") if request else None,
+        )
 
         return {"error": "系统错误", "message": "系统出现错误，请稍后重试", "status_code": 500}, 500
 
@@ -136,51 +137,54 @@ def log_database_operation_error(
     operation: str, error: Exception, module: str | None = None, details: str | None = None
 ) -> None:
     """记录数据库操作错误"""
-    try:
-        Log.log_error(
-            message=f"数据库操作失败: {operation}",
-            module=module or "database",
-            details=f"{details or ''}\n错误类型: {type(error).__name__}\n错误信息: {str(error)}\n堆栈跟踪:\n{traceback.format_exc()}",
-            user_id=current_user.id if current_user and hasattr(current_user, "id") else None,
-            ip_address=request.remote_addr if request else None,
-            user_agent=request.headers.get("User-Agent") if request else None,
-        )
-    except Exception:
-        log_critical("记录数据库错误日志失败: {log_error}", module="database")
+    db_logger = get_db_logger()
+    db_logger.error(
+        "数据库操作失败",
+        module=module or "database",
+        operation=operation,
+        exception=error,
+        error_type=type(error).__name__,
+        details=details,
+        user_id=current_user.id if current_user and hasattr(current_user, "id") else None,
+        ip_address=request.remote_addr if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None,
+    )
 
 
 def log_api_operation_error(
     endpoint: str, error: Exception, module: str | None = None, details: str | None = None
 ) -> None:
     """记录API操作错误"""
-    try:
-        Log.log_error(
-            message=f"API操作失败: {endpoint}",
-            module=module or "api",
-            details=f"{details or ''}\n错误类型: {type(error).__name__}\n错误信息: {str(error)}\n堆栈跟踪:\n{traceback.format_exc()}",
-            user_id=current_user.id if current_user and hasattr(current_user, "id") else None,
-            ip_address=request.remote_addr if request else None,
-            user_agent=request.headers.get("User-Agent") if request else None,
-        )
-    except Exception:
-        log_critical("记录API错误日志失败: {log_error}", module="api")
+    api_logger = get_api_logger()
+    api_logger.error(
+        "API操作失败",
+        module=module or "api",
+        endpoint=endpoint,
+        exception=error,
+        error_type=type(error).__name__,
+        details=details,
+        user_id=current_user.id if current_user and hasattr(current_user, "id") else None,
+        ip_address=request.remote_addr if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None,
+    )
 
 
 def log_sync_operation_error(
     operation: str, error: Exception, module: str | None = None, details: str | None = None
 ) -> None:
     """记录同步操作错误"""
-    try:
-        Log.log_error(
-            message=f"同步操作失败: {operation}",
-            module=module or "sync",
-            details=f"{details or ''}\n错误类型: {type(error).__name__}\n错误信息: {str(error)}\n堆栈跟踪:\n{traceback.format_exc()}",
-            user_id=current_user.id if current_user and hasattr(current_user, "id") else None,
-            ip_address=request.remote_addr if request else None,
-            user_agent=request.headers.get("User-Agent") if request else None,
-        )
-    except Exception:
-        log_critical("记录同步错误日志失败: {log_error}", module="sync")
+    sync_logger = get_sync_logger()
+    sync_logger.error(
+        "同步操作失败",
+        module=module or "sync",
+        operation=operation,
+        exception=error,
+        error_type=type(error).__name__,
+        details=details,
+        user_id=current_user.id if current_user and hasattr(current_user, "id") else None,
+        ip_address=request.remote_addr if request else None,
+        user_agent=request.headers.get("User-Agent") if request else None,
+    )
 
 
 def _find_related_sync_logs(start_time: datetime, end_time: datetime) -> list:
@@ -200,7 +204,7 @@ def _find_related_sync_logs(start_time: datetime, end_time: datetime) -> list:
 
         return sync_logs
     except Exception as e:
-        print(f"DEBUG: 查找相关同步日志失败: {e}")
+        log_error("查找相关同步日志失败", module="middleware", exception=e)
         return []
 
 
@@ -293,10 +297,7 @@ def _merge_batch_sync_logs(
         return merged_log
 
     except Exception as e:
-        print(f"DEBUG: 合并批量同步日志失败: {e}")
-        import traceback
-
-        traceback.print_exc()
+        log_error("合并批量同步日志失败", module="middleware", exception=e)
         return None
 
 
@@ -335,7 +336,4 @@ def _handle_batch_sync_log_merge(request_id: str, status_code: int, response: Re
             db.session.commit()
 
     except Exception as e:
-        print(f"DEBUG: 批量同步日志合并失败: {e}")
-        import traceback
-
-        traceback.print_exc()
+        log_error("批量同步日志合并失败", module="middleware", exception=e)

@@ -2,14 +2,13 @@
 泰摸鱼吧 - 速率限制工具
 """
 
-import logging
 import time
 from collections.abc import Callable
 from functools import wraps
 
 from flask import jsonify, request
 
-logger = logging.getLogger(__name__)
+from app.utils.structlog_config import get_system_logger
 
 
 class RateLimiter:
@@ -47,7 +46,8 @@ class RateLimiter:
             try:
                 return self._check_redis(identifier, endpoint, limit, window, current_time, window_start)
             except Exception as e:
-                logger.warning(f"Redis速率限制检查失败，降级到内存模式: {e}")
+                system_logger = get_system_logger()
+                system_logger.warning("Redis速率限制检查失败，降级到内存模式", module="rate_limiter", exception=e)
                 # 降级到内存模式
                 return self._check_memory(identifier, endpoint, limit, window, current_time, window_start)
         else:
@@ -140,7 +140,8 @@ class RateLimiter:
             result = self.is_allowed(identifier, endpoint, limit, window)
             return result["remaining"]
         except Exception as e:
-            logger.warning(f"获取剩余请求次数失败: {e}")
+            system_logger = get_system_logger()
+            system_logger.warning("获取剩余请求次数失败", module="rate_limiter", exception=e)
             return limit  # 出错时返回最大限制
 
     def reset(self, identifier: str, endpoint: str):
@@ -150,7 +151,8 @@ class RateLimiter:
                 key = self._get_key(identifier, endpoint)
                 self.redis_client.delete(key)
             except Exception as e:
-                logger.warning(f"Redis重置速率限制失败: {e}")
+                system_logger = get_system_logger()
+                system_logger.warning("Redis重置速率限制失败", module="rate_limiter", exception=e)
                 # 降级到内存模式
                 key = self._get_memory_key(identifier, endpoint)
                 if key in self.memory_store:
@@ -290,7 +292,8 @@ def init_rate_limiter(redis_client=None):
     """初始化速率限制器"""
     global rate_limiter
     rate_limiter = RateLimiter(redis_client)
-    logger.info("速率限制器初始化完成")
+    system_logger = get_system_logger()
+    system_logger.info("速率限制器初始化完成", module="rate_limiter")
 
 
 # 获取速率限制状态

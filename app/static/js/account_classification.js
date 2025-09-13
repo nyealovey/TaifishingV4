@@ -1,5 +1,13 @@
 /* 账户分类管理页面JavaScript */
 
+// 引入console工具函数
+if (typeof logErrorWithContext === 'undefined') {
+    console.warn('console-utils.js not loaded, using fallback logging');
+    window.logErrorWithContext = function(error, context, additionalContext) {
+        console.error(`错误处理: ${context}`, error, additionalContext);
+    };
+}
+
 // 全局变量
 let currentClassificationId = null;
 let currentDbType = null;
@@ -25,7 +33,7 @@ function loadClassifications() {
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        logErrorWithContext(error, '加载分类失败', { action: 'load_classifications' });
         showAlert('danger', '加载分类失败');
     });
 }

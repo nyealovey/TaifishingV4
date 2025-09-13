@@ -3,6 +3,8 @@
 {% block title %}编辑数据库类型{% endblock %}
 
 {% block content %}
+<script src="{{ url_for('static', filename='js/common/alert-utils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/common/console-utils.js') }}"></script>
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -177,15 +179,15 @@ document.getElementById('editForm').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(result => {
         if (result.success) {
-            alert('保存成功');
+            showSuccessAlert('保存成功');
             window.location.href = '/database-types/';
         } else {
-            alert('保存失败: ' + result.message);
+            showErrorAlert('保存失败: ' + result.message);
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('保存失败');
+        logErrorWithContext(error, '保存数据库类型失败', { form: 'database_type_edit' });
+        showErrorAlert('保存失败');
     });
 });
 </script>

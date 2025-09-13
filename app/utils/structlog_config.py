@@ -73,7 +73,9 @@ class SQLAlchemyLogHandler:
                     db.session.add(unified_log)
                     db.session.commit()
             except Exception as e:
-                print(f"Error writing log to database: {e}")
+                # 使用标准logging避免循环依赖
+                import logging
+                logging.error(f"Error writing log to database: {e}")
 
         return event_dict
 
@@ -140,7 +142,9 @@ class SQLAlchemyLogHandler:
             }
         except Exception as e:
             # 避免日志处理本身出错
-            print(f"Error building log entry: {e}")
+            # 使用标准logging避免循环依赖
+            import logging
+            logging.error(f"Error building log entry: {e}")
             return None
 
     def _build_context(self, event_dict: dict[str, Any]) -> dict[str, Any]:
@@ -193,7 +197,9 @@ class SQLAlchemyLogHandler:
                     self._flush_logs()
 
             except Exception as e:
-                print(f"Error processing logs: {e}")
+                # 使用标准logging避免循环依赖
+                import logging
+                logging.error(f"Error processing logs: {e}")
                 time.sleep(1)
 
     def _flush_logs(self):
@@ -228,7 +234,9 @@ class SQLAlchemyLogHandler:
                 self.last_flush = time.time()
 
         except Exception as e:
-            print(f"Error flushing logs to database: {e}")
+            # 使用标准logging避免循环依赖
+            import logging
+            logging.error(f"Error flushing logs to database: {e}")
             try:
                 db.session.rollback()
             except:
@@ -308,20 +316,20 @@ class StructlogConfig:
         # 添加应用信息
         event_dict["app_name"] = "泰摸鱼吧"
         event_dict["app_version"] = "4.0.0"
-        
+
         # 添加环境信息
         if has_request_context():
             event_dict["environment"] = "development"  # 可以根据实际环境设置
             event_dict["host"] = getattr(g, "host", "localhost")
-        
+
         # 添加模块信息（从logger名称提取）
         logger_name = logger.name if hasattr(logger, "name") else "unknown"
         event_dict["logger_name"] = logger_name
-        
+
         # 添加全局上下文变量
         global _global_context
         event_dict.update(_global_context)
-        
+
         return event_dict
 
     def _get_console_renderer(self):
@@ -336,9 +344,8 @@ class StructlogConfig:
                     max_frames=10,
                 ),
             )
-        else:
-            # 非终端环境，使用简单的控制台渲染器
-            return structlog.dev.ConsoleRenderer(colors=False)
+        # 非终端环境，使用简单的控制台渲染器
+        return structlog.dev.ConsoleRenderer(colors=False)
 
     def _get_handler(self):
         """获取数据库处理器"""
@@ -522,17 +529,17 @@ def clear_request_context() -> None:
 # 上下文管理器
 class LogContext:
     """日志上下文管理器"""
-    
+
     def __init__(self, **kwargs):
         self.context = kwargs
         self.old_context = {}
-    
+
     def __enter__(self):
         global _global_context
         self.old_context = _global_context.copy()
         _global_context.update(self.context)
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         global _global_context
         _global_context.clear()
@@ -542,9 +549,12 @@ class LogContext:
 # 装饰器用于自动绑定上下文
 def with_log_context(**context):
     """装饰器：为函数自动绑定日志上下文"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             with LogContext(**context):
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator

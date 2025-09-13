@@ -509,17 +509,18 @@ def auto_classify() -> "Response":
             )
         else:
             log_error(
-                f"自动分类失败: {result.get('error', '未知错误')}",
+                "自动分类失败",
                 module="account_classification",
                 instance_id=instance_id,
+                error=result.get('error', '未知错误'),
             )
 
         # 直接返回服务层的结果
         return jsonify(result)
 
     except Exception as e:
-        log_error(f"自动分类异常: {str(e)}", module="account_classification", instance_id=instance_id)
-        current_app.logger.error(f"自动分类失败: {e}")
+        log_error("自动分类异常", module="account_classification", instance_id=instance_id, exception=e)
+        log_error("自动分类失败", module="account_classification", instance_id=instance_id, exception=e)
         return jsonify({"success": False, "error": str(e)})
 
 

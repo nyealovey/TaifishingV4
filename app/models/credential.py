@@ -5,7 +5,6 @@
 from datetime import datetime
 
 from app import bcrypt, db
-from app.utils.enhanced_logger import log_operation
 from app.utils.password_manager import password_manager
 from app.utils.timezone import now
 
@@ -161,13 +160,17 @@ class Credential(db.Model):
         """软删除凭据"""
         self.deleted_at = now()
         db.session.commit()
-        log_operation("credential_delete", details={"credential_id": self.id, "name": self.name})
+        from app.utils.structlog_config import get_system_logger
+        system_logger = get_system_logger()
+        system_logger.info("凭据删除", module="model", operation="credential_delete", credential_id=self.id, name=self.name)
 
     def restore(self) -> None:
         """恢复凭据"""
         self.deleted_at = None
         db.session.commit()
-        log_operation("credential_restore", details={"credential_id": self.id, "name": self.name})
+        from app.utils.structlog_config import get_system_logger
+        system_logger = get_system_logger()
+        system_logger.info("凭据恢复", module="model", operation="credential_restore", credential_id=self.id, name=self.name)
 
     @staticmethod
     def get_active_credentials() -> list:

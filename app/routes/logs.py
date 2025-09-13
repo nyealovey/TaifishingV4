@@ -11,7 +11,7 @@ from flask_login import login_required  # type: ignore
 from app.models.unified_log import LogLevel, UnifiedLog
 from app.utils.api_response import error_response, success_response
 from app.utils.decorators import view_required
-from app.utils.structlog_config import is_debug_logging_enabled, set_debug_logging_enabled
+from app.utils.structlog_config import is_debug_logging_enabled, set_debug_logging_enabled, get_system_logger
 from app.utils.timezone import now, utc_to_china
 
 # 创建蓝图
@@ -104,7 +104,9 @@ def get_unified_logs() -> Response:
         )
 
     except Exception as e:
-        logging.error(f"获取统一日志失败: {e}")
+        from app.utils.structlog_config import get_system_logger
+        system_logger = get_system_logger()
+        system_logger.error("获取统一日志失败", module="logs", exception=e)
         return error_response("获取统一日志失败", 500)
 
 
@@ -118,7 +120,9 @@ def get_unified_log_stats() -> Response:
         return success_response(stats)
 
     except Exception as e:
-        logging.error(f"获取统一日志统计失败: {e}")
+        from app.utils.structlog_config import get_system_logger
+        system_logger = get_system_logger()
+        system_logger.error("获取统一日志统计失败", module="logs", exception=e)
         return error_response("获取统一日志统计失败", 500)
 
 
@@ -157,7 +161,9 @@ def get_unified_error_logs() -> Response:
         return success_response({"logs": logs_data})
 
     except Exception as e:
-        logging.error(f"获取统一错误日志失败: {e}")
+        from app.utils.structlog_config import get_system_logger
+        system_logger = get_system_logger()
+        system_logger.error("获取统一错误日志失败", module="logs", exception=e)
         return error_response("获取统一错误日志失败", 500)
 
 
@@ -172,7 +178,9 @@ def get_unified_log_modules() -> Response:
         return success_response(module_list)
 
     except Exception as e:
-        logging.error(f"获取统一日志模块失败: {e}")
+        from app.utils.structlog_config import get_system_logger
+        system_logger = get_system_logger()
+        system_logger.error("获取统一日志模块失败", module="logs", exception=e)
         return error_response("获取统一日志模块失败", 500)
 
 
@@ -203,7 +211,9 @@ def get_unified_log_detail(log_id: int) -> Response:
         return success_response(log_detail)
 
     except Exception as e:
-        logging.error(f"获取日志详情失败: {e}")
+        from app.utils.structlog_config import get_system_logger
+        system_logger = get_system_logger()
+        system_logger.error("获取日志详情失败", module="logs", exception=e)
         return error_response("获取日志详情失败", 500)
 
 
@@ -296,7 +306,9 @@ def export_unified_logs() -> Response:
         return error_response("Unsupported format", 400)
 
     except Exception as e:
-        logging.error(f"导出统一日志失败: {e}")
+        from app.utils.structlog_config import get_system_logger
+        system_logger = get_system_logger()
+        system_logger.error("导出统一日志失败", module="logs", exception=e)
         return error_response("导出统一日志失败", 500)
 
 
@@ -308,7 +320,9 @@ def get_debug_status() -> Response:
         enabled = is_debug_logging_enabled()
         return success_response({"enabled": enabled, "status": "启用" if enabled else "关闭"})
     except Exception as e:
-        logging.error(f"获取DEBUG日志状态失败: {e}")
+        from app.utils.structlog_config import get_system_logger
+        system_logger = get_system_logger()
+        system_logger.error("获取DEBUG日志状态失败", module="logs", exception=e)
         return error_response("获取DEBUG日志状态失败", 500)
 
 
@@ -336,5 +350,46 @@ def toggle_debug_logging() -> Response:
             }
         )
     except Exception as e:
-        logging.error(f"切换DEBUG日志状态失败: {e}")
+        from app.utils.structlog_config import get_system_logger
+        system_logger = get_system_logger()
+        system_logger.error("切换DEBUG日志状态失败", module="logs", exception=e)
         return error_response("切换DEBUG日志状态失败", 500)
+
+
+@logs_bp.route("/api/logs/frontend", methods=["POST"])
+def frontend_log() -> Response:
+    """接收前端日志并记录到structlog系统"""
+    try:
+        data = request.get_json()
+        if not data:
+            return error_response("无效的请求数据", 400)
+        
+        # 获取日志信息
+        level = data.get('level', 'info')
+        message = data.get('message', '')
+        module = data.get('module', 'frontend')
+        context = data.get('context', {})
+        
+        # 获取系统日志记录器
+        system_logger = get_system_logger()
+        
+        # 根据级别记录日志
+        if level == 'error':
+            system_logger.error(message, module=module, **context)
+        elif level == 'warning':
+            system_logger.warning(message, module=module, **context)
+        elif level == 'info':
+            system_logger.info(message, module=module, **context)
+        elif level == 'debug':
+            system_logger.debug(message, module=module, **context)
+        else:
+            system_logger.info(message, module=module, **context)
+        
+        return success_response({"message": "日志记录成功"})
+        
+    except Exception as e:
+        # 使用标准logging避免循环依赖
+        from app.utils.structlog_config import get_system_logger
+        system_logger = get_system_logger()
+        system_logger.error("记录前端日志失败", module="logs", exception=e)
+        return error_response("记录前端日志失败", 500)

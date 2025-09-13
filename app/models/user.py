@@ -112,7 +112,9 @@ class User(UserMixin, db.Model):
             admin = User(username="admin", password="Admin123", role="admin")  # noqa: S106
             db.session.add(admin)
             db.session.commit()
-            print("✅ 默认管理员用户已创建: admin/Admin123")
+            from app.utils.structlog_config import get_system_logger
+            system_logger = get_system_logger()
+            system_logger.info("默认管理员用户已创建", module="user_model", username="admin")
         return admin
 
     def __repr__(self) -> str:

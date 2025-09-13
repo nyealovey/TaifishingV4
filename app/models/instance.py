@@ -5,7 +5,6 @@
 from datetime import datetime
 
 from app import db
-from app.utils.enhanced_logger import log_operation
 from app.utils.timezone import now
 
 
@@ -224,14 +223,18 @@ class Instance(db.Model):
         self.deleted_at = now()
         self.status = "deleted"
         db.session.commit()
-        log_operation("instance_delete", details={"instance_id": self.id, "name": self.name})
+        from app.utils.structlog_config import get_system_logger
+        system_logger = get_system_logger()
+        system_logger.info("实例删除", module="model", operation="instance_delete", instance_id=self.id, name=self.name)
 
     def restore(self) -> None:
         """恢复实例"""
         self.deleted_at = None
         self.status = "active"
         db.session.commit()
-        log_operation("instance_restore", details={"instance_id": self.id, "name": self.name})
+        from app.utils.structlog_config import get_system_logger
+        system_logger = get_system_logger()
+        system_logger.info("实例恢复", module="model", operation="instance_restore", instance_id=self.id, name=self.name)
 
     @staticmethod
     def get_active_instances() -> list:

@@ -58,11 +58,11 @@ from app.utils.structlog_config import LogContext
 with LogContext(transaction_id="tx_789", step="validation"):
     logger.info("验证用户输入", module="validation")
     # 这条日志会包含 transaction_id 和 step
-    
+
     with LogContext(data_type="email"):
         logger.debug("检查邮箱格式", module="validation")
         # 这条日志会包含 transaction_id, step 和 data_type
-    
+
     logger.info("验证完成", module="validation")
     # 这条日志只包含 transaction_id 和 step（data_type 已被清除）
 
@@ -82,9 +82,9 @@ def create_user(username: str, email: str):
     logger = get_logger("user_service")
     logger.info("开始创建用户", module="user_service", username=username, email=email)
     # 这条日志会自动包含 service="user_service" 和 version="1.2.0"
-    
+
     # 处理逻辑...
-    
+
     logger.info("用户创建成功", module="user_service", user_id=123)
     # 这条日志也会包含相同的上下文
     return {"success": True, "username": username}
@@ -176,17 +176,17 @@ bind_context(operation_id="batch_001", batch_size=1000)
 def process_data(data_list):
     """处理数据"""
     logger = get_logger("data_processor")
-    
+
     logger.info("开始处理数据", module="data_processor", total_count=len(data_list))
-    
+
     for i, item in enumerate(data_list):
         with LogContext(item_id=item["id"], step=f"processing_{i}"):
             logger.debug("处理数据项", module="data_processor", item_type=item["type"])
-            
+
             # 处理逻辑...
-            
+
             logger.info("数据项处理完成", module="data_processor", result="success")
-    
+
     logger.info("批量处理完成", module="data_processor")
 ```
 

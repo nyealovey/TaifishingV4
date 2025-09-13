@@ -356,8 +356,14 @@ class DatabaseService:
         cursor.close()
 
         # 记录同步结果
-        logging.info(
-            f"MySQL账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {removed_count}, 总计: {synced_count}"
+        self.db_logger.info(
+            "MySQL账户同步完成",
+            module="database",
+            instance_name=instance.name,
+            added_count=added_count,
+            updated_count=updated_count,
+            removed_count=removed_count,
+            synced_count=synced_count,
         )
 
         return {
@@ -546,8 +552,14 @@ class DatabaseService:
         cursor.close()
 
         # 记录同步结果
-        logging.info(
-            f"PostgreSQL账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {removed_count}, 总计: {synced_count}"
+        self.db_logger.info(
+            "PostgreSQL账户同步完成",
+            module="database",
+            instance_name=instance.name,
+            added_count=added_count,
+            updated_count=updated_count,
+            removed_count=removed_count,
+            synced_count=synced_count,
         )
 
         return {
@@ -689,8 +701,14 @@ class DatabaseService:
         cursor.close()
 
         # 记录同步结果
-        logging.info(
-            f"SQL Server账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {removed_count}, 总计: {synced_count}"
+        self.db_logger.info(
+            "SQL Server账户同步完成",
+            module="database",
+            instance_name=instance.name,
+            added_count=added_count,
+            updated_count=updated_count,
+            removed_count=removed_count,
+            synced_count=synced_count,
         )
 
         return {
@@ -854,8 +872,14 @@ class DatabaseService:
         cursor.close()
 
         # 记录同步结果
-        logging.info(
-            f"Oracle账户同步完成 - 实例: {instance.name}, 新增: {added_count}, 更新: {updated_count}, 删除: {removed_count}, 总计: {synced_count}"
+        self.db_logger.info(
+            "Oracle账户同步完成",
+            module="database",
+            instance_name=instance.name,
+            added_count=added_count,
+            updated_count=updated_count,
+            removed_count=removed_count,
+            synced_count=synced_count,
         )
 
         return {
@@ -906,13 +930,13 @@ class DatabaseService:
             if conn:
                 # 存储连接
                 self.connections[instance.id] = conn
-                log_operation(
-                    "database_connect",
-                    details={
-                        "instance_id": instance.id,
-                        "db_type": instance.db_type,
-                        "host": instance.host,
-                    },
+                self.db_logger.info(
+                    "数据库连接成功",
+                    module="database",
+                    operation="database_connect",
+                    instance_id=instance.id,
+                    db_type=instance.db_type,
+                    host=instance.host,
                 )
 
             return conn
@@ -943,7 +967,7 @@ class DatabaseService:
                 return self._get_oracle_version(conn)
             return None
         except Exception as e:
-            logging.error(f"获取数据库版本失败: {e}")
+            self.db_logger.error("获取数据库版本失败", module="database", exception=e)
             return None
 
     def _test_connection_validity(self, conn: "Any", db_type: str) -> bool:
@@ -976,9 +1000,12 @@ class DatabaseService:
                     elif hasattr(conn, "disconnect"):
                         conn.disconnect()
                 del self.connections[instance.id]
-                log_operation(
-                    "database_disconnect",
-                    details={"instance_id": instance.id, "db_type": instance.db_type},
+                self.db_logger.info(
+                    "数据库连接关闭",
+                    module="database",
+                    operation="database_disconnect",
+                    instance_id=instance.id,
+                    db_type=instance.db_type,
                 )
         except Exception as e:
             log_error(e, context={"instance_id": instance.id})
@@ -1295,15 +1322,15 @@ class DatabaseService:
     def _get_postgresql_permissions(self, instance: Instance, account: Account) -> dict[str, Any]:
         """获取PostgreSQL账户权限 - 根据新的权限配置结构"""
         try:
-            print(f"DEBUG: 获取PostgreSQL权限 - 账户: {account.username}")
-            print(f"DEBUG: 本地权限数据: {account.permissions}")
+            self.db_logger.debug("获取PostgreSQL权限", module="database_service", username=account.username)
+            self.db_logger.debug("本地权限数据", module="database_service", has_permissions=bool(account.permissions))
 
             # 优先使用本地数据库中已同步的权限数据
             if account.permissions:
                 import json
 
                 permissions = json.loads(account.permissions)
-                print(f"DEBUG: 解析后的权限数据: {permissions}")
+                self.db_logger.debug("解析后的权限数据", module="database_service", permission_keys=list(permissions.keys()) if permissions else [])
 
                 # 转换为前端显示格式
                 result = {
@@ -1312,7 +1339,7 @@ class DatabaseService:
                     "database_privileges": permissions.get("database_privileges", []),
                     "tablespace_privileges": permissions.get("tablespace_privileges", []),
                 }
-                print(f"DEBUG: 返回的权限结果: {result}")
+                self.db_logger.debug("返回的权限结果", module="database_service", result_keys=list(result.keys()) if result else [])
                 return result
 
             # 如果本地没有权限数据，则从服务器查询（备用方案）
@@ -1327,12 +1354,12 @@ class DatabaseService:
                 }
 
             # 从服务器查询权限数据
-            print("DEBUG: 从服务器实时查询权限数据")
+            self.db_logger.debug("从服务器实时查询权限数据", module="database_service")
             from app.services.account_sync_service import AccountSyncService
 
             sync_service = AccountSyncService()
             permissions = sync_service._get_postgresql_account_permissions(instance, conn, account.username)
-            print(f"DEBUG: 实时查询的权限数据: {permissions}")
+            self.db_logger.debug("实时查询的权限数据", module="database_service", permission_keys=list(permissions.keys()) if permissions else [])
 
             if permissions:
                 # 将实时查询到的权限数据保存到本地数据库
@@ -1349,9 +1376,9 @@ class DatabaseService:
                     "database_privileges": permissions.get("database_privileges", []),
                     "tablespace_privileges": permissions.get("tablespace_privileges", []),
                 }
-                print(f"DEBUG: 实时查询返回的权限结果: {result}")
+                self.db_logger.debug("实时查询返回的权限结果", module="database_service", result_keys=list(result.keys()) if result else [])
                 return result
-            print("DEBUG: 实时查询返回空权限数据")
+            self.db_logger.debug("实时查询返回空权限数据", module="database_service")
             return {
                 "predefined_roles": [],
                 "role_attributes": [],
@@ -1575,7 +1602,7 @@ class DatabaseService:
             cursor.close()
             return version
         except Exception as e:
-            logging.error(f"获取MySQL版本失败: {e}")
+            self.db_logger.error("获取MySQL版本失败", module="database", exception=e)
             return None
 
     def _get_postgresql_version(self, conn: "Any") -> str | None:
@@ -1591,7 +1618,7 @@ class DatabaseService:
             match = re.search(r"PostgreSQL (\d+\.\d+)", version)
             return match.group(1) if match else version
         except Exception as e:
-            logging.error(f"获取PostgreSQL版本失败: {e}")
+            self.db_logger.error("获取PostgreSQL版本失败", module="database", exception=e)
             return None
 
     def _get_sqlserver_version(self, conn: "Any") -> str | None:
@@ -1607,7 +1634,7 @@ class DatabaseService:
             match = re.search(r"Microsoft SQL Server (\d+)", version)
             return match.group(1) if match else version
         except Exception as e:
-            logging.error(f"获取SQL Server版本失败: {e}")
+            self.db_logger.error("获取SQL Server版本失败", module="database", exception=e)
             return None
 
     def _get_oracle_version(self, conn: "Any") -> str | None:
@@ -1623,5 +1650,5 @@ class DatabaseService:
             match = re.search(r"Oracle Database (\d+c?)", version)
             return match.group(1) if match else version
         except Exception as e:
-            logging.error(f"获取Oracle版本失败: {e}")
+            self.db_logger.error("获取Oracle版本失败", module="database", exception=e)
             return None

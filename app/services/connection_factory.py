@@ -10,7 +10,7 @@ from typing import Any
 
 from app.models.instance import Instance
 from app.utils.database_type_utils import DatabaseTypeUtils
-from app.utils.enhanced_logger import log_error
+from app.utils.structlog_config import get_db_logger, log_error
 
 
 class DatabaseConnection(ABC):
@@ -18,6 +18,7 @@ class DatabaseConnection(ABC):
 
     def __init__(self, instance: Instance) -> None:
         self.instance = instance
+        self.db_logger = get_db_logger()
         self.connection = None
         self.is_connected = False
 
@@ -72,7 +73,7 @@ class MySQLConnection(DatabaseConnection):
             return True
 
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "db_type": "MySQL"})
+            self.db_logger.error("MySQL连接失败", module="connection", instance_id=self.instance.id, db_type="MySQL", exception=e)
             return False
 
     def disconnect(self) -> None:
@@ -81,7 +82,7 @@ class MySQLConnection(DatabaseConnection):
             try:
                 self.connection.close()
             except Exception as e:
-                log_error(e, context={"instance_id": self.instance.id, "db_type": "MySQL"})
+                self.db_logger.error("MySQL断开连接失败", module="connection", instance_id=self.instance.id, db_type="MySQL", exception=e)
             finally:
                 self.connection = None
                 self.is_connected = False
@@ -151,7 +152,7 @@ class PostgreSQLConnection(DatabaseConnection):
             return True
 
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "db_type": "PostgreSQL"})
+            self.db_logger.error("PostgreSQL连接失败", module="connection", instance_id=self.instance.id, db_type="PostgreSQL", exception=e)
             return False
 
     def disconnect(self) -> None:
@@ -160,7 +161,7 @@ class PostgreSQLConnection(DatabaseConnection):
             try:
                 self.connection.close()
             except Exception as e:
-                log_error(e, context={"instance_id": self.instance.id, "db_type": "PostgreSQL"})
+                self.db_logger.error("PostgreSQL断开连接失败", module="connection", instance_id=self.instance.id, db_type="PostgreSQL", exception=e)
             finally:
                 self.connection = None
                 self.is_connected = False
@@ -234,7 +235,7 @@ class SQLServerConnection(DatabaseConnection):
             return True
 
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "db_type": "SQL Server"})
+            self.db_logger.error("SQL Server连接失败", module="connection", instance_id=self.instance.id, db_type="SQL Server", exception=e)
             return False
 
     def disconnect(self) -> None:
@@ -243,7 +244,7 @@ class SQLServerConnection(DatabaseConnection):
             try:
                 self.connection.close()
             except Exception as e:
-                log_error(e, context={"instance_id": self.instance.id, "db_type": "SQL Server"})
+                self.db_logger.error("SQL Server断开连接失败", module="connection", instance_id=self.instance.id, db_type="SQL Server", exception=e)
             finally:
                 self.connection = None
                 self.is_connected = False
@@ -347,7 +348,7 @@ class OracleConnection(DatabaseConnection):
             return True
 
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "db_type": "Oracle"})
+            self.db_logger.error("Oracle连接失败", module="connection", instance_id=self.instance.id, db_type="Oracle", exception=e)
             return False
 
     def disconnect(self) -> None:
@@ -356,7 +357,7 @@ class OracleConnection(DatabaseConnection):
             try:
                 self.connection.close()
             except Exception as e:
-                log_error(e, context={"instance_id": self.instance.id, "db_type": "Oracle"})
+                self.db_logger.error("Oracle断开连接失败", module="connection", instance_id=self.instance.id, db_type="Oracle", exception=e)
             finally:
                 self.connection = None
                 self.is_connected = False
@@ -426,7 +427,7 @@ class ConnectionFactory:
         db_type = instance.db_type.lower()
 
         if db_type not in ConnectionFactory.CONNECTION_CLASSES:
-            log_error(f"不支持的数据库类型: {db_type}", context={"instance_id": instance.id, "db_type": db_type})
+            log_error("不支持的数据库类型", module="connection", instance_id=instance.id, db_type=db_type)
             return None
 
         connection_class = ConnectionFactory.CONNECTION_CLASSES[db_type]

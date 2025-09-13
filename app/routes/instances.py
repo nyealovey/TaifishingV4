@@ -1197,7 +1197,7 @@ def api_test_instance_connection() -> Response | tuple[Response, int]:
         data = request.get_json()
 
         # 添加调试日志
-        logging.info(f"收到API测试连接请求，Content-Type: {request.content_type}")
+        log_info(f"收到API测试连接请求，Content-Type: {request.content_type}", module="instances")
         log_info(f"请求数据: {request.get_data()}", module="instances")
 
         # 检查Content-Type

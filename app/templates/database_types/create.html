@@ -3,6 +3,8 @@
 {% block title %}添加数据库类型{% endblock %}
 
 {% block content %}
+<script src="{{ url_for('static', filename='js/common/alert-utils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/common/console-utils.js') }}"></script>
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -162,15 +164,15 @@ document.getElementById('createForm').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(result => {
         if (result.success) {
-            alert('创建成功');
+            showSuccessAlert('创建成功');
             window.location.href = '/database-types/';
         } else {
-            alert('创建失败: ' + result.message);
+            showErrorAlert('创建失败: ' + result.message);
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('创建失败');
+        logErrorWithContext(error, '创建数据库类型失败', { form: 'database_type_create' });
+        showErrorAlert('创建失败');
     });
 });
 </script>

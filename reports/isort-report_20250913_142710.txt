@@ -8,12 +8,12 @@ ERROR: /Users/shiyijiufei/TaifishingV4/app/services/account_classification_servi
 @@ -7,8 +7,9 @@
  from enum import Enum
  from typing import Any
- 
+
 -from sqlalchemy import JSON, Column, DateTime, Index, Integer, String, Text
 +from sqlalchemy import JSON, Column, DateTime
  from sqlalchemy import Enum as SQLEnum
 +from sqlalchemy import Index, Integer, String, Text
- 
+
  from app import db
  from app.utils.timezone import now, utc_to_china
 --- /Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py:before	2025-09-13 14:27:09.069201
@@ -24,6 +24,6 @@ ERROR: /Users/shiyijiufei/TaifishingV4/app/services/account_classification_servi
  )
 -from app.utils.structlog_config import log_info, log_error, log_warning
 +from app.utils.structlog_config import log_error, log_info, log_warning
- 
- 
+
+
  class AccountClassificationService:

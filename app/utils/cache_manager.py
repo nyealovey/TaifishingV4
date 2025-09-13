@@ -4,14 +4,13 @@
 
 import hashlib
 import json
-import logging
 from collections.abc import Callable
 from functools import wraps
 from typing import Any
 
 from flask_caching import Cache
 
-logger = logging.getLogger(__name__)
+from app.utils.structlog_config import get_system_logger
 
 
 class CacheManager:
@@ -20,6 +19,7 @@ class CacheManager:
     def __init__(self, cache: Cache) -> None:
         self.cache = cache
         self.default_timeout = 300  # 5分钟默认超时
+        self.system_logger = get_system_logger()
 
     def _generate_key(self, prefix: str, *args, **kwargs) -> str:
         """生成缓存键"""
@@ -37,7 +37,7 @@ class CacheManager:
         try:
             return self.cache.get(key)
         except Exception as e:
-            logger.warning(f"获取缓存失败: {key}, 错误: {e}")
+            self.self.system_logger.warning("获取缓存失败", module="cache", key=key, exception=e)
             return None
 
     def set(self, key: str, value: Any, timeout: int | None = None) -> bool:
@@ -47,7 +47,7 @@ class CacheManager:
             self.cache.set(key, value, timeout=timeout)
             return True
         except Exception as e:
-            logger.warning(f"设置缓存失败: {key}, 错误: {e}")
+            self.self.system_logger.warning("设置缓存失败", module="cache", key=key, exception=e)
             return False
 
     def delete(self, key: str) -> bool:
@@ -56,7 +56,7 @@ class CacheManager:
             self.cache.delete(key)
             return True
         except Exception as e:
-            logger.warning(f"删除缓存失败: {key}, 错误: {e}")
+            self.system_logger.warning(f"删除缓存失败: {key}, 错误: {e}")
             return False
 
     def clear(self) -> bool:
@@ -65,7 +65,7 @@ class CacheManager:
             self.cache.clear()
             return True
         except Exception as e:
-            logger.warning(f"清空缓存失败: {e}")
+            self.system_logger.warning(f"清空缓存失败: {e}")
             return False
 
     def get_or_set(self, key: str, func: Callable, timeout: int | None = None, *args, **kwargs) -> Any:
@@ -83,10 +83,10 @@ class CacheManager:
             # Redis支持模式匹配，其他后端可能需要遍历
             if hasattr(self.cache.cache, "delete_pattern"):
                 return self.cache.cache.delete_pattern(pattern)
-            logger.warning("当前缓存后端不支持模式删除")
+            self.system_logger.warning("当前缓存后端不支持模式删除")
             return 0
         except Exception as e:
-            logger.warning(f"模式删除缓存失败: {pattern}, 错误: {e}")
+            self.system_logger.warning(f"模式删除缓存失败: {pattern}, 错误: {e}")
             return 0
 
 
@@ -98,7 +98,8 @@ def init_cache_manager(cache: Cache) -> None:
     """初始化缓存管理器"""
     global cache_manager
     cache_manager = CacheManager(cache)
-    logger.info("缓存管理器初始化完成")
+    system_logger = get_system_logger()
+    system_logger.info("缓存管理器初始化完成", module="cache")
 
 
 def cached(
@@ -133,13 +134,15 @@ def cached(
             # 尝试获取缓存
             cached_value = cache_manager.get(cache_key)
             if cached_value is not None:
-                logger.debug(f"缓存命中: {cache_key}")
+                system_logger = get_system_logger()
+                system_logger.debug("缓存命中", module="cache", cache_key=cache_key)
                 return cached_value
 
             # 执行函数并缓存结果
             result = f(*args, **kwargs)
             cache_manager.set(cache_key, result, timeout)
-            logger.debug(f"缓存设置: {cache_key}")
+            system_logger = get_system_logger()
+            system_logger.debug("缓存设置", module="cache", cache_key=cache_key)
 
             return result
 
@@ -156,7 +159,8 @@ def cache_invalidate(pattern: str) -> Callable:
         def decorated_function(*args: "Any", **kwargs: "Any") -> "Any":
             result = f(*args, **kwargs)
             cache_manager.invalidate_pattern(pattern)
-            logger.debug(f"缓存失效: {pattern}")
+            system_logger = get_system_logger()
+            system_logger.debug("缓存失效", module="cache", pattern=pattern)
             return result
 
         return decorated_function
@@ -291,8 +295,10 @@ def warm_up_cache() -> "bool | None":
         for task in tasks:
             cache_manager.set(f"task:{task.id}", task.to_dict(), 180)
 
-        logger.info("缓存预热完成")
+        system_logger = get_system_logger()
+        system_logger.info("缓存预热完成", module="cache")
         return True
     except Exception as e:
-        logger.error(f"缓存预热失败: {e}")
+        system_logger = get_system_logger()
+        system_logger.error("缓存预热失败", module="cache", exception=e)
         return False

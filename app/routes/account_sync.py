@@ -13,8 +13,7 @@ from app import db
 from app.models.instance import Instance
 from app.models.sync_data import SyncData
 from app.services.account_sync_service import account_sync_service
-from app.utils.enhanced_logger import log_api_error
-from app.utils.structlog_config import log_error, log_info, log_warning
+from app.utils.structlog_config import get_api_logger, log_error, log_info, log_warning
 
 # 创建蓝图
 account_sync_bp = Blueprint("account_sync", __name__)
@@ -353,17 +352,16 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
         )
 
         # 记录操作日志
-        from app.utils.enhanced_logger import log_operation
-
-        log_operation(
+        api_logger = get_api_logger()
+        api_logger.info(
+            "批量同步账户完成",
+            module="account_sync",
             operation_type="BATCH_SYNC_ACCOUNTS_COMPLETE",
             user_id=current_user.id,
-            details={
-                "total_instances": len(instances),
-                "success_count": success_count,
-                "failed_count": failed_count,
-                "results": results,
-            },
+            total_instances=len(instances),
+            success_count=success_count,
+            failed_count=failed_count,
+            results=results,
         )
 
         return jsonify(
@@ -379,7 +377,8 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
 
     except Exception as e:
         # 记录详细的错误日志
-        log_api_error("sync_all_accounts", e, "account_sync", f"用户: {current_user.id if current_user else 'unknown'}")
+        api_logger = get_api_logger()
+        api_logger.error("同步所有账户失败", module="account_sync", operation="sync_all_accounts", user_id=current_user.id if current_user else None, exception=e)
 
         return (
             jsonify(

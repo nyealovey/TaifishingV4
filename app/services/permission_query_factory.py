@@ -11,7 +11,7 @@ from typing import Any
 from app.models.account import Account
 from app.models.instance import Instance
 from app.services.connection_factory import ConnectionFactory
-from app.utils.enhanced_logger import log_error
+from app.utils.structlog_config import get_db_logger, log_error
 
 
 class PermissionQuery(ABC):
@@ -20,6 +20,7 @@ class PermissionQuery(ABC):
     def __init__(self, instance: Instance) -> None:
         self.instance = instance
         self.connection = None
+        self.db_logger = get_db_logger()
 
     @abstractmethod
     def get_account_permissions(self, account: Account) -> dict[str, Any]:
@@ -68,7 +69,7 @@ class MySQLPermissionQuery(PermissionQuery):
                 "permissions": {"global_privileges": global_perms, "database_privileges": database_perms},
             }
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return {"success": False, "error": str(e)}
         finally:
             if connection:
@@ -98,7 +99,7 @@ class MySQLPermissionQuery(PermissionQuery):
 
             return [{"privilege": row[0], "granted": True, "grantable": row[1]} for row in results]
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return []
         finally:
             if connection:
@@ -129,7 +130,7 @@ class MySQLPermissionQuery(PermissionQuery):
 
             return [{"database": row[0], "privileges": row[1].split(",") if row[1] else []} for row in results]
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return []
         finally:
             if connection:
@@ -160,7 +161,7 @@ class MySQLPermissionQuery(PermissionQuery):
 
             return [{"table": row[0], "privileges": row[1].split(",") if row[1] else []} for row in results]
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return []
         finally:
             if connection:
@@ -201,7 +202,7 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                 "permissions": {"role_attributes": role_attributes, "database_privileges": database_privileges},
             }
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return {"success": False, "error": str(e)}
         finally:
             if connection:
@@ -262,7 +263,7 @@ class PostgreSQLPermissionQuery(PermissionQuery):
 
             return permissions
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return []
         finally:
             if connection:
@@ -302,7 +303,7 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                 if any([row[1], row[2], row[3]])  # 只返回有权限的数据库
             ]
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return []
         finally:
             if connection:
@@ -351,7 +352,7 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                 if any([row[2], row[3], row[4], row[5]])  # 只返回有权限的表
             ]
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return []
         finally:
             if connection:
@@ -419,7 +420,7 @@ class SQLServerPermissionQuery(PermissionQuery):
                 },
             }
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return {"success": False, "error": str(e)}
         finally:
             if connection:
@@ -450,7 +451,7 @@ class SQLServerPermissionQuery(PermissionQuery):
                 for row in results
             ]
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return []
         finally:
             if connection:
@@ -497,12 +498,12 @@ class SQLServerPermissionQuery(PermissionQuery):
 
                 except Exception as e:
                     # 如果某个数据库查询失败，记录日志但继续处理其他数据库
-                    print(f"DEBUG: 查询数据库 {db_name} 的角色失败: {e}")
+                    self.db_logger.debug("查询数据库角色失败", module="permission_query", database=db_name, exception=e)
                     continue
 
             return [{"database": db_name, "roles": roles} for db_name, roles in db_permissions.items()]
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return []
         finally:
             if connection:
@@ -545,7 +546,7 @@ class SQLServerPermissionQuery(PermissionQuery):
                 for table_name, permissions in table_permissions.items()
             ]
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return []
         finally:
             if connection:
@@ -600,7 +601,7 @@ class OraclePermissionQuery(PermissionQuery):
                 },
             }
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return {"success": False, "error": str(e)}
         finally:
             if connection:
@@ -614,7 +615,7 @@ class OraclePermissionQuery(PermissionQuery):
                 return []
 
             permissions = []
-            print(f"DEBUG: 开始查询Oracle用户 {account.username} 的全局权限")
+            self.db_logger.debug("开始查询Oracle用户全局权限", module="permission_query", username=account.username)
 
             # 查询系统权限 - 使用dba_sys_privs查询指定用户的权限
             sys_privs_query = """
@@ -626,9 +627,9 @@ class OraclePermissionQuery(PermissionQuery):
                 ORDER BY privilege
             """
 
-            print(f"DEBUG: 执行系统权限查询，用户名: {account.username.upper()}")
+            self.db_logger.debug("执行系统权限查询", module="permission_query", username=account.username.upper())
             sys_results = connection.execute_query(sys_privs_query, {"username": account.username.upper()})
-            print(f"DEBUG: 系统权限查询结果: {list(sys_results)}")
+            self.db_logger.debug("系统权限查询结果", module="permission_query", result_count=len(list(sys_results)))
 
             for row in sys_results:
                 permissions.append({"privilege": row[0], "granted": True, "grantable": row[1] == "YES"})
@@ -643,17 +644,17 @@ class OraclePermissionQuery(PermissionQuery):
                 ORDER BY granted_role
             """
 
-            print(f"DEBUG: 执行角色权限查询，用户名: {account.username.upper()}")
+            self.db_logger.debug("执行角色权限查询", module="permission_query", username=account.username.upper())
             role_results = connection.execute_query(roles_query, {"username": account.username.upper()})
-            print(f"DEBUG: 角色权限查询结果: {list(role_results)}")
+            self.db_logger.debug("角色权限查询结果", module="permission_query", result_count=len(list(role_results)))
 
             for row in role_results:
                 permissions.append({"privilege": f"ROLE_{row[0]}", "granted": True, "grantable": row[1] == "YES"})
 
-            print(f"DEBUG: 最终权限列表: {permissions}")
+            self.db_logger.debug("最终权限列表", module="permission_query", permission_count=len(permissions))
             return permissions
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return []
         finally:
             if connection:
@@ -667,7 +668,7 @@ class OraclePermissionQuery(PermissionQuery):
                 return []
 
             permissions = []
-            print(f"DEBUG: 开始查询Oracle用户 {account.username} 的数据库权限")
+            self.db_logger.debug("开始查询Oracle用户数据库权限", module="permission_query", username=account.username)
 
             # 查询表空间配额 - 使用user_ts_quotas查询指定用户的配额
             quota_query = """
@@ -679,9 +680,9 @@ class OraclePermissionQuery(PermissionQuery):
                 ORDER BY tablespace_name
             """
 
-            print(f"DEBUG: 执行表空间配额查询，用户名: {account.username.upper()}")
+            self.db_logger.debug("执行表空间配额查询", module="permission_query", username=account.username.upper())
             quota_results = connection.execute_query(quota_query, ())
-            print(f"DEBUG: 表空间配额查询结果: {list(quota_results)}")
+            self.db_logger.debug("表空间配额查询结果", module="permission_query", result_count=len(list(quota_results)))
 
             for row in quota_results:
                 tablespace_name = row[0]
@@ -697,10 +698,10 @@ class OraclePermissionQuery(PermissionQuery):
 
                 permissions.append({"quota": quota_info})
 
-            print(f"DEBUG: 数据库权限列表: {permissions}")
+            self.db_logger.debug("数据库权限列表", module="permission_query", permission_count=len(permissions))
             return permissions
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return []
         finally:
             if connection:
@@ -753,7 +754,7 @@ class OraclePermissionQuery(PermissionQuery):
                 for table_name, permissions in table_permissions.items()
             ]
         except Exception as e:
-            log_error(e, context={"instance_id": self.instance.id, "account_id": account.id})
+            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
             return []
         finally:
             if connection:
@@ -785,7 +786,7 @@ class PermissionQueryFactory:
         db_type = instance.db_type.lower()
 
         if db_type not in PermissionQueryFactory.QUERY_CLASSES:
-            log_error(f"不支持的数据库类型: {db_type}", context={"instance_id": instance.id, "db_type": db_type})
+            log_error("不支持的数据库类型", module="permission", instance_id=instance.id, db_type=db_type)
             return None
 
         query_class = PermissionQueryFactory.QUERY_CLASSES[db_type]

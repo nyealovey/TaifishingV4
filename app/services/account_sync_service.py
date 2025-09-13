@@ -185,17 +185,17 @@ class AccountSyncService:
             connection_obj = ConnectionFactory.create_connection(instance)
 
             if not connection_obj:
-                self.logger.error(f"不支持的数据库类型: {instance.db_type}")
+                self.sync_logger.error(f"不支持的数据库类型: {instance.db_type}")
                 return None
 
             # 建立连接
             if connection_obj.connect():
                 return connection_obj.connection
-            self.logger.error(f"无法建立{instance.db_type}连接")
+            self.sync_logger.error(f"无法建立{instance.db_type}连接")
             return None
 
         except Exception as e:
-            self.logger.error(f"数据库连接失败: {str(e)}")
+            self.sync_logger.error(f"数据库连接失败: {str(e)}")
             return None
 
     def _get_sqlserver_pyodbc_connection(self, instance: Instance) -> "str | None":
@@ -605,9 +605,9 @@ class AccountSyncService:
                     account.can_grant = permissions.get("can_grant", False)
                     # 标记有权限更新
                     changes = True
-                    self.logger.info(f"PostgreSQL账户 {username} 权限已更新: {permissions}")
+                    self.sync_logger.info(f"PostgreSQL账户 {username} 权限已更新: {permissions}")
             except Exception as e:
-                self.logger.warning(f"获取PostgreSQL账户 {username} 权限失败: {e}")
+                self.sync_logger.warning(f"获取PostgreSQL账户 {username} 权限失败: {e}")
 
         # 删除服务器端不存在的账户
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
@@ -638,15 +638,15 @@ class AccountSyncService:
         }
 
         try:
-            self.logger.info(f"开始获取PostgreSQL用户 {username} 的权限信息")
+            self.sync_logger.info(f"开始获取PostgreSQL用户 {username} 的权限信息")
 
             # 首先检查用户是否存在
             cursor.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (username,))
             if not cursor.fetchone():
-                self.logger.warning(f"PostgreSQL用户 {username} 不存在")
+                self.sync_logger.warning(f"PostgreSQL用户 {username} 不存在")
                 return permissions
 
-            self.logger.info(f"PostgreSQL用户 {username} 存在，继续获取权限")
+            self.sync_logger.info(f"PostgreSQL用户 {username} 存在，继续获取权限")
 
             # 获取预定义角色成员身份
             try:
@@ -669,7 +669,7 @@ class AccountSyncService:
                         if role and len(role) > 0:
                             permissions["predefined_roles"].append(role[0])
             except Exception as e:
-                self.logger.warning(f"获取PostgreSQL用户 {username} 预定义角色失败: {e}")
+                self.sync_logger.warning(f"获取PostgreSQL用户 {username} 预定义角色失败: {e}")
 
             # 获取角色属性
             try:
@@ -711,7 +711,7 @@ class AccountSyncService:
                     if can_bypass_rls:
                         permissions["role_attributes"].append("BYPASSRLS")
             except Exception as e:
-                self.logger.warning(f"获取PostgreSQL用户 {username} 角色属性失败: {e}")
+                self.sync_logger.warning(f"获取PostgreSQL用户 {username} 角色属性失败: {e}")
 
             # 获取数据库权限（多数据库版本）
             try:
@@ -719,7 +719,7 @@ class AccountSyncService:
                 cursor.execute("SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname")
                 databases = [row[0] for row in cursor.fetchall()]
 
-                self.logger.info(f"PostgreSQL用户 {username} 权限查询使用默认数据库: postgres")
+                self.sync_logger.info(f"PostgreSQL用户 {username} 权限查询使用默认数据库: postgres")
 
                 # 为每个数据库查询权限
                 for db_name in databases:
@@ -750,11 +750,11 @@ class AccountSyncService:
                                     {"database": db_name, "privileges": db_privileges}
                                 )
                     except Exception as db_error:
-                        self.logger.debug(f"查询数据库 {db_name} 的权限失败: {db_error}")
+                        self.sync_logger.debug(f"查询数据库 {db_name} 的权限失败: {db_error}")
                         continue
 
             except Exception as e:
-                self.logger.warning(f"获取PostgreSQL用户 {username} 数据库权限失败: {e}")
+                self.sync_logger.warning(f"获取PostgreSQL用户 {username} 数据库权限失败: {e}")
 
             # 获取表空间权限
             try:
@@ -772,7 +772,7 @@ class AccountSyncService:
                     if create:
                         permissions["tablespace_privileges"].append("CREATE")
             except Exception as e:
-                self.logger.warning(f"获取PostgreSQL用户 {username} 表空间权限失败: {e}")
+                self.sync_logger.warning(f"获取PostgreSQL用户 {username} 表空间权限失败: {e}")
 
             # 确定是否为超级用户和是否可以授权
             is_superuser = "SUPERUSER" in permissions["role_attributes"]
@@ -781,10 +781,10 @@ class AccountSyncService:
             permissions["is_superuser"] = is_superuser
             permissions["can_grant"] = can_grant
 
-            self.logger.info(f"PostgreSQL用户 {username} 权限获取成功: {permissions}")
+            self.sync_logger.info(f"PostgreSQL用户 {username} 权限获取成功: {permissions}")
 
         except Exception as e:
-            self.logger.error(f"获取PostgreSQL账户 {username} 权限失败: {e}")
+            self.sync_logger.error(f"获取PostgreSQL账户 {username} 权限失败: {e}")
             # 返回基本权限结构而不是空字典
             permissions["is_superuser"] = False
             permissions["can_grant"] = False
@@ -945,7 +945,7 @@ class AccountSyncService:
 
     def _sync_oracle_accounts(self, instance: Instance, conn: "Any") -> dict[str, int]:
         """同步Oracle账户"""
-        print("DEBUG: 开始Oracle账户同步 - 函数被调用")
+        self.sync_logger.debug("开始Oracle账户同步", module="sync", db_type="oracle")
         cursor = conn.cursor()
 
         # 获取Oracle过滤规则（使用安全的参数化查询）
@@ -1046,15 +1046,14 @@ class AccountSyncService:
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
         removed_accounts = []
 
-        print(f"DEBUG: Oracle账户清理 - 服务器端账户: {server_accounts}")
-        print(f"DEBUG: Oracle账户清理 - 本地账户数量: {len(local_accounts)}")
-        self.logger.info(f"Oracle账户清理 - 服务器端账户: {server_accounts}")
-        self.logger.info(f"Oracle账户清理 - 本地账户数量: {len(local_accounts)}")
+        self.sync_logger.debug("Oracle账户清理", module="sync", server_accounts=server_accounts, local_accounts_count=len(local_accounts))
+        self.sync_logger.info(f"Oracle账户清理 - 服务器端账户: {server_accounts}")
+        self.sync_logger.info(f"Oracle账户清理 - 本地账户数量: {len(local_accounts)}")
 
         for local_account in local_accounts:
             if local_account.username not in server_accounts:
-                print(f"DEBUG: Oracle账户清理 - 删除账户: {local_account.username}")
-                self.logger.info(f"Oracle账户清理 - 删除账户: {local_account.username}")
+                self.sync_logger.debug("Oracle账户清理 - 删除账户", module="sync", username=local_account.username)
+                self.sync_logger.info(f"Oracle账户清理 - 删除账户: {local_account.username}")
                 removed_accounts.append(
                     {
                         "username": local_account.username,
@@ -1194,7 +1193,7 @@ class AccountSyncService:
             }
 
         except Exception as e:
-            self.logger.error(f"获取MySQL权限失败: {e}")
+            self.sync_logger.error(f"获取MySQL权限失败: {e}")
             return {
                 "permissions_json": json.dumps({"global_privileges": [], "database_privileges": []}),
                 "is_superuser": False,
@@ -1282,7 +1281,7 @@ class AccountSyncService:
 
                     except Exception as db_error:
                         # 如果某个数据库查询失败，记录日志但继续处理其他数据库
-                        self.logger.debug(f"查询数据库 {db_name} 的角色失败: {db_error}")
+                        self.sync_logger.debug(f"查询数据库 {db_name} 的角色失败: {db_error}")
                         continue
 
                 # 转换格式
@@ -1290,7 +1289,7 @@ class AccountSyncService:
                     database_roles.append({"database": db_name, "roles": roles})
 
             except Exception as e:
-                self.logger.debug(f"获取数据库角色失败: {e}")
+                self.sync_logger.debug(f"获取数据库角色失败: {e}")
 
             # 获取数据库权限
             try:
@@ -1324,7 +1323,7 @@ class AccountSyncService:
 
                     except Exception as db_error:
                         # 如果某个数据库查询失败，记录日志但继续处理其他数据库
-                        self.logger.debug(f"查询数据库 {db_name} 的权限失败: {db_error}")
+                        self.sync_logger.debug(f"查询数据库 {db_name} 的权限失败: {db_error}")
                         continue
 
                 # 转换格式
@@ -1332,7 +1331,7 @@ class AccountSyncService:
                     database_permissions.append({"database": db_name, "permissions": perms})
 
             except Exception as e:
-                self.logger.debug(f"获取数据库权限失败: {e}")
+                self.sync_logger.debug(f"获取数据库权限失败: {e}")
 
             # 转换数据格式以匹配前端期望的格式
             server_roles_list = [role["role"] for role in server_roles]
@@ -1366,7 +1365,7 @@ class AccountSyncService:
             }
 
         except Exception as e:
-            self.logger.error(f"获取SQL Server权限失败: {e}")
+            self.sync_logger.error(f"获取SQL Server权限失败: {e}")
             return {
                 "permissions_json": json.dumps(
                     {
@@ -1457,7 +1456,7 @@ class AccountSyncService:
 
                         permissions["tablespace_quotas"].append(quota_info)
                 except Exception as e:
-                    print(f"DEBUG: 表空间配额查询失败: {e}")
+                    self.sync_logger.debug("表空间配额查询失败", module="sync", exception=e)
 
                 # 确定是否为超级用户和是否可以授权
                 is_superuser = any(role in ["DBA", "SYSDBA", "SYSOPER"] for role in permissions["roles"])
@@ -1475,7 +1474,7 @@ class AccountSyncService:
                 cursor.close()
 
         except Exception as e:
-            self.logger.error(f"获取Oracle权限失败: {e}")
+            self.sync_logger.error(f"获取Oracle权限失败: {e}")
             return {
                 "permissions_json": json.dumps(
                     {

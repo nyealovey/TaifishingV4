@@ -2,12 +2,12 @@
 泰摸鱼吧 - 错误处理工具
 """
 
-import logging
 import traceback
 
 from flask import current_app, jsonify, render_template, request
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.utils.structlog_config import get_system_logger
 from app.utils.timezone import now
 
 
@@ -69,8 +69,9 @@ def register_error_handlers(app):
     @app.errorhandler(Exception)
     def handle_generic_error(error):
         """通用错误处理"""
-        logging.error(f"未处理的错误: {error}")
-        logging.error(f"错误堆栈: {traceback.format_exc()}")
+        system_logger = get_system_logger()
+        system_logger.error("未处理的错误", module="error_handler", error=str(error))
+        system_logger.error("错误堆栈", module="error_handler", traceback=traceback.format_exc())
         return _handle_error(error, 500, "系统错误")
 
 
@@ -128,13 +129,15 @@ def _log_error(error, status_code):
         }
 
         # 记录到日志
+        system_logger = get_system_logger()
         if status_code >= 500:
-            logging.error(f"服务器错误: {error_details}")
+            system_logger.error("服务器错误", module="error_handler", status_code=status_code, **error_details)
         else:
-            logging.warning(f"客户端错误: {error_details}")
+            system_logger.warning("客户端错误", module="error_handler", status_code=status_code, **error_details)
 
     except Exception as e:
-        logging.error(f"记录错误日志失败: {e}")
+        system_logger = get_system_logger()
+        system_logger.error("记录错误日志失败", module="error_handler", exception=e)
 
 
 def _get_timestamp():
@@ -202,7 +205,8 @@ def handle_security_error(error):
     Returns:
         Response: 错误响应
     """
-    logging.warning(f"安全错误: {error}")
+    system_logger = get_system_logger()
+    system_logger.warning("安全错误", module="error_handler", error=str(error))
     return _handle_error(error, 403, "安全验证失败")
 
 
@@ -216,7 +220,8 @@ def handle_validation_error(error):
     Returns:
         Response: 错误响应
     """
-    logging.info(f"验证错误: {error}")
+    system_logger = get_system_logger()
+    system_logger.info("验证错误", module="error_handler", error=str(error))
     return _handle_error(error, 400, str(error))
 
 
@@ -230,5 +235,6 @@ def handle_business_logic_error(error):
     Returns:
         Response: 错误响应
     """
-    logging.info(f"业务逻辑错误: {error}")
+    system_logger = get_system_logger()
+    system_logger.info("业务逻辑错误", module="error_handler", error=str(error))
     return _handle_error(error, 422, str(error))

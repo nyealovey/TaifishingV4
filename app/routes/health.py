@@ -2,7 +2,6 @@
 泰摸鱼吧 - 健康检查路由
 """
 
-import logging
 import time
 
 import psutil
@@ -10,8 +9,7 @@ from flask import Blueprint
 
 from app import cache, db
 from app.utils.api_response import APIResponse
-
-logger = logging.getLogger(__name__)
+from app.utils.structlog_config import get_system_logger
 
 # 创建蓝图
 health_bp = Blueprint("health", __name__)
@@ -26,7 +24,8 @@ def health_check() -> "Response":
             message="服务运行正常",
         )
     except Exception as e:
-        logger.error(f"健康检查失败: {e}")
+        system_logger = get_system_logger()
+        system_logger.error("健康检查失败", module="health", exception=e)
         return APIResponse.server_error("健康检查失败")
 
 
@@ -71,7 +70,8 @@ def detailed_health_check() -> "Response":
         )
 
     except Exception as e:
-        logger.error(f"详细健康检查失败: {e}")
+        system_logger = get_system_logger()
+        system_logger.error("详细健康检查失败", module="health", exception=e)
         return APIResponse.server_error("详细健康检查失败")
 
 
@@ -88,7 +88,8 @@ def check_database_health() -> dict:
             "status": "connected",
         }
     except Exception as e:
-        logger.error(f"数据库健康检查失败: {e}")
+        system_logger = get_system_logger()
+        system_logger.error("数据库健康检查失败", module="health", exception=e)
         return {"healthy": False, "error": str(e), "status": "disconnected"}
 
 
@@ -106,7 +107,8 @@ def check_cache_health() -> dict:
             "status": "connected" if result == "ok" else "error",
         }
     except Exception as e:
-        logger.error(f"缓存健康检查失败: {e}")
+        system_logger = get_system_logger()
+        system_logger.error("缓存健康检查失败", module="health", exception=e)
         return {"healthy": False, "error": str(e), "status": "disconnected"}
 
 
@@ -141,7 +143,8 @@ def check_system_health() -> dict:
             "status": "healthy" if healthy else "warning",
         }
     except Exception as e:
-        logger.error(f"系统健康检查失败: {e}")
+        system_logger = get_system_logger()
+        system_logger.error("系统健康检查失败", module="health", exception=e)
         return {"healthy": False, "error": str(e), "status": "error"}
 
 
@@ -157,7 +160,8 @@ def readiness_check() -> "Response":
             return APIResponse.success(data={"status": "ready"}, message="服务就绪")
         return APIResponse.error(message="服务未就绪", code=503)
     except Exception as e:
-        logger.error(f"就绪检查失败: {e}")
+        system_logger = get_system_logger()
+        system_logger.error("就绪检查失败", module="health", exception=e)
         return APIResponse.server_error("就绪检查失败")
 
 
@@ -168,5 +172,6 @@ def liveness_check() -> "Response":
         # 简单的存活检查
         return APIResponse.success(data={"status": "alive"}, message="服务存活")
     except Exception as e:
-        logger.error(f"存活检查失败: {e}")
+        system_logger = get_system_logger()
+        system_logger.error("存活检查失败", module="health", exception=e)
         return APIResponse.server_error("存活检查失败")

@@ -16,11 +16,11 @@ class SafeQueryBuilder:
     def add_condition(self, condition: str, *params: Any) -> "SafeQueryBuilder":
         """
         添加查询条件
-        
+
         Args:
             condition: SQL条件字符串，使用%s作为参数占位符
             *params: 参数值
-            
+
         Returns:
             SafeQueryBuilder: 返回自身以支持链式调用
         """
@@ -31,11 +31,11 @@ class SafeQueryBuilder:
     def add_in_condition(self, field: str, values: list[str]) -> "SafeQueryBuilder":
         """
         添加IN条件
-        
+
         Args:
             field: 字段名
             values: 值列表
-            
+
         Returns:
             SafeQueryBuilder: 返回自身以支持链式调用
         """
@@ -48,11 +48,11 @@ class SafeQueryBuilder:
     def add_like_condition(self, field: str, pattern: str) -> "SafeQueryBuilder":
         """
         添加LIKE条件
-        
+
         Args:
             field: 字段名
             pattern: 模式字符串
-            
+
         Returns:
             SafeQueryBuilder: 返回自身以支持链式调用
         """
@@ -63,7 +63,7 @@ class SafeQueryBuilder:
     def build_where_clause(self) -> tuple[str, list[Any]]:
         """
         构建WHERE子句
-        
+
         Returns:
             Tuple[str, List[Any]]: WHERE子句和参数列表
         """
@@ -81,18 +81,16 @@ class SafeQueryBuilder:
 
 
 def build_safe_filter_conditions(
-    db_type: str,
-    username_field: str,
-    filter_rules: dict[str, Any]
+    db_type: str, username_field: str, filter_rules: dict[str, Any]
 ) -> tuple[str, list[Any]]:
     """
     构建安全的过滤条件
-    
+
     Args:
         db_type: 数据库类型
         username_field: 用户名字段名
         filter_rules: 过滤规则
-        
+
     Returns:
         Tuple[str, List[Any]]: WHERE子句和参数列表
     """
