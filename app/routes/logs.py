@@ -4,9 +4,11 @@
 
 import logging
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
-from flask_login import current_user, login_required
+from flask import Blueprint, Response, flash, jsonify, redirect, render_template, request, url_for
+from flask_login import current_user, login_required  # type: ignore
+from flask_sqlalchemy import Pagination
 
 from app import db
 from app.models.log import Log
@@ -17,7 +19,7 @@ from app.utils.decorators import delete_required, view_required
 logs_bp = Blueprint("logs", __name__)
 
 
-def get_merged_request_logs(query, page=1, per_page=20):
+def get_merged_request_logs(query: Any, page: int = 1, per_page: int = 20) -> Pagination:
     """
     获取日志列表（过滤中间状态日志，只显示合并后的完整日志）
 
@@ -64,9 +66,9 @@ def get_merged_request_logs(query, page=1, per_page=20):
 
 
 @logs_bp.route("/")
-@login_required
-@view_required
-def index():
+@login_required  # type: ignore
+@view_required  # type: ignore
+def index() -> Union[str, Response]:
     """日志管理首页"""
     try:
         # 获取查询参数
@@ -186,9 +188,9 @@ def index():
 
 
 @logs_bp.route("/api/export")
-@login_required
-@view_required
-def export_logs():
+@login_required  # type: ignore
+@view_required  # type: ignore
+def export_logs() -> Union[Response, Tuple[Response, int]]:
     """导出日志为CSV"""
     try:
         import csv
@@ -267,14 +269,12 @@ def export_logs():
     except Exception as e:
         logging.error(f"导出日志失败: {e}")
         return jsonify({"success": False, "message": "导出失败"}), 500
-        flash("导出失败", "error")
-        return redirect(url_for("logs.index"))
 
 
 @logs_bp.route("/api/log/<int:log_id>")
-@login_required
-@view_required
-def get_log_detail(log_id):
+@login_required  # type: ignore
+@view_required  # type: ignore
+def get_log_detail(log_id: int) -> Response:
     """获取日志详情"""
     try:
         log = Log.query.get_or_404(log_id)
@@ -302,9 +302,9 @@ def get_log_detail(log_id):
 
 
 @logs_bp.route("/api/merged-info/<int:log_id>")
-@login_required
-@view_required
-def get_merged_info(log_id):
+@login_required  # type: ignore
+@view_required  # type: ignore
+def get_merged_info(log_id: int) -> Response:
     """获取合并日志的详细信息"""
     try:
         log = Log.query.get_or_404(log_id)
@@ -517,9 +517,9 @@ def get_merged_info(log_id):
 
 
 @logs_bp.route("/api/stats")
-@login_required
-@view_required
-def get_log_stats():
+@login_required  # type: ignore
+@view_required  # type: ignore
+def get_log_stats() -> Response:
     """获取日志统计信息"""
     try:
         # 统计所有日志（不限制时间范围）
@@ -555,9 +555,9 @@ def get_log_stats():
 
 
 @logs_bp.route("/api/clear")
-@login_required
-@delete_required
-def clear_logs():
+@login_required  # type: ignore
+@delete_required  # type: ignore
+def clear_logs() -> Response:
     """清空日志"""
     try:
         # 只允许管理员清空日志
@@ -575,9 +575,9 @@ def clear_logs():
 
 
 @logs_bp.route("/api/delete/<int:log_id>")
-@login_required
-@delete_required
-def delete_log(log_id):
+@login_required  # type: ignore
+@delete_required  # type: ignore
+def delete_log(log_id: int) -> Response:
     """删除单个日志"""
     try:
         # 只允许管理员删除日志
