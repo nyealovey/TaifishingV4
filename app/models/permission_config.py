@@ -49,7 +49,7 @@ class PermissionConfig(db.Model):
         }
 
     @classmethod
-    def get_permissions_by_db_type(cls, db_type):
+    def get_permissions_by_db_type(cls, db_type: str) -> dict:
         """根据数据库类型获取权限配置"""
         permissions = (
             cls.query.filter_by(db_type=db_type, is_active=True)
@@ -67,7 +67,7 @@ class PermissionConfig(db.Model):
         return result
 
     @classmethod
-    def init_default_permissions(cls):
+    def init_default_permissions(cls) -> None:
         """初始化默认权限配置"""
         # 检查是否已经初始化过
         if cls.query.first():

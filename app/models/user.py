@@ -26,7 +26,7 @@ class User(UserMixin, db.Model):
     # 关系
     # logs关系在Log模型中定义
 
-    def __init__(self, username, password, role="user"):
+    def __init__(self, username: str, password: str, role: str = "user") -> None:
         """
         初始化用户
 
@@ -39,7 +39,7 @@ class User(UserMixin, db.Model):
         self.set_password(password)
         self.role = role
 
-    def set_password(self, password):
+    def set_password(self, password: str) -> None:
         """
         设置密码（加密）
 
@@ -62,7 +62,7 @@ class User(UserMixin, db.Model):
 
         self.password = bcrypt.generate_password_hash(password, rounds=12).decode("utf-8")
 
-    def check_password(self, password):
+    def check_password(self, password: str) -> bool:
         """
         验证密码
 
@@ -74,7 +74,7 @@ class User(UserMixin, db.Model):
         """
         return bcrypt.check_password_hash(self.password, password)
 
-    def is_admin(self):
+    def is_admin(self) -> bool:
         """
         检查是否为管理员
 
@@ -83,7 +83,7 @@ class User(UserMixin, db.Model):
         """
         return self.role == "admin"
 
-    def update_last_login(self):
+    def update_last_login(self) -> None:
         """更新最后登录时间"""
         self.last_login = now()
         db.session.commit()
@@ -105,7 +105,7 @@ class User(UserMixin, db.Model):
         }
 
     @staticmethod
-    def create_admin():
+    def create_admin() -> "User | None":
         """创建默认管理员用户"""
         admin = User.query.filter_by(username="admin").first()
         if not admin:

@@ -35,16 +35,16 @@ class Task(db.Model):
 
     def __init__(
         self,
-        name,
-        task_type,
-        db_type,
-        schedule=None,
-        description=None,
-        python_code=None,
-        config=None,
-        is_active=True,
-        is_builtin=False,
-    ):
+        name: str,
+        task_type: str,
+        db_type: str,
+        schedule: str | None = None,
+        description: str | None = None,
+        python_code: str | None = None,
+        config: str | None = None,
+        is_active: bool = True,
+        is_builtin: bool = False,
+    ) -> None:
         """
         初始化任务
 
@@ -101,33 +101,33 @@ class Task(db.Model):
         }
 
     @staticmethod
-    def get_active_tasks():
+    def get_active_tasks() -> list:
         """获取所有活跃任务"""
         return Task.query.filter_by(is_active=True).all()
 
     @staticmethod
-    def get_by_type(task_type):
+    def get_by_type(task_type: str) -> list:
         """根据任务类型获取任务"""
         return Task.query.filter_by(task_type=task_type, is_active=True).all()
 
     @staticmethod
-    def get_by_db_type(db_type):
+    def get_by_db_type(db_type: str) -> list:
         """根据数据库类型获取任务"""
         return Task.query.filter_by(db_type=db_type, is_active=True).all()
 
     @staticmethod
-    def get_builtin_tasks():
+    def get_builtin_tasks() -> list:
         """获取所有内置任务"""
         return Task.query.filter_by(is_builtin=True).all()
 
     @property
-    def success_rate(self):
+    def success_rate(self) -> float:
         """计算成功率"""
         if self.run_count == 0:
             return 0.0
         return round((self.success_count / self.run_count * 100), 2)
 
-    def get_matching_instances(self):
+    def get_matching_instances(self) -> list:
         """获取匹配的实例列表"""
         from app.models.instance import Instance
 

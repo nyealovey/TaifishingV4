@@ -29,19 +29,19 @@ class SyncData(db.Model):
 
     def __init__(
         self,
-        sync_type,
-        instance_id,
-        task_id=None,
-        data=None,
-        status="success",
-        message=None,
-        synced_count=0,
-        added_count=0,
-        removed_count=0,
-        modified_count=0,
-        error_message=None,
-        records_count=0,
-    ):
+        sync_type: str,
+        instance_id: int,
+        task_id: str | None = None,
+        data: str | None = None,
+        status: str = "success",
+        message: str | None = None,
+        synced_count: int = 0,
+        added_count: int = 0,
+        removed_count: int = 0,
+        modified_count: int = 0,
+        error_message: str | None = None,
+        records_count: int = 0,
+    ) -> None:
         """
         初始化同步数据
 
@@ -72,7 +72,7 @@ class SyncData(db.Model):
         self.error_message = error_message
         self.records_count = records_count
 
-    def get_record_ids(self):
+    def get_record_ids(self) -> list:
         """
         获取记录ID列表（兼容聚合记录接口）
 
@@ -107,7 +107,7 @@ class SyncData(db.Model):
         }
 
     @staticmethod
-    def get_latest_sync(instance_id, sync_type=None):
+    def get_latest_sync(instance_id: int, sync_type: str | None = None) -> "SyncData | None":
         """
         获取最新同步数据
 
