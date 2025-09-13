@@ -3,9 +3,9 @@
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Union, Tuple
+from typing import Any
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for, Response
+from flask import Blueprint, Response, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app import db
@@ -96,11 +96,11 @@ def index() -> str:
 @instances_bp.route("/create", methods=["GET", "POST"])
 @login_required
 @create_required
-def create() -> Union[str, Response, Tuple[Response, int]]:
+def create() -> str | Response | tuple[Response, int]:
     """创建实例"""
     # 获取凭据列表
     credentials = Credential.query.filter_by(is_active=True).all()
-    
+
     if request.method == "POST":
         data = request.get_json() if request.is_json else request.form
 
@@ -251,7 +251,7 @@ def create() -> Union[str, Response, Tuple[Response, int]]:
 @instances_bp.route("/test-connection", methods=["POST"])
 @login_required
 @view_required
-def test_instance_connection() -> Union[str, Response, Tuple[Response, int]]:
+def test_instance_connection() -> str | Response | tuple[Response, int]:
     """测试数据库连接"""
     try:
         # 添加调试日志
@@ -360,7 +360,7 @@ def test_instance_connection() -> Union[str, Response, Tuple[Response, int]]:
 @instances_bp.route("/<int:instance_id>")
 @login_required
 @view_required
-def detail(instance_id: int) -> Union[str, Response, Tuple[Response, int]]:
+def detail(instance_id: int) -> str | Response | tuple[Response, int]:
     """实例详情"""
     instance = Instance.query.get_or_404(instance_id)
 
@@ -373,7 +373,7 @@ def detail(instance_id: int) -> Union[str, Response, Tuple[Response, int]]:
 @instances_bp.route("/statistics")
 @login_required
 @view_required
-def statistics() -> Union[str, Response]:
+def statistics() -> str | Response:
     """实例统计页面"""
     stats = get_instance_statistics()
 
@@ -395,7 +395,7 @@ def api_statistics() -> Response:
 @instances_bp.route("/<int:instance_id>/edit", methods=["GET", "POST"])
 @login_required
 @update_required
-def edit(instance_id: int) -> Union[str, Response, Tuple[Response, int]]:
+def edit(instance_id: int) -> str | Response | tuple[Response, int]:
     """编辑实例"""
     instance = Instance.query.get_or_404(instance_id)
 
@@ -563,7 +563,7 @@ def edit(instance_id: int) -> Union[str, Response, Tuple[Response, int]]:
 @instances_bp.route("/<int:instance_id>/delete", methods=["POST"])
 @login_required
 @delete_required
-def delete(instance_id: int) -> Union[str, Response, Tuple[Response, int]]:
+def delete(instance_id: int) -> str | Response | tuple[Response, int]:
     """删除实例"""
     instance = Instance.query.get_or_404(instance_id)
 
@@ -628,7 +628,7 @@ def delete(instance_id: int) -> Union[str, Response, Tuple[Response, int]]:
 @instances_bp.route("/batch-delete", methods=["POST"])
 @login_required
 @delete_required
-def batch_delete() -> Union[str, Response, Tuple[Response, int]]:
+def batch_delete() -> str | Response | tuple[Response, int]:
     """批量删除实例"""
     try:
         data = request.get_json()
@@ -711,7 +711,7 @@ def batch_delete() -> Union[str, Response, Tuple[Response, int]]:
 @instances_bp.route("/batch-create", methods=["POST"])
 @login_required
 @create_required
-def batch_create() -> Union[str, Response, Tuple[Response, int]]:
+def batch_create() -> str | Response | tuple[Response, int]:
     """批量创建实例"""
     try:
         # 检查是否有文件上传
@@ -736,7 +736,7 @@ def batch_create() -> Union[str, Response, Tuple[Response, int]]:
         return jsonify({"success": False, "error": f"批量创建实例失败: {str(e)}"}), 500
 
 
-def _process_csv_file(file: Any) -> Union[Dict[str, Any], Response, Tuple[Response, int]]:
+def _process_csv_file(file: Any) -> dict[str, Any] | Response | tuple[Response, int]:
     """处理CSV文件"""
     import csv
     import io
@@ -764,7 +764,9 @@ def _process_csv_file(file: Any) -> Union[Dict[str, Any], Response, Tuple[Respon
         return jsonify({"success": False, "error": f"CSV文件处理失败: {str(e)}"}), 400
 
 
-def _process_instances_data(instances_data: List[Dict[str, Any]]) -> Union[Dict[str, Any], Response, Tuple[Response, int]]:
+def _process_instances_data(
+    instances_data: list[dict[str, Any]],
+) -> dict[str, Any] | Response | tuple[Response, int]:
     """处理实例数据"""
     created_count = 0
     errors = []
@@ -1032,7 +1034,7 @@ def download_template() -> Response:
 @instances_bp.route("/<int:instance_id>/test", methods=["POST"])
 @login_required
 @view_required
-def test_connection(instance_id: int) -> Union[str, Response, Tuple[Response, int]]:
+def test_connection(instance_id: int) -> str | Response | tuple[Response, int]:
     """测试数据库连接"""
     instance = Instance.query.get_or_404(instance_id)
 
@@ -1070,7 +1072,7 @@ def test_connection(instance_id: int) -> Union[str, Response, Tuple[Response, in
 @instances_bp.route("/<int:instance_id>/sync", methods=["POST"])
 @login_required
 @update_required
-def sync_accounts(instance_id: int) -> Union[str, Response, Tuple[Response, int]]:
+def sync_accounts(instance_id: int) -> str | Response | tuple[Response, int]:
     """同步账户信息"""
     instance = Instance.query.get_or_404(instance_id)
 
@@ -1179,7 +1181,7 @@ def api_detail(instance_id: int) -> Response:
 @instances_bp.route("/api/instances/<int:instance_id>/test")
 @login_required
 @view_required
-def api_test_connection(instance_id: int) -> Union[Response, Tuple[Response, int]]:
+def api_test_connection(instance_id: int) -> Response | tuple[Response, int]:
     """测试连接API"""
     instance = Instance.query.get_or_404(instance_id)
 
@@ -1194,7 +1196,7 @@ def api_test_connection(instance_id: int) -> Union[Response, Tuple[Response, int
 @instances_bp.route("/api/test-connection", methods=["POST"])
 @login_required
 @view_required
-def api_test_instance_connection() -> Union[Response, Tuple[Response, int]]:
+def api_test_instance_connection() -> Response | tuple[Response, int]:
     """测试数据库连接API（无需CSRF）"""
     try:
         data = request.get_json()
@@ -1298,7 +1300,7 @@ def api_test_instance_connection() -> Union[Response, Tuple[Response, int]]:
         return jsonify({"success": False, "error": f"测试连接失败: {str(e)}"}), 500
 
 
-def get_instance_statistics() -> Dict[str, Any]:
+def get_instance_statistics() -> dict[str, Any]:
     """获取实例统计数据"""
     try:
         # 基础统计
@@ -1389,7 +1391,7 @@ def get_default_version(db_type: str) -> str:
 @instances_bp.route("/<int:instance_id>/accounts/<int:account_id>/permissions")
 @login_required
 @view_required
-def get_account_permissions(instance_id: int, account_id: int) -> Union[Dict[str, Any], Response, Tuple[Response, int]]:
+def get_account_permissions(instance_id: int, account_id: int) -> dict[str, Any] | Response | tuple[Response, int]:
     """获取账户权限详情"""
     instance = Instance.query.get_or_404(instance_id)
     account = Account.query.filter_by(id=account_id, instance_id=instance_id).first_or_404()

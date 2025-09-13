@@ -4,8 +4,9 @@
 """
 
 import logging
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 from flask import Blueprint, Response
 from flask_login import current_user, login_required  # type: ignore
@@ -13,7 +14,7 @@ from flask_login import current_user, login_required  # type: ignore
 from app.constants import UserRole
 from app.utils.api_response import APIResponse
 
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 logger = logging.getLogger(__name__)
 

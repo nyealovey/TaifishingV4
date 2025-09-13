@@ -4,9 +4,9 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
-from flask import Blueprint, Response, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, Response, flash, jsonify, render_template, request
 from flask_login import current_user, login_required  # type: ignore
 from flask_sqlalchemy import Pagination
 
@@ -68,7 +68,7 @@ def get_merged_request_logs(query: Any, page: int = 1, per_page: int = 20) -> Pa
 @logs_bp.route("/")
 @login_required  # type: ignore
 @view_required  # type: ignore
-def index() -> Union[str, Response]:
+def index() -> str | Response:
     """日志管理首页"""
     try:
         # 获取查询参数
@@ -190,7 +190,7 @@ def index() -> Union[str, Response]:
 @logs_bp.route("/api/export")
 @login_required  # type: ignore
 @view_required  # type: ignore
-def export_logs() -> Union[Response, Tuple[Response, int]]:
+def export_logs() -> Response | tuple[Response, int]:
     """导出日志为CSV"""
     try:
         import csv

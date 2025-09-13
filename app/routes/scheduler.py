@@ -4,8 +4,9 @@
 
 import importlib.util
 import logging
+from collections.abc import Callable
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
@@ -42,7 +43,7 @@ def get_jobs() -> Response:
             return APIResponse.error("调度器未启动", code=500)  # type: ignore
         jobs = scheduler.get_jobs()
         logger.info(f"获取到 {len(jobs)} 个任务")
-        jobs_data: List[Dict[str, Any]] = []
+        jobs_data: list[dict[str, Any]] = []
 
         for job in jobs:
             # 检查任务状态
@@ -371,7 +372,7 @@ def run_job(job_id: str) -> Response:
         return APIResponse.error(f"执行任务失败: {str(e)}")  # type: ignore
 
 
-def _get_task_function(func_name: str) -> Optional[Callable[..., Any]]:
+def _get_task_function(func_name: str) -> Callable[..., Any] | None:
     """获取任务函数"""
     from app.tasks import cleanup_old_logs, sync_accounts
 
@@ -384,7 +385,7 @@ def _get_task_function(func_name: str) -> Optional[Callable[..., Any]]:
     return task_functions.get(func_name)
 
 
-def _create_dynamic_task_function(job_id: str, code: str) -> Optional[Callable[..., Any]]:
+def _create_dynamic_task_function(job_id: str, code: str) -> Callable[..., Any] | None:
     """创建动态任务函数"""
     try:
         import os
@@ -441,14 +442,14 @@ def task_wrapper():
         spec.loader.exec_module(module)
 
         # 返回模块中的task_wrapper函数
-        return getattr(module, 'task_wrapper', None)
+        return getattr(module, "task_wrapper", None)
 
     except Exception as e:
         logger.error(f"创建动态任务函数失败: {e}")
         return None
 
 
-def _build_trigger(data: Dict[str, Any]) -> Optional[Union[CronTrigger, IntervalTrigger, DateTrigger]]:
+def _build_trigger(data: dict[str, Any]) -> CronTrigger | IntervalTrigger | DateTrigger | None:
     """构建触发器"""
     trigger_type = data.get("trigger_type")
 

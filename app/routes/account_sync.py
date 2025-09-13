@@ -3,9 +3,10 @@
 """
 
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Union, Tuple, Generator
+from collections.abc import Generator
+from typing import Any
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for, Response
+from flask import Blueprint, Response, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app import db
@@ -20,7 +21,7 @@ account_sync_bp = Blueprint("account_sync", __name__)
 
 @account_sync_bp.route("/")
 @login_required
-def sync_records() -> Union[str, Response]:
+def sync_records() -> str | Response:
     """统一的同步记录页面"""
     # 获取查询参数
     page = request.args.get("page", 1, type=int)
@@ -64,7 +65,7 @@ def sync_records() -> Union[str, Response]:
     manual_records = [r for r in all_records if r.sync_type == "manual"]
 
     # 聚合batch类型的记录（task类型已经是聚合记录，不需要再次聚合）
-    grouped: Dict[str, Dict[str, Any]] = defaultdict(
+    grouped: dict[str, dict[str, Any]] = defaultdict(
         lambda: {
             "total_instances": 0,
             "success_count": 0,
@@ -128,7 +129,7 @@ def sync_records() -> Union[str, Response]:
 
         # 创建聚合记录对象
         class AggregatedRecord:
-            def __init__(self, data: Dict[str, Any], latest_time: Any, sync_type_display: str) -> None:
+            def __init__(self, data: dict[str, Any], latest_time: Any, sync_type_display: str) -> None:
                 self.sync_time = latest_time
                 self.sync_type = sync_type_display
                 self.status = "success" if data["failed_count"] == 0 else "failed"
@@ -145,7 +146,7 @@ def sync_records() -> Union[str, Response]:
                 self.sync_records = data["sync_records"]  # 保存原始记录用于详情查看
                 self.is_aggregated = True
 
-            def get_record_ids(self) -> List[int]:
+            def get_record_ids(self) -> list[int]:
                 """获取记录ID列表"""
                 return [record.id for record in self.sync_records]
 
@@ -172,7 +173,7 @@ def sync_records() -> Union[str, Response]:
 
     # 创建分页对象
     class Pagination:
-        def __init__(self, items: List[Any], page: int, per_page: int, total: int) -> None:
+        def __init__(self, items: list[Any], page: int, per_page: int, total: int) -> None:
             self.items = items
             self.page = page
             self.per_page = per_page
@@ -183,7 +184,9 @@ def sync_records() -> Union[str, Response]:
             self.prev_num = page - 1 if page > 1 else None
             self.next_num = page + 1 if page < self.pages else None
 
-        def iter_pages(self, left_edge: int = 2, right_edge: int = 2, left_current: int = 2, right_current: int = 3) -> Generator[Optional[int], None, None]:
+        def iter_pages(
+            self, left_edge: int = 2, right_edge: int = 2, left_current: int = 2, right_current: int = 3
+        ) -> Generator[int | None]:
             """生成分页页码迭代器，与Flask-SQLAlchemy的Pagination兼容"""
             last = self.pages
             for num in range(1, last + 1):
@@ -242,7 +245,7 @@ def sync_records() -> Union[str, Response]:
 
 @account_sync_bp.route("/sync-all", methods=["POST"])
 @login_required
-def sync_all_accounts() -> Union[str, Response, Tuple[Response, int]]:
+def sync_all_accounts() -> str | Response | tuple[Response, int]:
     """同步所有实例的账户"""
     try:
         # 获取所有活跃实例
@@ -361,7 +364,7 @@ def sync_all_accounts() -> Union[str, Response, Tuple[Response, int]]:
 
 @account_sync_bp.route("/sync-details-batch", methods=["GET"])
 @login_required
-def sync_details_batch() -> Union[str, Response, Tuple[Response, int]]:
+def sync_details_batch() -> str | Response | tuple[Response, int]:
     """获取批量同步详情"""
     try:
         record_ids = request.args.get("record_ids", "").split(",")
@@ -437,7 +440,7 @@ def sync_details_batch() -> Union[str, Response, Tuple[Response, int]]:
 
 @account_sync_bp.route("/sync-details/<sync_id>")
 @login_required
-def sync_details(sync_id: int) -> Union[str, Response, Tuple[Response, int]]:
+def sync_details(sync_id: int) -> str | Response | tuple[Response, int]:
     """同步详情页面"""
     try:
         record = SyncData.query.get_or_404(sync_id)
