@@ -7982,252 +7982,36 @@
   },
   {
     "cell": null,
-    "code": "I001",
-    "end_location": {
-      "column": 52,
-      "row": 15
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "from collections import defaultdict\nfrom typing import Any, Dict, Generator, List, Optional, Tuple, Union\n\nfrom flask import Blueprint, Response, flash, jsonify, redirect, render_template, request, url_for\nfrom flask_login import current_user, login_required\n\nfrom app import db\nfrom app.models.instance import Instance\nfrom app.models.sync_data import SyncData\nfrom app.services.account_sync_service import account_sync_service\nfrom app.utils.enhanced_logger import log_api_error\n\n",
-          "end_location": {
-            "column": 1,
-            "row": 17
-          },
-          "location": {
-            "column": 1,
-            "row": 5
-          }
-        }
-      ],
-      "message": "Organize imports"
-    },
-    "location": {
-      "column": 1,
-      "row": 5
-    },
-    "message": "Import block is un-sorted or un-formatted",
-    "noqa_row": 5,
-    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 70,
-      "row": 6
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "from typing import Any, Dict, List, Optional, Union, Tuple\nfrom collections.abc import Generator",
-          "end_location": {
-            "column": 70,
-            "row": 6
-          },
-          "location": {
-            "column": 1,
-            "row": 6
-          }
-        }
-      ],
-      "message": "Import from `collections.abc`"
-    },
-    "location": {
-      "column": 1,
-      "row": 6
-    },
-    "message": "Import from `collections.abc` instead: `Generator`",
-    "noqa_row": 6,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 70,
-      "row": 6
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": null,
-    "location": {
-      "column": 1,
-      "row": 6
-    },
-    "message": "`typing.Dict` is deprecated, use `dict` instead",
-    "noqa_row": 6,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 70,
-      "row": 6
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": null,
-    "location": {
-      "column": 1,
-      "row": 6
-    },
-    "message": "`typing.List` is deprecated, use `list` instead",
-    "noqa_row": 6,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 70,
-      "row": 6
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": null,
-    "location": {
-      "column": 1,
-      "row": 6
-    },
-    "message": "`typing.Tuple` is deprecated, use `tuple` instead",
-    "noqa_row": 6,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
     "code": "C901",
     "end_location": {
       "column": 17,
-      "row": 23
+      "row": 24
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
     "fix": null,
     "location": {
       "column": 5,
-      "row": 23
+      "row": 24
     },
     "message": "`sync_records` is too complex (21 > 10)",
-    "noqa_row": 23,
+    "noqa_row": 24,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 43,
-      "row": 23
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response",
-          "end_location": {
-            "column": 43,
-            "row": 23
-          },
-          "location": {
-            "column": 23,
-            "row": 23
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 23,
-      "row": 23
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 23,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 18,
-      "row": 67
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "dict",
-          "end_location": {
-            "column": 18,
-            "row": 67
-          },
-          "location": {
-            "column": 14,
-            "row": 67
-          }
-        }
-      ],
-      "message": "Replace with `dict`"
-    },
-    "location": {
-      "column": 14,
-      "row": 67
-    },
-    "message": "Use `dict` instead of `Dict` for type annotation",
-    "noqa_row": 67,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 28,
-      "row": 67
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "dict",
-          "end_location": {
-            "column": 28,
-            "row": 67
-          },
-          "location": {
-            "column": 24,
-            "row": 67
-          }
-        }
-      ],
-      "message": "Replace with `dict`"
-    },
-    "location": {
-      "column": 24,
-      "row": 67
-    },
-    "message": "Use `dict` instead of `Dict` for type annotation",
-    "noqa_row": 67,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
   },
   {
     "cell": null,
     "code": "B007",
     "end_location": {
       "column": 17,
-      "row": 118
+      "row": 119
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 118
+      "row": 119
     },
     "message": "Loop control variable `time_key` not used within loop body",
-    "noqa_row": 118,
+    "noqa_row": 119,
     "url": "https://docs.astral.sh/ruff/rules/unused-loop-control-variable"
   },
   {
@@ -8235,454 +8019,58 @@
     "code": "SIM108",
     "end_location": {
       "column": 55,
-      "row": 127
+      "row": 128
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 124
+      "row": 125
     },
     "message": "Use ternary operator `sync_type_display = sync_types[0] if len(sync_types) == 1 else \" + \".join(sync_types)` instead of `if`-`else`-block",
-    "noqa_row": 124,
+    "noqa_row": 125,
     "url": "https://docs.astral.sh/ruff/rules/if-else-block-instead-of-if-exp"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 42,
-      "row": 131
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "dict",
-          "end_location": {
-            "column": 42,
-            "row": 131
-          },
-          "location": {
-            "column": 38,
-            "row": 131
-          }
-        }
-      ],
-      "message": "Replace with `dict`"
-    },
-    "location": {
-      "column": 38,
-      "row": 131
-    },
-    "message": "Use `dict` instead of `Dict` for type annotation",
-    "noqa_row": 131,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
   },
   {
     "cell": null,
     "code": "ANN401",
     "end_location": {
       "column": 70,
-      "row": 131
+      "row": 132
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
     "fix": null,
     "location": {
       "column": 67,
-      "row": 131
+      "row": 132
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `latest_time`",
-    "noqa_row": 131,
+    "noqa_row": 132,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 45,
-      "row": 148
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "list",
-          "end_location": {
-            "column": 45,
-            "row": 148
-          },
-          "location": {
-            "column": 41,
-            "row": 148
-          }
-        }
-      ],
-      "message": "Replace with `list`"
-    },
-    "location": {
-      "column": 41,
-      "row": 148
-    },
-    "message": "Use `list` instead of `List` for type annotation",
-    "noqa_row": 148,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 39,
-      "row": 175
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "list",
-          "end_location": {
-            "column": 39,
-            "row": 175
-          },
-          "location": {
-            "column": 35,
-            "row": 175
-          }
-        }
-      ],
-      "message": "Replace with `list`"
-    },
-    "location": {
-      "column": 35,
-      "row": 175
-    },
-    "message": "Use `list` instead of `List` for type annotation",
-    "noqa_row": 175,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP043",
-    "end_location": {
-      "column": 157,
-      "row": 186
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Generator[Optional[int]]",
-          "end_location": {
-            "column": 157,
-            "row": 186
-          },
-          "location": {
-            "column": 121,
-            "row": 186
-          }
-        }
-      ],
-      "message": "Remove default type arguments"
-    },
-    "location": {
-      "column": 121,
-      "row": 186
-    },
-    "message": "Unnecessary default type arguments",
-    "noqa_row": 186,
-    "url": "https://docs.astral.sh/ruff/rules/unnecessary-default-type-args"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 144,
-      "row": 186
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "int | None",
-          "end_location": {
-            "column": 144,
-            "row": 186
-          },
-          "location": {
-            "column": 131,
-            "row": 186
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 131,
-      "row": 186
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 186,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 70,
-      "row": 245
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 70,
-            "row": 245
-          },
-          "location": {
-            "column": 28,
-            "row": 245
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 28,
-      "row": 245
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 245,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 54,
-      "row": 245
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 54,
-            "row": 245
-          },
-          "location": {
-            "column": 49,
-            "row": 245
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 49,
-      "row": 245
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 245,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
   },
   {
     "cell": null,
     "code": "C901",
     "end_location": {
       "column": 23,
-      "row": 364
+      "row": 367
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
     "fix": null,
     "location": {
       "column": 5,
-      "row": 364
+      "row": 367
     },
     "message": "`sync_details_batch` is too complex (11 > 10)",
-    "noqa_row": 364,
+    "noqa_row": 367,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 71,
-      "row": 364
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 71,
-            "row": 364
-          },
-          "location": {
-            "column": 29,
-            "row": 364
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 29,
-      "row": 364
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 364,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 55,
-      "row": 364
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 55,
-            "row": 364
-          },
-          "location": {
-            "column": 50,
-            "row": 364
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 50,
-      "row": 364
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 364,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 77,
-      "row": 440
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 77,
-            "row": 440
-          },
-          "location": {
-            "column": 35,
-            "row": 440
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 35,
-      "row": 440
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 440,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 61,
-      "row": 440
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 61,
-            "row": 440
-          },
-          "location": {
-            "column": 56,
-            "row": 440
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 56,
-      "row": 440
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 440,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 42,
-      "row": 8
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/admin.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "from typing import Any, TypeVar\nfrom collections.abc import Callable",
-          "end_location": {
-            "column": 42,
-            "row": 8
-          },
-          "location": {
-            "column": 1,
-            "row": 8
-          }
-        }
-      ],
-      "message": "Import from `collections.abc`"
-    },
-    "location": {
-      "column": 1,
-      "row": 8
-    },
-    "message": "Import from `collections.abc` instead: `Callable`",
-    "noqa_row": 8,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
   },
   {
     "cell": null,
     "code": "UP047",
     "end_location": {
       "column": 25,
-      "row": 24
+      "row": 25
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/admin.py",
     "fix": {
@@ -8692,11 +8080,11 @@
           "content": "[F: Callable[..., Any]]",
           "end_location": {
             "column": 19,
-            "row": 24
+            "row": 25
           },
           "location": {
             "column": 19,
-            "row": 24
+            "row": 25
           }
         }
       ],
@@ -8704,10 +8092,10 @@
     },
     "location": {
       "column": 5,
-      "row": 24
+      "row": 25
     },
     "message": "Generic function `admin_required` should use type parameters",
-    "noqa_row": 24,
+    "noqa_row": 25,
     "url": "https://docs.astral.sh/ruff/rules/non-pep695-generic-function"
   },
   {
@@ -8715,16 +8103,16 @@
     "code": "ANN401",
     "end_location": {
       "column": 38,
-      "row": 28
+      "row": 29
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/admin.py",
     "fix": null,
     "location": {
       "column": 35,
-      "row": 28
+      "row": 29
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `*args`",
-    "noqa_row": 28,
+    "noqa_row": 29,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -8732,16 +8120,16 @@
     "code": "ANN401",
     "end_location": {
       "column": 53,
-      "row": 28
+      "row": 29
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/admin.py",
     "fix": null,
     "location": {
       "column": 50,
-      "row": 28
+      "row": 29
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `**kwargs`",
-    "noqa_row": 28,
+    "noqa_row": 29,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -8749,16 +8137,16 @@
     "code": "ANN401",
     "end_location": {
       "column": 61,
-      "row": 28
+      "row": 29
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/admin.py",
     "fix": null,
     "location": {
       "column": 58,
-      "row": 28
+      "row": 29
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `decorated_function`",
-    "noqa_row": 28,
+    "noqa_row": 29,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -8766,16 +8154,16 @@
     "code": "G004",
     "end_location": {
       "column": 38,
-      "row": 47
+      "row": 48
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/admin.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 47
+      "row": 48
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 47,
+    "noqa_row": 48,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -8783,16 +8171,16 @@
     "code": "G004",
     "end_location": {
       "column": 38,
-      "row": 62
+      "row": 63
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/admin.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 62
+      "row": 63
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 62,
+    "noqa_row": 63,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -8800,16 +8188,16 @@
     "code": "G004",
     "end_location": {
       "column": 36,
-      "row": 76
+      "row": 77
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/admin.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 76
+      "row": 77
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 76,
+    "noqa_row": 77,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -8817,16 +8205,16 @@
     "code": "G004",
     "end_location": {
       "column": 36,
-      "row": 95
+      "row": 96
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/admin.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 95
+      "row": 96
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 95,
+    "noqa_row": 96,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -10309,123 +9697,6 @@
   },
   {
     "cell": null,
-    "code": "I001",
-    "end_location": {
-      "column": 2,
-      "row": 22
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "import logging\nfrom typing import Any, Dict, List, Optional, Tuple, Union\n\nfrom flask import Blueprint, Response, flash, jsonify, redirect, render_template, request, url_for\nfrom flask_login import current_user, login_required\n\nfrom app import db\nfrom app.models.account import Account\nfrom app.models.credential import Credential\nfrom app.models.instance import Instance\nfrom app.services.database_service import DatabaseService\nfrom app.utils.decorators import create_required, delete_required, update_required, view_required\nfrom app.utils.enhanced_logger import log_operation\nfrom app.utils.security import (\n    sanitize_form_data,\n    validate_db_type,\n    validate_required_fields,\n)\n\n",
-          "end_location": {
-            "column": 1,
-            "row": 24
-          },
-          "location": {
-            "column": 1,
-            "row": 5
-          }
-        }
-      ],
-      "message": "Organize imports"
-    },
-    "location": {
-      "column": 1,
-      "row": 5
-    },
-    "message": "Import block is un-sorted or un-formatted",
-    "noqa_row": 5,
-    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 59,
-      "row": 6
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": null,
-    "location": {
-      "column": 1,
-      "row": 6
-    },
-    "message": "`typing.Dict` is deprecated, use `dict` instead",
-    "noqa_row": 6,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 59,
-      "row": 6
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": null,
-    "location": {
-      "column": 1,
-      "row": 6
-    },
-    "message": "`typing.List` is deprecated, use `list` instead",
-    "noqa_row": 6,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 59,
-      "row": 6
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": null,
-    "location": {
-      "column": 1,
-      "row": 6
-    },
-    "message": "`typing.Tuple` is deprecated, use `tuple` instead",
-    "noqa_row": 6,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
-    "code": "F401",
-    "end_location": {
-      "column": 45,
-      "row": 6
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "from typing import Any, Dict, List, Union, Tuple",
-          "end_location": {
-            "column": 59,
-            "row": 6
-          },
-          "location": {
-            "column": 1,
-            "row": 6
-          }
-        }
-      ],
-      "message": "Remove unused import: `typing.Optional`"
-    },
-    "location": {
-      "column": 37,
-      "row": 6
-    },
-    "message": "`typing.Optional` imported but unused",
-    "noqa_row": 6,
-    "url": "https://docs.astral.sh/ruff/rules/unused-import"
-  },
-  {
-    "cell": null,
     "code": "C901",
     "end_location": {
       "column": 11,
@@ -10440,105 +9711,6 @@
     "message": "`create` is too complex (24 > 10)",
     "noqa_row": 99,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 59,
-      "row": 99
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 59,
-            "row": 99
-          },
-          "location": {
-            "column": 17,
-            "row": 99
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 17,
-      "row": 99
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 99,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 43,
-      "row": 99
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 43,
-            "row": 99
-          },
-          "location": {
-            "column": 38,
-            "row": 99
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 38,
-      "row": 99
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 99,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "W293",
-    "end_location": {
-      "column": 5,
-      "row": 103
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "",
-          "end_location": {
-            "column": 5,
-            "row": 103
-          },
-          "location": {
-            "column": 1,
-            "row": 103
-          }
-        }
-      ],
-      "message": "Remove whitespace from blank line"
-    },
-    "location": {
-      "column": 1,
-      "row": 103
-    },
-    "message": "Blank line contains whitespace",
-    "noqa_row": 103,
-    "url": "https://docs.astral.sh/ruff/rules/blank-line-with-whitespace"
   },
   {
     "cell": null,
@@ -10590,72 +9762,6 @@
     "message": "`test_instance_connection` is too complex (11 > 10)",
     "noqa_row": 254,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 77,
-      "row": 254
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 77,
-            "row": 254
-          },
-          "location": {
-            "column": 35,
-            "row": 254
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 35,
-      "row": 254
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 254,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 61,
-      "row": 254
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 61,
-            "row": 254
-          },
-          "location": {
-            "column": 56,
-            "row": 254
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 56,
-      "row": 254
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 254,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
   },
   {
     "cell": null,
@@ -10744,105 +9850,6 @@
   },
   {
     "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 75,
-      "row": 363
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 75,
-            "row": 363
-          },
-          "location": {
-            "column": 33,
-            "row": 363
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 33,
-      "row": 363
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 363,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 59,
-      "row": 363
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 59,
-            "row": 363
-          },
-          "location": {
-            "column": 54,
-            "row": 363
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 54,
-      "row": 363
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 363,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 41,
-      "row": 376
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response",
-          "end_location": {
-            "column": 41,
-            "row": 376
-          },
-          "location": {
-            "column": 21,
-            "row": 376
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 21,
-      "row": 376
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 376,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
     "code": "C901",
     "end_location": {
       "column": 9,
@@ -10857,72 +9864,6 @@
     "message": "`edit` is too complex (27 > 10)",
     "noqa_row": 398,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 73,
-      "row": 398
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 73,
-            "row": 398
-          },
-          "location": {
-            "column": 31,
-            "row": 398
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 31,
-      "row": 398
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 398,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 57,
-      "row": 398
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 57,
-            "row": 398
-          },
-          "location": {
-            "column": 52,
-            "row": 398
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 52,
-      "row": 398
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 398,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
   },
   {
     "cell": null,
@@ -10957,72 +9898,6 @@
     "message": "Logging statement uses f-string",
     "noqa_row": 524,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 75,
-      "row": 566
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 75,
-            "row": 566
-          },
-          "location": {
-            "column": 33,
-            "row": 566
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 33,
-      "row": 566
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 566,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 59,
-      "row": 566
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 59,
-            "row": 566
-          },
-          "location": {
-            "column": 54,
-            "row": 566
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 54,
-      "row": 566
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 566,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
   },
   {
     "cell": null,
@@ -11111,72 +9986,6 @@
   },
   {
     "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 65,
-      "row": 631
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 65,
-            "row": 631
-          },
-          "location": {
-            "column": 23,
-            "row": 631
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 23,
-      "row": 631
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 631,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 49,
-      "row": 631
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 49,
-            "row": 631
-          },
-          "location": {
-            "column": 44,
-            "row": 631
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 44,
-      "row": 631
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 631,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
     "code": "G004",
     "end_location": {
       "column": 100,
@@ -11208,72 +10017,6 @@
     "message": "Logging statement uses f-string",
     "noqa_row": 707,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 65,
-      "row": 714
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 65,
-            "row": 714
-          },
-          "location": {
-            "column": 23,
-            "row": 714
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 23,
-      "row": 714
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 714,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 49,
-      "row": 714
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 49,
-            "row": 714
-          },
-          "location": {
-            "column": 44,
-            "row": 714
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 44,
-      "row": 714
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 714,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
   },
   {
     "cell": null,
@@ -11311,105 +10054,6 @@
   },
   {
     "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 90,
-      "row": 739
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Dict[str, Any] | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 90,
-            "row": 739
-          },
-          "location": {
-            "column": 37,
-            "row": 739
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 37,
-      "row": 739
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 739,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 47,
-      "row": 739
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "dict",
-          "end_location": {
-            "column": 47,
-            "row": 739
-          },
-          "location": {
-            "column": 43,
-            "row": 739
-          }
-        }
-      ],
-      "message": "Replace with `dict`"
-    },
-    "location": {
-      "column": 43,
-      "row": 739
-    },
-    "message": "Use `dict` instead of `Dict` for type annotation",
-    "noqa_row": 739,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 74,
-      "row": 739
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 74,
-            "row": 739
-          },
-          "location": {
-            "column": 69,
-            "row": 739
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 69,
-      "row": 739
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 739,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
     "code": "C901",
     "end_location": {
       "column": 28,
@@ -11427,184 +10071,19 @@
   },
   {
     "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 49,
-      "row": 767
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "list",
-          "end_location": {
-            "column": 49,
-            "row": 767
-          },
-          "location": {
-            "column": 45,
-            "row": 767
-          }
-        }
-      ],
-      "message": "Replace with `list`"
-    },
-    "location": {
-      "column": 45,
-      "row": 767
-    },
-    "message": "Use `list` instead of `List` for type annotation",
-    "noqa_row": 767,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 54,
-      "row": 767
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "dict",
-          "end_location": {
-            "column": 54,
-            "row": 767
-          },
-          "location": {
-            "column": 50,
-            "row": 767
-          }
-        }
-      ],
-      "message": "Replace with `dict`"
-    },
-    "location": {
-      "column": 50,
-      "row": 767
-    },
-    "message": "Use `dict` instead of `Dict` for type annotation",
-    "noqa_row": 767,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 123,
-      "row": 767
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Dict[str, Any] | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 123,
-            "row": 767
-          },
-          "location": {
-            "column": 70,
-            "row": 767
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 70,
-      "row": 767
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 767,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 80,
-      "row": 767
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "dict",
-          "end_location": {
-            "column": 80,
-            "row": 767
-          },
-          "location": {
-            "column": 76,
-            "row": 767
-          }
-        }
-      ],
-      "message": "Replace with `dict`"
-    },
-    "location": {
-      "column": 76,
-      "row": 767
-    },
-    "message": "Use `dict` instead of `Dict` for type annotation",
-    "noqa_row": 767,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 107,
-      "row": 767
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 107,
-            "row": 767
-          },
-          "location": {
-            "column": 102,
-            "row": 767
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 102,
-      "row": 767
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 767,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
     "code": "DTZ005",
     "end_location": {
       "column": 31,
-      "row": 943
+      "row": 945
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": null,
     "location": {
       "column": 17,
-      "row": 943
+      "row": 945
     },
     "message": "`datetime.datetime.now()` called without a `tz` argument",
-    "noqa_row": 943,
+    "noqa_row": 945,
     "url": "https://docs.astral.sh/ruff/rules/call-datetime-now-without-tzinfo"
   },
   {
@@ -11612,7 +10091,7 @@
     "code": "RET504",
     "end_location": {
       "column": 20,
-      "row": 952
+      "row": 954
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": {
@@ -11622,22 +10101,22 @@
           "content": "return",
           "end_location": {
             "column": 15,
-            "row": 946
+            "row": 948
           },
           "location": {
             "column": 5,
-            "row": 946
+            "row": 948
           }
         },
         {
           "content": "",
           "end_location": {
             "column": 1,
-            "row": 953
+            "row": 955
           },
           "location": {
             "column": 1,
-            "row": 952
+            "row": 954
           }
         }
       ],
@@ -11645,10 +10124,10 @@
     },
     "location": {
       "column": 12,
-      "row": 952
+      "row": 954
     },
     "message": "Unnecessary assignment to `response` before `return` statement",
-    "noqa_row": 952,
+    "noqa_row": 954,
     "url": "https://docs.astral.sh/ruff/rules/unnecessary-assign"
   },
   {
@@ -11656,7 +10135,7 @@
     "code": "RET504",
     "end_location": {
       "column": 20,
-      "row": 1029
+      "row": 1031
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": {
@@ -11666,22 +10145,22 @@
           "content": "return",
           "end_location": {
             "column": 15,
-            "row": 1023
+            "row": 1025
           },
           "location": {
             "column": 5,
-            "row": 1023
+            "row": 1025
           }
         },
         {
           "content": "",
           "end_location": {
             "column": 1,
-            "row": 1030
+            "row": 1032
           },
           "location": {
             "column": 1,
-            "row": 1029
+            "row": 1031
           }
         }
       ],
@@ -11689,342 +10168,78 @@
     },
     "location": {
       "column": 12,
-      "row": 1029
+      "row": 1031
     },
     "message": "Unnecessary assignment to `response` before `return` statement",
-    "noqa_row": 1029,
+    "noqa_row": 1031,
     "url": "https://docs.astral.sh/ruff/rules/unnecessary-assign"
   },
   {
     "cell": null,
-    "code": "UP007",
+    "code": "G004",
     "end_location": {
-      "column": 84,
-      "row": 1035
+      "column": 37,
+      "row": 1062
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 84,
-            "row": 1035
-          },
-          "location": {
-            "column": 42,
-            "row": 1035
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
+    "fix": null,
     "location": {
-      "column": 42,
-      "row": 1035
+      "column": 23,
+      "row": 1062
     },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 1035,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 68,
-      "row": 1035
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 68,
-            "row": 1035
-          },
-          "location": {
-            "column": 63,
-            "row": 1035
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 63,
-      "row": 1035
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 1035,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
+    "message": "Logging statement uses f-string",
+    "noqa_row": 1062,
+    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
     "cell": null,
     "code": "G004",
     "end_location": {
       "column": 37,
-      "row": 1060
+      "row": 1139
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": null,
     "location": {
       "column": 23,
-      "row": 1060
+      "row": 1139
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1060,
+    "noqa_row": 1139,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 82,
-      "row": 1073
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 82,
-            "row": 1073
-          },
-          "location": {
-            "column": 40,
-            "row": 1073
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 40,
-      "row": 1073
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 1073,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 66,
-      "row": 1073
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 66,
-            "row": 1073
-          },
-          "location": {
-            "column": 61,
-            "row": 1073
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 61,
-      "row": 1073
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 1073,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "G004",
-    "end_location": {
-      "column": 37,
-      "row": 1137
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": null,
-    "location": {
-      "column": 23,
-      "row": 1137
-    },
-    "message": "Logging statement uses f-string",
-    "noqa_row": 1137,
-    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 83,
-      "row": 1182
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 83,
-            "row": 1182
-          },
-          "location": {
-            "column": 46,
-            "row": 1182
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 46,
-      "row": 1182
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 1182,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 67,
-      "row": 1182
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 67,
-            "row": 1182
-          },
-          "location": {
-            "column": 62,
-            "row": 1182
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 62,
-      "row": 1182
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 1182,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
   },
   {
     "cell": null,
     "code": "C901",
     "end_location": {
       "column": 33,
-      "row": 1197
+      "row": 1199
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": null,
     "location": {
       "column": 5,
-      "row": 1197
+      "row": 1199
     },
     "message": "`api_test_instance_connection` is too complex (11 > 10)",
-    "noqa_row": 1197,
+    "noqa_row": 1199,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 76,
-      "row": 1197
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 76,
-            "row": 1197
-          },
-          "location": {
-            "column": 39,
-            "row": 1197
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 39,
-      "row": 1197
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 1197,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 60,
-      "row": 1197
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 60,
-            "row": 1197
-          },
-          "location": {
-            "column": 55,
-            "row": 1197
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 55,
-      "row": 1197
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 1197,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
   },
   {
     "cell": null,
     "code": "G004",
     "end_location": {
       "column": 73,
-      "row": 1203
+      "row": 1205
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 1203
+      "row": 1205
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1203,
+    "noqa_row": 1205,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -12032,16 +10247,16 @@
     "code": "G004",
     "end_location": {
       "column": 51,
-      "row": 1204
+      "row": 1206
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 1204
+      "row": 1206
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1204,
+    "noqa_row": 1206,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -12049,16 +10264,16 @@
     "code": "G004",
     "end_location": {
       "column": 79,
-      "row": 1208
+      "row": 1210
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": null,
     "location": {
       "column": 29,
-      "row": 1208
+      "row": 1210
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1208,
+    "noqa_row": 1210,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -12066,16 +10281,16 @@
     "code": "G004",
     "end_location": {
       "column": 43,
-      "row": 1220
+      "row": 1222
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 1220
+      "row": 1222
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1220,
+    "noqa_row": 1222,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -12083,66 +10298,33 @@
     "code": "G004",
     "end_location": {
       "column": 37,
-      "row": 1297
+      "row": 1299
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": null,
     "location": {
       "column": 23,
-      "row": 1297
+      "row": 1299
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1297,
+    "noqa_row": 1299,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 38,
-      "row": 1301
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "dict",
-          "end_location": {
-            "column": 38,
-            "row": 1301
-          },
-          "location": {
-            "column": 34,
-            "row": 1301
-          }
-        }
-      ],
-      "message": "Replace with `dict`"
-    },
-    "location": {
-      "column": 34,
-      "row": 1301
-    },
-    "message": "Use `dict` instead of `Dict` for type annotation",
-    "noqa_row": 1301,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
   },
   {
     "cell": null,
     "code": "G201",
     "end_location": {
       "column": 22,
-      "row": 1364
+      "row": 1366
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": null,
     "location": {
       "column": 17,
-      "row": 1364
+      "row": 1366
     },
     "message": "Logging `.exception(...)` should be used instead of `.error(..., exc_info=True)`",
-    "noqa_row": 1364,
+    "noqa_row": 1366,
     "url": "https://docs.astral.sh/ruff/rules/logging-exc-info"
   },
   {
@@ -12150,123 +10332,24 @@
     "code": "G004",
     "end_location": {
       "column": 39,
-      "row": 1364
+      "row": 1366
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": null,
     "location": {
       "column": 23,
-      "row": 1364
+      "row": 1366
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1364,
+    "noqa_row": 1366,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
     "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 120,
-      "row": 1392
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Dict[str, Any] | Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 120,
-            "row": 1392
-          },
-          "location": {
-            "column": 67,
-            "row": 1392
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 67,
-      "row": 1392
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 1392,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 77,
-      "row": 1392
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "dict",
-          "end_location": {
-            "column": 77,
-            "row": 1392
-          },
-          "location": {
-            "column": 73,
-            "row": 1392
-          }
-        }
-      ],
-      "message": "Replace with `dict`"
-    },
-    "location": {
-      "column": 73,
-      "row": 1392
-    },
-    "message": "Use `dict` instead of `Dict` for type annotation",
-    "noqa_row": 1392,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 104,
-      "row": 1392
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 104,
-            "row": 1392
-          },
-          "location": {
-            "column": 99,
-            "row": 1392
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 99,
-      "row": 1392
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 1392,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
     "code": "T201",
     "end_location": {
       "column": 14,
-      "row": 1404
+      "row": 1406
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": {
@@ -12276,44 +10359,11 @@
           "content": "",
           "end_location": {
             "column": 1,
-            "row": 1405
+            "row": 1407
           },
           "location": {
-            "column": 1,
-            "row": 1404
-          }
-        }
-      ],
-      "message": "Remove `print`"
-    },
-    "location": {
-      "column": 9,
-      "row": 1404
-    },
-    "message": "`print` found",
-    "noqa_row": 1404,
-    "url": "https://docs.astral.sh/ruff/rules/print"
-  },
-  {
-    "cell": null,
-    "code": "T201",
-    "end_location": {
-      "column": 14,
-      "row": 1405
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
-    "fix": {
-      "applicability": "unsafe",
-      "edits": [
-        {
-          "content": "",
-          "end_location": {
             "column": 1,
             "row": 1406
-          },
-          "location": {
-            "column": 1,
-            "row": 1405
           }
         }
       ],
@@ -12321,10 +10371,10 @@
     },
     "location": {
       "column": 9,
-      "row": 1405
+      "row": 1406
     },
     "message": "`print` found",
-    "noqa_row": 1405,
+    "noqa_row": 1406,
     "url": "https://docs.astral.sh/ruff/rules/print"
   },
   {
@@ -12332,7 +10382,7 @@
     "code": "T201",
     "end_location": {
       "column": 14,
-      "row": 1418
+      "row": 1407
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": {
@@ -12342,11 +10392,11 @@
           "content": "",
           "end_location": {
             "column": 1,
-            "row": 1419
+            "row": 1408
           },
           "location": {
             "column": 1,
-            "row": 1418
+            "row": 1407
           }
         }
       ],
@@ -12354,10 +10404,43 @@
     },
     "location": {
       "column": 9,
-      "row": 1418
+      "row": 1407
     },
     "message": "`print` found",
-    "noqa_row": 1418,
+    "noqa_row": 1407,
+    "url": "https://docs.astral.sh/ruff/rules/print"
+  },
+  {
+    "cell": null,
+    "code": "T201",
+    "end_location": {
+      "column": 14,
+      "row": 1420
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 1421
+          },
+          "location": {
+            "column": 1,
+            "row": 1420
+          }
+        }
+      ],
+      "message": "Remove `print`"
+    },
+    "location": {
+      "column": 9,
+      "row": 1420
+    },
+    "message": "`print` found",
+    "noqa_row": 1420,
     "url": "https://docs.astral.sh/ruff/rules/print"
   },
   {
@@ -12365,233 +10448,17 @@
     "code": "G004",
     "end_location": {
       "column": 39,
-      "row": 1423
+      "row": 1425
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": null,
     "location": {
       "column": 23,
-      "row": 1423
+      "row": 1425
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1423,
+    "noqa_row": 1425,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 59,
-      "row": 7
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/logs.py",
-    "fix": null,
-    "location": {
-      "column": 1,
-      "row": 7
-    },
-    "message": "`typing.Dict` is deprecated, use `dict` instead",
-    "noqa_row": 7,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 59,
-      "row": 7
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/logs.py",
-    "fix": null,
-    "location": {
-      "column": 1,
-      "row": 7
-    },
-    "message": "`typing.List` is deprecated, use `list` instead",
-    "noqa_row": 7,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 59,
-      "row": 7
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/logs.py",
-    "fix": null,
-    "location": {
-      "column": 1,
-      "row": 7
-    },
-    "message": "`typing.Tuple` is deprecated, use `tuple` instead",
-    "noqa_row": 7,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
-    "code": "F401",
-    "end_location": {
-      "column": 29,
-      "row": 7
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/logs.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "from typing import Any, Tuple, Union",
-          "end_location": {
-            "column": 59,
-            "row": 7
-          },
-          "location": {
-            "column": 1,
-            "row": 7
-          }
-        }
-      ],
-      "message": "Remove unused import"
-    },
-    "location": {
-      "column": 25,
-      "row": 7
-    },
-    "message": "`typing.Dict` imported but unused",
-    "noqa_row": 7,
-    "url": "https://docs.astral.sh/ruff/rules/unused-import"
-  },
-  {
-    "cell": null,
-    "code": "F401",
-    "end_location": {
-      "column": 35,
-      "row": 7
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/logs.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "from typing import Any, Tuple, Union",
-          "end_location": {
-            "column": 59,
-            "row": 7
-          },
-          "location": {
-            "column": 1,
-            "row": 7
-          }
-        }
-      ],
-      "message": "Remove unused import"
-    },
-    "location": {
-      "column": 31,
-      "row": 7
-    },
-    "message": "`typing.List` imported but unused",
-    "noqa_row": 7,
-    "url": "https://docs.astral.sh/ruff/rules/unused-import"
-  },
-  {
-    "cell": null,
-    "code": "F401",
-    "end_location": {
-      "column": 45,
-      "row": 7
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/logs.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "from typing import Any, Tuple, Union",
-          "end_location": {
-            "column": 59,
-            "row": 7
-          },
-          "location": {
-            "column": 1,
-            "row": 7
-          }
-        }
-      ],
-      "message": "Remove unused import"
-    },
-    "location": {
-      "column": 37,
-      "row": 7
-    },
-    "message": "`typing.Optional` imported but unused",
-    "noqa_row": 7,
-    "url": "https://docs.astral.sh/ruff/rules/unused-import"
-  },
-  {
-    "cell": null,
-    "code": "F401",
-    "end_location": {
-      "column": 64,
-      "row": 9
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/logs.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "from flask import Blueprint, Response, flash, jsonify, render_template, request",
-          "end_location": {
-            "column": 99,
-            "row": 9
-          },
-          "location": {
-            "column": 1,
-            "row": 9
-          }
-        }
-      ],
-      "message": "Remove unused import"
-    },
-    "location": {
-      "column": 56,
-      "row": 9
-    },
-    "message": "`flask.redirect` imported but unused",
-    "noqa_row": 9,
-    "url": "https://docs.astral.sh/ruff/rules/unused-import"
-  },
-  {
-    "cell": null,
-    "code": "F401",
-    "end_location": {
-      "column": 99,
-      "row": 9
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/logs.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "from flask import Blueprint, Response, flash, jsonify, render_template, request",
-          "end_location": {
-            "column": 99,
-            "row": 9
-          },
-          "location": {
-            "column": 1,
-            "row": 9
-          }
-        }
-      ],
-      "message": "Remove unused import"
-    },
-    "location": {
-      "column": 92,
-      "row": 9
-    },
-    "message": "`flask.url_for` imported but unused",
-    "noqa_row": 9,
-    "url": "https://docs.astral.sh/ruff/rules/unused-import"
   },
   {
     "cell": null,
@@ -12643,39 +10510,6 @@
     "message": "`index` is too complex (11 > 10)",
     "noqa_row": 71,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 36,
-      "row": 71
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/logs.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | Response",
-          "end_location": {
-            "column": 36,
-            "row": 71
-          },
-          "location": {
-            "column": 16,
-            "row": 71
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 16,
-      "row": 71
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 71,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
   },
   {
     "cell": null,
@@ -12744,72 +10578,6 @@
     "message": "Do not use bare `except`",
     "noqa_row": 175,
     "url": "https://docs.astral.sh/ruff/rules/bare-except"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 59,
-      "row": 193
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/logs.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Response | Tuple[Response, int]",
-          "end_location": {
-            "column": 59,
-            "row": 193
-          },
-          "location": {
-            "column": 22,
-            "row": 193
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 22,
-      "row": 193
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 193,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 43,
-      "row": 193
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/logs.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "tuple",
-          "end_location": {
-            "column": 43,
-            "row": 193
-          },
-          "location": {
-            "column": 38,
-            "row": 193
-          }
-        }
-      ],
-      "message": "Replace with `tuple`"
-    },
-    "location": {
-      "column": 38,
-      "row": 193
-    },
-    "message": "Use `tuple` instead of `Tuple` for type annotation",
-    "noqa_row": 193,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
   },
   {
     "cell": null,
@@ -13288,169 +11056,19 @@
   },
   {
     "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 62,
-      "row": 8
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "from typing import Any, Dict, List, Optional, Union\nfrom collections.abc import Callable",
-          "end_location": {
-            "column": 62,
-            "row": 8
-          },
-          "location": {
-            "column": 1,
-            "row": 8
-          }
-        }
-      ],
-      "message": "Import from `collections.abc`"
-    },
-    "location": {
-      "column": 1,
-      "row": 8
-    },
-    "message": "Import from `collections.abc` instead: `Callable`",
-    "noqa_row": 8,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 62,
-      "row": 8
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
-    "fix": null,
-    "location": {
-      "column": 1,
-      "row": 8
-    },
-    "message": "`typing.Dict` is deprecated, use `dict` instead",
-    "noqa_row": 8,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 62,
-      "row": 8
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
-    "fix": null,
-    "location": {
-      "column": 1,
-      "row": 8
-    },
-    "message": "`typing.List` is deprecated, use `list` instead",
-    "noqa_row": 8,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
     "code": "G004",
     "end_location": {
       "column": 43,
-      "row": 44
+      "row": 45
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 44
+      "row": 45
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 44,
-    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 24,
-      "row": 45
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "list",
-          "end_location": {
-            "column": 24,
-            "row": 45
-          },
-          "location": {
-            "column": 20,
-            "row": 45
-          }
-        }
-      ],
-      "message": "Replace with `list`"
-    },
-    "location": {
-      "column": 20,
-      "row": 45
-    },
-    "message": "Use `list` instead of `List` for type annotation",
     "noqa_row": 45,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 29,
-      "row": 45
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "dict",
-          "end_location": {
-            "column": 29,
-            "row": 45
-          },
-          "location": {
-            "column": 25,
-            "row": 45
-          }
-        }
-      ],
-      "message": "Replace with `dict`"
-    },
-    "location": {
-      "column": 25,
-      "row": 45
-    },
-    "message": "Use `dict` instead of `Dict` for type annotation",
-    "noqa_row": 45,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "G004",
-    "end_location": {
-      "column": 38,
-      "row": 72
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
-    "fix": null,
-    "location": {
-      "column": 22,
-      "row": 72
-    },
-    "message": "Logging statement uses f-string",
-    "noqa_row": 72,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13458,16 +11076,33 @@
     "code": "G004",
     "end_location": {
       "column": 38,
-      "row": 102
+      "row": 73
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 102
+      "row": 73
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 102,
+    "noqa_row": 73,
+    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
+  },
+  {
+    "cell": null,
+    "code": "G004",
+    "end_location": {
+      "column": 38,
+      "row": 103
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
+    "fix": null,
+    "location": {
+      "column": 22,
+      "row": 103
+    },
+    "message": "Logging statement uses f-string",
+    "noqa_row": 103,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13475,16 +11110,16 @@
     "code": "G004",
     "end_location": {
       "column": 40,
-      "row": 113
+      "row": 114
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 113
+      "row": 114
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 113,
+    "noqa_row": 114,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13492,16 +11127,16 @@
     "code": "G004",
     "end_location": {
       "column": 48,
-      "row": 119
+      "row": 120
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 30,
-      "row": 119
+      "row": 120
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 119,
+    "noqa_row": 120,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13509,16 +11144,16 @@
     "code": "G004",
     "end_location": {
       "column": 40,
-      "row": 151
+      "row": 152
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 151
+      "row": 152
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 151,
+    "noqa_row": 152,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13526,16 +11161,16 @@
     "code": "G004",
     "end_location": {
       "column": 36,
-      "row": 155
+      "row": 156
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 155
+      "row": 156
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 155,
+    "noqa_row": 156,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13543,16 +11178,16 @@
     "code": "G004",
     "end_location": {
       "column": 53,
-      "row": 196
+      "row": 197
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 29,
-      "row": 196
+      "row": 197
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 196,
+    "noqa_row": 197,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13560,16 +11195,16 @@
     "code": "G004",
     "end_location": {
       "column": 40,
-      "row": 224
+      "row": 225
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 224
+      "row": 225
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 224,
+    "noqa_row": 225,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13577,16 +11212,16 @@
     "code": "G004",
     "end_location": {
       "column": 36,
-      "row": 228
+      "row": 229
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 228
+      "row": 229
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 228,
+    "noqa_row": 229,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13594,16 +11229,16 @@
     "code": "G004",
     "end_location": {
       "column": 40,
-      "row": 248
+      "row": 249
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 248
+      "row": 249
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 248,
+    "noqa_row": 249,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13611,16 +11246,16 @@
     "code": "G004",
     "end_location": {
       "column": 36,
-      "row": 252
+      "row": 253
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 252
+      "row": 253
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 252,
+    "noqa_row": 253,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13628,16 +11263,16 @@
     "code": "G004",
     "end_location": {
       "column": 39,
-      "row": 272
+      "row": 273
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 272
+      "row": 273
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 272,
+    "noqa_row": 273,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13645,16 +11280,16 @@
     "code": "G004",
     "end_location": {
       "column": 36,
-      "row": 276
+      "row": 277
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 276
+      "row": 277
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 276,
+    "noqa_row": 277,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13662,16 +11297,16 @@
     "code": "G004",
     "end_location": {
       "column": 39,
-      "row": 296
+      "row": 297
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 296
+      "row": 297
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 296,
+    "noqa_row": 297,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13679,16 +11314,16 @@
     "code": "G004",
     "end_location": {
       "column": 36,
-      "row": 300
+      "row": 301
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 300
+      "row": 301
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 300,
+    "noqa_row": 301,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13696,16 +11331,16 @@
     "code": "G004",
     "end_location": {
       "column": 40,
-      "row": 311
+      "row": 312
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 311
+      "row": 312
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 311,
+    "noqa_row": 312,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13713,16 +11348,16 @@
     "code": "G004",
     "end_location": {
       "column": 36,
-      "row": 315
+      "row": 316
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 315
+      "row": 316
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 315,
+    "noqa_row": 316,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13730,16 +11365,16 @@
     "code": "G004",
     "end_location": {
       "column": 40,
-      "row": 326
+      "row": 327
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 326
+      "row": 327
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 326,
+    "noqa_row": 327,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13747,16 +11382,16 @@
     "code": "G004",
     "end_location": {
       "column": 36,
-      "row": 330
+      "row": 331
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 330
+      "row": 331
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 330,
+    "noqa_row": 331,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13764,16 +11399,16 @@
     "code": "G004",
     "end_location": {
       "column": 55,
-      "row": 348
+      "row": 349
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 348
+      "row": 349
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 348,
+    "noqa_row": 349,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13781,16 +11416,16 @@
     "code": "G004",
     "end_location": {
       "column": 65,
-      "row": 355
+      "row": 356
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 29,
-      "row": 355
+      "row": 356
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 355,
+    "noqa_row": 356,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13798,16 +11433,16 @@
     "code": "G004",
     "end_location": {
       "column": 65,
-      "row": 363
+      "row": 364
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 29,
-      "row": 363
+      "row": 364
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 363,
+    "noqa_row": 364,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13815,16 +11450,16 @@
     "code": "G004",
     "end_location": {
       "column": 62,
-      "row": 366
+      "row": 367
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 26,
-      "row": 366
+      "row": 367
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 366,
+    "noqa_row": 367,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13832,99 +11467,33 @@
     "code": "G004",
     "end_location": {
       "column": 36,
-      "row": 370
+      "row": 371
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 370
+      "row": 371
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 370,
+    "noqa_row": 371,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 71,
-      "row": 374
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Callable[..., Any] | None",
-          "end_location": {
-            "column": 71,
-            "row": 374
-          },
-          "location": {
-            "column": 43,
-            "row": 374
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 43,
-      "row": 374
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 374,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 90,
-      "row": 387
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Callable[..., Any] | None",
-          "end_location": {
-            "column": 90,
-            "row": 387
-          },
-          "location": {
-            "column": 62,
-            "row": 387
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 62,
-      "row": 387
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 387,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
   },
   {
     "cell": null,
     "code": "DTZ005",
     "end_location": {
       "column": 22,
-      "row": 403
+      "row": 404
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 8,
-      "row": 403
+      "row": 404
     },
     "message": "`datetime.datetime.now()` called without a `tz` argument",
-    "noqa_row": 423,
+    "noqa_row": 424,
     "url": "https://docs.astral.sh/ruff/rules/call-datetime-now-without-tzinfo"
   },
   {
@@ -13932,16 +11501,16 @@
     "code": "G004",
     "end_location": {
       "column": 52,
-      "row": 437
+      "row": 438
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 26,
-      "row": 437
+      "row": 438
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 437,
+    "noqa_row": 438,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -13949,116 +11518,17 @@
     "code": "G004",
     "end_location": {
       "column": 40,
-      "row": 447
+      "row": 448
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 447
+      "row": 448
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 447,
+    "noqa_row": 448,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 30,
-      "row": 451
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "dict",
-          "end_location": {
-            "column": 30,
-            "row": 451
-          },
-          "location": {
-            "column": 26,
-            "row": 451
-          }
-        }
-      ],
-      "message": "Replace with `dict`"
-    },
-    "location": {
-      "column": 26,
-      "row": 451
-    },
-    "message": "Use `dict` instead of `Dict` for type annotation",
-    "noqa_row": 451,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 103,
-      "row": 451
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Union[CronTrigger, IntervalTrigger, DateTrigger] | None",
-          "end_location": {
-            "column": 103,
-            "row": 451
-          },
-          "location": {
-            "column": 45,
-            "row": 451
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 45,
-      "row": 451
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 451,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP007",
-    "end_location": {
-      "column": 102,
-      "row": 451
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "CronTrigger | IntervalTrigger | DateTrigger",
-          "end_location": {
-            "column": 102,
-            "row": 451
-          },
-          "location": {
-            "column": 54,
-            "row": 451
-          }
-        }
-      ],
-      "message": "Convert to `X | Y`"
-    },
-    "location": {
-      "column": 54,
-      "row": 451
-    },
-    "message": "Use `X | Y` for type annotations",
-    "noqa_row": 451,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-union"
   },
   {
     "cell": null,
@@ -24768,109 +22238,9 @@
   },
   {
     "cell": null,
-    "code": "I001",
-    "end_location": {
-      "column": 58,
-      "row": 8
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "import logging\nimport traceback\nfrom typing import Any, Callable, Dict, Optional, TypeVar\n\n",
-          "end_location": {
-            "column": 1,
-            "row": 10
-          },
-          "location": {
-            "column": 1,
-            "row": 6
-          }
-        }
-      ],
-      "message": "Organize imports"
-    },
-    "location": {
-      "column": 1,
-      "row": 6
-    },
-    "message": "Import block is un-sorted or un-formatted",
-    "noqa_row": 6,
-    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 58,
-      "row": 8
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "from typing import Any, Optional, TypeVar, Dict\nfrom collections.abc import Callable",
-          "end_location": {
-            "column": 58,
-            "row": 8
-          },
-          "location": {
-            "column": 1,
-            "row": 8
-          }
-        }
-      ],
-      "message": "Import from `collections.abc`"
-    },
-    "location": {
-      "column": 1,
-      "row": 8
-    },
-    "message": "Import from `collections.abc` instead: `Callable`",
-    "noqa_row": 8,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
-    "code": "UP035",
-    "end_location": {
-      "column": 58,
-      "row": 8
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": null,
-    "location": {
-      "column": 1,
-      "row": 8
-    },
-    "message": "`typing.Dict` is deprecated, use `dict` instead",
-    "noqa_row": 8,
-    "url": "https://docs.astral.sh/ruff/rules/deprecated-import"
-  },
-  {
-    "cell": null,
     "code": "E402",
     "end_location": {
       "column": 60,
-      "row": 12
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": null,
-    "location": {
-      "column": 1,
-      "row": 12
-    },
-    "message": "Module level import not at top of file",
-    "noqa_row": 12,
-    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
-  },
-  {
-    "cell": null,
-    "code": "E402",
-    "end_location": {
-      "column": 37,
       "row": 13
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
@@ -24887,17 +22257,34 @@
     "cell": null,
     "code": "E402",
     "end_location": {
-      "column": 35,
-      "row": 16
+      "column": 37,
+      "row": 14
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 1,
-      "row": 16
+      "row": 14
     },
     "message": "Module level import not at top of file",
-    "noqa_row": 16,
+    "noqa_row": 14,
+    "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
+  },
+  {
+    "cell": null,
+    "code": "E402",
+    "end_location": {
+      "column": 35,
+      "row": 17
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
+    "fix": null,
+    "location": {
+      "column": 1,
+      "row": 17
+    },
+    "message": "Module level import not at top of file",
+    "noqa_row": 17,
     "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
   },
   {
@@ -24905,7 +22292,7 @@
     "code": "ANN204",
     "end_location": {
       "column": 17,
-      "row": 22
+      "row": 23
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": {
@@ -24915,11 +22302,11 @@
           "content": " -> None",
           "end_location": {
             "column": 46,
-            "row": 22
+            "row": 23
           },
           "location": {
             "column": 46,
-            "row": 22
+            "row": 23
           }
         }
       ],
@@ -24927,1878 +22314,129 @@
     },
     "location": {
       "column": 9,
-      "row": 22
+      "row": 23
     },
     "message": "Missing return type annotation for special method `__init__`",
-    "noqa_row": 22,
+    "noqa_row": 23,
     "url": "https://docs.astral.sh/ruff/rules/missing-return-type-special-method"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 30,
-      "row": 51
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 30,
-            "row": 51
-          },
-          "location": {
-            "column": 17,
-            "row": 51
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 17,
-      "row": 51
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 51,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 31,
-      "row": 52
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 31,
-            "row": 52
-          },
-          "location": {
-            "column": 18,
-            "row": 52
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 18,
-      "row": 52
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 52,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 39,
-      "row": 53
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Exception | None",
-          "end_location": {
-            "column": 39,
-            "row": 53
-          },
-          "location": {
-            "column": 20,
-            "row": 53
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 20,
-      "row": 53
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 53,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 30,
-      "row": 54
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 30,
-            "row": 54
-          },
-          "location": {
-            "column": 17,
-            "row": 54
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 17,
-      "row": 54
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 54,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
   },
   {
     "cell": null,
     "code": "G004",
     "end_location": {
       "column": 49,
-      "row": 91
+      "row": 92
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 31,
-      "row": 91
+      "row": 92
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 91,
+    "noqa_row": 92,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 50,
-      "row": 94
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 50,
-            "row": 94
-          },
-          "location": {
-            "column": 37,
-            "row": 94
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 37,
-      "row": 94
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 94,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 81,
-      "row": 94
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 81,
-            "row": 94
-          },
-          "location": {
-            "column": 68,
-            "row": 94
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 68,
-      "row": 94
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 94,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 120,
-      "row": 94
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Exception | None",
-          "end_location": {
-            "column": 120,
-            "row": 94
-          },
-          "location": {
-            "column": 101,
-            "row": 94
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 101,
-      "row": 94
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 94,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 150,
-      "row": 94
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 150,
-            "row": 94
-          },
-          "location": {
-            "column": 137,
-            "row": 94
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 137,
-      "row": 94
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 94,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 50,
-      "row": 101
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 50,
-            "row": 101
-          },
-          "location": {
-            "column": 37,
-            "row": 101
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 37,
-      "row": 101
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 101,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 81,
-      "row": 101
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 81,
-            "row": 101
-          },
-          "location": {
-            "column": 68,
-            "row": 101
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 68,
-      "row": 101
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 101,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 120,
-      "row": 101
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Exception | None",
-          "end_location": {
-            "column": 120,
-            "row": 101
-          },
-          "location": {
-            "column": 101,
-            "row": 101
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 101,
-      "row": 101
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 101,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 150,
-      "row": 101
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 150,
-            "row": 101
-          },
-          "location": {
-            "column": 137,
-            "row": 101
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 137,
-      "row": 101
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 101,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 50,
-      "row": 108
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 50,
-            "row": 108
-          },
-          "location": {
-            "column": 37,
-            "row": 108
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 37,
-      "row": 108
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 108,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 81,
-      "row": 108
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 81,
-            "row": 108
-          },
-          "location": {
-            "column": 68,
-            "row": 108
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 68,
-      "row": 108
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 108,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 120,
-      "row": 108
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Exception | None",
-          "end_location": {
-            "column": 120,
-            "row": 108
-          },
-          "location": {
-            "column": 101,
-            "row": 108
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 101,
-      "row": 108
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 108,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 150,
-      "row": 108
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 150,
-            "row": 108
-          },
-          "location": {
-            "column": 137,
-            "row": 108
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 137,
-      "row": 108
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 108,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 50,
-      "row": 115
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 50,
-            "row": 115
-          },
-          "location": {
-            "column": 37,
-            "row": 115
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 37,
-      "row": 115
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 115,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 81,
-      "row": 115
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 81,
-            "row": 115
-          },
-          "location": {
-            "column": 68,
-            "row": 115
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 68,
-      "row": 115
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 115,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 120,
-      "row": 115
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Exception | None",
-          "end_location": {
-            "column": 120,
-            "row": 115
-          },
-          "location": {
-            "column": 101,
-            "row": 115
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 101,
-      "row": 115
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 115,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 150,
-      "row": 115
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 150,
-            "row": 115
-          },
-          "location": {
-            "column": 137,
-            "row": 115
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 137,
-      "row": 115
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 115,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 50,
-      "row": 122
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 50,
-            "row": 122
-          },
-          "location": {
-            "column": 37,
-            "row": 122
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 37,
-      "row": 122
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 122,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 81,
-      "row": 122
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 81,
-            "row": 122
-          },
-          "location": {
-            "column": 68,
-            "row": 122
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 68,
-      "row": 122
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 122,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 120,
-      "row": 122
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Exception | None",
-          "end_location": {
-            "column": 120,
-            "row": 122
-          },
-          "location": {
-            "column": 101,
-            "row": 122
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 101,
-      "row": 122
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 122,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 150,
-      "row": 122
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 150,
-            "row": 122
-          },
-          "location": {
-            "column": 137,
-            "row": 122
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 137,
-      "row": 122
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 122,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 50,
-      "row": 129
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 50,
-            "row": 129
-          },
-          "location": {
-            "column": 37,
-            "row": 129
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 37,
-      "row": 129
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 129,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 81,
-      "row": 129
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 81,
-            "row": 129
-          },
-          "location": {
-            "column": 68,
-            "row": 129
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 68,
-      "row": 129
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 129,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 120,
-      "row": 129
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Exception | None",
-          "end_location": {
-            "column": 120,
-            "row": 129
-          },
-          "location": {
-            "column": 101,
-            "row": 129
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 101,
-      "row": 129
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 129,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 150,
-      "row": 129
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 150,
-            "row": 129
-          },
-          "location": {
-            "column": 137,
-            "row": 129
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 137,
-      "row": 129
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 129,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
   },
   {
     "cell": null,
     "code": "G004",
     "end_location": {
       "column": 51,
-      "row": 132
+      "row": 163
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 29,
-      "row": 132
+      "row": 163
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 132,
+    "noqa_row": 163,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 50,
-      "row": 136
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 50,
-            "row": 136
-          },
-          "location": {
-            "column": 37,
-            "row": 136
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 37,
-      "row": 136
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 136,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 81,
-      "row": 136
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 81,
-            "row": 136
-          },
-          "location": {
-            "column": 68,
-            "row": 136
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 68,
-      "row": 136
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 136,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 120,
-      "row": 136
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Exception | None",
-          "end_location": {
-            "column": 120,
-            "row": 136
-          },
-          "location": {
-            "column": 101,
-            "row": 136
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 101,
-      "row": 136
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 136,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 150,
-      "row": 136
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 150,
-            "row": 136
-          },
-          "location": {
-            "column": 137,
-            "row": 136
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 137,
-      "row": 136
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 136,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
   },
   {
     "cell": null,
     "code": "G004",
     "end_location": {
       "column": 49,
-      "row": 139
+      "row": 175
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 27,
-      "row": 139
+      "row": 175
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 139,
+    "noqa_row": 175,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 50,
-      "row": 143
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 50,
-            "row": 143
-          },
-          "location": {
-            "column": 37,
-            "row": 143
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 37,
-      "row": 143
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 143,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 81,
-      "row": 143
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 81,
-            "row": 143
-          },
-          "location": {
-            "column": 68,
-            "row": 143
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 68,
-      "row": 143
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 143,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 120,
-      "row": 143
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Exception | None",
-          "end_location": {
-            "column": 120,
-            "row": 143
-          },
-          "location": {
-            "column": 101,
-            "row": 143
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 101,
-      "row": 143
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 143,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 150,
-      "row": 143
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 150,
-            "row": 143
-          },
-          "location": {
-            "column": 137,
-            "row": 143
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 137,
-      "row": 143
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 143,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
   },
   {
     "cell": null,
     "code": "G004",
     "end_location": {
       "column": 44,
-      "row": 146
+      "row": 187
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 26,
-      "row": 146
+      "row": 187
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 146,
+    "noqa_row": 187,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 50,
-      "row": 150
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 50,
-            "row": 150
-          },
-          "location": {
-            "column": 37,
-            "row": 150
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 37,
-      "row": 150
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 150,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 81,
-      "row": 150
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 81,
-            "row": 150
-          },
-          "location": {
-            "column": 68,
-            "row": 150
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 68,
-      "row": 150
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 150,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 120,
-      "row": 150
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Exception | None",
-          "end_location": {
-            "column": 120,
-            "row": 150
-          },
-          "location": {
-            "column": 101,
-            "row": 150
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 101,
-      "row": 150
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 150,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 150,
-      "row": 150
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 150,
-            "row": 150
-          },
-          "location": {
-            "column": 137,
-            "row": 150
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 137,
-      "row": 150
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 150,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
   },
   {
     "cell": null,
     "code": "G004",
     "end_location": {
       "column": 43,
-      "row": 153
+      "row": 199
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 26,
-      "row": 153
+      "row": 199
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 153,
+    "noqa_row": 199,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 63,
-      "row": 169
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 63,
-            "row": 169
-          },
-          "location": {
-            "column": 50,
-            "row": 169
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 50,
-      "row": 169
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 169,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 93,
-      "row": 169
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 93,
-            "row": 169
-          },
-          "location": {
-            "column": 80,
-            "row": 169
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 80,
-      "row": 169
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 169,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 79,
-      "row": 182
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 79,
-            "row": 182
-          },
-          "location": {
-            "column": 66,
-            "row": 182
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 66,
-      "row": 182
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 182,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 110,
-      "row": 182
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 110,
-            "row": 182
-          },
-          "location": {
-            "column": 97,
-            "row": 182
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 97,
-      "row": 182
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 182,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 75,
-      "row": 188
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 75,
-            "row": 188
-          },
-          "location": {
-            "column": 62,
-            "row": 188
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 62,
-      "row": 188
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 188,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 106,
-      "row": 188
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 106,
-            "row": 188
-          },
-          "location": {
-            "column": 93,
-            "row": 188
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 93,
-      "row": 188
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 188,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 73,
-      "row": 194
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 73,
-            "row": 194
-          },
-          "location": {
-            "column": 60,
-            "row": 194
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 60,
-      "row": 194
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 194,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 104,
-      "row": 194
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 104,
-            "row": 194
-          },
-          "location": {
-            "column": 91,
-            "row": 194
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 91,
-      "row": 194
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 194,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 58,
-      "row": 200
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 58,
-            "row": 200
-          },
-          "location": {
-            "column": 45,
-            "row": 200
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 45,
-      "row": 200
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 200,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 88,
-      "row": 200
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 88,
-            "row": 200
-          },
-          "location": {
-            "column": 75,
-            "row": 200
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 75,
-      "row": 200
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 200,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
   },
   {
     "cell": null,
     "code": "G004",
     "end_location": {
       "column": 47,
-      "row": 203
+      "row": 257
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 31,
-      "row": 203
+      "row": 257
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 203,
+    "noqa_row": 257,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 62,
-      "row": 222
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "int | None",
-          "end_location": {
-            "column": 62,
-            "row": 222
-          },
-          "location": {
-            "column": 49,
-            "row": 222
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 49,
-      "row": 222
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 222,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 104,
-      "row": 222
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Dict[str, Any] | None",
-          "end_location": {
-            "column": 104,
-            "row": 222
-          },
-          "location": {
-            "column": 80,
-            "row": 222
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 80,
-      "row": 222
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 222,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 93,
-      "row": 222
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "dict",
-          "end_location": {
-            "column": 93,
-            "row": 222
-          },
-          "location": {
-            "column": 89,
-            "row": 222
-          }
-        }
-      ],
-      "message": "Replace with `dict`"
-    },
-    "location": {
-      "column": 89,
-      "row": 222
-    },
-    "message": "Use `dict` instead of `Dict` for type annotation",
-    "noqa_row": 222,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
   },
   {
     "cell": null,
     "code": "G004",
     "end_location": {
       "column": 36,
-      "row": 243
+      "row": 297
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 17,
-      "row": 243
+      "row": 297
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 243,
+    "noqa_row": 297,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -26806,348 +22444,84 @@
     "code": "G004",
     "end_location": {
       "column": 42,
-      "row": 266
+      "row": 320
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 266
+      "row": 320
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 266,
+    "noqa_row": 320,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 40,
-      "row": 269
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "dict",
-          "end_location": {
-            "column": 40,
-            "row": 269
-          },
-          "location": {
-            "column": 36,
-            "row": 269
-          }
-        }
-      ],
-      "message": "Replace with `dict`"
-    },
-    "location": {
-      "column": 36,
-      "row": 269
-    },
-    "message": "Use `dict` instead of `Dict` for type annotation",
-    "noqa_row": 269,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 59,
-      "row": 269
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "dict",
-          "end_location": {
-            "column": 59,
-            "row": 269
-          },
-          "location": {
-            "column": 55,
-            "row": 269
-          }
-        }
-      ],
-      "message": "Replace with `dict`"
-    },
-    "location": {
-      "column": 55,
-      "row": 269
-    },
-    "message": "Use `dict` instead of `Dict` for type annotation",
-    "noqa_row": 269,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 55,
-      "row": 295
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "int | None",
-          "end_location": {
-            "column": 55,
-            "row": 295
-          },
-          "location": {
-            "column": 42,
-            "row": 295
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 42,
-      "row": 295
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 295,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 97,
-      "row": 295
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "Dict[str, Any] | None",
-          "end_location": {
-            "column": 97,
-            "row": 295
-          },
-          "location": {
-            "column": 73,
-            "row": 295
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 73,
-      "row": 295
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 295,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP006",
-    "end_location": {
-      "column": 86,
-      "row": 295
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "dict",
-          "end_location": {
-            "column": 86,
-            "row": 295
-          },
-          "location": {
-            "column": 82,
-            "row": 295
-          }
-        }
-      ],
-      "message": "Replace with `dict`"
-    },
-    "location": {
-      "column": 82,
-      "row": 295
-    },
-    "message": "Use `dict` instead of `Dict` for type annotation",
-    "noqa_row": 295,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep585-annotation"
   },
   {
     "cell": null,
     "code": "G004",
     "end_location": {
       "column": 39,
-      "row": 314
+      "row": 368
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 18,
-      "row": 314
+      "row": 368
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 314,
+    "noqa_row": 368,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 106,
-      "row": 318
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "int | None",
-          "end_location": {
-            "column": 106,
-            "row": 318
-          },
-          "location": {
-            "column": 93,
-            "row": 318
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 93,
-      "row": 318
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 318,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 140,
-      "row": 318
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 140,
-            "row": 318
-          },
-          "location": {
-            "column": 127,
-            "row": 318
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 127,
-      "row": 318
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 318,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
   },
   {
     "cell": null,
     "code": "G004",
     "end_location": {
       "column": 37,
-      "row": 342
+      "row": 403
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 17,
-      "row": 342
+      "row": 403
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 342,
+    "noqa_row": 403,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 44,
-      "row": 346
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 44,
-            "row": 346
-          },
-          "location": {
-            "column": 31,
-            "row": 346
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 31,
-      "row": 346
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 346,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
   },
   {
     "cell": null,
     "code": "FBT001",
     "end_location": {
-      "column": 61,
-      "row": 346
+      "column": 58,
+      "row": 407
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
-      "column": 53,
-      "row": 346
+      "column": 50,
+      "row": 407
     },
     "message": "Boolean-typed positional argument in function definition",
-    "noqa_row": 346,
+    "noqa_row": 407,
     "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
   },
   {
     "cell": null,
     "code": "FBT002",
     "end_location": {
-      "column": 61,
-      "row": 346
+      "column": 58,
+      "row": 407
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
-      "column": 53,
-      "row": 346
+      "column": 50,
+      "row": 407
     },
     "message": "Boolean default positional argument in function definition",
-    "noqa_row": 346,
+    "noqa_row": 407,
     "url": "https://docs.astral.sh/ruff/rules/boolean-default-value-positional-argument"
   },
   {
@@ -27155,16 +22529,16 @@
     "code": "ANN401",
     "end_location": {
       "column": 31,
-      "row": 350
+      "row": 411
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 28,
-      "row": 350
+      "row": 411
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `*args`",
-    "noqa_row": 350,
+    "noqa_row": 411,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -27172,16 +22546,16 @@
     "code": "ANN401",
     "end_location": {
       "column": 46,
-      "row": 350
+      "row": 411
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 43,
-      "row": 350
+      "row": 411
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `**kwargs`",
-    "noqa_row": 350,
+    "noqa_row": 411,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -27189,16 +22563,16 @@
     "code": "ANN401",
     "end_location": {
       "column": 54,
-      "row": 350
+      "row": 411
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 51,
-      "row": 350
+      "row": 411
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `wrapper`",
-    "noqa_row": 350,
+    "noqa_row": 411,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -27206,16 +22580,16 @@
     "code": "G004",
     "end_location": {
       "column": 54,
-      "row": 352
+      "row": 413
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 34,
-      "row": 352
+      "row": 413
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 352,
+    "noqa_row": 413,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -27223,16 +22597,16 @@
     "code": "G004",
     "end_location": {
       "column": 76,
-      "row": 355
+      "row": 416
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 39,
-      "row": 355
+      "row": 416
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 355,
+    "noqa_row": 416,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -27240,16 +22614,16 @@
     "code": "G004",
     "end_location": {
       "column": 60,
-      "row": 359
+      "row": 420
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 38,
-      "row": 359
+      "row": 420
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 359,
+    "noqa_row": 420,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -27257,66 +22631,33 @@
     "code": "G004",
     "end_location": {
       "column": 61,
-      "row": 362
+      "row": 423
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 39,
-      "row": 362
+      "row": 423
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 362,
+    "noqa_row": 423,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "UP045",
-    "end_location": {
-      "column": 65,
-      "row": 370
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "str | None",
-          "end_location": {
-            "column": 65,
-            "row": 370
-          },
-          "location": {
-            "column": 52,
-            "row": 370
-          }
-        }
-      ],
-      "message": "Convert to `X | None`"
-    },
-    "location": {
-      "column": 52,
-      "row": 370
-    },
-    "message": "Use `X | None` for type annotations",
-    "noqa_row": 370,
-    "url": "https://docs.astral.sh/ruff/rules/non-pep604-annotation-optional"
   },
   {
     "cell": null,
     "code": "ANN401",
     "end_location": {
       "column": 31,
-      "row": 374
+      "row": 435
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 28,
-      "row": 374
+      "row": 435
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `*args`",
-    "noqa_row": 374,
+    "noqa_row": 435,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -27324,16 +22665,16 @@
     "code": "ANN401",
     "end_location": {
       "column": 46,
-      "row": 374
+      "row": 435
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 43,
-      "row": 374
+      "row": 435
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `**kwargs`",
-    "noqa_row": 374,
+    "noqa_row": 435,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -27341,16 +22682,16 @@
     "code": "ANN401",
     "end_location": {
       "column": 54,
-      "row": 374
+      "row": 435
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 51,
-      "row": 374
+      "row": 435
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `wrapper`",
-    "noqa_row": 374,
+    "noqa_row": 435,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -27358,16 +22699,16 @@
     "code": "G004",
     "end_location": {
       "column": 55,
-      "row": 377
+      "row": 438
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py",
     "fix": null,
     "location": {
       "column": 32,
-      "row": 377
+      "row": 438
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 377,
+    "noqa_row": 438,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {

@@ -223,7 +223,7 @@ class AccountSyncService:
                         f"UID={instance.credential.username};"
                         f"PWD={instance.credential.get_plain_password()}"
                     )
-            except:
+            except Exception:
                 continue
 
         return None
@@ -231,7 +231,7 @@ class AccountSyncService:
     def _get_sqlserver_pymssql_connection(self, instance: Instance):
         """获取SQL Server pymssql连接参数"""
         try:
-            import pymssql
+            import pymssql  # noqa: F401
 
             return {
                 "server": instance.host,
@@ -332,7 +332,7 @@ class AccountSyncService:
             plugin_name = plugin if plugin else "mysql_native_password"
 
             # 处理密码过期状态
-            is_password_expired = password_expired == "Y" if password_expired else False
+            is_password_expired = password_expired == "Y" if password_expired else False  # noqa: S105
 
             # 处理锁定状态
             is_locked = account_locked == "Y" if account_locked else False
@@ -342,7 +342,7 @@ class AccountSyncService:
             if password_last_changed:
                 try:
                     password_changed = password_last_changed
-                except:
+                except Exception:
                     password_changed = None
 
             # 获取完整权限信息

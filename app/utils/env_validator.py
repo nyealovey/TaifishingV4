@@ -134,7 +134,7 @@ class EnvironmentValidator:
 
             parsed = urlparse(url)
             return parsed.scheme in valid_schemes
-        except:
+        except Exception:
             return False
 
     @classmethod
@@ -145,7 +145,7 @@ class EnvironmentValidator:
 
             parsed = urlparse(url)
             return parsed.scheme == "redis"
-        except:
+        except Exception:
             return False
 
     @classmethod

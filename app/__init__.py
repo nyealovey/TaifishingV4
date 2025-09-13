@@ -18,7 +18,7 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 
-from app.constants import DefaultConfig, SystemConstants
+from app.constants import SystemConstants
 
 # 加载环境变量
 load_dotenv()
@@ -75,10 +75,7 @@ def create_app(config_name=None):
     register_error_handlers(app)
 
     # 注册高级错误处理器
-    from app.utils.advanced_error_handler import (
-        advanced_error_handler,
-        handle_advanced_errors,
-    )
+    from app.utils.advanced_error_handler import advanced_error_handler
 
     app.advanced_error_handler = advanced_error_handler
 
@@ -450,7 +447,15 @@ def configure_template_filters(app):
 app = create_app()
 
 # 导入模型（确保模型被注册）
-from app.models import account, credential, database_type_config, instance, log, task, user
+from app.models import (  # noqa: F401
+    account,
+    credential,
+    database_type_config,
+    instance,
+    log,
+    task,
+    user,
+)
 
 if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "False").lower() == "true"

@@ -109,7 +109,7 @@ class User(UserMixin, db.Model):
         """创建默认管理员用户"""
         admin = User.query.filter_by(username="admin").first()
         if not admin:
-            admin = User(username="admin", password="Admin123", role="admin")
+            admin = User(username="admin", password="Admin123", role="admin")  # noqa: S106
             db.session.add(admin)
             db.session.commit()
             print("✅ 默认管理员用户已创建: admin/Admin123")

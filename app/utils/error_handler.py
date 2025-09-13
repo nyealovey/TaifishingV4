@@ -1,5 +1,3 @@
-from app.utils.timezone import now
-
 """
 泰摸鱼吧 - 错误处理工具
 """
@@ -9,6 +7,8 @@ import traceback
 
 from flask import current_app, jsonify, render_template, request
 from sqlalchemy.exc import SQLAlchemyError
+
+from app.utils.timezone import now
 
 
 def register_error_handlers(app):

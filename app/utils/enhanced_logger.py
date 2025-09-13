@@ -8,13 +8,13 @@ import traceback
 from collections.abc import Callable
 from typing import Any, TypeVar
 
-F = TypeVar("F", bound=Callable[..., Any])
-
 from flask import current_app, has_request_context, request
 from flask_login import current_user
 
 # 延迟导入以避免循环导入
 from app.utils.timezone import now
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 class EnhancedLogger:

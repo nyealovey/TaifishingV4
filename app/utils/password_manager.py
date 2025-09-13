@@ -88,7 +88,7 @@ class PasswordManager:
         try:
             base64.b64decode(password.encode())
             return True
-        except:
+        except Exception:
             return False
 
 

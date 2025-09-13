@@ -937,7 +937,7 @@ class DatabaseService:
             elif db_type == "oracle":
                 conn.execute("SELECT 1 FROM DUAL")
             return True
-        except:
+        except Exception:
             return False
 
     def close_connection(self, instance: Instance):
@@ -1016,6 +1016,7 @@ class DatabaseService:
                     conn.close()
                 del self.connections[instance_id]
             except Exception:
+                # 忽略连接关闭时的错误
                 pass
 
     def get_connection_status(self, instance: Instance) -> dict[str, Any]:

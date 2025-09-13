@@ -172,7 +172,7 @@ def index() -> str | Response:
                 Log.query.with_entities(distinct(Log.module)).filter(Log.module.isnot(None)).order_by(Log.module).all()
             )
             module_list = [m[0] for m in available_modules if m[0]]
-        except:
+        except Exception:
             module_list = []
 
         return render_template(
@@ -406,12 +406,12 @@ def get_merged_info(log_id: int) -> Response:
                     # 处理格式: 2025-09-11 06:32:19.401751
                     start_time = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S.%f")
                     merged_info["start_time"] = start_time.isoformat()
-                except:
+                except Exception:
                     try:
                         # 尝试不带微秒的格式
                         start_time = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S")
                         merged_info["start_time"] = start_time.isoformat()
-                    except:
+                    except Exception:
                         merged_info["start_time"] = start_time_str
 
             if end_match:
@@ -421,12 +421,12 @@ def get_merged_info(log_id: int) -> Response:
                     # 处理格式: 2025-09-11 06:32:20.413840
                     end_time = datetime.strptime(end_time_str, "%Y-%m-%d %H:%M:%S.%f")
                     merged_info["end_time"] = end_time.isoformat()
-                except:
+                except Exception:
                     try:
                         # 尝试不带微秒的格式
                         end_time = datetime.strptime(end_time_str, "%Y-%m-%d %H:%M:%S")
                         merged_info["end_time"] = end_time.isoformat()
-                    except:
+                    except Exception:
                         merged_info["end_time"] = end_time_str
 
             if duration_match:
@@ -446,7 +446,7 @@ def get_merged_info(log_id: int) -> Response:
                     if size_str.endswith(" bytes"):
                         size_str = size_str[:-6]
                     merged_info["response_size"] = int(size_str)
-                except:
+                except Exception:
                     merged_info["response_size"] = response_size_match.group(1).strip()
 
             # 解析请求头
@@ -457,7 +457,7 @@ def get_merged_info(log_id: int) -> Response:
 
                     headers_str = request_headers_match.group(1)
                     merged_info["request_headers"] = ast.literal_eval(headers_str)
-                except:
+                except Exception:
                     merged_info["request_headers"] = request_headers_match.group(1)
 
             # 解析响应头
@@ -468,7 +468,7 @@ def get_merged_info(log_id: int) -> Response:
 
                     headers_str = response_headers_match.group(1)
                     merged_info["response_headers"] = ast.literal_eval(headers_str)
-                except:
+                except Exception:
                     merged_info["response_headers"] = response_headers_match.group(1)
 
             # 解析响应内容

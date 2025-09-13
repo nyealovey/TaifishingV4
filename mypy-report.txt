@@ -743,7 +743,7 @@ app/scheduler.py:196:5: error: Function is missing a type annotation
 [no-untyped-def]
         def decorator(func):
         ^
-app/utils/enhanced_logger.py:13:1: error: Skipping analyzing "flask_login":
+app/utils/enhanced_logger.py:14:1: error: Skipping analyzing "flask_login":
 module is installed, but missing library stubs or py.typed marker 
 [import-untyped]
     from flask_login import current_user
@@ -3423,28 +3423,29 @@ app/services/permission_query_factory.py:813:34: error: Missing type parameters
 for generic type "list"  [type-arg]
         def get_supported_types() -> list:
                                      ^
-app/routes/account_sync.py:9:1: error: Skipping analyzing "flask_login": module
-is installed, but missing library stubs or py.typed marker  [import-untyped]
+app/routes/account_sync.py:10:1: error: Skipping analyzing "flask_login":
+module is installed, but missing library stubs or py.typed marker 
+[import-untyped]
     from flask_login import current_user, login_required
     ^
-app/routes/account_sync.py:22:2: error: Untyped decorator makes function
+app/routes/account_sync.py:23:2: error: Untyped decorator makes function
 "sync_records" untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
-app/routes/account_sync.py:244:2: error: Untyped decorator makes function
+app/routes/account_sync.py:247:2: error: Untyped decorator makes function
 "sync_all_accounts" untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
-app/routes/account_sync.py:363:2: error: Untyped decorator makes function
+app/routes/account_sync.py:366:2: error: Untyped decorator makes function
 "sync_details_batch" untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
-app/routes/account_sync.py:439:2: error: Untyped decorator makes function
+app/routes/account_sync.py:442:2: error: Untyped decorator makes function
 "sync_details" untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/account_sync.py: note: In function "sync_details":
-app/routes/account_sync.py:466:16: error: Incompatible return value type (got
+app/routes/account_sync.py:469:16: error: Incompatible return value type (got
 "werkzeug.wrappers.response.Response", expected
 "str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]") 
 [return-value]
@@ -3865,130 +3866,130 @@ app/routes/instances.py:731:16: error: Incompatible return value type (got
             return _process_instances_data(instances_data)
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/routes/instances.py: note: In function "_process_instances_data":
-app/routes/instances.py:807:24: error: Call to untyped function "Instance" in
+app/routes/instances.py:809:24: error: Call to untyped function "Instance" in
 typed context  [no-untyped-call]
                 instance = Instance(
                            ^
 app/routes/instances.py: note: At top level:
-app/routes/instances.py:860:2: error: Untyped decorator makes function
+app/routes/instances.py:862:2: error: Untyped decorator makes function
 "export_instances" untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
-app/routes/instances.py:861:2: error: Untyped decorator makes function
+app/routes/instances.py:863:2: error: Untyped decorator makes function
 "export_instances" untyped  [misc]
     @view_required
      ^~~~~~~~~~~~~
-app/routes/instances.py:956:2: error: Untyped decorator makes function
+app/routes/instances.py:958:2: error: Untyped decorator makes function
 "download_template" untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
-app/routes/instances.py:957:2: error: Untyped decorator makes function
+app/routes/instances.py:959:2: error: Untyped decorator makes function
 "download_template" untyped  [misc]
     @view_required
      ^~~~~~~~~~~~~
-app/routes/instances.py:1033:2: error: Untyped decorator makes function
+app/routes/instances.py:1035:2: error: Untyped decorator makes function
 "test_connection" untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
-app/routes/instances.py:1034:2: error: Untyped decorator makes function
+app/routes/instances.py:1036:2: error: Untyped decorator makes function
 "test_connection" untyped  [misc]
     @view_required
      ^~~~~~~~~~~~~
 app/routes/instances.py: note: In function "test_connection":
-app/routes/instances.py:1041:22: error: Call to untyped function
+app/routes/instances.py:1043:22: error: Call to untyped function
 "DatabaseService" in typed context  [no-untyped-call]
             db_service = DatabaseService()
                          ^~~~~~~~~~~~~~~~~
-app/routes/instances.py:1067:12: error: Incompatible return value type (got
+app/routes/instances.py:1069:12: error: Incompatible return value type (got
 "werkzeug.wrappers.response.Response", expected
 "str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]") 
 [return-value]
         return redirect(url_for("instances.detail", instance_id=instance_i...
                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/routes/instances.py: note: At top level:
-app/routes/instances.py:1071:2: error: Untyped decorator makes function
+app/routes/instances.py:1073:2: error: Untyped decorator makes function
 "sync_accounts" untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
-app/routes/instances.py:1072:2: error: Untyped decorator makes function
+app/routes/instances.py:1074:2: error: Untyped decorator makes function
 "sync_accounts" untyped  [misc]
     @update_required
      ^~~~~~~~~~~~~~~
 app/routes/instances.py: note: In function "sync_accounts":
-app/routes/instances.py:1091:22: error: Call to untyped function
+app/routes/instances.py:1093:22: error: Call to untyped function
 "DatabaseService" in typed context  [no-untyped-call]
             db_service = DatabaseService()
                          ^~~~~~~~~~~~~~~~~
-app/routes/instances.py:1157:12: error: Incompatible return value type (got
+app/routes/instances.py:1159:12: error: Incompatible return value type (got
 "werkzeug.wrappers.response.Response", expected
 "str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]") 
 [return-value]
         return redirect(url_for("instances.detail", instance_id=instance_i...
                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/routes/instances.py: note: At top level:
-app/routes/instances.py:1162:2: error: Untyped decorator makes function
+app/routes/instances.py:1164:2: error: Untyped decorator makes function
 "api_list" untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
-app/routes/instances.py:1163:2: error: Untyped decorator makes function
+app/routes/instances.py:1165:2: error: Untyped decorator makes function
 "api_list" untyped  [misc]
     @view_required
      ^~~~~~~~~~~~~
-app/routes/instances.py:1171:2: error: Untyped decorator makes function
+app/routes/instances.py:1173:2: error: Untyped decorator makes function
 "api_detail" untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
-app/routes/instances.py:1172:2: error: Untyped decorator makes function
+app/routes/instances.py:1174:2: error: Untyped decorator makes function
 "api_detail" untyped  [misc]
     @view_required
      ^~~~~~~~~~~~~
-app/routes/instances.py:1180:2: error: Untyped decorator makes function
+app/routes/instances.py:1182:2: error: Untyped decorator makes function
 "api_test_connection" untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
-app/routes/instances.py:1181:2: error: Untyped decorator makes function
+app/routes/instances.py:1183:2: error: Untyped decorator makes function
 "api_test_connection" untyped  [misc]
     @view_required
      ^~~~~~~~~~~~~
 app/routes/instances.py: note: In function "api_test_connection":
-app/routes/instances.py:1187:22: error: Call to untyped function
+app/routes/instances.py:1189:22: error: Call to untyped function
 "DatabaseService" in typed context  [no-untyped-call]
             db_service = DatabaseService()
                          ^~~~~~~~~~~~~~~~~
 app/routes/instances.py: note: At top level:
-app/routes/instances.py:1195:2: error: Untyped decorator makes function
+app/routes/instances.py:1197:2: error: Untyped decorator makes function
 "api_test_instance_connection" untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
-app/routes/instances.py:1196:2: error: Untyped decorator makes function
+app/routes/instances.py:1198:2: error: Untyped decorator makes function
 "api_test_instance_connection" untyped  [misc]
     @view_required
      ^~~~~~~~~~~~~
 app/routes/instances.py: note: In function "api_test_instance_connection":
-app/routes/instances.py:1204:38: error: If x = b'abc' then f"{x}" or
+app/routes/instances.py:1206:38: error: If x = b'abc' then f"{x}" or
 "{}".format(x) produces "b'abc'", not "abc". If this is desired behavior, use
 f"{x!r}" or "{!r}".format(x). Otherwise, decode the bytes  [str-bytes-safe]
             logging.info(f"请求数据: {request.get_data()}")
                                          ^~~~~~~~~~~~~~
-app/routes/instances.py:1264:25: error: Call to untyped function "Instance" in
+app/routes/instances.py:1266:25: error: Call to untyped function "Instance" in
 typed context  [no-untyped-call]
             temp_instance = Instance(
                             ^
-app/routes/instances.py:1291:22: error: Call to untyped function
+app/routes/instances.py:1293:22: error: Call to untyped function
 "DatabaseService" in typed context  [no-untyped-call]
             db_service = DatabaseService()
                          ^~~~~~~~~~~~~~~~~
 app/routes/instances.py: note: At top level:
-app/routes/instances.py:1390:2: error: Untyped decorator makes function
+app/routes/instances.py:1392:2: error: Untyped decorator makes function
 "get_account_permissions" untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
-app/routes/instances.py:1391:2: error: Untyped decorator makes function
+app/routes/instances.py:1393:2: error: Untyped decorator makes function
 "get_account_permissions" untyped  [misc]
     @view_required
      ^~~~~~~~~~~~~
 app/routes/instances.py: note: In function "get_account_permissions":
-app/routes/instances.py:1400:22: error: Call to untyped function
+app/routes/instances.py:1402:22: error: Call to untyped function
 "DatabaseService" in typed context  [no-untyped-call]
             db_service = DatabaseService()
                          ^~~~~~~~~~~~~~~~~

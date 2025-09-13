@@ -1,299 +1,33 @@
-错误: would reformat /Users/shiyijiufei/TaifishingV4/app/routes/admin.py
-would reformat /Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py
-would reformat /Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py
-would reformat /Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py
-would reformat /Users/shiyijiufei/TaifishingV4/app/routes/instances.py
+错误: would reformat /Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py
 
 Oh no! 💥 💔 💥
-5 files would be reformatted, 55 files would be left unchanged.
+1 file would be reformatted, 59 files would be left unchanged.
 
 
 标准输出:
---- /Users/shiyijiufei/TaifishingV4/app/routes/admin.py	2025-09-13 00:40:42.143437+00:00
-+++ /Users/shiyijiufei/TaifishingV4/app/routes/admin.py	2025-09-13 00:47:12.920916+00:00
-@@ -11,11 +11,11 @@
- from flask_login import current_user, login_required  # type: ignore
- 
- from app.constants import UserRole
- from app.utils.api_response import APIResponse
- 
--F = TypeVar('F', bound=Callable[..., Any])
-+F = TypeVar("F", bound=Callable[..., Any])
- 
- logger = logging.getLogger(__name__)
- 
- # 创建管理蓝图
- admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
---- /Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py	2025-09-12 23:49:03.054936+00:00
-+++ /Users/shiyijiufei/TaifishingV4/app/routes/account_sync.py	2025-09-13 00:47:13.415409+00:00
-@@ -181,11 +181,13 @@
-             self.has_prev = page > 1
-             self.has_next = page < self.pages
-             self.prev_num = page - 1 if page > 1 else None
-             self.next_num = page + 1 if page < self.pages else None
- 
--        def iter_pages(self, left_edge: int = 2, right_edge: int = 2, left_current: int = 2, right_current: int = 3) -> Generator[Optional[int], None, None]:
-+        def iter_pages(
-+            self, left_edge: int = 2, right_edge: int = 2, left_current: int = 2, right_current: int = 3
-+        ) -> Generator[Optional[int], None, None]:
-             """生成分页页码迭代器，与Flask-SQLAlchemy的Pagination兼容"""
-             last = self.pages
-             for num in range(1, last + 1):
-                 if (
-                     num <= left_edge
---- /Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py	2025-09-13 00:40:42.143408+00:00
-+++ /Users/shiyijiufei/TaifishingV4/app/routes/scheduler.py	2025-09-13 00:47:13.490043+00:00
-@@ -439,11 +439,11 @@
-         module = importlib.util.module_from_spec(spec)
-         sys.modules[module_name] = module
-         spec.loader.exec_module(module)
- 
-         # 返回模块中的task_wrapper函数
--        return getattr(module, 'task_wrapper', None)
-+        return getattr(module, "task_wrapper", None)
- 
-     except Exception as e:
-         logger.error(f"创建动态任务函数失败: {e}")
-         return None
- 
---- /Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py	2025-09-13 00:40:42.142755+00:00
-+++ /Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py	2025-09-13 00:47:13.643319+00:00
-@@ -5,11 +5,11 @@
- 
- import logging
- import traceback
- from typing import Any, Optional, Callable, TypeVar, Dict
- 
--F = TypeVar('F', bound=Callable[..., Any])
-+F = TypeVar("F", bound=Callable[..., Any])
- 
- from flask import current_app, has_request_context, request
- from flask_login import current_user
- 
- # 延迟导入以避免循环导入
-@@ -89,67 +89,112 @@
-         except Exception as e:
-             # 如果数据库记录失败，至少记录到文件
-             self.logger.error(f"记录日志到数据库失败: {e}")
- 
-     def debug(
--        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
-+        self,
-+        message: str,
-+        module: Optional[str] = None,
-+        details: Optional[str] = None,
-+        exception: Optional[Exception] = None,
-+        source: Optional[str] = None,
-     ) -> None:
-         """记录DEBUG级别日志"""
-         self.logger.debug(message)
-         self._log_to_database("DEBUG", "system", message, module, details, exception, source)
- 
-     def info(
--        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
-+        self,
-+        message: str,
-+        module: Optional[str] = None,
-+        details: Optional[str] = None,
-+        exception: Optional[Exception] = None,
-+        source: Optional[str] = None,
-     ) -> None:
-         """记录INFO级别日志"""
-         self.logger.info(message)
-         self._log_to_database("INFO", "operation", message, module, details, exception, source)
- 
-     def warning(
--        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
-+        self,
-+        message: str,
-+        module: Optional[str] = None,
-+        details: Optional[str] = None,
-+        exception: Optional[Exception] = None,
-+        source: Optional[str] = None,
-     ) -> None:
-         """记录WARNING级别日志"""
-         self.logger.warning(message)
-         self._log_to_database("WARNING", "operation", message, module, details, exception, source)
- 
-     def error(
--        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
-+        self,
-+        message: str,
-+        module: Optional[str] = None,
-+        details: Optional[str] = None,
-+        exception: Optional[Exception] = None,
-+        source: Optional[str] = None,
-     ) -> None:
-         """记录ERROR级别日志"""
-         self.logger.error(message)
-         self._log_to_database("ERROR", "error", message, module, details, exception, source)
- 
-     def critical(
--        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
-+        self,
-+        message: str,
-+        module: Optional[str] = None,
-+        details: Optional[str] = None,
-+        exception: Optional[Exception] = None,
-+        source: Optional[str] = None,
-     ) -> None:
-         """记录CRITICAL级别日志"""
-         self.logger.critical(message)
-         self._log_to_database("CRITICAL", "error", message, module, details, exception, source)
- 
-     def security(
--        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
-+        self,
-+        message: str,
-+        module: Optional[str] = None,
-+        details: Optional[str] = None,
-+        exception: Optional[Exception] = None,
-+        source: Optional[str] = None,
-     ) -> None:
-         """记录安全相关日志"""
-         self.logger.warning(f"SECURITY: {message}")
-         self._log_to_database("WARNING", "security", message, module, details, exception, source)
- 
-     def database(
--        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
-+        self,
-+        message: str,
-+        module: Optional[str] = None,
-+        details: Optional[str] = None,
-+        exception: Optional[Exception] = None,
-+        source: Optional[str] = None,
-     ) -> None:
-         """记录数据库相关日志"""
-         self.logger.error(f"DATABASE: {message}")
-         self._log_to_database("ERROR", "database", message, module, details, exception, source)
- 
-     def sync(
--        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
-+        self,
-+        message: str,
-+        module: Optional[str] = None,
-+        details: Optional[str] = None,
-+        exception: Optional[Exception] = None,
-+        source: Optional[str] = None,
-     ) -> None:
-         """记录同步相关日志"""
-         self.logger.info(f"SYNC: {message}")
-         self._log_to_database("INFO", "sync", message, module, details, exception, source)
- 
-     def api(
--        self, message: str, module: Optional[str] = None, details: Optional[str] = None, exception: Optional[Exception] = None, source: Optional[str] = None
-+        self,
-+        message: str,
-+        module: Optional[str] = None,
-+        details: Optional[str] = None,
-+        exception: Optional[Exception] = None,
-+        source: Optional[str] = None,
-     ) -> None:
-         """记录API相关日志"""
-         self.logger.info(f"API: {message}")
-         self._log_to_database("INFO", "api", message, module, details, exception, source)
- 
-@@ -164,11 +209,13 @@
- api_logger = EnhancedLogger("taifish.api")
- security_logger = EnhancedLogger("taifish.security")
- system_logger = EnhancedLogger("taifish.system")
- 
- 
--def log_exception(exception: Exception, message: Optional[str] = None, module: Optional[str] = None, level: str = "ERROR") -> None:
-+def log_exception(
-+    exception: Exception, message: Optional[str] = None, module: Optional[str] = None, level: str = "ERROR"
-+) -> None:
-     """记录异常的便捷函数"""
-     if message is None:
-         message = f"未处理的异常: {type(exception).__name__}"
- 
-     if level == "CRITICAL":
-@@ -177,17 +224,21 @@
+--- /Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py	2025-09-13 00:47:27.607751+00:00
++++ /Users/shiyijiufei/TaifishingV4/app/utils/enhanced_logger.py	2025-09-13 00:47:36.742515+00:00
+@@ -225,21 +225,17 @@
          enhanced_logger.warning(message, module, exception=exception)
      else:
          enhanced_logger.error(message, module, exception=exception)
  
  
--def log_database_error(operation: str, error: Exception, module: Optional[str] = None, details: Optional[str] = None) -> None:
-+def log_database_error(
-+    operation: str, error: Exception, module: Optional[str] = None, details: Optional[str] = None
-+) -> None:
+-def log_database_error(
+-    operation: str, error: Exception, module: str | None = None, details: str | None = None
+-) -> None:
++def log_database_error(operation: str, error: Exception, module: str | None = None, details: str | None = None) -> None:
      """记录数据库错误的便捷函数"""
      message = f"数据库操作失败: {operation}"
      db_logger.database(message, module, details, error)
  
  
--def log_sync_error(operation: str, error: Exception, module: Optional[str] = None, details: Optional[str] = None) -> None:
-+def log_sync_error(
-+    operation: str, error: Exception, module: Optional[str] = None, details: Optional[str] = None
-+) -> None:
+-def log_sync_error(
+-    operation: str, error: Exception, module: str | None = None, details: str | None = None
+-) -> None:
++def log_sync_error(operation: str, error: Exception, module: str | None = None, details: str | None = None) -> None:
      """记录同步错误的便捷函数"""
      message = f"同步操作失败: {operation}"
      sync_logger.error(message, module, details, error)
  
  
-@@ -195,11 +246,13 @@
-     """记录API错误的便捷函数"""
-     message = f"API调用失败: {endpoint}"
-     api_logger.error(message, module, details, error)
- 
- 
--def log_security_event(event: str, details: Optional[str] = None, module: Optional[str] = None, level: str = "WARNING") -> None:
-+def log_security_event(
-+    event: str, details: Optional[str] = None, module: Optional[str] = None, level: str = "WARNING"
-+) -> None:
-     """记录安全事件的便捷函数"""
-     if level == "ERROR":
-         security_logger.error(f"安全事件: {event}", module, details)
-     else:
-         security_logger.security(f"安全事件: {event}", module, details)
-@@ -313,11 +366,18 @@
- 
-     logger.error(f"错误日志: {error_data}")
- 
- 
- # API请求日志函数
--def log_api_request(method: str, endpoint: str, status_code: int, duration: float, user_id: Optional[int] = None, ip_address: Optional[str] = None) -> None:
-+def log_api_request(
-+    method: str,
-+    endpoint: str,
-+    status_code: int,
-+    duration: float,
-+    user_id: Optional[int] = None,
-+    ip_address: Optional[str] = None,
-+) -> None:
-     """
-     记录API请求日志
- 
-     Args:
-         method: HTTP方法
---- /Users/shiyijiufei/TaifishingV4/app/routes/instances.py	2025-09-12 23:49:03.054887+00:00
-+++ /Users/shiyijiufei/TaifishingV4/app/routes/instances.py	2025-09-13 00:47:13.719740+00:00
-@@ -98,11 +98,11 @@
- @create_required
- def create() -> Union[str, Response, Tuple[Response, int]]:
-     """创建实例"""
-     # 获取凭据列表
-     credentials = Credential.query.filter_by(is_active=True).all()
--    
-+
-     if request.method == "POST":
-         data = request.get_json() if request.is_json else request.form
- 
-         # 清理输入数据
-         data = sanitize_form_data(data)
-@@ -762,11 +762,13 @@
- 
-     except Exception as e:
-         return jsonify({"success": False, "error": f"CSV文件处理失败: {str(e)}"}), 400
- 
- 
--def _process_instances_data(instances_data: List[Dict[str, Any]]) -> Union[Dict[str, Any], Response, Tuple[Response, int]]:
-+def _process_instances_data(
-+    instances_data: List[Dict[str, Any]],
-+) -> Union[Dict[str, Any], Response, Tuple[Response, int]]:
-     """处理实例数据"""
-     created_count = 0
-     errors = []
- 
-     for i, instance_data in enumerate(instances_data):

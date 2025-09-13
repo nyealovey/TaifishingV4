@@ -2,7 +2,7 @@
 泰摸鱼吧 - 数据模型
 """
 
-from app import db
+from app import db  # noqa: F401
 
 from .account import Account
 from .account_change import AccountChange
