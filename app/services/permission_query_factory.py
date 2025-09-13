@@ -69,7 +69,13 @@ class MySQLPermissionQuery(PermissionQuery):
                 "permissions": {"global_privileges": global_perms, "database_privileges": database_perms},
             }
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return {"success": False, "error": str(e)}
         finally:
             if connection:
@@ -99,7 +105,13 @@ class MySQLPermissionQuery(PermissionQuery):
 
             return [{"privilege": row[0], "granted": True, "grantable": row[1]} for row in results]
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return []
         finally:
             if connection:
@@ -130,7 +142,13 @@ class MySQLPermissionQuery(PermissionQuery):
 
             return [{"database": row[0], "privileges": row[1].split(",") if row[1] else []} for row in results]
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return []
         finally:
             if connection:
@@ -161,7 +179,13 @@ class MySQLPermissionQuery(PermissionQuery):
 
             return [{"table": row[0], "privileges": row[1].split(",") if row[1] else []} for row in results]
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return []
         finally:
             if connection:
@@ -202,7 +226,13 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                 "permissions": {"role_attributes": role_attributes, "database_privileges": database_privileges},
             }
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return {"success": False, "error": str(e)}
         finally:
             if connection:
@@ -263,7 +293,13 @@ class PostgreSQLPermissionQuery(PermissionQuery):
 
             return permissions
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return []
         finally:
             if connection:
@@ -303,7 +339,13 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                 if any([row[1], row[2], row[3]])  # 只返回有权限的数据库
             ]
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return []
         finally:
             if connection:
@@ -352,7 +394,13 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                 if any([row[2], row[3], row[4], row[5]])  # 只返回有权限的表
             ]
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return []
         finally:
             if connection:
@@ -420,7 +468,13 @@ class SQLServerPermissionQuery(PermissionQuery):
                 },
             }
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return {"success": False, "error": str(e)}
         finally:
             if connection:
@@ -451,7 +505,13 @@ class SQLServerPermissionQuery(PermissionQuery):
                 for row in results
             ]
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return []
         finally:
             if connection:
@@ -503,7 +563,13 @@ class SQLServerPermissionQuery(PermissionQuery):
 
             return [{"database": db_name, "roles": roles} for db_name, roles in db_permissions.items()]
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return []
         finally:
             if connection:
@@ -546,7 +612,13 @@ class SQLServerPermissionQuery(PermissionQuery):
                 for table_name, permissions in table_permissions.items()
             ]
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return []
         finally:
             if connection:
@@ -601,7 +673,13 @@ class OraclePermissionQuery(PermissionQuery):
                 },
             }
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return {"success": False, "error": str(e)}
         finally:
             if connection:
@@ -654,7 +732,13 @@ class OraclePermissionQuery(PermissionQuery):
             self.db_logger.debug("最终权限列表", module="permission_query", permission_count=len(permissions))
             return permissions
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return []
         finally:
             if connection:
@@ -701,7 +785,13 @@ class OraclePermissionQuery(PermissionQuery):
             self.db_logger.debug("数据库权限列表", module="permission_query", permission_count=len(permissions))
             return permissions
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return []
         finally:
             if connection:
@@ -754,7 +844,13 @@ class OraclePermissionQuery(PermissionQuery):
                 for table_name, permissions in table_permissions.items()
             ]
         except Exception as e:
-            self.db_logger.error("获取MySQL账户权限失败", module="permission", instance_id=self.instance.id, account_id=account.id, exception=e)
+            self.db_logger.error(
+                "获取MySQL账户权限失败",
+                module="permission",
+                instance_id=self.instance.id,
+                account_id=account.id,
+                exception=e,
+            )
             return []
         finally:
             if connection:

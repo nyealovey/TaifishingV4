@@ -507,6 +507,13 @@ function testConnection() {
     const testBtn = event ? event.target : document.querySelector('button[onclick="testConnection()"]');
     const originalText = testBtn.innerHTML;
     
+    // 记录操作开始日志
+    logUserAction('开始测试连接', { 
+        operation: 'test_connection', 
+        instance_id: {{ instance.id }},
+        instance_name: '{{ instance.name }}'
+    });
+    
     testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>测试中...';
     testBtn.disabled = true;
     
@@ -538,6 +545,15 @@ function testConnection() {
         const contentDiv = document.getElementById('testResultContent');
         
         if (data.success) {
+            // 记录成功日志
+            logUserAction('测试连接成功', { 
+                operation: 'test_connection', 
+                instance_id: {{ instance.id }},
+                instance_name: '{{ instance.name }}',
+                result: 'success',
+                message: data.message || '数据库连接正常'
+            });
+            
             statusBadge.textContent = '正常';
             statusBadge.className = 'badge bg-success';
             
@@ -549,6 +565,15 @@ function testConnection() {
                 </div>
             `;
         } else if (data.error) {
+            // 记录失败日志
+            logError('测试连接失败', { 
+                operation: 'test_connection', 
+                instance_id: {{ instance.id }},
+                instance_name: '{{ instance.name }}',
+                result: 'failed',
+                error: data.error
+            });
+            
             statusBadge.textContent = '失败';
             statusBadge.className = 'badge bg-danger';
             
@@ -597,6 +622,15 @@ function testConnection() {
         `;
         document.getElementById('testResult').style.display = 'block';
     })
+    .catch(error => {
+        // 记录异常日志
+        logErrorWithContext(error, '测试连接异常', { 
+            operation: 'test_connection', 
+            instance_id: {{ instance.id }},
+            instance_name: '{{ instance.name }}',
+            result: 'exception'
+        });
+    })
     .finally(() => {
         testBtn.innerHTML = originalText;
         testBtn.disabled = false;
@@ -606,6 +640,13 @@ function testConnection() {
 function syncAccounts() {
     const syncBtn = event.target;
     const originalText = syncBtn.innerHTML;
+    
+    // 记录操作开始日志
+    logUserAction('开始同步账户', { 
+        operation: 'sync_accounts', 
+        instance_id: {{ instance.id }},
+        instance_name: '{{ instance.name }}'
+    });
     
     syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>同步中...';
     syncBtn.disabled = true;
@@ -623,12 +664,35 @@ function syncAccounts() {
     .then(response => response.json())
     .then(data => {
         if (data.message) {
+            // 记录成功日志
+            logUserAction('同步账户成功', { 
+                operation: 'sync_accounts', 
+                instance_id: {{ instance.id }},
+                instance_name: '{{ instance.name }}',
+                result: 'success',
+                message: data.message
+            });
             showAlert('success', data.message);
         } else if (data.error) {
+            // 记录失败日志
+            logError('同步账户失败', { 
+                operation: 'sync_accounts', 
+                instance_id: {{ instance.id }},
+                instance_name: '{{ instance.name }}',
+                result: 'failed',
+                error: data.error
+            });
             showAlert('danger', data.error);
         }
     })
     .catch(error => {
+        // 记录异常日志
+        logErrorWithContext(error, '同步账户异常', { 
+            operation: 'sync_accounts', 
+            instance_id: {{ instance.id }},
+            instance_name: '{{ instance.name }}',
+            result: 'exception'
+        });
         showAlert('danger', '同步失败');
     })
     .finally(() => {

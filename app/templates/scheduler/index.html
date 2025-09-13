@@ -447,6 +447,11 @@ function runJob(jobId) {
     }
     
     if (confirm('确定要立即执行此任务吗？')) {
+        // 记录操作开始日志
+        logUserAction('开始立即执行任务', { 
+            operation: 'run_job', 
+            job_id: jobId
+        });
         $.ajax({
             url: `{{ url_for("scheduler.run_job", job_id="PLACEHOLDER") }}`.replace('PLACEHOLDER', jobId),
             method: 'POST',
@@ -455,16 +460,40 @@ function runJob(jobId) {
             },
             success: function(response) {
                 if (response.success === true) {
+                    // 记录成功日志
+                    logUserAction('任务执行成功', { 
+                        operation: 'run_job', 
+                        job_id: jobId,
+                        result: 'success'
+                    });
                     showAlert('任务执行成功', 'success');
                 } else {
+                    // 记录失败日志
+                    logError('执行任务失败', { 
+                        operation: 'run_job', 
+                        job_id: jobId,
+                        result: 'failed',
+                        error: response.message
+                    });
                     showAlert('执行任务失败: ' + response.message, 'danger');
                 }
             },
             error: function(xhr) {
                 if (xhr.status === 403) {
+                    logError('执行任务失败: 权限不足', { 
+                        operation: 'run_job', 
+                        job_id: jobId,
+                        result: 'permission_denied'
+                    });
                     showAlert('需要管理员权限才能执行任务', 'warning');
                 } else {
                     const error = xhr.responseJSON;
+                    logErrorWithContext(xhr, '执行任务异常', { 
+                        operation: 'run_job', 
+                        job_id: jobId,
+                        result: 'exception',
+                        error: error ? error.message : '未知错误'
+                    });
                     showAlert('执行任务失败: ' + (error ? error.message : '未知错误'), 'danger');
                 }
             }
@@ -480,6 +509,12 @@ function pauseJob(jobId) {
         return;
     }
     
+    // 记录操作开始日志
+    logUserAction('开始暂停任务', { 
+        operation: 'pause_job', 
+        job_id: jobId
+    });
+    
     $.ajax({
         url: `{{ url_for("scheduler.pause_job", job_id="") }}${jobId}/pause`,
         method: 'POST',
@@ -488,17 +523,41 @@ function pauseJob(jobId) {
         },
         success: function(response) {
             if (response.success === true) {
+                // 记录成功日志
+                logUserAction('任务暂停成功', { 
+                    operation: 'pause_job', 
+                    job_id: jobId,
+                    result: 'success'
+                });
                 showAlert('任务已暂停', 'success');
                 loadJobs();
             } else {
+                // 记录失败日志
+                logError('暂停任务失败', { 
+                    operation: 'pause_job', 
+                    job_id: jobId,
+                    result: 'failed',
+                    error: response.message
+                });
                 showAlert('暂停任务失败: ' + response.message, 'danger');
             }
         },
         error: function(xhr) {
             if (xhr.status === 403) {
+                logError('暂停任务失败: 权限不足', { 
+                    operation: 'pause_job', 
+                    job_id: jobId,
+                    result: 'permission_denied'
+                });
                 showAlert('需要管理员权限才能暂停任务', 'warning');
             } else {
                 const error = xhr.responseJSON;
+                logErrorWithContext(xhr, '暂停任务异常', { 
+                    operation: 'pause_job', 
+                    job_id: jobId,
+                    result: 'exception',
+                    error: error ? error.message : '未知错误'
+                });
                 showAlert('暂停任务失败: ' + (error ? error.message : '未知错误'), 'danger');
             }
         }
@@ -521,6 +580,12 @@ function deleteJob(jobId) {
     }
     
     if (confirm('确定要删除此任务吗？此操作不可逆！')) {
+        // 记录操作开始日志
+        logUserAction('开始删除任务', { 
+            operation: 'delete_job', 
+            job_id: jobId
+        });
+        
         $.ajax({
             url: `{{ url_for("scheduler.delete_job", job_id="") }}${jobId}`,
             method: 'DELETE',
@@ -529,17 +594,41 @@ function deleteJob(jobId) {
             },
             success: function(response) {
                 if (response.success === true) {
+                    // 记录成功日志
+                    logUserAction('任务删除成功', { 
+                        operation: 'delete_job', 
+                        job_id: jobId,
+                        result: 'success'
+                    });
                     showAlert('任务删除成功', 'success');
                     loadJobs();
                 } else {
+                    // 记录失败日志
+                    logError('删除任务失败', { 
+                        operation: 'delete_job', 
+                        job_id: jobId,
+                        result: 'failed',
+                        error: response.message
+                    });
                     showAlert('删除任务失败: ' + response.message, 'danger');
                 }
             },
             error: function(xhr) {
                 if (xhr.status === 403) {
+                    logError('删除任务失败: 权限不足', { 
+                        operation: 'delete_job', 
+                        job_id: jobId,
+                        result: 'permission_denied'
+                    });
                     showAlert('需要管理员权限才能删除任务', 'warning');
                 } else {
                     const error = xhr.responseJSON;
+                    logErrorWithContext(xhr, '删除任务异常', { 
+                        operation: 'delete_job', 
+                        job_id: jobId,
+                        result: 'exception',
+                        error: error ? error.message : '未知错误'
+                    });
                     showAlert('删除任务失败: ' + (error ? error.message : '未知错误'), 'danger');
                 }
             }

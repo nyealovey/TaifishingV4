@@ -113,6 +113,7 @@ class User(UserMixin, db.Model):
             db.session.add(admin)
             db.session.commit()
             from app.utils.structlog_config import get_system_logger
+
             system_logger = get_system_logger()
             system_logger.info("默认管理员用户已创建", module="user_model", username="admin")
         return admin

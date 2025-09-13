@@ -161,16 +161,22 @@ class Credential(db.Model):
         self.deleted_at = now()
         db.session.commit()
         from app.utils.structlog_config import get_system_logger
+
         system_logger = get_system_logger()
-        system_logger.info("凭据删除", module="model", operation="credential_delete", credential_id=self.id, name=self.name)
+        system_logger.info(
+            "凭据删除", module="model", operation="credential_delete", credential_id=self.id, name=self.name
+        )
 
     def restore(self) -> None:
         """恢复凭据"""
         self.deleted_at = None
         db.session.commit()
         from app.utils.structlog_config import get_system_logger
+
         system_logger = get_system_logger()
-        system_logger.info("凭据恢复", module="model", operation="credential_restore", credential_id=self.id, name=self.name)
+        system_logger.info(
+            "凭据恢复", module="model", operation="credential_restore", credential_id=self.id, name=self.name
+        )
 
     @staticmethod
     def get_active_credentials() -> list:

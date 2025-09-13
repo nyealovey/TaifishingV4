@@ -1,6 +1,6 @@
 {
   "errors": [],
-  "generated_at": "2025-09-13T06:33:49Z",
+  "generated_at": "2025-09-13T11:39:27Z",
   "metrics": {
     "_totals": {
       "CONFIDENCE.HIGH": 5,
@@ -11,7 +11,7 @@
       "SEVERITY.LOW": 10,
       "SEVERITY.MEDIUM": 9,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 17093,
+      "loc": 17033,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -154,7 +154,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 165,
+      "loc": 172,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -180,7 +180,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 229,
+      "loc": 234,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -206,7 +206,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 729,
+      "loc": 733,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -258,7 +258,7 @@
       "SEVERITY.LOW": 1,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 93,
+      "loc": 95,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -284,7 +284,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 464,
+      "loc": 465,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -323,7 +323,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 380,
+      "loc": 386,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -401,7 +401,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 130,
+      "loc": 136,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -427,7 +427,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 250,
+      "loc": 293,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -453,7 +453,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 357,
+      "loc": 355,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -531,7 +531,7 @@
       "SEVERITY.LOW": 2,
       "SEVERITY.MEDIUM": 4,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 1196,
+      "loc": 1197,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -544,7 +544,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 378,
+      "loc": 415,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -570,7 +570,7 @@
       "SEVERITY.LOW": 1,
       "SEVERITY.MEDIUM": 4,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 1315,
+      "loc": 1356,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -609,7 +609,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 671,
+      "loc": 768,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -635,7 +635,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 242,
+      "loc": 253,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -687,7 +687,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 203,
+      "loc": 209,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -730,19 +730,6 @@
       "nosec": 0,
       "skipped_tests": 0
     },
-    "app/utils/enhanced_logger.py": {
-      "CONFIDENCE.HIGH": 0,
-      "CONFIDENCE.LOW": 0,
-      "CONFIDENCE.MEDIUM": 0,
-      "CONFIDENCE.UNDEFINED": 0,
-      "SEVERITY.HIGH": 0,
-      "SEVERITY.LOW": 0,
-      "SEVERITY.MEDIUM": 0,
-      "SEVERITY.UNDEFINED": 0,
-      "loc": 344,
-      "nosec": 0,
-      "skipped_tests": 0
-    },
     "app/utils/env_validator.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
@@ -765,7 +752,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 170,
+      "loc": 176,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -791,7 +778,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 70,
+      "loc": 76,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -804,7 +791,7 @@
       "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 236,
+      "loc": 239,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -856,7 +843,7 @@
       "SEVERITY.LOW": 1,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 381,
+      "loc": 385,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -969,7 +956,7 @@
       "test_name": "hardcoded_password_string"
     },
     {
-      "code": "48                 g.request_id = request_id\n49         except Exception:\n50             # \u907f\u514d\u5728\u65e5\u5fd7\u8bb0\u5f55\u8fc7\u7a0b\u4e2d\u51fa\u9519\n51             pass\n52 \n",
+      "code": "53                 g.request_id = request_id\n54         except Exception:\n55             # \u907f\u514d\u5728\u65e5\u5fd7\u8bb0\u5f55\u8fc7\u7a0b\u4e2d\u51fa\u9519\n56             pass\n57 \n",
       "col_offset": 8,
       "end_col_offset": 16,
       "filename": "app/middleware/error_logging_middleware.py",
@@ -980,11 +967,11 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Try, Except, Pass detected.",
-      "line_number": 49,
+      "line_number": 54,
       "line_range": [
-        49,
-        50,
-        51
+        54,
+        55,
+        56
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
       "test_id": "B110",
@@ -1220,7 +1207,7 @@
       "test_name": "hardcoded_sql_expressions"
     },
     {
-      "code": "395 \n396         query = f\"\"\"\n397             SELECT\n398                 rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb,\n399                 rolcanlogin, rolconnlimit,\n400                 CASE\n401                     WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL\n402                     ELSE rolvaliduntil\n403                 END as rolvaliduntil,\n404                 rolbypassrls, rolreplication\n405             FROM pg_roles\n406             WHERE {where_clause}\n407         \"\"\"  # noqa: B608\n408 \n",
+      "code": "401 \n402         query = f\"\"\"\n403             SELECT\n404                 rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb,\n405                 rolcanlogin, rolconnlimit,\n406                 CASE\n407                     WHEN rolvaliduntil = 'infinity'::timestamp THEN NULL\n408                     ELSE rolvaliduntil\n409                 END as rolvaliduntil,\n410                 rolbypassrls, rolreplication\n411             FROM pg_roles\n412             WHERE {where_clause}\n413         \"\"\"  # noqa: B608\n414 \n",
       "col_offset": 20,
       "end_col_offset": 18,
       "filename": "app/services/database_service.py",
@@ -1231,27 +1218,27 @@
       },
       "issue_severity": "MEDIUM",
       "issue_text": "Possible SQL injection vector through string-based query construction.",
-      "line_number": 396,
+      "line_number": 402,
       "line_range": [
-        396,
-        397,
-        398,
-        399,
-        400,
-        401,
         402,
         403,
         404,
         405,
         406,
-        407
+        407,
+        408,
+        409,
+        410,
+        411,
+        412,
+        413
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
       "test_id": "B608",
       "test_name": "hardcoded_sql_expressions"
     },
     {
-      "code": "570 \n571         query = f\"\"\"\n572             SELECT name, type_desc, is_disabled, create_date, modify_date\n573             FROM sys.server_principals\n574             WHERE type IN ('S', 'U', 'G')\n575             AND {where_clause}\n576             AND (name = 'sa' OR name NOT LIKE 'NT %')\n577         \"\"\"  # noqa: B608\n578 \n",
+      "code": "582 \n583         query = f\"\"\"\n584             SELECT name, type_desc, is_disabled, create_date, modify_date\n585             FROM sys.server_principals\n586             WHERE type IN ('S', 'U', 'G')\n587             AND {where_clause}\n588             AND (name = 'sa' OR name NOT LIKE 'NT %')\n589         \"\"\"  # noqa: B608\n590 \n",
       "col_offset": 20,
       "end_col_offset": 16,
       "filename": "app/services/database_service.py",
@@ -1262,22 +1249,22 @@
       },
       "issue_severity": "MEDIUM",
       "issue_text": "Possible SQL injection vector through string-based query construction.",
-      "line_number": 571,
+      "line_number": 583,
       "line_range": [
-        571,
-        572,
-        573,
-        574,
-        575,
-        576,
-        577
+        583,
+        584,
+        585,
+        586,
+        587,
+        588,
+        589
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
       "test_id": "B608",
       "test_name": "hardcoded_sql_expressions"
     },
     {
-      "code": "712 \n713         query = f\"\"\"\n714             SELECT username, user_id, account_status, lock_date, expiry_date,\n715                    default_tablespace, created, authentication_type\n716             FROM dba_users\n717             WHERE {where_clause}\n718             ORDER BY username\n719         \"\"\"  # noqa: B608\n720 \n",
+      "code": "730 \n731         query = f\"\"\"\n732             SELECT username, user_id, account_status, lock_date, expiry_date,\n733                    default_tablespace, created, authentication_type\n734             FROM dba_users\n735             WHERE {where_clause}\n736             ORDER BY username\n737         \"\"\"  # noqa: B608\n738 \n",
       "col_offset": 20,
       "end_col_offset": 18,
       "filename": "app/services/database_service.py",
@@ -1288,22 +1275,22 @@
       },
       "issue_severity": "MEDIUM",
       "issue_text": "Possible SQL injection vector through string-based query construction.",
-      "line_number": 713,
+      "line_number": 731,
       "line_range": [
-        713,
-        714,
-        715,
-        716,
-        717,
-        718,
-        719
+        731,
+        732,
+        733,
+        734,
+        735,
+        736,
+        737
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b608_hardcoded_sql_expressions.html",
       "test_id": "B608",
       "test_name": "hardcoded_sql_expressions"
     },
     {
-      "code": "1036                 del self.connections[instance_id]\n1037             except Exception:\n1038                 # \u5ffd\u7565\u8fde\u63a5\u5173\u95ed\u65f6\u7684\u9519\u8bef\n1039                 pass\n1040 \n",
+      "code": "1063                 del self.connections[instance_id]\n1064             except Exception:\n1065                 # \u5ffd\u7565\u8fde\u63a5\u5173\u95ed\u65f6\u7684\u9519\u8bef\n1066                 pass\n1067 \n",
       "col_offset": 12,
       "end_col_offset": 20,
       "filename": "app/services/database_service.py",
@@ -1314,11 +1301,11 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Try, Except, Pass detected.",
-      "line_number": 1037,
+      "line_number": 1064,
       "line_range": [
-        1037,
-        1038,
-        1039
+        1064,
+        1065,
+        1066
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
       "test_id": "B110",
@@ -1345,7 +1332,7 @@
       "test_name": "exec_used"
     },
     {
-      "code": "233                 db.session.rollback()\n234             except:\n235                 pass\n236             # \u6e05\u7a7a\u7f13\u51b2\u533a\u907f\u514d\u91cd\u590d\u9519\u8bef\n",
+      "code": "245                 db.session.rollback()\n246             except:\n247                 pass\n248             # \u6e05\u7a7a\u7f13\u51b2\u533a\u907f\u514d\u91cd\u590d\u9519\u8bef\n",
       "col_offset": 12,
       "end_col_offset": 20,
       "filename": "app/utils/structlog_config.py",
@@ -1356,10 +1343,10 @@
       },
       "issue_severity": "LOW",
       "issue_text": "Try, Except, Pass detected.",
-      "line_number": 234,
+      "line_number": 246,
       "line_range": [
-        234,
-        235
+        246,
+        247
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b110_try_except_pass.html",
       "test_id": "B110",

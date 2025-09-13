@@ -73,7 +73,9 @@ class MySQLConnection(DatabaseConnection):
             return True
 
         except Exception as e:
-            self.db_logger.error("MySQL连接失败", module="connection", instance_id=self.instance.id, db_type="MySQL", exception=e)
+            self.db_logger.error(
+                "MySQL连接失败", module="connection", instance_id=self.instance.id, db_type="MySQL", exception=e
+            )
             return False
 
     def disconnect(self) -> None:
@@ -82,7 +84,9 @@ class MySQLConnection(DatabaseConnection):
             try:
                 self.connection.close()
             except Exception as e:
-                self.db_logger.error("MySQL断开连接失败", module="connection", instance_id=self.instance.id, db_type="MySQL", exception=e)
+                self.db_logger.error(
+                    "MySQL断开连接失败", module="connection", instance_id=self.instance.id, db_type="MySQL", exception=e
+                )
             finally:
                 self.connection = None
                 self.is_connected = False
@@ -152,7 +156,13 @@ class PostgreSQLConnection(DatabaseConnection):
             return True
 
         except Exception as e:
-            self.db_logger.error("PostgreSQL连接失败", module="connection", instance_id=self.instance.id, db_type="PostgreSQL", exception=e)
+            self.db_logger.error(
+                "PostgreSQL连接失败",
+                module="connection",
+                instance_id=self.instance.id,
+                db_type="PostgreSQL",
+                exception=e,
+            )
             return False
 
     def disconnect(self) -> None:
@@ -161,7 +171,13 @@ class PostgreSQLConnection(DatabaseConnection):
             try:
                 self.connection.close()
             except Exception as e:
-                self.db_logger.error("PostgreSQL断开连接失败", module="connection", instance_id=self.instance.id, db_type="PostgreSQL", exception=e)
+                self.db_logger.error(
+                    "PostgreSQL断开连接失败",
+                    module="connection",
+                    instance_id=self.instance.id,
+                    db_type="PostgreSQL",
+                    exception=e,
+                )
             finally:
                 self.connection = None
                 self.is_connected = False
@@ -235,7 +251,13 @@ class SQLServerConnection(DatabaseConnection):
             return True
 
         except Exception as e:
-            self.db_logger.error("SQL Server连接失败", module="connection", instance_id=self.instance.id, db_type="SQL Server", exception=e)
+            self.db_logger.error(
+                "SQL Server连接失败",
+                module="connection",
+                instance_id=self.instance.id,
+                db_type="SQL Server",
+                exception=e,
+            )
             return False
 
     def disconnect(self) -> None:
@@ -244,7 +266,13 @@ class SQLServerConnection(DatabaseConnection):
             try:
                 self.connection.close()
             except Exception as e:
-                self.db_logger.error("SQL Server断开连接失败", module="connection", instance_id=self.instance.id, db_type="SQL Server", exception=e)
+                self.db_logger.error(
+                    "SQL Server断开连接失败",
+                    module="connection",
+                    instance_id=self.instance.id,
+                    db_type="SQL Server",
+                    exception=e,
+                )
             finally:
                 self.connection = None
                 self.is_connected = False
@@ -348,7 +376,9 @@ class OracleConnection(DatabaseConnection):
             return True
 
         except Exception as e:
-            self.db_logger.error("Oracle连接失败", module="connection", instance_id=self.instance.id, db_type="Oracle", exception=e)
+            self.db_logger.error(
+                "Oracle连接失败", module="connection", instance_id=self.instance.id, db_type="Oracle", exception=e
+            )
             return False
 
     def disconnect(self) -> None:
@@ -357,7 +387,13 @@ class OracleConnection(DatabaseConnection):
             try:
                 self.connection.close()
             except Exception as e:
-                self.db_logger.error("Oracle断开连接失败", module="connection", instance_id=self.instance.id, db_type="Oracle", exception=e)
+                self.db_logger.error(
+                    "Oracle断开连接失败",
+                    module="connection",
+                    instance_id=self.instance.id,
+                    db_type="Oracle",
+                    exception=e,
+                )
             finally:
                 self.connection = None
                 self.is_connected = False

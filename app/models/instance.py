@@ -224,6 +224,7 @@ class Instance(db.Model):
         self.status = "deleted"
         db.session.commit()
         from app.utils.structlog_config import get_system_logger
+
         system_logger = get_system_logger()
         system_logger.info("实例删除", module="model", operation="instance_delete", instance_id=self.id, name=self.name)
 
@@ -233,8 +234,11 @@ class Instance(db.Model):
         self.status = "active"
         db.session.commit()
         from app.utils.structlog_config import get_system_logger
+
         system_logger = get_system_logger()
-        system_logger.info("实例恢复", module="model", operation="instance_restore", instance_id=self.id, name=self.name)
+        system_logger.info(
+            "实例恢复", module="model", operation="instance_restore", instance_id=self.id, name=self.name
+        )
 
     @staticmethod
     def get_active_instances() -> list:

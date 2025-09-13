@@ -58,7 +58,7 @@ function logToConsole(level, message, context = {}, sendToBackend = true) {
     const timestamp = new Date().toISOString();
     const contextStr = Object.keys(context).length > 0 ? ` | Context: ${JSON.stringify(context)}` : '';
     const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}`;
-    
+
     switch (level) {
         case 'error':
             console.error(logMessage);
@@ -76,7 +76,7 @@ function logToConsole(level, message, context = {}, sendToBackend = true) {
         default:
             console.log(logMessage);
     }
-    
+
     // 发送到后端
     if (sendToBackend) {
         sendLogToBackend(level, message, context);

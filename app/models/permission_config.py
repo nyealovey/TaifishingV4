@@ -759,11 +759,13 @@ class PermissionConfig(db.Model):
         try:
             db.session.commit()
             from app.utils.structlog_config import get_system_logger
+
             system_logger = get_system_logger()
             system_logger.info("成功初始化权限配置", module="permission_config", count=len(all_permissions))
         except Exception as e:
             db.session.rollback()
             from app.utils.structlog_config import get_system_logger
+
             system_logger = get_system_logger()
             system_logger.error("初始化权限配置失败", module="permission_config", exception=e)
             raise

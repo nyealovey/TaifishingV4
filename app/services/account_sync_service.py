@@ -1046,7 +1046,9 @@ class AccountSyncService:
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
         removed_accounts = []
 
-        self.sync_logger.debug("Oracle账户清理", module="sync", server_accounts=server_accounts, local_accounts_count=len(local_accounts))
+        self.sync_logger.debug(
+            "Oracle账户清理", module="sync", server_accounts=server_accounts, local_accounts_count=len(local_accounts)
+        )
         self.sync_logger.info(f"Oracle账户清理 - 服务器端账户: {server_accounts}")
         self.sync_logger.info(f"Oracle账户清理 - 本地账户数量: {len(local_accounts)}")
 

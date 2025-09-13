@@ -6,6 +6,7 @@ import psutil
 from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 from flask_login import login_required
 
+from app.utils.decorators import admin_required
 from app.utils.structlog_config import log_info
 from app.utils.timezone import get_china_time
 
@@ -35,6 +36,7 @@ def chrome_devtools() -> "Response":
 
 @main_bp.route("/admin")
 @login_required
+@admin_required
 def admin() -> str:
     """系统管理页面"""
     return render_template("admin/index.html")

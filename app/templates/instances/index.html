@@ -540,6 +540,13 @@ function batchDelete() {
         return;
     }
     
+    // 记录操作开始日志
+    logUserAction('开始批量删除实例', { 
+        operation: 'batch_delete_instances', 
+        instance_count: instanceIds.length,
+        instance_ids: instanceIds
+    });
+    
     const btn = document.getElementById('batchDeleteBtn');
     const originalText = btn.textContent;
     
@@ -560,13 +567,36 @@ function batchDelete() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // 记录成功日志
+            logUserAction('批量删除实例成功', { 
+                operation: 'batch_delete_instances', 
+                instance_count: instanceIds.length,
+                instance_ids: instanceIds,
+                result: 'success',
+                message: data.message
+            });
             showAlert('success', data.message);
             setTimeout(() => location.reload(), 1000);
         } else {
+            // 记录失败日志
+            logError('批量删除实例失败', { 
+                operation: 'batch_delete_instances', 
+                instance_count: instanceIds.length,
+                instance_ids: instanceIds,
+                result: 'failed',
+                error: data.error
+            });
             showAlert('danger', data.error);
         }
     })
     .catch(error => {
+        // 记录异常日志
+        logErrorWithContext(error, '批量删除实例异常', { 
+            operation: 'batch_delete_instances', 
+            instance_count: instanceIds.length,
+            instance_ids: instanceIds,
+            result: 'exception'
+        });
         showAlert('danger', '批量删除失败');
     })
     .finally(() => {

@@ -326,6 +326,18 @@ def edit(credential_id: int) -> "str | Response":
 
             db.session.commit()
 
+            # 记录操作成功日志
+            log_info(
+                "更新数据库凭据",
+                module="credentials",
+                user_id=current_user.id,
+                credential_id=credential.id,
+                credential_name=credential.name,
+                credential_type=credential.credential_type,
+                db_type=credential.db_type,
+                is_active=credential.is_active,
+            )
+
             if request.is_json:
                 return jsonify({"message": "凭据更新成功", "credential": credential.to_dict()})
 
@@ -409,8 +421,23 @@ def delete(credential_id: int) -> "Response":
     credential = Credential.query.get_or_404(credential_id)
 
     try:
+        # 记录删除前的凭据信息
+        credential_name = credential.name
+        credential_type = credential.credential_type
+        credential_id = credential.id
+        
         db.session.delete(credential)
         db.session.commit()
+
+        # 记录操作成功日志
+        log_info(
+            "删除数据库凭据",
+            module="credentials",
+            user_id=current_user.id,
+            credential_id=credential_id,
+            credential_name=credential_name,
+            credential_type=credential_type,
+        )
 
         if request.is_json:
             return jsonify({"message": "凭据删除成功"})
@@ -427,37 +454,6 @@ def delete(credential_id: int) -> "Response":
 
         flash("删除凭据失败，请重试", "error")
         return redirect(url_for("credentials.index"))
-
-
-@credentials_bp.route("/<int:credential_id>/test", methods=["POST"])
-@login_required
-@view_required
-def test_credential(credential_id: int) -> "Response":
-    """测试凭据"""
-    Credential.query.get_or_404(credential_id)
-
-    try:
-        # 这里可以实现凭据测试逻辑
-        # 暂时返回成功
-        if request.is_json:
-            return jsonify(
-                {
-                    "message": "凭据测试成功",
-                    "result": {"success": True, "message": "凭据格式正确"},
-                }
-            )
-
-        flash("凭据测试成功！", "success")
-
-    except Exception as e:
-        log_error(f"测试凭据失败: {e}", module="credentials")
-
-        if request.is_json:
-            return jsonify({"error": "凭据测试失败，请重试"}), 500
-
-        flash("凭据测试失败，请重试", "error")
-
-    return redirect(url_for("credentials.detail", credential_id=credential_id))
 
 
 # API路由

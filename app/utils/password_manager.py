@@ -23,10 +23,13 @@ class PasswordManager:
             # 如果没有设置密钥，生成一个新的
             key = Fernet.generate_key()
             from app.utils.structlog_config import get_system_logger
+
             system_logger = get_system_logger()
             system_logger.warning("没有设置PASSWORD_ENCRYPTION_KEY环境变量", module="password_manager")
             system_logger.info("生成的临时密钥", module="password_manager", key=key.decode())
-            system_logger.info("请设置环境变量", module="password_manager", env_var=f"export PASSWORD_ENCRYPTION_KEY='{key.decode()}'")
+            system_logger.info(
+                "请设置环境变量", module="password_manager", env_var=f"export PASSWORD_ENCRYPTION_KEY='{key.decode()}'"
+            )
         else:
             key = key.encode()
 
@@ -67,6 +70,7 @@ class PasswordManager:
             return decrypted.decode()
         except Exception as e:
             from app.utils.structlog_config import get_system_logger
+
             system_logger = get_system_logger()
             system_logger.error("密码解密失败", module="password_manager", exception=e)
             return ""

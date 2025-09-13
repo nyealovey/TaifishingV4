@@ -1330,7 +1330,11 @@ class DatabaseService:
                 import json
 
                 permissions = json.loads(account.permissions)
-                self.db_logger.debug("解析后的权限数据", module="database_service", permission_keys=list(permissions.keys()) if permissions else [])
+                self.db_logger.debug(
+                    "解析后的权限数据",
+                    module="database_service",
+                    permission_keys=list(permissions.keys()) if permissions else [],
+                )
 
                 # 转换为前端显示格式
                 result = {
@@ -1339,7 +1343,9 @@ class DatabaseService:
                     "database_privileges": permissions.get("database_privileges", []),
                     "tablespace_privileges": permissions.get("tablespace_privileges", []),
                 }
-                self.db_logger.debug("返回的权限结果", module="database_service", result_keys=list(result.keys()) if result else [])
+                self.db_logger.debug(
+                    "返回的权限结果", module="database_service", result_keys=list(result.keys()) if result else []
+                )
                 return result
 
             # 如果本地没有权限数据，则从服务器查询（备用方案）
@@ -1359,7 +1365,11 @@ class DatabaseService:
 
             sync_service = AccountSyncService()
             permissions = sync_service._get_postgresql_account_permissions(instance, conn, account.username)
-            self.db_logger.debug("实时查询的权限数据", module="database_service", permission_keys=list(permissions.keys()) if permissions else [])
+            self.db_logger.debug(
+                "实时查询的权限数据",
+                module="database_service",
+                permission_keys=list(permissions.keys()) if permissions else [],
+            )
 
             if permissions:
                 # 将实时查询到的权限数据保存到本地数据库
@@ -1376,7 +1386,11 @@ class DatabaseService:
                     "database_privileges": permissions.get("database_privileges", []),
                     "tablespace_privileges": permissions.get("tablespace_privileges", []),
                 }
-                self.db_logger.debug("实时查询返回的权限结果", module="database_service", result_keys=list(result.keys()) if result else [])
+                self.db_logger.debug(
+                    "实时查询返回的权限结果",
+                    module="database_service",
+                    result_keys=list(result.keys()) if result else [],
+                )
                 return result
             self.db_logger.debug("实时查询返回空权限数据", module="database_service")
             return {

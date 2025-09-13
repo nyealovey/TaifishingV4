@@ -3,7 +3,6 @@
 确保所有未捕获的异常都被正确记录到系统日志
 """
 
-import traceback
 import uuid
 from datetime import datetime
 
@@ -13,14 +12,12 @@ from flask_login import current_user
 from app import db
 from app.models.log import Log
 from app.utils.structlog_config import (
-    get_system_logger,
     get_api_logger,
     get_db_logger,
     get_sync_logger,
-    log_critical,
+    get_system_logger,
     log_error,
     log_warning,
-    log_info,
 )
 
 
@@ -119,8 +116,8 @@ def register_error_logging_middleware(app: Flask) -> None:
         """处理所有未捕获的异常"""
         # 记录详细的错误信息
         log_error(
-            "未处理的异常", 
-            module="error_handler", 
+            "未处理的异常",
+            module="error_handler",
             exception=error,
             error_type=type(error).__name__,
             method=request.method if request else "unknown",

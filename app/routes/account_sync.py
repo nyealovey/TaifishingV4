@@ -10,6 +10,7 @@ from flask import Blueprint, Response, flash, jsonify, redirect, render_template
 from flask_login import current_user, login_required
 
 from app import db
+from app.utils.decorators import view_required
 from app.models.instance import Instance
 from app.models.sync_data import SyncData
 from app.services.account_sync_service import account_sync_service
@@ -21,6 +22,7 @@ account_sync_bp = Blueprint("account_sync", __name__)
 
 @account_sync_bp.route("/")
 @login_required
+@view_required
 def sync_records() -> str | Response:
     """统一的同步记录页面"""
     # 获取查询参数
@@ -378,7 +380,13 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
     except Exception as e:
         # 记录详细的错误日志
         api_logger = get_api_logger()
-        api_logger.error("同步所有账户失败", module="account_sync", operation="sync_all_accounts", user_id=current_user.id if current_user else None, exception=e)
+        api_logger.error(
+            "同步所有账户失败",
+            module="account_sync",
+            operation="sync_all_accounts",
+            user_id=current_user.id if current_user else None,
+            exception=e,
+        )
 
         return (
             jsonify(

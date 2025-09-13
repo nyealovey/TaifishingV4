@@ -76,7 +76,7 @@ def get_classifications() -> "Response":
         return jsonify({"success": True, "classifications": result})
 
     except Exception as e:
-        current_app.logger.error(f"获取账户分类失败: {e}")
+        log_error(f"获取账户分类失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -117,7 +117,7 @@ def create_classification() -> "Response":
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"创建账户分类失败: {e}")
+        log_error(f"创建账户分类失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -147,7 +147,7 @@ def get_classification(classification_id: int) -> "Response":
         )
 
     except Exception as e:
-        current_app.logger.error(f"获取账户分类失败: {e}")
+        log_error(f"获取账户分类失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -172,7 +172,7 @@ def update_classification(classification_id: int) -> "Response":
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"更新账户分类失败: {e}")
+        log_error(f"更新账户分类失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -195,7 +195,7 @@ def delete_classification(classification_id: int) -> "Response":
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"删除账户分类失败: {e}")
+        log_error(f"删除账户分类失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -237,7 +237,7 @@ def get_rules() -> "Response":
         return jsonify({"success": True, "rules": result})
 
     except Exception as e:
-        current_app.logger.error(f"获取分类规则失败: {e}")
+        log_error(f"获取分类规则失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -281,7 +281,7 @@ def list_rules() -> "Response":
         return jsonify({"success": True, "rules_by_db_type": rules_by_db_type})
 
     except Exception as e:
-        current_app.logger.error(f"获取规则列表失败: {e}")
+        log_error(f"获取规则列表失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -311,7 +311,7 @@ def create_rule() -> "Response":
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"创建分类规则失败: {e}")
+        log_error(f"创建分类规则失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -344,7 +344,7 @@ def get_rule(rule_id: int) -> "Response":
         return jsonify({"success": True, "rule": rule_dict})
 
     except Exception as e:
-        current_app.logger.error(f"获取规则详情失败: {e}")
+        log_error(f"获取规则详情失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -371,7 +371,7 @@ def update_rule(rule_id: int) -> "Response":
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"更新分类规则失败: {e}")
+        log_error(f"更新分类规则失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -445,7 +445,7 @@ def get_matched_accounts(rule_id: int) -> "Response":
         return jsonify({"success": True, "accounts": matched_accounts, "rule_name": rule.rule_name})
 
     except Exception as e:
-        current_app.logger.error(f"获取匹配账户失败: {e}")
+        log_error(f"获取匹配账户失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -464,7 +464,7 @@ def delete_rule(rule_id: int) -> "Response":
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"删除分类规则失败: {e}")
+        log_error(f"删除分类规则失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -482,7 +482,7 @@ def assign_classification() -> "Response":
         return jsonify({"success": True, "assignment_id": result})
 
     except Exception as e:
-        current_app.logger.error(f"分配账户分类失败: {e}")
+        log_error(f"分配账户分类失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -512,7 +512,7 @@ def auto_classify() -> "Response":
                 "自动分类失败",
                 module="account_classification",
                 instance_id=instance_id,
-                error=result.get('error', '未知错误'),
+                error=result.get("error", "未知错误"),
             )
 
         # 直接返回服务层的结果
@@ -555,7 +555,7 @@ def get_assignments() -> "Response":
         return jsonify({"success": True, "assignments": result})
 
     except Exception as e:
-        current_app.logger.error(f"获取账户分类分配失败: {e}")
+        log_error(f"获取账户分类分配失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -573,7 +573,7 @@ def remove_assignment(assignment_id: int) -> "Response":
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"移除账户分类分配失败: {e}")
+        log_error(f"移除账户分类分配失败: {e}", module="account_classification")
         return jsonify({"success": False, "error": f"移除分配失败: {str(e)}"})
 
 

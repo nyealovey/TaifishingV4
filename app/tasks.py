@@ -10,13 +10,13 @@ from app.models.account import Account
 from app.models.log import Log
 from app.models.user import User
 from app.services.account_sync_service import account_sync_service
-from app.utils.structlog_config import get_task_logger, get_sync_logger, log_info, log_error, log_warning
+from app.utils.structlog_config import get_sync_logger, get_task_logger
 
 
 def cleanup_old_logs():
     """清理旧日志任务 - 清理30天前的日志和临时文件"""
     task_logger = get_task_logger()
-    
+
     app = create_app()
     with app.app_context():
         try:
@@ -64,7 +64,7 @@ def cleanup_old_logs():
 def _cleanup_temp_files():
     """清理临时文件"""
     task_logger = get_task_logger()
-    
+
     try:
         temp_dirs = ["userdata/temp", "userdata/exports", "userdata/logs", "userdata/dynamic_tasks"]
 
@@ -95,7 +95,7 @@ def sync_accounts():
     from app import db
     from app.models.instance import Instance
     from app.models.sync_data import SyncData
-    
+
     sync_logger = get_sync_logger()
     task_logger = get_task_logger()
 
@@ -263,7 +263,7 @@ def sync_accounts():
 def health_check():
     """健康检查任务"""
     task_logger = get_task_logger()
-    
+
     app = create_app()
     with app.app_context():
         try:
@@ -295,7 +295,7 @@ def health_check():
 def cleanup_temp_files():
     """清理临时文件任务"""
     task_logger = get_task_logger()
-    
+
     app = create_app()
     with app.app_context():
         try:

@@ -75,6 +75,7 @@ class SQLAlchemyLogHandler:
             except Exception as e:
                 # 使用标准logging避免循环依赖
                 import logging
+
                 logging.error(f"Error writing log to database: {e}")
 
         return event_dict
@@ -144,6 +145,7 @@ class SQLAlchemyLogHandler:
             # 避免日志处理本身出错
             # 使用标准logging避免循环依赖
             import logging
+
             logging.error(f"Error building log entry: {e}")
             return None
 
@@ -199,6 +201,7 @@ class SQLAlchemyLogHandler:
             except Exception as e:
                 # 使用标准logging避免循环依赖
                 import logging
+
                 logging.error(f"Error processing logs: {e}")
                 time.sleep(1)
 
@@ -236,6 +239,7 @@ class SQLAlchemyLogHandler:
         except Exception as e:
             # 使用标准logging避免循环依赖
             import logging
+
             logging.error(f"Error flushing logs to database: {e}")
             try:
                 db.session.rollback()

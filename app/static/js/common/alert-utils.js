@@ -59,7 +59,7 @@ function showSuccessAlert(message, title = '成功', context = {}) {
         title: title,
         ...context
     });
-    
+
     showAlert(message, 'success', title);
 }
 
@@ -76,7 +76,7 @@ function showErrorAlert(message, title = '错误', context = {}) {
         title: title,
         ...context
     });
-    
+
     showAlert(message, 'error', title);
 }
 
@@ -93,7 +93,7 @@ function showWarningAlert(message, title = '警告', context = {}) {
         title: title,
         ...context
     });
-    
+
     showAlert(message, 'warning', title);
 }
 
@@ -110,7 +110,7 @@ function showInfoAlert(message, title = '信息', context = {}) {
         title: title,
         ...context
     });
-    
+
     showAlert(message, 'info', title);
 }
 
@@ -129,7 +129,7 @@ function showConfirmAlert(message, title = '确认', onConfirm = null, onCancel 
         title: title,
         ...context
     });
-    
+
     if (confirm(`${title}: ${message}`)) {
         // 记录确认操作
         sendLogToBackend('info', `用户确认操作: ${message}`, {
@@ -138,7 +138,7 @@ function showConfirmAlert(message, title = '确认', onConfirm = null, onCancel 
             title: title,
             ...context
         });
-        
+
         if (onConfirm && typeof onConfirm === 'function') {
             onConfirm();
         }
@@ -150,7 +150,7 @@ function showConfirmAlert(message, title = '确认', onConfirm = null, onCancel 
             title: title,
             ...context
         });
-        
+
         if (onCancel && typeof onCancel === 'function') {
             onCancel();
         }
@@ -187,14 +187,14 @@ function showAlert(message, type = 'info', title = '提示') {
             </div>
         </div>
     `;
-    
+
     // 添加到页面
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
+
     // 显示模态框
     const modal = new bootstrap.Modal(document.getElementById(modalId));
     modal.show();
-    
+
     // 模态框关闭后移除DOM元素
     document.getElementById(modalId).addEventListener('hidden.bs.modal', function() {
         this.remove();
@@ -250,14 +250,14 @@ function showToast(message, type = 'info') {
             </div>
         </div>
     `;
-    
+
     // 添加到页面
     document.body.insertAdjacentHTML('beforeend', toastHtml);
-    
+
     // 显示Toast
     const toast = new bootstrap.Toast(document.getElementById(toastId));
     toast.show();
-    
+
     // Toast关闭后移除DOM元素
     document.getElementById(toastId).addEventListener('hidden.bs.toast', function() {
         this.remove();
