@@ -74,16 +74,18 @@
 - **`app/utils/security.py`** ✅ - 安全工具，被使用
 - **`app/utils/password_manager.py`** ✅ - 密码管理器，被使用
 
-#### 可能未使用的工具类
-- **`app/utils/code_quality_analyzer.py`** ❌ - 代码质量分析器，未被导入使用
-- **`app/utils/backup_manager.py`** ❌ - 备份管理器，未被导入使用
-- **`app/utils/monitoring.py`** ❌ - 监控工具，未被导入使用
-- **`app/utils/query_optimizer.py`** ❌ - 查询优化器，未被导入使用
-- **`app/utils/security_headers.py`** ❌ - 安全头工具，未被导入使用
-- **`app/utils/safe_query_builder.py`** ❌ - 安全查询构建器，未被导入使用
-- **`app/utils/connection_pool.py`** ❌ - 连接池，未被导入使用
-- **`app/utils/env_manager.py`** ❌ - 环境管理器，未被导入使用
-- **`app/utils/api_version.py`** ❌ - API版本工具，未被导入使用
+#### 已删除的未使用文件 ✅
+- **`app/utils/code_quality_analyzer.py`** ✅ - 代码质量分析器，已删除
+- **`app/utils/backup_manager.py`** ✅ - 备份管理器，已删除
+- **`app/utils/monitoring.py`** ✅ - 监控工具，已删除
+- **`app/utils/query_optimizer.py`** ✅ - 查询优化器，已删除
+- **`app/utils/security_headers.py`** ✅ - 安全头工具，已删除
+- **`app/utils/safe_query_builder.py`** ✅ - 安全查询构建器，已删除
+- **`app/utils/connection_pool.py`** ✅ - 连接池，已删除
+- **`app/utils/env_manager.py`** ✅ - 环境管理器，已删除
+- **`app/utils/api_version.py`** ✅ - API版本工具，已删除
+- **`app/routes/api.py`** ✅ - 未注册的API路由，已删除
+- **`app/services/database_drivers.py`** ✅ - 未使用的数据库驱动服务，已删除
 
 ### 中间件 (middleware/)
 - **`app/middleware/error_logging_middleware.py`** ✅ - 错误日志中间件，被使用
@@ -120,20 +122,18 @@ app/services/*.py
 
 ## 建议
 
-### 可以删除的文件（未使用）
-1. **`app/utils/code_quality_analyzer.py`** - 代码质量分析器，未被使用
-2. **`app/utils/backup_manager.py`** - 备份管理器，未被使用
-3. **`app/utils/monitoring.py`** - 监控工具，未被使用
-4. **`app/utils/query_optimizer.py`** - 查询优化器，未被使用
-5. **`app/utils/security_headers.py`** - 安全头工具，未被使用
-6. **`app/utils/safe_query_builder.py`** - 安全查询构建器，未被使用
-7. **`app/utils/connection_pool.py`** - 连接池，未被使用
-8. **`app/utils/env_manager.py`** - 环境管理器，未被使用
-9. **`app/utils/api_version.py`** - API版本工具，未被使用
-
-### 需要进一步检查的文件
-1. **`app/routes/api.py`** - 可能未直接注册到主应用
-2. **`app/services/database_drivers.py`** - 可能通过其他方式间接使用
+### 已删除的文件 ✅
+1. **`app/utils/code_quality_analyzer.py`** ✅ - 代码质量分析器，已删除
+2. **`app/utils/backup_manager.py`** ✅ - 备份管理器，已删除
+3. **`app/utils/monitoring.py`** ✅ - 监控工具，已删除
+4. **`app/utils/query_optimizer.py`** ✅ - 查询优化器，已删除
+5. **`app/utils/security_headers.py`** ✅ - 安全头工具，已删除
+6. **`app/utils/safe_query_builder.py`** ✅ - 安全查询构建器，已删除
+7. **`app/utils/connection_pool.py`** ✅ - 连接池，已删除
+8. **`app/utils/env_manager.py`** ✅ - 环境管理器，已删除
+9. **`app/utils/api_version.py`** ✅ - API版本工具，已删除
+10. **`app/routes/api.py`** ✅ - 未注册的API路由，已删除
+11. **`app/services/database_drivers.py`** ✅ - 未使用的数据库驱动服务，已删除
 
 ### 保留建议
 - 所有模型文件都应该保留，它们被数据库系统使用
@@ -144,6 +144,6 @@ app/services/*.py
 ## 总结
 - **总文件数**: 约 80+ 个文件
 - **正在使用**: 约 70+ 个文件
-- **可能未使用**: 约 9 个工具类文件
+- **已删除**: 11 个未使用的文件（9个工具类 + 1个路由 + 1个服务）
 - **代码质量**: 整体结构清晰，依赖关系合理
-- **建议**: 可以安全删除未使用的工具类文件，以简化项目结构
+- **项目结构**: 已简化，移除了所有未使用的文件
