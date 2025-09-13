@@ -9,10 +9,10 @@ Oh no! 💥 💔 💥
 +++ /Users/shiyijiufei/TaifishingV4/app/middleware/error_logging_middleware.py	2025-09-13 02:00:32.669116+00:00
 @@ -211,11 +211,13 @@
              enhanced_logger.critical(f"记录错误日志失败: {log_error}", "error_handler")
- 
+
          return {"error": "系统错误", "message": "系统出现错误，请稍后重试", "status_code": 500}, 500
- 
- 
+
+
 -def log_database_operation_error(operation: str, error: Exception, module: str | None = None, details: str | None = None) -> None:
 +def log_database_operation_error(
 +    operation: str, error: Exception, module: str | None = None, details: str | None = None
@@ -26,8 +26,8 @@ Oh no! 💥 💔 💥
          )
      except Exception as log_error:
          enhanced_logger.critical(f"记录数据库错误日志失败: {log_error}", "database")
- 
- 
+
+
 -def log_api_operation_error(endpoint: str, error: Exception, module: str | None = None, details: str | None = None) -> None:
 +def log_api_operation_error(
 +    endpoint: str, error: Exception, module: str | None = None, details: str | None = None
@@ -41,8 +41,8 @@ Oh no! 💥 💔 💥
          )
      except Exception as log_error:
          enhanced_logger.critical(f"记录API错误日志失败: {log_error}", "api")
- 
- 
+
+
 -def log_sync_operation_error(operation: str, error: Exception, module: str | None = None, details: str | None = None) -> None:
 +def log_sync_operation_error(
 +    operation: str, error: Exception, module: str | None = None, details: str | None = None
@@ -56,8 +56,8 @@ Oh no! 💥 💔 💥
      except Exception as e:
          print(f"DEBUG: 查找相关同步日志失败: {e}")
          return []
- 
- 
+
+
 -def _merge_batch_sync_logs(start_log: Log, sync_logs: list, end_time: datetime, duration: float, status_code: int, response: Response) -> None:
 +def _merge_batch_sync_logs(
 +    start_log: Log, sync_logs: list, end_time: datetime, duration: float, status_code: int, response: Response
@@ -68,11 +68,11 @@ Oh no! 💥 💔 💥
          total_instances = 0
          success_count = 0
 @@ -371,11 +379,13 @@
- 
+
          traceback.print_exc()
          return None
- 
- 
+
+
 -def _merge_regular_request_logs(start_log: Log, end_time: datetime, duration: float, status_code: int, response: Response) -> None:
 +def _merge_regular_request_logs(
 +    start_log: Log, end_time: datetime, duration: float, status_code: int, response: Response
@@ -81,4 +81,3 @@ Oh no! 💥 💔 💥
      try:
          # 创建合并后的日志
          merged_message = f"请求: {request.method} {request.path}"
- 

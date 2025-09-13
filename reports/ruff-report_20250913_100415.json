@@ -1,40 +1,7 @@
-错误:
+错误: 
 
 标准输出:
 [
-  {
-    "cell": null,
-    "code": "I001",
-    "end_location": {
-      "column": 42,
-      "row": 22
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/__init__.py",
-    "fix": {
-      "applicability": "safe",
-      "edits": [
-        {
-          "content": "import logging\nimport os\nfrom logging.handlers import RotatingFileHandler\nfrom typing import Union\n\nfrom dotenv import load_dotenv\nfrom flask import Flask, jsonify\nfrom flask_bcrypt import Bcrypt\nfrom flask_caching import Cache\nfrom flask_cors import CORS\nfrom flask_jwt_extended import JWTManager\nfrom flask_login import LoginManager\nfrom flask_migrate import Migrate\nfrom flask_sqlalchemy import SQLAlchemy\nfrom flask_wtf.csrf import CSRFProtect\n\nfrom app.constants import SystemConstants\n\n",
-          "end_location": {
-            "column": 1,
-            "row": 24
-          },
-          "location": {
-            "column": 1,
-            "row": 6
-          }
-        }
-      ],
-      "message": "Organize imports"
-    },
-    "location": {
-      "column": 1,
-      "row": 6
-    },
-    "message": "Import block is un-sorted or un-formatted",
-    "noqa_row": 6,
-    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
-  },
   {
     "cell": null,
     "code": "T201",
@@ -870,7 +837,7 @@
     "code": "RET504",
     "end_location": {
       "column": 25,
-      "row": 276
+      "row": 282
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/middleware/error_logging_middleware.py",
     "fix": {
@@ -880,22 +847,22 @@
           "content": "return",
           "end_location": {
             "column": 20,
-            "row": 265
+            "row": 271
           },
           "location": {
             "column": 9,
-            "row": 265
+            "row": 271
           }
         },
         {
           "content": "",
           "end_location": {
             "column": 1,
-            "row": 277
+            "row": 283
           },
           "location": {
             "column": 1,
-            "row": 276
+            "row": 282
           }
         }
       ],
@@ -903,10 +870,10 @@
     },
     "location": {
       "column": 16,
-      "row": 276
+      "row": 282
     },
     "message": "Unnecessary assignment to `sync_logs` before `return` statement",
-    "noqa_row": 276,
+    "noqa_row": 282,
     "url": "https://docs.astral.sh/ruff/rules/unnecessary-assign"
   },
   {
@@ -914,7 +881,7 @@
     "code": "T201",
     "end_location": {
       "column": 14,
-      "row": 278
+      "row": 284
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/middleware/error_logging_middleware.py",
     "fix": {
@@ -924,11 +891,11 @@
           "content": "",
           "end_location": {
             "column": 1,
-            "row": 279
+            "row": 285
           },
           "location": {
             "column": 1,
-            "row": 278
+            "row": 284
           }
         }
       ],
@@ -936,10 +903,10 @@
     },
     "location": {
       "column": 9,
-      "row": 278
+      "row": 284
     },
     "message": "`print` found",
-    "noqa_row": 278,
+    "noqa_row": 284,
     "url": "https://docs.astral.sh/ruff/rules/print"
   },
   {
@@ -947,7 +914,7 @@
     "code": "T201",
     "end_location": {
       "column": 14,
-      "row": 369
+      "row": 377
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/middleware/error_logging_middleware.py",
     "fix": {
@@ -957,11 +924,11 @@
           "content": "",
           "end_location": {
             "column": 1,
-            "row": 370
+            "row": 378
           },
           "location": {
             "column": 1,
-            "row": 369
+            "row": 377
           }
         }
       ],
@@ -969,10 +936,10 @@
     },
     "location": {
       "column": 9,
-      "row": 369
+      "row": 377
     },
     "message": "`print` found",
-    "noqa_row": 369,
+    "noqa_row": 377,
     "url": "https://docs.astral.sh/ruff/rules/print"
   },
   {
@@ -980,7 +947,7 @@
     "code": "T201",
     "end_location": {
       "column": 18,
-      "row": 413
+      "row": 423
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/middleware/error_logging_middleware.py",
     "fix": {
@@ -990,11 +957,11 @@
           "content": "",
           "end_location": {
             "column": 1,
-            "row": 414
+            "row": 424
           },
           "location": {
             "column": 1,
-            "row": 413
+            "row": 423
           }
         }
       ],
@@ -1002,10 +969,10 @@
     },
     "location": {
       "column": 13,
-      "row": 413
+      "row": 423
     },
     "message": "`print` found",
-    "noqa_row": 413,
+    "noqa_row": 423,
     "url": "https://docs.astral.sh/ruff/rules/print"
   },
   {
@@ -1013,7 +980,7 @@
     "code": "T201",
     "end_location": {
       "column": 14,
-      "row": 443
+      "row": 453
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/middleware/error_logging_middleware.py",
     "fix": {
@@ -1023,11 +990,11 @@
           "content": "",
           "end_location": {
             "column": 1,
-            "row": 444
+            "row": 454
           },
           "location": {
             "column": 1,
-            "row": 443
+            "row": 453
           }
         }
       ],
@@ -1035,10 +1002,10 @@
     },
     "location": {
       "column": 9,
-      "row": 443
+      "row": 453
     },
     "message": "`print` found",
-    "noqa_row": 443,
+    "noqa_row": 453,
     "url": "https://docs.astral.sh/ruff/rules/print"
   },
   {
