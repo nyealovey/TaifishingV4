@@ -31,15 +31,15 @@ class Credential(db.Model):
 
     def __init__(
         self,
-        name,
-        credential_type,
-        username,
-        password,
-        db_type=None,
-        instance_ids=None,
-        category_id=None,
-        description=None,
-    ):
+        name: str,
+        credential_type: str,
+        username: str,
+        password: str,
+        db_type: str | None = None,
+        instance_ids: list | None = None,
+        category_id: int | None = None,
+        description: str | None = None,
+    ) -> None:
         """
         初始化凭据
 
@@ -62,7 +62,7 @@ class Credential(db.Model):
         self.category_id = category_id
         self.description = description
 
-    def set_password(self, password):
+    def set_password(self, password: str) -> None:
         """
         设置密码（加密）
 
@@ -72,7 +72,7 @@ class Credential(db.Model):
         # 使用新的加密方式存储密码
         self.password = password_manager.encrypt_password(password)
 
-    def check_password(self, password):
+    def check_password(self, password: str) -> bool:
         """
         验证密码
 
@@ -94,7 +94,7 @@ class Credential(db.Model):
         # 如果是明文密码（不安全），直接比较
         return self.password == password
 
-    def get_password_masked(self):
+    def get_password_masked(self) -> str:
         """
         获取掩码密码
 
@@ -105,7 +105,7 @@ class Credential(db.Model):
             return "*" * (len(self.password) - 4) + self.password[-4:]
         return "*" * len(self.password)
 
-    def get_plain_password(self):
+    def get_plain_password(self) -> str:
         """
         获取原始密码（用于数据库连接）
 
@@ -157,30 +157,30 @@ class Credential(db.Model):
 
         return data
 
-    def soft_delete(self):
+    def soft_delete(self) -> None:
         """软删除凭据"""
         self.deleted_at = now()
         db.session.commit()
         log_operation("credential_delete", details={"credential_id": self.id, "name": self.name})
 
-    def restore(self):
+    def restore(self) -> None:
         """恢复凭据"""
         self.deleted_at = None
         db.session.commit()
         log_operation("credential_restore", details={"credential_id": self.id, "name": self.name})
 
     @staticmethod
-    def get_active_credentials():
+    def get_active_credentials() -> list:
         """获取所有活跃凭据"""
         return Credential.query.filter_by(deleted_at=None).all()
 
     @staticmethod
-    def get_by_type(credential_type):
+    def get_by_type(credential_type: str) -> list:
         """根据类型获取凭据"""
         return Credential.query.filter_by(credential_type=credential_type, deleted_at=None).all()
 
     @staticmethod
-    def get_by_db_type(db_type):
+    def get_by_db_type(db_type: str) -> list:
         """根据数据库类型获取凭据"""
         return Credential.query.filter_by(db_type=db_type, deleted_at=None).all()
 

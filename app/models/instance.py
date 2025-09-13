@@ -42,16 +42,16 @@ class Instance(db.Model):
 
     def __init__(
         self,
-        name,
-        db_type,
-        host,
-        port,
-        database_name=None,
-        credential_id=None,
-        description=None,
-        tags=None,
-        environment="production",
-    ):
+        name: str,
+        db_type: str,
+        host: str,
+        port: int,
+        database_name: str | None = None,
+        credential_id: int | None = None,
+        description: str | None = None,
+        tags: str | None = None,
+        environment: str = "production",
+    ) -> None:
         """
         初始化实例
 
@@ -76,7 +76,7 @@ class Instance(db.Model):
         self.tags = tags or []
         self.environment = environment
 
-    def test_connection(self):
+    def test_connection(self) -> dict:
         """
         测试数据库连接
 
@@ -97,7 +97,7 @@ class Instance(db.Model):
         except Exception as e:
             return {"status": "error", "message": f"连接测试失败: {str(e)}"}
 
-    def _test_sql_server_connection(self):
+    def _test_sql_server_connection(self) -> dict:
         """测试SQL Server连接"""
         import pymssql
 
@@ -114,7 +114,7 @@ class Instance(db.Model):
         except Exception as e:
             return {"status": "error", "message": f"SQL Server连接失败: {str(e)}"}
 
-    def _test_mysql_connection(self):
+    def _test_mysql_connection(self) -> dict:
         """测试MySQL连接"""
         import pymysql
 
@@ -131,7 +131,7 @@ class Instance(db.Model):
         except Exception as e:
             return {"status": "error", "message": f"MySQL连接失败: {str(e)}"}
 
-    def _test_oracle_connection(self):
+    def _test_oracle_connection(self) -> dict:
         """测试Oracle连接"""
         import oracledb
 
@@ -219,14 +219,14 @@ class Instance(db.Model):
 
         return data
 
-    def soft_delete(self):
+    def soft_delete(self) -> None:
         """软删除实例"""
         self.deleted_at = now()
         self.status = "deleted"
         db.session.commit()
         log_operation("instance_delete", details={"instance_id": self.id, "name": self.name})
 
-    def restore(self):
+    def restore(self) -> None:
         """恢复实例"""
         self.deleted_at = None
         self.status = "active"
@@ -234,27 +234,27 @@ class Instance(db.Model):
         log_operation("instance_restore", details={"instance_id": self.id, "name": self.name})
 
     @staticmethod
-    def get_active_instances():
+    def get_active_instances() -> list:
         """获取所有活跃实例"""
         return Instance.query.filter_by(deleted_at=None, status="active").all()
 
     @staticmethod
-    def get_by_db_type(db_type):
+    def get_by_db_type(db_type: str) -> list:
         """根据数据库类型获取实例"""
         return Instance.query.filter_by(db_type=db_type, deleted_at=None).all()
 
     @staticmethod
-    def get_by_environment(environment):
+    def get_by_environment(environment: str) -> list:
         """根据环境类型获取实例"""
         return Instance.query.filter_by(environment=environment, deleted_at=None).all()
 
     @staticmethod
-    def get_by_db_type_and_environment(db_type, environment):
+    def get_by_db_type_and_environment(db_type: str, environment: str) -> list:
         """根据数据库类型和环境类型获取实例"""
         return Instance.query.filter_by(db_type=db_type, environment=environment, deleted_at=None).all()
 
     @staticmethod
-    def get_environment_choices():
+    def get_environment_choices() -> list:
         """获取环境类型选项"""
         return [
             ("production", "生产环境"),

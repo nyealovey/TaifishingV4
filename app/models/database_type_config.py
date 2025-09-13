@@ -46,7 +46,7 @@ class DatabaseTypeConfig(db.Model):
         return []
 
     @features_list.setter
-    def features_list(self, value: list[str]):
+    def features_list(self, value: list[str]) -> None:
         """设置特性列表"""
         self.features = json.dumps(value, ensure_ascii=False)
 

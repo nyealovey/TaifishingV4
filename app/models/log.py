@@ -29,16 +29,16 @@ class Log(db.Model):
 
     def __init__(
         self,
-        level,
-        log_type,
-        message,
-        module=None,
-        details=None,
-        user_id=None,
-        ip_address=None,
-        user_agent=None,
-        source=None,
-    ):
+        level: str,
+        log_type: str,
+        message: str,
+        module: str | None = None,
+        details: str | None = None,
+        user_id: int | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        source: str | None = None,
+    ) -> None:
         """
         初始化日志
 
@@ -87,16 +87,16 @@ class Log(db.Model):
 
     @staticmethod
     def log_operation(
-        level,
-        log_type,
-        message,
-        module=None,
-        details=None,
-        user_id=None,
-        ip_address=None,
-        user_agent=None,
-        source=None,
-    ):
+        level: str,
+        log_type: str,
+        message: str,
+        module: str | None = None,
+        details: str | None = None,
+        user_id: int | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        source: str | None = None,
+    ) -> None:
         """
         记录操作日志
 
@@ -134,14 +134,14 @@ class Log(db.Model):
 
     @staticmethod
     def log_info(
-        message,
-        module=None,
-        details=None,
-        user_id=None,
-        ip_address=None,
-        user_agent=None,
-        source=None,
-    ):
+        message: str,
+        module: str | None = None,
+        details: str | None = None,
+        user_id: int | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        source: str | None = None,
+    ) -> None:
         """记录INFO级别日志"""
         Log.log_operation(
             "INFO",
@@ -157,14 +157,14 @@ class Log(db.Model):
 
     @staticmethod
     def log_warning(
-        message,
-        module=None,
-        details=None,
-        user_id=None,
-        ip_address=None,
-        user_agent=None,
-        source=None,
-    ):
+        message: str,
+        module: str | None = None,
+        details: str | None = None,
+        user_id: int | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        source: str | None = None,
+    ) -> None:
         """记录WARNING级别日志"""
         Log.log_operation(
             "WARNING",
@@ -180,27 +180,27 @@ class Log(db.Model):
 
     @staticmethod
     def log_error(
-        message,
-        module=None,
-        details=None,
-        user_id=None,
-        ip_address=None,
-        user_agent=None,
-        source=None,
-    ):
+        message: str,
+        module: str | None = None,
+        details: str | None = None,
+        user_id: int | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        source: str | None = None,
+    ) -> None:
         """记录ERROR级别日志"""
         Log.log_operation("ERROR", "error", message, module, details, user_id, ip_address, user_agent, source)
 
     @staticmethod
     def log_security(
-        message,
-        module=None,
-        details=None,
-        user_id=None,
-        ip_address=None,
-        user_agent=None,
-        source=None,
-    ):
+        message: str,
+        module: str | None = None,
+        details: str | None = None,
+        user_id: int | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        source: str | None = None,
+    ) -> None:
         """记录安全相关日志"""
         Log.log_operation(
             "WARNING",
@@ -215,27 +215,27 @@ class Log(db.Model):
         )
 
     @staticmethod
-    def get_by_level(level):
+    def get_by_level(level: str) -> list:
         """根据级别获取日志"""
         return Log.query.filter_by(level=level).order_by(Log.created_at.desc()).all()
 
     @staticmethod
-    def get_by_type(log_type):
+    def get_by_type(log_type: str) -> list:
         """根据类型获取日志"""
         return Log.query.filter_by(log_type=log_type).order_by(Log.created_at.desc()).all()
 
     @staticmethod
-    def get_by_user(user_id):
+    def get_by_user(user_id: int) -> list:
         """根据用户获取日志"""
         return Log.query.filter_by(user_id=user_id).order_by(Log.created_at.desc()).all()
 
     @staticmethod
-    def get_recent_logs(limit=100):
+    def get_recent_logs(limit: int = 100) -> list:
         """获取最近的日志"""
         return Log.query.order_by(Log.created_at.desc()).limit(limit).all()
 
     @staticmethod
-    def get_error_logs(limit=50):
+    def get_error_logs(limit: int = 50) -> list:
         """获取错误日志"""
         return Log.query.filter(Log.level.in_(["ERROR", "CRITICAL"])).order_by(Log.created_at.desc()).limit(limit).all()
 
