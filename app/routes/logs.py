@@ -1,594 +1,334 @@
 """
-泰摸鱼吧 - 操作日志管理路由
+泰摸鱼吧 - 统一日志管理路由
 """
 
 import logging
 from datetime import datetime, timedelta
 from typing import Any
 
-from flask import Blueprint, Response, flash, jsonify, render_template, request
+from flask import Blueprint, Response, request, render_template
 from flask_login import current_user, login_required  # type: ignore
-from flask_sqlalchemy import Pagination
 
 from app import db
-from app.models.log import Log
-from app.models.user import User
-from app.utils.decorators import delete_required, view_required
+from app.models.unified_log import UnifiedLog, LogLevel
+from app.utils.decorators import view_required
+from app.utils.api_response import success_response, error_response
+from app.utils.timezone import now, utc_to_china, get_china_today
+from app.utils.structlog_config import set_debug_logging_enabled, is_debug_logging_enabled
 
 # 创建蓝图
 logs_bp = Blueprint("logs", __name__)
 
 
-def get_merged_request_logs(query: Any, page: int = 1, per_page: int = 20) -> Pagination:
-    """
-    获取日志列表（过滤中间状态日志，只显示合并后的完整日志）
-
-    Args:
-        query: SQLAlchemy查询对象
-        page: 页码
-        per_page: 每页数量
-
-    Returns:
-        Pagination: 分页对象
-    """
-    try:
-        import re
-
-        # 简化过滤逻辑，只过滤掉明显的中间状态日志
-        # 1. 过滤掉"请求开始"和"请求结束"的中间日志
-        query = query.filter(~Log.message.like("%请求开始%"), ~Log.message.like("%请求结束%"))
-
-        # 查询过滤后的日志，按ID排序
-        logs = query.order_by(Log.id.desc()).paginate(page=page, per_page=per_page, error_out=False)
-
-        # 为每个日志添加类型标识和状态码
-        for log in logs.items:
-            # 判断是否为HTTP请求日志
-            if log.log_type == "request" and "请求:" in log.message and log.module == "request_handler":
-                log.is_merged = True  # HTTP请求日志（已合并）
-                log.log_category = "http_request"
-
-                # 提取状态码（从详情信息中获取）
-                log.status_code = None
-                if log.details:
-                    status_match = re.search(r"状态码:\s+(\d+)", log.details)
-                    if status_match:
-                        log.status_code = int(status_match.group(1))
-            else:
-                log.is_merged = False  # 其他类型日志
-                log.log_category = "other"
-                log.status_code = None
-
-        return logs
-    except Exception as e:
-        logging.error(f"获取日志列表失败: {e}")
-        return None
-
-
 @logs_bp.route("/")
 @login_required  # type: ignore
 @view_required  # type: ignore
-def index() -> str | Response:
-    """日志管理首页"""
+def index() -> str:
+    """统一日志中心首页"""
+    return render_template("logs/unified_logs.html")
+
+
+# ==================== 统一日志系统 API ====================
+
+@logs_bp.route("/api/structlog/search", methods=["GET"])
+@login_required  # type: ignore
+def get_unified_logs() -> Response:
+    """获取统一日志列表"""
     try:
         # 获取查询参数
-        level = request.args.get("level", "")
-        module = request.args.get("module", "")
-        start_date = request.args.get("start_date", "")
-        end_date = request.args.get("end_date", "")
-        search = request.args.get("search", "")
-        page = int(request.args.get("page", 1))
-
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 50))
+        level = request.args.get('level')
+        module = request.args.get('module')
+        q = request.args.get('q', '')
+        hours = int(request.args.get('hours', 24))
+        
         # 构建查询
-        query = Log.query
-
-        # 按级别过滤
+        query = UnifiedLog.query
+        
+        # 时间过滤（使用东八区时间）
+        if hours > 0:
+            from datetime import timedelta
+            start_time = now() - timedelta(hours=hours)
+            query = query.filter(UnifiedLog.timestamp >= start_time)
+        
+        # 级别过滤
         if level:
-            query = query.filter(Log.level == level)
-
-        # 按模块过滤
+            query = query.filter(UnifiedLog.level == level)
+        
+        # 模块过滤
         if module:
-            query = query.filter(Log.module == module)
-
-        # 按时间范围过滤
-        if start_date:
-            try:
-                start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
-                query = query.filter(Log.created_at >= start_datetime)
-            except ValueError:
-                pass
-
-        if end_date:
-            try:
-                end_datetime = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
-                query = query.filter(Log.created_at < end_datetime)
-            except ValueError:
-                pass
-
-        # 按消息内容搜索
-        if search:
-            query = query.filter(Log.message.like(f"%{search}%"))
-
-        # 获取合并后的日志
-        merged_logs = get_merged_request_logs(query, page, 20)
-
-        if not merged_logs:
-            flash("获取日志列表失败", "error")
-            # 获取所有可用的模块列表
-            from sqlalchemy import distinct
-
-            available_modules = (
-                Log.query.with_entities(distinct(Log.module)).filter(Log.module.isnot(None)).order_by(Log.module).all()
-            )
-            module_list = [m[0] for m in available_modules if m[0]]
-
-            return render_template(
-                "logs/system_logs.html",
-                merged_logs=None,
-                level=level,
-                module=module,
-                start_date=start_date,
-                end_date=end_date,
-                search=search,
-                module_list=module_list,
-            )
-
-        # 获取统计信息
-        total_logs = Log.query.count()
-        error_logs = Log.query.filter(Log.level == "ERROR").count()
-        warning_logs = Log.query.filter(Log.level == "WARNING").count()
-        info_logs = Log.query.filter(Log.level == "INFO").count()
-
-        # 获取所有可用的模块列表
-        from sqlalchemy import distinct
-
-        available_modules = (
-            Log.query.with_entities(distinct(Log.module)).filter(Log.module.isnot(None)).order_by(Log.module).all()
+            query = query.filter(UnifiedLog.module == module)
+        
+        # 搜索过滤
+        if q:
+            query = query.filter(UnifiedLog.message.contains(q))
+        
+        # 分页查询
+        logs = query.order_by(UnifiedLog.timestamp.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
         )
-        module_list = [m[0] for m in available_modules if m[0]]
-
-        return render_template(
-            "logs/system_logs.html",
-            merged_logs=merged_logs,
-            level=level,
-            module=module,
-            start_date=start_date,
-            end_date=end_date,
-            search=search,
-            total_logs=total_logs,
-            error_logs=error_logs,
-            warning_logs=warning_logs,
-            info_logs=info_logs,
-            module_list=module_list,
-        )
-    except Exception as e:
-        logging.error(f"日志管理首页加载失败: {e}")
-        flash("页面加载失败", "error")
-        # 获取所有可用的模块列表
-        from sqlalchemy import distinct
-
-        try:
-            available_modules = (
-                Log.query.with_entities(distinct(Log.module)).filter(Log.module.isnot(None)).order_by(Log.module).all()
-            )
-            module_list = [m[0] for m in available_modules if m[0]]
-        except Exception:
-            module_list = []
-
-        return render_template(
-            "logs/system_logs.html",
-            merged_logs=None,
-            level="",
-            module="",
-            start_date="",
-            end_date="",
-            search="",
-            module_list=module_list,
-        )
-
-
-@logs_bp.route("/api/export")
-@login_required  # type: ignore
-@view_required  # type: ignore
-def export_logs() -> Response | tuple[Response, int]:
-    """导出日志为CSV"""
-    try:
-        import csv
-        import io
-
-        from flask import make_response
-
-        # 获取查询参数
-        level = request.args.get("level", "")
-        module = request.args.get("module", "")
-        start_date = request.args.get("start_date", "")
-        end_date = request.args.get("end_date", "")
-        search = request.args.get("search", "")
-
-        # 构建查询
-        query = Log.query
-
-        # 按级别过滤
-        if level:
-            query = query.filter(Log.level == level)
-
-        # 按模块过滤
-        if module:
-            query = query.filter(Log.module == module)
-
-        # 按时间范围过滤
-        if start_date:
-            try:
-                start_datetime = datetime.strptime(start_date, "%Y-%m-%d")
-                query = query.filter(Log.created_at >= start_datetime)
-            except ValueError:
-                pass
-
-        if end_date:
-            try:
-                end_datetime = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
-                query = query.filter(Log.created_at < end_datetime)
-            except ValueError:
-                pass
-
-        # 按消息内容搜索
-        if search:
-            query = query.filter(Log.message.like(f"%{search}%"))
-
-        # 获取所有日志
-        logs = query.order_by(Log.id.desc()).all()
-
-        # 创建CSV
-        output = io.StringIO()
-        writer = csv.writer(output)
-
-        # 写入标题行
-        writer.writerow(["ID", "时间", "级别", "模块", "消息", "用户", "IP地址"])
-
-        # 写入数据行
-        for log in logs:
-            writer.writerow(
-                [
-                    log.id,
-                    log.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-                    log.level,
-                    log.module,
-                    log.message,
-                    log.user_id or "未知",
-                    log.ip_address or "未知",
-                ]
-            )
-
-        # 创建响应
-        output.seek(0)
-        response = make_response(output.getvalue())
-        response.headers["Content-Type"] = "text/csv; charset=utf-8"
-        response.headers["Content-Disposition"] = "attachment; filename=logs.csv"
-
-        return response
-    except Exception as e:
-        logging.error(f"导出日志失败: {e}")
-        return jsonify({"success": False, "message": "导出失败"}), 500
-
-
-@logs_bp.route("/api/log/<int:log_id>")
-@login_required  # type: ignore
-@view_required  # type: ignore
-def get_log_detail(log_id: int) -> Response:
-    """获取日志详情"""
-    try:
-        log = Log.query.get_or_404(log_id)
-
-        return jsonify(
-            {
-                "success": True,
-                "log": {
-                    "id": log.id,
-                    "level": log.level,
-                    "log_type": log.log_type,
-                    "module": log.module,
-                    "message": log.message,
-                    "details": log.details,
-                    "user_id": log.user_id,
-                    "ip_address": log.ip_address,
-                    "user_agent": log.user_agent,
-                    "created_at": log.created_at.isoformat(),
-                },
+        
+        # 构建响应数据（转换为东八区时间显示）
+        logs_data = []
+        for log in logs.items:
+            # 转换为东八区时间
+            china_timestamp = utc_to_china(log.timestamp)
+            china_created_at = utc_to_china(log.created_at) if log.created_at else None
+            
+            logs_data.append({
+                'id': log.id,
+                'timestamp': china_timestamp.isoformat() if china_timestamp else None,
+                'level': log.level.value,
+                'module': log.module,
+                'message': log.message,
+                'context': log.context,
+                'traceback': log.traceback,
+                'created_at': china_created_at.isoformat() if china_created_at else None
+            })
+        
+        return success_response({
+            'logs': logs_data,
+            'pagination': {
+                'page': logs.page,
+                'per_page': logs.per_page,
+                'total': logs.total,
+                'pages': logs.pages,
+                'has_next': logs.has_next,
+                'has_prev': logs.has_prev,
+                'next_num': logs.next_num,
+                'prev_num': logs.prev_num
             }
-        )
+        })
+        
+    except Exception as e:
+        logging.error(f"获取统一日志失败: {e}")
+        return error_response("获取统一日志失败", 500)
+
+
+@logs_bp.route("/api/structlog/stats", methods=["GET"])
+@login_required  # type: ignore
+def get_unified_log_stats() -> Response:
+    """获取统一日志统计信息"""
+    try:
+        hours = int(request.args.get('hours', 24))
+        stats = UnifiedLog.get_log_statistics(hours=hours)
+        return success_response(stats)
+        
+    except Exception as e:
+        logging.error(f"获取统一日志统计失败: {e}")
+        return error_response("获取统一日志统计失败", 500)
+
+
+@logs_bp.route("/api/structlog/errors", methods=["GET"])
+@login_required  # type: ignore
+def get_unified_error_logs() -> Response:
+    """获取统一错误日志"""
+    try:
+        hours = int(request.args.get('hours', 24))
+        limit = int(request.args.get('limit', 50))
+        
+        # 查询错误日志
+        start_time = datetime.utcnow() - timedelta(hours=hours)
+        error_logs = UnifiedLog.query.filter(
+            UnifiedLog.level.in_([LogLevel.ERROR, LogLevel.CRITICAL]),
+            UnifiedLog.timestamp >= start_time
+        ).order_by(UnifiedLog.timestamp.desc()).limit(limit).all()
+        
+        logs_data = []
+        for log in error_logs:
+            logs_data.append({
+                'id': log.id,
+                'timestamp': log.timestamp.isoformat(),
+                'level': log.level.value,
+                'module': log.module,
+                'message': log.message,
+                'context': log.context
+            })
+        
+        return success_response({'logs': logs_data})
+        
+    except Exception as e:
+        logging.error(f"获取统一错误日志失败: {e}")
+        return error_response("获取统一错误日志失败", 500)
+
+
+@logs_bp.route("/api/structlog/modules", methods=["GET"])
+@login_required  # type: ignore
+def get_unified_log_modules() -> Response:
+    """获取统一日志模块列表"""
+    try:
+        hours = int(request.args.get('hours', 24))
+        modules = UnifiedLog.get_log_modules(hours=hours)
+        module_list = [module.module for module in modules]
+        return success_response(module_list)
+        
+    except Exception as e:
+        logging.error(f"获取统一日志模块失败: {e}")
+        return error_response("获取统一日志模块失败", 500)
+
+
+@logs_bp.route("/api/structlog/detail/<int:log_id>", methods=["GET"])
+@login_required  # type: ignore
+def get_unified_log_detail(log_id: int) -> Response:
+    """获取统一日志详情"""
+    try:
+        log = UnifiedLog.query.get_or_404(log_id)
+        
+        # 转换为东八区时间
+        china_timestamp = utc_to_china(log.timestamp)
+        china_created_at = utc_to_china(log.created_at) if log.created_at else None
+        
+        log_detail = {
+            'id': log.id,
+            'timestamp': china_timestamp.isoformat() if china_timestamp else None,
+            'level': log.level.value,
+            'module': log.module,
+            'message': log.message,
+            'context': log.context,
+            'traceback': log.traceback,
+            'created_at': china_created_at.isoformat() if china_created_at else None,
+            'formatted_timestamp': china_timestamp.strftime('%Y-%m-%d %H:%M:%S') if china_timestamp else None,
+            'formatted_created_at': china_created_at.strftime('%Y-%m-%d %H:%M:%S') if china_created_at else None
+        }
+        
+        return success_response(log_detail)
+        
     except Exception as e:
         logging.error(f"获取日志详情失败: {e}")
-        return jsonify({"success": False, "message": "获取日志详情失败"})
+        return error_response("获取日志详情失败", 500)
 
 
-@logs_bp.route("/api/merged-info/<int:log_id>")
+@logs_bp.route("/api/structlog/export", methods=["GET"])
 @login_required  # type: ignore
-@view_required  # type: ignore
-def get_merged_info(log_id: int) -> Response:
-    """获取合并日志的详细信息"""
+def export_unified_logs() -> Response:
+    """导出统一日志"""
     try:
-        log = Log.query.get_or_404(log_id)
-
-        # 解析日志详情
-        merged_info = {
-            "path": None,
-            "status_code": None,
-            "duration": None,
-            "start_time": None,
-            "end_time": None,
-            "request_method": None,
-            "user_info": None,
-            "ip_info": None,
-            "log_level": log.level,  # 使用合并后的日志级别
-            "response_size": None,
-            "response_headers": None,
-            "response_body": None,
-            "request_headers": None,
-            "request_body": None,
-        }
-
-        # 如果是请求日志，解析消息
-        if log.log_type == "request" and "请求:" in log.message:
-            # 解析路径（新格式：请求: GET /path）
-            import re
-
-            match = re.search(r"请求:\s+(\w+)\s+(.+)", log.message)
-            if match:
-                merged_info["request_method"] = match.group(1)
-                merged_info["path"] = match.group(2)
-
-        # 解析详情信息
-        if log.details:
-            import json
-            import re
-
-            # 首先尝试解析响应内容中的JSON数据
-            response_body_match = re.search(r"响应内容:\s+({.*})", log.details, re.DOTALL)
-            if response_body_match:
-                try:
-                    response_json = response_body_match.group(1)
-                    # 尝试解析JSON响应
-                    response_data = json.loads(response_json)
-
-                    # 如果响应包含merged_info，直接使用它
-                    if "merged_info" in response_data and isinstance(response_data["merged_info"], dict):
-                        nested_info = response_data["merged_info"]
-
-                        # 提取嵌套的merged_info中的信息
-                        if "path" in nested_info:
-                            merged_info["path"] = nested_info["path"]
-                        if "status_code" in nested_info:
-                            merged_info["status_code"] = nested_info["status_code"]
-                        if "duration" in nested_info:
-                            merged_info["duration"] = nested_info["duration"]
-                        if "start_time" in nested_info:
-                            merged_info["start_time"] = nested_info["start_time"]
-                        if "end_time" in nested_info:
-                            merged_info["end_time"] = nested_info["end_time"]
-                        if "request_method" in nested_info:
-                            merged_info["request_method"] = nested_info["request_method"]
-                        if "user_info" in nested_info:
-                            merged_info["user_info"] = nested_info["user_info"]
-                        if "ip_info" in nested_info:
-                            merged_info["ip_info"] = nested_info["ip_info"]
-                        if "response_size" in nested_info:
-                            merged_info["response_size"] = nested_info["response_size"]
-                        if "response_headers" in nested_info:
-                            merged_info["response_headers"] = nested_info["response_headers"]
-                        if "response_body" in nested_info:
-                            merged_info["response_body"] = nested_info["response_body"]
-                        if "request_headers" in nested_info:
-                            merged_info["request_headers"] = nested_info["request_headers"]
-                        if "request_body" in nested_info:
-                            merged_info["request_body"] = nested_info["request_body"]
-
-                        # 添加调试信息
-                        if "debug" in nested_info:
-                            merged_info["debug"] = nested_info["debug"]
-
-                        # 如果成功解析了嵌套信息，跳过后续的字符串解析
-                        return jsonify({"success": True, "merged_info": merged_info})
-
-                except (json.JSONDecodeError, KeyError):
-                    # JSON解析失败，继续使用字符串解析
-                    pass
-
-            # 如果JSON解析失败，使用原来的字符串解析方法
-            # 解析时间信息
-            start_match = re.search(r"开始时间:\s+([^,]+)", log.details)
-            end_match = re.search(r"结束时间:\s+([^,]+)", log.details)
-            duration_match = re.search(r"持续时间:\s+([^,]+)", log.details)
-
-            if start_match:
-                try:
-                    # 解析开始时间
-                    start_time_str = start_match.group(1).strip()
-                    # 处理格式: 2025-09-11 06:32:19.401751
-                    start_time = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S.%f")
-                    merged_info["start_time"] = start_time.isoformat()
-                except Exception:
-                    try:
-                        # 尝试不带微秒的格式
-                        start_time = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S")
-                        merged_info["start_time"] = start_time.isoformat()
-                    except Exception:
-                        merged_info["start_time"] = start_time_str
-
-            if end_match:
-                try:
-                    # 解析结束时间
-                    end_time_str = end_match.group(1).strip()
-                    # 处理格式: 2025-09-11 06:32:20.413840
-                    end_time = datetime.strptime(end_time_str, "%Y-%m-%d %H:%M:%S.%f")
-                    merged_info["end_time"] = end_time.isoformat()
-                except Exception:
-                    try:
-                        # 尝试不带微秒的格式
-                        end_time = datetime.strptime(end_time_str, "%Y-%m-%d %H:%M:%S")
-                        merged_info["end_time"] = end_time.isoformat()
-                    except Exception:
-                        merged_info["end_time"] = end_time_str
-
-            if duration_match:
-                merged_info["duration"] = float(duration_match.group(1).replace("ms", ""))
-
-            # 解析状态码
-            status_code_match = re.search(r"状态码:\s+(\d+)", log.details)
-            if status_code_match:
-                merged_info["status_code"] = int(status_code_match.group(1))
-
-            # 解析响应信息
-            response_size_match = re.search(r"响应大小:\s+([^,]+)", log.details)
-            if response_size_match:
-                try:
-                    size_str = response_size_match.group(1).strip()
-                    # 去掉"bytes"后缀
-                    if size_str.endswith(" bytes"):
-                        size_str = size_str[:-6]
-                    merged_info["response_size"] = int(size_str)
-                except Exception:
-                    merged_info["response_size"] = response_size_match.group(1).strip()
-
-            # 解析请求头
-            request_headers_match = re.search(r"请求头:\s+({[^}]+})", log.details)
-            if request_headers_match:
-                try:
-                    import ast
-
-                    headers_str = request_headers_match.group(1)
-                    merged_info["request_headers"] = ast.literal_eval(headers_str)
-                except Exception:
-                    merged_info["request_headers"] = request_headers_match.group(1)
-
-            # 解析响应头
-            response_headers_match = re.search(r"响应头:\s+({[^}]+})", log.details)
-            if response_headers_match:
-                try:
-                    import ast
-
-                    headers_str = response_headers_match.group(1)
-                    merged_info["response_headers"] = ast.literal_eval(headers_str)
-                except Exception:
-                    merged_info["response_headers"] = response_headers_match.group(1)
-
-            # 解析响应内容
-            response_body_match = re.search(r"响应内容:\s+({.*})", log.details, re.DOTALL)
-            if response_body_match:
-                response_body = response_body_match.group(1).strip()
-                # 如果响应内容为空或只有括号，显示为空
-                if response_body in ["(空)", "(获取失败:", ""]:
-                    merged_info["response_body"] = None
-                else:
-                    merged_info["response_body"] = response_body
-
-        # 用户信息
-        if log.user_id:
-            user = User.query.get(log.user_id)
-            if user:
-                merged_info["user_info"] = {
-                    "id": user.id,
-                    "username": user.username,
-                    "email": getattr(user, "email", "N/A"),
+        # 获取查询参数
+        level = request.args.get('level')
+        module = request.args.get('module')
+        hours = int(request.args.get('hours', 24))
+        format_type = request.args.get('format', 'csv')
+        
+        # 构建查询
+        query = UnifiedLog.query
+        
+        # 时间过滤（使用东八区时间）
+        if hours > 0:
+            start_time = now() - timedelta(hours=hours)
+            query = query.filter(UnifiedLog.timestamp >= start_time)
+        
+        # 级别过滤
+        if level:
+            query = query.filter(UnifiedLog.level == level)
+        
+        # 模块过滤
+        if module:
+            query = query.filter(UnifiedLog.module == module)
+        
+        # 获取日志数据
+        logs = query.order_by(UnifiedLog.timestamp.desc()).all()
+        
+        if format_type == 'csv':
+            import csv
+            import io
+            from flask import make_response
+            
+            output = io.StringIO()
+            writer = csv.writer(output)
+            
+            # 写入表头
+            writer.writerow(['时间', '级别', '模块', '消息', '上下文', '堆栈追踪', '创建时间'])
+            
+            # 写入数据（转换为东八区时间显示）
+            for log in logs:
+                # 转换为东八区时间
+                china_timestamp = utc_to_china(log.timestamp)
+                china_created_at = utc_to_china(log.created_at) if log.created_at else None
+                
+                writer.writerow([
+                    china_timestamp.strftime('%Y-%m-%d %H:%M:%S') if china_timestamp else '',
+                    log.level.value,
+                    log.module,
+                    log.message,
+                    log.context,
+                    log.traceback,
+                    china_created_at.strftime('%Y-%m-%d %H:%M:%S') if china_created_at else ''
+                ])
+            
+            response = make_response(output.getvalue())
+            response.headers['Content-Type'] = 'text/csv; charset=utf-8'
+            response.headers['Content-Disposition'] = 'attachment; filename=unified_logs.csv'
+            return response
+            
+        elif format_type == 'json':
+            logs_data = []
+            for log in logs:
+                # 转换为东八区时间
+                china_timestamp = utc_to_china(log.timestamp)
+                china_created_at = utc_to_china(log.created_at) if log.created_at else None
+                
+                logs_data.append({
+                    'id': log.id,
+                    'timestamp': china_timestamp.isoformat() if china_timestamp else None,
+                    'level': log.level.value,
+                    'module': log.module,
+                    'message': log.message,
+                    'context': log.context,
+                    'traceback': log.traceback,
+                    'created_at': china_created_at.isoformat() if china_created_at else None
+                })
+            
+            return success_response({
+                "data": {
+                    "logs": logs_data,
+                    "total": len(logs),
+                    "exported_at": now().isoformat()
                 }
+            })
+        else:
+            return error_response("Unsupported format", 400)
 
-        # IP信息
-        if log.ip_address:
-            merged_info["ip_info"] = {"address": log.ip_address, "user_agent": log.user_agent}
-
-        # 添加调试信息
-        merged_info["debug"] = {
-            "log_id": log.id,
-            "log_type": log.log_type,
-            "message": log.message,
-            "details": log.details,
-            "parsed_successfully": any([merged_info["path"], merged_info["status_code"], merged_info["duration"]]),
-        }
-
-        return jsonify({"success": True, "merged_info": merged_info})
     except Exception as e:
-        logging.error(f"获取合并日志信息失败: {e}")
-        return jsonify(
-            {
-                "success": False,
-                "message": f"获取合并日志信息失败: {str(e)}",
-                "debug": {"log_id": log_id, "error": str(e)},
-            }
-        )
+        logging.error(f"导出统一日志失败: {e}")
+        return error_response("导出统一日志失败", 500)
 
 
-@logs_bp.route("/api/stats")
+@logs_bp.route("/api/debug-status", methods=["GET"])
 @login_required  # type: ignore
-@view_required  # type: ignore
-def get_log_stats() -> Response:
-    """获取日志统计信息"""
+def get_debug_status() -> Response:
+    """获取DEBUG日志状态"""
     try:
-        # 统计所有日志（不限制时间范围）
-
-        # 按级别统计
-        level_stats = {}
-        for level in ["ERROR", "WARNING", "INFO", "DEBUG"]:
-            count = Log.query.filter(Log.level == level).count()
-            level_stats[level] = count
-
-        # 按模块统计
-        module_stats = {}
-        modules = db.session.query(Log.module).distinct().all()
-        for module in modules:
-            if module[0]:
-                count = Log.query.filter(Log.module == module[0]).count()
-                module_stats[module[0]] = count
-
-        return jsonify(
-            {
-                "success": True,
-                "stats": {
-                    "level_stats": level_stats,
-                    "level_distribution": level_stats,  # 添加前端期望的字段
-                    "module_stats": module_stats,
-                    "total_logs": Log.query.count(),  # 统计所有日志
-                },
-            }
-        )
+        enabled = is_debug_logging_enabled()
+        return success_response({
+            'enabled': enabled,
+            'status': '启用' if enabled else '关闭'
+        })
     except Exception as e:
-        logging.error(f"获取日志统计失败: {e}")
-        return jsonify({"success": False, "message": "获取日志统计失败"})
+        logging.error(f"获取DEBUG日志状态失败: {e}")
+        return error_response("获取DEBUG日志状态失败", 500)
 
 
-@logs_bp.route("/api/clear")
+@logs_bp.route("/api/debug-toggle", methods=["POST"])
 @login_required  # type: ignore
-@delete_required  # type: ignore
-def clear_logs() -> Response:
-    """清空日志"""
+def toggle_debug_logging() -> Response:
+    """切换DEBUG日志开关"""
     try:
-        # 只允许管理员清空日志
-        if not current_user.is_admin:
-            return jsonify({"success": False, "message": "权限不足"})
-
-        # 清空所有日志
-        Log.query.delete()
-        db.session.commit()
-
-        return jsonify({"success": True, "message": "日志已清空"})
+        current_enabled = is_debug_logging_enabled()
+        new_enabled = not current_enabled
+        
+        # 设置新的DEBUG日志状态
+        set_debug_logging_enabled(new_enabled)
+        
+        # 记录状态变更日志
+        from app.utils.structlog_config import log_info
+        log_info(f"DEBUG日志已{'启用' if new_enabled else '关闭'}", module="system")
+        
+        return success_response({
+            'enabled': new_enabled,
+            'status': '启用' if new_enabled else '关闭',
+            'message': f"DEBUG日志已{'启用' if new_enabled else '关闭'}"
+        })
     except Exception as e:
-        logging.error(f"清空日志失败: {e}")
-        return jsonify({"success": False, "message": "清空日志失败"})
-
-
-@logs_bp.route("/api/delete/<int:log_id>")
-@login_required  # type: ignore
-@delete_required  # type: ignore
-def delete_log(log_id: int) -> Response:
-    """删除单个日志"""
-    try:
-        # 只允许管理员删除日志
-        if not current_user.is_admin:
-            return jsonify({"success": False, "message": "权限不足"})
-
-        log = Log.query.get_or_404(log_id)
-        db.session.delete(log)
-        db.session.commit()
-
-        return jsonify({"success": True, "message": "日志已删除"})
-    except Exception as e:
-        logging.error(f"删除日志失败: {e}")
-        return jsonify({"success": False, "message": "删除日志失败"})
+        logging.error(f"切换DEBUG日志状态失败: {e}")
+        return error_response("切换DEBUG日志状态失败", 500)

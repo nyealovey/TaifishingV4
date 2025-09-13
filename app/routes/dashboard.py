@@ -20,7 +20,7 @@ from app.models.user import User
 from app.utils.cache_manager import (
     cached,
 )
-from app.utils.enhanced_logger import log_api_request, log_operation
+from app.utils.structlog_config import log_info, log_error, log_warning, get_api_logger
 from app.utils.timezone import (
     CHINA_TZ,
     china_to_utc,
@@ -52,15 +52,12 @@ def index() -> str:
 
     # 记录操作日志
     duration = (time.time() - start_time) * 1000
-    log_operation(
-        "DASHBOARD_VIEW",
-        current_user.id,
-        {
-            "ip_address": request.remote_addr,
-            "user_agent": request.headers.get("User-Agent"),
-            "duration_ms": duration,
-        },
-    )
+    log_info("访问仪表板", 
+            module="dashboard",
+            user_id=current_user.id,
+            ip_address=request.remote_addr,
+            user_agent=request.headers.get("User-Agent"),
+            duration_ms=duration)
 
     if request.is_json:
         return jsonify(
@@ -91,14 +88,11 @@ def api_overview() -> "Response":
 
     # 记录API调用
     duration = (time.time() - start_time) * 1000
-    log_api_request(
-        "GET",
-        "/dashboard/api/overview",
-        200,
-        duration,
-        current_user.id,
-        request.remote_addr,
-    )
+    log_info("获取仪表板概览数据", 
+            module="dashboard",
+            user_id=current_user.id,
+            ip_address=request.remote_addr,
+            duration_ms=duration)
 
     return jsonify(overview)
 
@@ -116,14 +110,11 @@ def api_charts() -> "Response":
 
     # 记录API调用
     duration = (time.time() - start_time) * 1000
-    log_api_request(
-        "GET",
-        "/dashboard/api/charts",
-        200,
-        duration,
-        current_user.id,
-        request.remote_addr,
-    )
+    log_info("获取仪表板图表数据", 
+            module="dashboard",
+            user_id=current_user.id,
+            ip_address=request.remote_addr,
+            duration_ms=duration)
 
     return jsonify(charts)
 
@@ -147,14 +138,11 @@ def api_status() -> "Response":
 
     # 记录API调用
     duration = (time.time() - start_time) * 1000
-    log_api_request(
-        "GET",
-        "/dashboard/api/status",
-        200,
-        duration,
-        current_user.id,
-        request.remote_addr,
-    )
+    log_info("获取仪表板系统状态", 
+            module="dashboard",
+            user_id=current_user.id,
+            ip_address=request.remote_addr,
+            duration_ms=duration)
 
     return jsonify(status)
 
@@ -198,7 +186,7 @@ def get_system_overview() -> dict:
             "syncs": {"recent": recent_syncs},
         }
     except Exception as e:
-        logging.error(f"获取系统概览失败: {e}")
+        log_error(f"获取系统概览失败: {e}", module="dashboard")
         return {
             "users": {"total": 0, "active": 0},
             "instances": {"total": 0, "active": 0},
@@ -235,7 +223,7 @@ def get_chart_data(chart_type: str = "all") -> dict:
 
         return charts
     except Exception as e:
-        logging.error(f"获取图表数据失败: {e}")
+        log_error(f"获取图表数据失败: {e}", module="dashboard")
         return {}
 
 
@@ -269,7 +257,7 @@ def get_log_trend_data() -> dict:
 
         return trend_data
     except Exception as e:
-        logging.error(f"获取日志趋势数据失败: {e}")
+        log_error(f"获取日志趋势数据失败: {e}", module="dashboard")
         return []
 
 
@@ -285,7 +273,7 @@ def get_log_level_distribution() -> dict:
 
         return [{"level": stat.level, "count": stat.count} for stat in level_stats]
     except Exception as e:
-        logging.error(f"获取日志级别分布失败: {e}")
+        log_error(f"获取日志级别分布失败: {e}", module="dashboard")
         return []
 
 
@@ -300,7 +288,7 @@ def get_instance_type_distribution() -> dict:
 
         return [{"type": stat.db_type, "count": stat.count} for stat in type_stats]
     except Exception as e:
-        logging.error(f"获取实例类型分布失败: {e}")
+        log_error(f"获取实例类型分布失败: {e}", module="dashboard")
         return []
 
 
@@ -313,7 +301,7 @@ def get_task_status_distribution() -> dict:
 
         return [{"status": stat.last_status or "unknown", "count": stat.count} for stat in status_stats]
     except Exception as e:
-        logging.error(f"获取任务状态分布失败: {e}")
+        log_error(f"获取任务状态分布失败: {e}", module="dashboard")
         return []
 
 
@@ -332,7 +320,7 @@ def get_sync_trend_data() -> dict:
 
         return trend_data
     except Exception as e:
-        logging.error(f"获取同步趋势数据失败: {e}")
+        log_error(f"获取同步趋势数据失败: {e}", module="dashboard")
         return []
 
 
@@ -362,7 +350,7 @@ def get_system_status() -> dict:
             else:
                 redis_status = "error"
         except Exception as e:
-            logging.warning(f"Redis连接检查失败: {e}")
+            log_warning(f"Redis连接检查失败: {e}", module="dashboard")
             redis_status = "error"
 
         # 应用状态
@@ -390,7 +378,7 @@ def get_system_status() -> dict:
             "uptime": get_system_uptime(),
         }
     except Exception as e:
-        logging.error(f"获取系统状态失败: {e}")
+        log_error(f"获取系统状态失败: {e}", module="dashboard")
         return {
             "system": {
                 "cpu": 0,

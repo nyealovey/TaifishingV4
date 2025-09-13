@@ -13,13 +13,16 @@ from flask_login import current_user, login_required, login_user, logout_user
 
 from app import db
 from app.models.user import User
-from app.utils.enhanced_logger import log_operation
+from app.utils.structlog_config import get_auth_logger, log_info, log_warning, log_error
 from app.utils.rate_limiter import (
     password_reset_rate_limit,
 )
 
 # 创建蓝图
 auth_bp = Blueprint("auth", __name__)
+
+# 获取认证日志记录器
+auth_logger = get_auth_logger()
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
@@ -31,6 +34,9 @@ def login() -> "str | Response":
         password = data.get("password")
 
         if not username or not password:
+            auth_logger.warning("登录失败：用户名或密码为空", 
+                               username=username,
+                               ip_address=request.remote_addr)
             if request.is_json:
                 return jsonify({"error": "用户名和密码不能为空"}), 400
             flash("用户名和密码不能为空", "error")
@@ -45,15 +51,11 @@ def login() -> "str | Response":
                 login_user(user, remember=True)
 
                 # 记录登录日志
-                log_operation(
-                    "USER_LOGIN",
-                    user.id,
-                    {
-                        "username": user.username,
-                        "ip_address": request.remote_addr,
-                        "user_agent": request.headers.get("User-Agent"),
-                    },
-                )
+                auth_logger.info("用户登录成功", 
+                                user_id=user.id,
+                                username=user.username,
+                                ip_address=request.remote_addr,
+                                user_agent=request.headers.get("User-Agent"))
 
                 if request.is_json:
                     # API登录，返回JWT token
@@ -77,10 +79,17 @@ def login() -> "str | Response":
                 flash("登录成功！", "success")
                 next_page = request.args.get("next")
                 return redirect(next_page) if next_page else redirect(url_for("dashboard.index"))
+            auth_logger.warning("登录失败：账户已被禁用", 
+                               username=username,
+                               user_id=user.id,
+                               ip_address=request.remote_addr)
             if request.is_json:
                 return jsonify({"error": "账户已被禁用"}), 403
             flash("账户已被禁用", "error")
         else:
+            auth_logger.warning("登录失败：用户名或密码错误", 
+                               username=username,
+                               ip_address=request.remote_addr)
             if request.is_json:
                 return jsonify({"error": "用户名或密码错误"}), 401
             flash("用户名或密码错误", "error")
@@ -97,15 +106,11 @@ def login() -> "str | Response":
 def logout() -> "Response":
     """用户登出"""
     # 记录登出日志
-    log_operation(
-        "USER_LOGOUT",
-        current_user.id,
-        {
-            "username": current_user.username,
-            "ip_address": request.remote_addr,
-            "user_agent": request.headers.get("User-Agent"),
-        },
-    )
+    auth_logger.info("用户登出", 
+                     user_id=current_user.id,
+                     username=current_user.username,
+                     ip_address=request.remote_addr,
+                     user_agent=request.headers.get("User-Agent"))
 
     logout_user()
 

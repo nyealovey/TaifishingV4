@@ -24,6 +24,9 @@ from app.constants import SystemConstants
 # 加载环境变量
 load_dotenv()
 
+# 初始化基础日志记录器（在structlog配置之前）
+logger = logging.getLogger(__name__)
+
 # 设置Oracle Instant Client环境变量
 oracle_instant_client_path = os.getenv("DYLD_LIBRARY_PATH")
 if oracle_instant_client_path and os.path.exists(oracle_instant_client_path):
@@ -69,6 +72,10 @@ def create_app(config_name: str | None = None) -> Flask:
 
     # 配置日志
     configure_logging(app)
+    
+    # 配置统一日志系统
+    from app.utils.structlog_config import configure_structlog
+    configure_structlog(app)
 
     # 注册全局错误处理器
     from app.utils.error_handler import register_error_handlers
@@ -94,8 +101,8 @@ def create_app(config_name: str | None = None) -> Flask:
         context = ErrorContext(error)
         error_response = advanced_error_handler.handle_error(error, context)
 
-          # 根据错误类型返回适当的响应
-          status_code = error.code if hasattr(error, "code") else 500
+        # 根据错误类型返回适当的响应
+        status_code = error.code if hasattr(error, "code") else 500
 
         return jsonify(error_response), status_code
 
@@ -341,6 +348,7 @@ def register_blueprints(app: Flask) -> None:
     from app.routes.instances import instances_bp
     from app.routes.logs import logs_bp
     from app.routes.main import main_bp
+    from app.routes.unified_logs import unified_logs_bp
 
     # 注册蓝图
     app.register_blueprint(main_bp)

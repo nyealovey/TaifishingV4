@@ -32,6 +32,8 @@ dependencies = [
     "oracledb>=1.4.2",
     "pyodbc>=5.0.1",
     "flask-bcrypt>=1.0.1",
+    "loguru>=0.7.3",
+    "structlog>=25.4.0",
 ]
 
 [project.optional-dependencies]

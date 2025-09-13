@@ -12,6 +12,16 @@
                     <h2 class="mb-1">系统日志</h2>
                     <p class="text-muted mb-0">系统运行日志和错误日志</p>
                 </div>
+                <div>
+                    <a href="/logs/unified" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-chart-line me-1"></i>
+                        统一日志中心
+                    </a>
+                    <button type="button" class="btn btn-outline-info" onclick="refreshLogs()">
+                        <i class="fas fa-sync-alt me-1"></i>
+                        刷新日志
+                    </button>
+                </div>
             </div>
 
             <!-- 日志统计 -->
@@ -97,35 +107,29 @@
                                 <label for="module" class="form-label">模块</label>
                                 <select class="form-select" id="module" name="module">
                                     <option value="">全部模块</option>
-                                    {% for module_name in module_list %}
+                                    {% for module_name in modules %}
                                     <option value="{{ module_name }}" {% if module == module_name %}selected{% endif %}>{{ module_name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-3">
                                 <label for="start_date" class="form-label">开始日期</label>
-                                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date or '' }}">
+                                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-3">
                                 <label for="end_date" class="form-label">结束日期</label>
-                                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date or '' }}">
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">&nbsp;</label>
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="fas fa-search me-1"></i>搜索
-                                </button>
+                                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
                             </div>
                         </div>
-                        <div class="row g-3 mt-2">
-                            <div class="col-md-8">
-                                <label for="search" class="form-label">关键词</label>
-                                <input type="text" class="form-control" id="search" name="search" placeholder="搜索日志内容..." value="{{ search or '' }}">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">&nbsp;</label>
-                                <a href="{{ url_for('logs.index') }}" class="btn btn-outline-secondary w-100">
-                                    <i class="fas fa-times me-1"></i>清除筛选
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i>
+                                    筛选
+                                </button>
+                                <a href="{{ url_for('logs.index') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i>
+                                    清除
                                 </a>
                             </div>
                         </div>
@@ -135,164 +139,93 @@
 
             <!-- 日志列表 -->
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">日志列表</h5>
-                    <div>
-                        <a href="{{ url_for('logs.export_logs', level=level, module=module, start_date=start_date, end_date=end_date, search=search) }}" 
-                           class="btn btn-sm btn-outline-success">
-                            <i class="fas fa-download me-1"></i>导出CSV
-                        </a>
-                    </div>
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        日志列表
+                    </h5>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-body">
+                    {% if logs.items %}
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
                                 <tr>
-                                    <th>ID</th>
                                     <th>时间</th>
                                     <th>级别</th>
                                     <th>模块</th>
-                                    <th>来源</th>
-                                    <th>状态码</th>
                                     <th>消息</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
-                            <tbody id="logs-table-body">
-                                {% if merged_logs and merged_logs.items %}
-                                    {% for log in merged_logs.items %}
-                                    <tr>
-                                        <td>
-                                            <code class="text-primary">{{ log.id }}</code>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">{{ log.created_at | china_time }}</small>
-                                        </td>
-                                        <td>
-                                            <span class="badge 
-                                                {% if log.level == 'ERROR' or log.level == 'CRITICAL' %}bg-danger
-                                                {% elif log.level == 'WARNING' %}bg-warning
-                                                {% elif log.level == 'INFO' %}bg-info
-                                                {% else %}bg-secondary{% endif %}">
-                                                {{ log.level }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-primary">{{ log.module or 'system' }}</span>
-                                        </td>
-                                        <td>
-                                            {% if log.source %}
-                                                <span class="badge 
-                                                    {% if log.source == 'web_request' %}bg-success
-                                                    {% elif log.source == 'api_call' %}bg-info
-                                                    {% elif log.source == 'background_task' %}bg-warning
-                                                    {% elif log.source == 'scheduled_job' %}bg-secondary
-                                                    {% elif log.source == 'manual_operation' %}bg-primary
-                                                    {% else %}bg-light text-dark{% endif %}">
-                                                    {% if log.source == 'web_request' %}网页请求
-                                                    {% elif log.source == 'api_call' %}API调用
-                                                    {% elif log.source == 'background_task' %}后台任务
-                                                    {% elif log.source == 'scheduled_job' %}定时任务
-                                                    {% elif log.source == 'manual_operation' %}手动操作
-                                                    {% elif log.source == 'system_operation' %}系统操作
-                                                    {% else %}{{ log.source }}{% endif %}
-                                                </span>
-                                            {% else %}
-                                                <span class="text-muted">--</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if log.log_category == 'http_request' and log.status_code %}
-                                                <span class="badge 
-                                                    {% if log.status_code >= 500 %}bg-danger
-                                                    {% elif log.status_code >= 400 %}bg-warning
-                                                    {% elif log.status_code >= 300 %}bg-info
-                                                    {% else %}bg-success{% endif %}">
-                                                    {{ log.status_code }}
-                                                </span>
-                                            {% else %}
-                                                <span class="text-muted">--</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <div class="log-message" style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                                {% if log.log_category == 'http_request' %}
-                                                    <span class="badge bg-success me-1">HTTP</span>
-                                                    {{ log.message }}
-                                                {% else %}
-                                                    {{ log.message }}
-                                                    {% if log.log_type == 'operation' %}
-                                                        <small class="text-muted d-block">(操作日志)</small>
-                                                    {% elif log.log_type == 'system' %}
-                                                        <small class="text-muted d-block">(系统日志)</small>
-                                                    {% elif log.log_type == 'error' %}
-                                                        <small class="text-muted d-block">(错误日志)</small>
-                                                    {% elif log.log_type == 'security' %}
-                                                        <small class="text-muted d-block">(安全日志)</small>
-                                                    {% endif %}
-                                                {% endif %}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-info" 
-                                                    onclick="showLogDetailWithEvent({{ log.id }}, {{ log.is_merged|lower }}, this)" 
-                                                    data-log-id="{{ log.id }}"
-                                                    data-is-merged="{{ log.is_merged|lower }}"
-                                                    title="查看详情">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                {% else %}
-                                    <tr>
-                                        <td colspan="8" class="text-center text-muted py-4">
-                                            <i class="fas fa-inbox fa-2x mb-2"></i><br>
-                                            暂无日志记录
-                                        </td>
-                                    </tr>
-                                {% endif %}
+                            <tbody>
+                                {% for log in logs.items %}
+                                <tr>
+                                    <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if log.level == 'ERROR' %}danger{% elif log.level == 'WARNING' %}warning{% elif log.level == 'INFO' %}info{% else %}secondary{% endif %}">
+                                            {{ log.level }}
+                                        </span>
+                                    </td>
+                                    <td><code>{{ log.module }}</code></td>
+                                    <td class="text-truncate" style="max-width: 400px;" title="{{ log.message }}">{{ log.message }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewLog({{ log.id }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if current_user.has_permission('delete') %}
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteLog({{ log.id }})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
                             </tbody>
                         </table>
                     </div>
-                </div>
-                <div class="card-footer">
-                    <!-- 服务器端分页 -->
-                    {% if merged_logs %}
+
+                    <!-- 分页 -->
+                    {% if logs.pages > 1 %}
                     <nav aria-label="日志分页">
-                        <ul class="pagination pagination-sm mb-0 justify-content-center">
-                            {% if merged_logs.has_prev %}
-                                <li class="page-item">
-                                    <a class="page-link" href="{{ url_for('logs.index', page=merged_logs.prev_num, level=level, module=module, start_date=start_date, end_date=end_date, search=search) }}">上一页</a>
-                                </li>
+                        <ul class="pagination justify-content-center">
+                            {% if logs.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('logs.index', page=logs.prev_num, level=level, module=module, start_date=start_date, end_date=end_date) }}">上一页</a>
+                            </li>
                             {% endif %}
                             
-                            {% for page_num in merged_logs.iter_pages() %}
+                            {% for page_num in logs.iter_pages() %}
                                 {% if page_num %}
-                                    {% if page_num != merged_logs.page %}
-                                        <li class="page-item">
-                                            <a class="page-link" href="{{ url_for('logs.index', page=page_num, level=level, module=module, start_date=start_date, end_date=end_date, search=search) }}">{{ page_num }}</a>
-                                        </li>
+                                    {% if page_num != logs.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('logs.index', page=page_num, level=level, module=module, start_date=start_date, end_date=end_date) }}">{{ page_num }}</a>
+                                    </li>
                                     {% else %}
-                                        <li class="page-item active">
-                                            <span class="page-link">{{ page_num }}</span>
-                                        </li>
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
                                     {% endif %}
                                 {% else %}
-                                    <li class="page-item disabled">
-                                        <span class="page-link">...</span>
-                                    </li>
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
                                 {% endif %}
                             {% endfor %}
                             
-                            {% if merged_logs.has_next %}
-                                <li class="page-item">
-                                    <a class="page-link" href="{{ url_for('logs.index', page=merged_logs.next_num, level=level, module=module, start_date=start_date, end_date=end_date, search=search) }}">下一页</a>
-                                </li>
+                            {% if logs.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('logs.index', page=logs.next_num, level=level, module=module, start_date=start_date, end_date=end_date) }}">下一页</a>
+                            </li>
                             {% endif %}
                         </ul>
                     </nav>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>暂无日志数据</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -308,8 +241,10 @@
                 <h5 class="modal-title" id="logDetailModalLabel">日志详情</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="log-detail-content">
-                <!-- 日志详情内容将通过JavaScript动态生成 -->
+            <div class="modal-body">
+                <div id="logDetailContent">
+                    <!-- 日志详情内容将在这里显示 -->
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
@@ -317,425 +252,97 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
-let currentPage = 1;
-let totalPages = 1;
-
-// 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', function() {
-    loadLogStats();
-    
-    // 注意：数据已通过服务器端渲染，不需要调用 loadLogs()
-    // 筛选功能已改为表单提交方式
-    // 移除所有对 loadLogs() 的调用以避免错误
-});
-
-// 加载日志统计
-async function loadLogStats() {
-    try {
-        const response = await fetch('/logs/api/stats');
-        const data = await response.json();
-        
-        if (data.success) {
-            updateLogStats(data.stats);
-        }
-    } catch (error) {
-        console.error('加载日志统计失败:', error);
-    }
-}
-
-// 更新日志统计
-function updateLogStats(stats) {
-    document.getElementById('total-logs').textContent = stats.total_logs || 0;
-    document.getElementById('error-logs').textContent = stats.level_distribution?.ERROR || 0;
-    document.getElementById('warning-logs').textContent = stats.level_distribution?.WARNING || 0;
-    document.getElementById('info-logs').textContent = stats.level_distribution?.INFO || 0;
-}
-
-// 注意：loadLogs 函数已移除，因为现在使用服务器端渲染
-// 数据通过模板直接渲染，不需要JavaScript加载
-
-// 注意：updateLogsTable 函数已移除，因为现在使用服务器端渲染
-// 表格内容通过模板直接渲染
-
-// 注意：updatePagination 函数已移除，因为现在使用服务器端分页
-// 分页通过模板直接渲染
-
-// 显示日志详情（带事件对象）
-function showLogDetailWithEvent(logId, isMerged, buttonElement) {
-    console.log('showLogDetailWithEvent called:', {logId, isMerged, buttonElement});
-    
-    // 转换字符串为布尔值
-    const isMergedBool = isMerged === 'true' || isMerged === true;
-    
-    if (isMergedBool) {
-        // 通过AJAX获取合并信息
-        fetchMergedLogInfo(logId);
-    } else {
-        showLogDetail(logId, false);
-    }
-}
-
-// 获取合并日志信息
-async function fetchMergedLogInfo(logId) {
-    try {
-        console.log('正在获取合并日志信息，ID:', logId);
-        const response = await fetch(`/logs/api/merged-info/${logId}`);
-        const data = await response.json();
-        
-        if (data.success) {
-            console.log('获取到的合并信息:', data.merged_info);
-            showMergedLogDetail(logId, data.merged_info);
-        } else {
-            console.error('获取合并信息失败:', data.message);
-            showMergedLogDetail(logId, null);
-        }
-    } catch (error) {
-        console.error('获取合并信息失败:', error);
-        showMergedLogDetail(logId, null);
-    }
-}
-
-// 显示日志详情
-async function showLogDetail(logId, isMerged = false, event = null) {
-    try {
-        console.log('正在获取日志详情，ID:', logId, '是否合并:', isMerged);
-        
-        if (isMerged) {
-            // 从按钮的数据属性中获取合并信息
-            let button = null;
-            if (event) {
-                button = event.target.closest('button');
+// 查看日志详情
+function viewLog(logId) {
+    fetch(`/logs/api/log/${logId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const log = data.data;
+                document.getElementById('logDetailContent').innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>时间:</strong> ${log.timestamp}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>级别:</strong> <span class="badge bg-${log.level === 'ERROR' ? 'danger' : log.level === 'WARNING' ? 'warning' : 'info'}">${log.level}</span>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <strong>模块:</strong> <code>${log.module}</code>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>类型:</strong> ${log.log_type}
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <strong>消息:</strong>
+                            <div class="mt-1 p-2 bg-light rounded">
+                                <pre style="white-space: pre-wrap; word-wrap: break-word;">${log.message}</pre>
+                            </div>
+                        </div>
+                    </div>
+                    ${log.details ? `
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <strong>详细信息:</strong>
+                            <div class="mt-1 p-2 bg-light rounded">
+                                <pre style="white-space: pre-wrap; word-wrap: break-word;">${JSON.stringify(JSON.parse(log.details), null, 2)}</pre>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                `;
+                new bootstrap.Modal(document.getElementById('logDetailModal')).show();
             } else {
-                button = document.querySelector(`button[onclick*="showLogDetail(${logId}"]`);
+                showNotification('获取日志详情失败: ' + data.message, 'danger');
             }
-            
-            let mergedInfo = null;
-            if (button && button.dataset.mergedInfo) {
-                try {
-                    mergedInfo = JSON.parse(button.dataset.mergedInfo);
-                } catch (e) {
-                    console.error('解析合并信息失败:', e);
-                }
-            }
-            showMergedLogDetail(logId, mergedInfo);
-            return;
-        }
-        
-        const response = await fetch(`/logs/api/log/${logId}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
-                             document.querySelector('input[name="csrf_token"]')?.value
-            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('获取日志详情失败: ' + error.message, 'danger');
         });
-        
-        console.log('响应状态:', response.status);
-        console.log('响应头:', response.headers);
-        
-        if (!response.ok) {
-            if (response.status === 302 || response.status === 401) {
-                throw new Error('会话已过期，请重新登录');
+}
+
+// 删除日志
+function deleteLog(logId) {
+    if (confirm('确定要删除这条日志吗？')) {
+        fetch(`/logs/api/log/${logId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
             }
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('响应数据:', data);
-        
-        // 检查响应是否成功
-        if (!data.success) {
-            throw new Error(data.message || '获取日志详情失败');
-        }
-        
-        const log = data.log;
-        const detailContent = document.getElementById('log-detail-content');
-        
-        // 格式化时间显示
-        const timeDisplay = log.created_at ? 
-            new Date(log.created_at).toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'}) : 
-            log.timestamp;
-        
-        // 根据日志类型添加标识
-        let logTypeBadge = '';
-        if (log.log_type === 'operation') {
-            logTypeBadge = '<span class="badge bg-primary me-2">操作日志</span>';
-        } else if (log.log_type === 'system') {
-            logTypeBadge = '<span class="badge bg-info me-2">系统日志</span>';
-        } else if (log.log_type === 'error') {
-            logTypeBadge = '<span class="badge bg-danger me-2">错误日志</span>';
-        } else if (log.log_type === 'security') {
-            logTypeBadge = '<span class="badge bg-warning me-2">安全日志</span>';
-        }
-
-        // 来源字段显示
-        let sourceDisplay = '--';
-        if (log.source) {
-            const sourceMap = {
-                'web_request': '网页请求',
-                'api_call': 'API调用', 
-                'background_task': '后台任务',
-                'scheduled_job': '定时任务',
-                'manual_operation': '手动操作',
-                'system_operation': '系统操作'
-            };
-            sourceDisplay = sourceMap[log.source] || log.source;
-        }
-
-        detailContent.innerHTML = `
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>时间:</strong> ${timeDisplay}
-                    </div>
-                    <div class="col-md-6">
-                        <strong>级别:</strong> <span class="badge ${getLevelClass(log.level)}"><i class="${getLevelIcon(log.level)}"></i> ${log.level}</span>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>模块:</strong> ${log.module || '--'}
-                    </div>
-                    <div class="col-md-6">
-                        <strong>用户ID:</strong> ${log.user_id || '--'}
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>来源:</strong> ${sourceDisplay}
-                    </div>
-                    <div class="col-md-6">
-                        <strong>类型:</strong> ${logTypeBadge}
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-12">
-                        <strong>消息:</strong>
-                        <pre class="mt-2 p-3 bg-light">${log.message}</pre>
-                    </div>
-                </div>
-                ${log.details ? `
-                <hr>
-                <div class="row">
-                    <div class="col-12">
-                        <strong>详细信息:</strong>
-                        <pre class="mt-2 p-3 bg-light">${log.details}</pre>
-                    </div>
-                </div>
-                ` : ''}
-                ${log.ip_address ? `
-                <hr>
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>IP地址:</strong> ${log.ip_address}
-                    </div>
-                    <div class="col-md-6">
-                        <strong>用户代理:</strong> ${log.user_agent || '--'}
-                    </div>
-                </div>
-                ` : ''}
-        `;
-        
-        new bootstrap.Modal(document.getElementById('logDetailModal')).show();
-    } catch (error) {
-        console.error('加载日志详情失败:', error);
-        showNotification('加载日志详情失败: ' + error.message, 'error');
-    }
-}
-
-// 显示合并日志详情
-function showMergedLogDetail(logId, mergedInfo) {
-    console.log('showMergedLogDetail called:', {logId, mergedInfo});
-    const detailContent = document.getElementById('log-detail-content');
-    
-    if (mergedInfo && Object.keys(mergedInfo).length > 0) {
-        // 格式化时间显示
-        const formatTime = (timeStr) => {
-            if (!timeStr) return '未知';
-            try {
-                // 处理ISO格式时间字符串
-                let date;
-                if (timeStr.includes('T')) {
-                    // ISO格式: 2025-09-11T06:36:19.390721
-                    date = new Date(timeStr);
-                } else {
-                    // 其他格式
-                    date = new Date(timeStr);
-                }
-                
-                // 检查日期是否有效
-                if (isNaN(date.getTime())) {
-                    return timeStr;
-                }
-                
-                return date.toLocaleString('zh-CN', {timeZone: 'Asia/Shanghai'});
-            } catch (e) {
-                console.error('时间格式化错误:', e, '时间字符串:', timeStr);
-                return timeStr;
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('日志删除成功', 'success');
+                location.reload();
+            } else {
+                showNotification('删除日志失败: ' + data.message, 'danger');
             }
-        };
-        
-        detailContent.innerHTML = `
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle me-2"></i>
-                这是一个合并的HTTP请求日志，包含了请求开始和结束的信息。
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <strong>请求路径:</strong> ${mergedInfo.path || '未知'}
-                </div>
-                <div class="col-md-6">
-                    <strong>状态码:</strong> 
-                    <span class="badge ${mergedInfo.status_code && mergedInfo.status_code >= 400 ? 'bg-danger' : 'bg-success'}">
-                        ${mergedInfo.status_code || '未知'}
-                    </span>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <strong>请求方法:</strong> 
-                    <span class="badge bg-info">${mergedInfo.request_method || '未知'}</span>
-                </div>
-                <div class="col-md-6">
-                    <strong>用户:</strong> ${mergedInfo.user_info ? mergedInfo.user_info.username : '未知'}
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <strong>来源:</strong> 
-                    ${mergedInfo.source ? (() => {
-                        const sourceMap = {
-                            'web_request': '网页请求',
-                            'api_call': 'API调用', 
-                            'background_task': '后台任务',
-                            'scheduled_job': '定时任务',
-                            'manual_operation': '手动操作',
-                            'system_operation': '系统操作'
-                        };
-                        return sourceMap[mergedInfo.source] || mergedInfo.source;
-                    })() : '未知'}
-                </div>
-                <div class="col-md-6">
-                    <strong>模块:</strong> ${mergedInfo.module || '未知'}
-                </div>
-            </div>
-            <hr>
-            <div class="row">
-                <div class="col-md-6">
-                    <strong>开始时间:</strong> 
-                    ${mergedInfo.start_time ? formatTime(mergedInfo.start_time) : '<span class="text-muted">未知</span>'}
-                </div>
-                <div class="col-md-6">
-                    <strong>结束时间:</strong> 
-                    ${mergedInfo.end_time ? formatTime(mergedInfo.end_time) : '<span class="text-muted">未知</span>'}
-                </div>
-            </div>
-            <hr>
-            <div class="row">
-                <div class="col-md-6">
-                    <strong>持续时间:</strong> 
-                    ${mergedInfo.duration ? mergedInfo.duration + 'ms' : '<span class="text-muted">未知</span>'}
-                </div>
-                <div class="col-md-6">
-                    <strong>日志级别:</strong> 
-                    <span class="badge ${getLevelClass(mergedInfo.log_level)}">${mergedInfo.log_level}</span>
-                </div>
-            </div>
-            <hr>
-            <div class="row">
-                <div class="col-12">
-                    <strong>响应信息:</strong>
-                    <div class="mt-2">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <strong>响应大小:</strong> ${mergedInfo.response_size || '未知'} bytes
-                            </div>
-                            <div class="col-md-6">
-                                <strong>响应时间:</strong> ${mergedInfo.duration || '未知'}ms
-                            </div>
-                        </div>
-                        ${mergedInfo.request_headers ? `
-                        <div class="mt-2">
-                            <strong>请求头:</strong>
-                            <pre class="mt-1 p-2 bg-light small">${JSON.stringify(mergedInfo.request_headers, null, 2)}</pre>
-                        </div>
-                        ` : ''}
-                        ${mergedInfo.response_headers ? `
-                        <div class="mt-2">
-                            <strong>响应头:</strong>
-                            <pre class="mt-1 p-2 bg-light small">${JSON.stringify(mergedInfo.response_headers, null, 2)}</pre>
-                        </div>
-                        ` : ''}
-                        ${mergedInfo.response_body && mergedInfo.response_body.trim() && mergedInfo.response_body !== '{' ? `
-                        <div class="mt-2">
-                            <strong>响应内容:</strong>
-                            <pre class="mt-1 p-2 bg-light small">${mergedInfo.response_body}</pre>
-                        </div>
-                        ` : ''}
-                    </div>
-                </div>
-            </div>
-        `;
-    } else {
-        console.log('mergedInfo为空或无效:', mergedInfo);
-        detailContent.innerHTML = `
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                无法获取合并日志的详细信息。调试信息：${JSON.stringify(mergedInfo)}
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <strong>说明:</strong>
-                    <p class="mt-2">合并日志将同一个请求的开始和结束日志合并显示，级别以最严重的为准。</p>
-                    <p>合并后的日志显示请求路径、状态码和持续时间（如果有）。</p>
-                </div>
-            </div>
-        `;
-    }
-    
-    new bootstrap.Modal(document.getElementById('logDetailModal')).show();
-}
-
-// 获取日志级别样式
-function getLevelClass(level) {
-    switch(level) {
-        case 'ERROR': return 'bg-danger';
-        case 'WARNING': return 'bg-warning';
-        case 'INFO': return 'bg-info';
-        case 'DEBUG': return 'bg-secondary';
-        default: return 'bg-secondary';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('删除日志失败: ' + error.message, 'danger');
+        });
     }
 }
 
-// 获取日志级别图标
-function getLevelIcon(level) {
-    switch(level) {
-        case 'ERROR': return 'fas fa-times-circle';
-        case 'WARNING': return 'fas fa-exclamation-triangle';
-        case 'INFO': return 'fas fa-info-circle';
-        case 'DEBUG': return 'fas fa-bug';
-        default: return 'fas fa-circle';
-    }
+// 刷新日志
+function refreshLogs() {
+    location.reload();
 }
-
-
 
 // 显示通知
 function showNotification(message, type = 'info') {
-    // 简单的通知实现
-    const alertClass = type === 'error' ? 'alert-danger' : 
-                     type === 'success' ? 'alert-success' : 
-                     type === 'warning' ? 'alert-warning' : 'alert-info';
-    
     const notification = document.createElement('div');
-    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
     notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
     notification.innerHTML = `
         ${message}
@@ -744,7 +351,7 @@ function showNotification(message, type = 'info') {
     
     document.body.appendChild(notification);
     
-    // 3秒后自动移除
+    // 自动隐藏
     setTimeout(() => {
         if (notification.parentNode) {
             notification.parentNode.removeChild(notification);

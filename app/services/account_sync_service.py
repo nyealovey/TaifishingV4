@@ -3,8 +3,6 @@
 统一处理手动同步和定时任务的账户同步逻辑
 """
 
-import logging
-
 # 可选导入数据库驱动
 try:
     import psycopg
@@ -26,7 +24,7 @@ from app import db
 from app.models import Instance
 from app.models.account import Account
 from app.services.database_filter_manager import database_filter_manager
-from app.utils.enhanced_logger import log_sync_error, sync_logger
+from app.utils.structlog_config import get_sync_logger, log_error, log_info, log_warning
 from app.utils.timezone import now
 
 
@@ -34,7 +32,7 @@ class AccountSyncService:
     """账户同步服务 - 统一处理所有账户同步逻辑"""
 
     def __init__(self) -> None:
-        self.logger = logging.getLogger(__name__)
+        self.sync_logger = get_sync_logger()
 
     def sync_accounts(self, instance: Instance, sync_type: str = "batch") -> dict[str, Any]:
         """
@@ -48,18 +46,25 @@ class AccountSyncService:
             Dict: 同步结果
         """
         try:
-            sync_logger.info(f"开始账户同步: {instance.name} ({instance.db_type})", "account_sync_service")
+            self.sync_logger.info("开始账户同步", 
+                                 instance_name=instance.name, 
+                                 db_type=instance.db_type,
+                                 sync_type=sync_type)
 
             # 获取数据库连接
             conn = self._get_connection(instance)
             if not conn:
                 error_msg = "无法获取数据库连接"
-                sync_logger.error(error_msg, "account_sync_service", f"实例: {instance.name}, 类型: {instance.db_type}")
+                self.sync_logger.error("无法获取数据库连接", 
+                                      instance_name=instance.name, 
+                                      db_type=instance.db_type)
                 return {"success": False, "error": error_msg}
 
             # 记录同步前的账户数量
             before_count = Account.query.filter_by(instance_id=instance.id).count()
-            sync_logger.info(f"同步前账户数量: {before_count}", "account_sync_service", f"实例: {instance.name}")
+            self.sync_logger.info("同步前账户统计", 
+                                 instance_name=instance.name, 
+                                 before_count=before_count)
 
             # 获取同步前的账户快照
             self._get_account_snapshot(instance)
@@ -70,21 +75,27 @@ class AccountSyncService:
             modified_count = 0
 
             # 根据数据库类型执行同步
-            sync_logger.info(f"开始同步 {instance.db_type} 数据库账户 - 实例: {instance.name}", "account_sync_service")
+            self.sync_logger.info("开始数据库账户同步", 
+                                 instance_name=instance.name, 
+                                 db_type=instance.db_type)
 
             if instance.db_type == "mysql":
                 result = self._sync_mysql_accounts(instance, conn)
             elif instance.db_type == "postgresql":
-                sync_logger.info("调用PostgreSQL账户同步函数...", "account_sync_service")
+                self.sync_logger.info("调用PostgreSQL账户同步函数", instance_name=instance.name)
                 result = self._sync_postgresql_accounts(instance, conn)
-                sync_logger.info(f"PostgreSQL同步结果: {result}", "account_sync_service")
+                self.sync_logger.info("PostgreSQL同步完成", 
+                                     instance_name=instance.name,
+                                     synced_count=result.get('synced_count', 0))
             elif instance.db_type == "sqlserver":
                 result = self._sync_sqlserver_accounts(instance, conn)
             elif instance.db_type == "oracle":
                 result = self._sync_oracle_accounts(instance, conn)
             else:
                 error_msg = f"不支持的数据库类型: {instance.db_type}"
-                sync_logger.warning(error_msg, "account_sync_service", f"实例: {instance.name}")
+                self.sync_logger.warning("不支持的数据库类型", 
+                                        instance_name=instance.name, 
+                                        db_type=instance.db_type)
                 return {
                     "success": False,
                     "error": error_msg,
@@ -138,12 +149,11 @@ class AccountSyncService:
 
         except Exception as e:
             # 记录详细的错误日志
-            log_sync_error(
-                "账户同步",
-                e,
-                "account_sync_service",
-                f"实例: {instance.name}, 类型: {instance.db_type}, 同步类型: {sync_type}",
-            )
+            self.sync_logger.error("账户同步失败", 
+                                  exception=e,
+                                  instance_name=instance.name, 
+                                  db_type=instance.db_type,
+                                  sync_type=sync_type)
 
             # 创建失败的同步报告记录（定时任务跳过单个实例记录，只创建聚合记录）
             if sync_type != "task":

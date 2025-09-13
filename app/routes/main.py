@@ -6,7 +6,7 @@ import psutil
 from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 from flask_login import login_required
 
-from app.utils.enhanced_logger import log_api_request
+from app.utils.structlog_config import log_info
 from app.utils.timezone import get_china_time
 
 # 创建蓝图
@@ -85,7 +85,10 @@ def api_health() -> "Response":
     import time
 
     duration = (time.time() - start_time) * 1000
-    log_api_request("GET", "/api/health", 200, duration, None, request.remote_addr)
+    log_info("健康检查API调用", 
+            module="main",
+            ip_address=request.remote_addr,
+            duration_ms=duration)
 
     return jsonify(result)
 

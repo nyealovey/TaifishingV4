@@ -2,7 +2,6 @@
 泰摸鱼吧 - 数据库连接管理服务
 """
 
-import logging
 from typing import Any
 
 from app import db
@@ -12,7 +11,7 @@ from app.services.connection_factory import ConnectionFactory
 from app.services.database_filter_manager import database_filter_manager
 from app.services.permission_query_factory import PermissionQueryFactory
 from app.utils.database_type_utils import DatabaseTypeUtils
-from app.utils.enhanced_logger import db_logger, log_database_error, log_error, log_operation
+from app.utils.structlog_config import get_db_logger, log_error, log_info, log_warning
 
 
 class DatabaseService:
@@ -20,6 +19,7 @@ class DatabaseService:
 
     def __init__(self) -> None:
         self.connections = {}
+        self.db_logger = get_db_logger()
 
     def test_connection(self, instance: Instance) -> dict[str, Any]:
         """
@@ -32,28 +32,33 @@ class DatabaseService:
             Dict: 测试结果
         """
         try:
-            db_logger.info(f"开始测试数据库连接: {instance.name} ({instance.db_type})", "database_service")
+            self.db_logger.info("开始测试数据库连接", 
+                               instance_name=instance.name, 
+                               db_type=instance.db_type)
 
             # 使用连接工厂测试连接
             result = ConnectionFactory.test_connection(instance)
 
             if result.get("success"):
-                db_logger.info(f"数据库连接测试成功: {instance.name}", "database_service")
+                self.db_logger.info("数据库连接测试成功", instance_name=instance.name)
                 # 更新最后连接时间
                 from app.utils.timezone import now
 
                 instance.last_connected = now()
                 db.session.commit()
             else:
-                db_logger.warning(f"数据库连接测试失败: {instance.name} - {result.get('error')}", "database_service")
+                self.db_logger.warning("数据库连接测试失败", 
+                                      instance_name=instance.name, 
+                                      error=result.get('error'))
 
             return result
 
         except Exception as e:
             error_msg = f"连接测试失败: {str(e)}"
-            log_database_error(
-                "test_connection", e, "database_service", f"实例: {instance.name}, 类型: {instance.db_type}"
-            )
+            self.db_logger.error("数据库连接测试异常", 
+                                exception=e, 
+                                instance_name=instance.name, 
+                                db_type=instance.db_type)
             return {"success": False, "error": error_msg}
 
     def sync_accounts(self, instance: Instance) -> dict[str, Any]:
@@ -70,9 +75,14 @@ class DatabaseService:
             from app import db
             from app.models.account import Account
 
+            self.db_logger.info("开始同步账户", 
+                               instance_name=instance.name, 
+                               db_type=instance.db_type)
+
             # 获取数据库连接
             conn = self.get_connection(instance)
             if not conn:
+                self.db_logger.error("无法获取数据库连接", instance_name=instance.name)
                 return {"success": False, "error": "无法获取数据库连接"}
 
             # 获取数据库版本信息
@@ -83,6 +93,9 @@ class DatabaseService:
 
             # 记录同步前的账户数量
             before_count = Account.query.filter_by(instance_id=instance.id).count()
+            self.db_logger.info("同步前账户统计", 
+                               instance_name=instance.name, 
+                               before_count=before_count)
 
             # 获取同步前的账户快照
             before_accounts = {}
@@ -147,6 +160,16 @@ class DatabaseService:
             net_change = after_count - before_count
             total_operations = synced_count
 
+            self.db_logger.info("账户同步完成", 
+                               instance_name=instance.name,
+                               synced_count=synced_count,
+                               added_count=added_count,
+                               removed_count=removed_count,
+                               modified_count=modified_count,
+                               before_count=before_count,
+                               after_count=after_count,
+                               net_change=net_change)
+
             # 创建同步报告记录
             from app.models.sync_data import SyncData
 
@@ -189,6 +212,11 @@ class DatabaseService:
                 },
             }
         except Exception as e:
+            self.db_logger.error("账户同步失败", 
+                                exception=e,
+                                instance_name=instance.name,
+                                db_type=instance.db_type)
+            
             # 创建失败的同步报告记录
             from app.models.sync_data import SyncData
 
@@ -875,14 +903,14 @@ class DatabaseService:
 
             connection_obj = ConnectionFactory.create_connection(instance)
             if not connection_obj:
-                log_error(f"不支持的数据库类型: {instance.db_type}")
+                log_error(f"不支持的数据库类型: {instance.db_type}", module="database")
                 return None
 
             # 建立连接
             if connection_obj.connect():
                 conn = connection_obj.connection
             else:
-                log_error(f"无法建立{instance.db_type}连接")
+                log_error(f"无法建立{instance.db_type}连接", module="database")
                 return None
 
             if conn:
@@ -900,7 +928,7 @@ class DatabaseService:
             return conn
 
         except Exception as e:
-            log_error(e, context={"instance_id": instance.id, "instance_name": instance.name})
+            log_error(e, module="database", context={"instance_id": instance.id, "instance_name": instance.name})
             return None
 
     def get_database_version(self, instance: Instance, conn: "Any") -> str | None:

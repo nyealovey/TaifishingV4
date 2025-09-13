@@ -11,7 +11,7 @@ from app import db
 from app.models.credential import Credential
 from app.models.instance import Instance
 from app.utils.decorators import create_required, delete_required, update_required, view_required
-from app.utils.enhanced_logger import log_operation
+from app.utils.structlog_config import log_info, log_error, log_warning
 from app.utils.security import (
     sanitize_form_data,
     validate_credential_type,
@@ -182,16 +182,13 @@ def create() -> "str | Response":
             db.session.commit()
 
             # 记录操作日志
-            log_operation(
-                "CREATE_CREDENTIAL",
-                current_user.id,
-                {
-                    "credential_id": credential.id,
-                    "credential_name": credential.name,
-                    "credential_type": credential.credential_type,
-                    "db_type": credential.db_type,
-                },
-            )
+            log_info("创建数据库凭据", 
+                    module="credentials",
+                    user_id=current_user.id,
+                    credential_id=credential.id,
+                    credential_name=credential.name,
+                    credential_type=credential.credential_type,
+                    db_type=credential.db_type)
 
             if request.is_json:
                 return (
@@ -204,7 +201,7 @@ def create() -> "str | Response":
 
         except Exception as e:
             db.session.rollback()
-            logging.error(f"创建凭据失败: {e}", exc_info=True)
+            log_error(f"创建凭据失败: {e}", module="credentials", exc_info=True)
 
             # 根据错误类型提供更具体的错误信息
             if "UNIQUE constraint failed" in str(e):
@@ -337,7 +334,7 @@ def edit(credential_id: int) -> "str | Response":
 
         except Exception as e:
             db.session.rollback()
-            logging.error(f"更新凭据失败: {e}", exc_info=True)
+            log_error(f"更新凭据失败: {e}", module="credentials", exc_info=True)
 
             # 根据错误类型提供更具体的错误信息
             if "UNIQUE constraint failed" in str(e):
@@ -373,15 +370,12 @@ def toggle(credential_id: int) -> "Response":
         db.session.commit()
 
         # 记录操作日志
-        log_operation(
-            "TOGGLE_CREDENTIAL",
-            current_user.id,
-            {
-                "credential_id": credential.id,
-                "credential_name": credential.name,
-                "is_active": is_active,
-            },
-        )
+        log_info("切换凭据状态", 
+                module="credentials",
+                user_id=current_user.id,
+                credential_id=credential.id,
+                credential_name=credential.name,
+                is_active=is_active)
 
         action = "启用" if is_active else "禁用"
         message = f"凭据{action}成功"
@@ -394,7 +388,7 @@ def toggle(credential_id: int) -> "Response":
 
     except Exception as e:
         db.session.rollback()
-        logging.error(f"切换凭据状态失败: {e}", exc_info=True)
+        log_error(f"切换凭据状态失败: {e}", module="credentials", exc_info=True)
 
         error_msg = f"切换凭据状态失败: {str(e)}"
 
@@ -424,7 +418,7 @@ def delete(credential_id: int) -> "Response":
 
     except Exception as e:
         db.session.rollback()
-        logging.error(f"删除凭据失败: {e}")
+        log_error(f"删除凭据失败: {e}", module="credentials")
 
         if request.is_json:
             return jsonify({"error": "删除凭据失败，请重试"}), 500
@@ -454,7 +448,7 @@ def test_credential(credential_id: int) -> "Response":
         flash("凭据测试成功！", "success")
 
     except Exception as e:
-        logging.error(f"测试凭据失败: {e}")
+        log_error(f"测试凭据失败: {e}", module="credentials")
 
         if request.is_json:
             return jsonify({"error": "凭据测试失败，请重试"}), 500

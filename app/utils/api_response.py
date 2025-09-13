@@ -42,3 +42,14 @@ class APIResponse:
         if data is not None:
             response["data"] = data
         return jsonify(response), code
+
+
+# 便捷函数
+def success_response(data=None, message="操作成功"):
+    """成功响应便捷函数"""
+    return APIResponse.success(data, message)
+
+
+def error_response(message="操作失败", code=400, data=None):
+    """错误响应便捷函数"""
+    return APIResponse.error(message, code, data)

@@ -13,7 +13,7 @@ from app.models.instance import Instance
 from app.models.sync_data import SyncData
 from app.services.database_service import DatabaseService
 from app.utils.decorators import update_required, view_required
-from app.utils.enhanced_logger import log_api_error
+from app.utils.structlog_config import log_error
 
 # 创建蓝图
 account_list_bp = Blueprint("account_list", __name__)
@@ -344,12 +344,11 @@ def sync_accounts(instance_id: int) -> "Response":
 
     except Exception as e:
         # 记录详细的错误日志
-        log_api_error(
-            "sync_accounts",
-            e,
-            "account_list",
-            f"实例ID: {instance_id}, 用户: {current_user.id if current_user else 'unknown'}",
-        )
+        log_error("同步账户失败", 
+                 module="account_list",
+                 instance_id=instance_id,
+                 user_id=current_user.id if current_user else 'unknown',
+                 error=str(e))
 
         # 记录同步失败
         sync_record = SyncData(
