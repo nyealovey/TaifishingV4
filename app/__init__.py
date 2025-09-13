@@ -8,6 +8,7 @@ import os
 from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
+from typing import Union
 from flask import Flask, jsonify
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
@@ -279,7 +280,7 @@ def initialize_extensions(app: Flask) -> None:
 
     # 用户加载器
     @login_manager.user_loader
-    def load_user(user_id: str) -> User | None:
+    def load_user(user_id: str) -> "User | None":
         from app.models.user import User
 
         return User.query.get(int(user_id))
@@ -428,17 +429,17 @@ def configure_template_filters(app: Flask) -> None:
     from app.utils.timezone import format_china_time
 
     @app.template_filter("china_time")
-    def china_time_filter(dt: str | datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
+    def china_time_filter(dt: Union[str, "datetime"], format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
         """东八区时间格式化过滤器"""
         return format_china_time(dt, format_str)
 
     @app.template_filter("china_date")
-    def china_date_filter(dt: str | datetime) -> str:
+    def china_date_filter(dt: Union[str, "datetime"]) -> str:
         """东八区日期格式化过滤器"""
         return format_china_time(dt, "%Y-%m-%d")
 
     @app.template_filter("china_datetime")
-    def china_datetime_filter(dt: str | datetime) -> str:
+    def china_datetime_filter(dt: Union[str, "datetime"]) -> str:
         """东八区日期时间格式化过滤器"""
         return format_china_time(dt, "%Y-%m-%d %H:%M:%S")
 
