@@ -227,17 +227,13 @@ def log_exception(
         enhanced_logger.error(message, module, exception=exception)
 
 
-def log_database_error(
-    operation: str, error: Exception, module: str | None = None, details: str | None = None
-) -> None:
+def log_database_error(operation: str, error: Exception, module: str | None = None, details: str | None = None) -> None:
     """记录数据库错误的便捷函数"""
     message = f"数据库操作失败: {operation}"
     db_logger.database(message, module, details, error)
 
 
-def log_sync_error(
-    operation: str, error: Exception, module: str | None = None, details: str | None = None
-) -> None:
+def log_sync_error(operation: str, error: Exception, module: str | None = None, details: str | None = None) -> None:
     """记录同步错误的便捷函数"""
     message = f"同步操作失败: {operation}"
     sync_logger.error(message, module, details, error)
