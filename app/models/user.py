@@ -88,7 +88,7 @@ class User(UserMixin, db.Model):
         self.last_login = now()
         db.session.commit()
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         转换为字典
 
@@ -115,5 +115,5 @@ class User(UserMixin, db.Model):
             print("✅ 默认管理员用户已创建: admin/Admin123")
         return admin
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<User {self.username}>"

@@ -23,7 +23,7 @@ class AccountChange(db.Model):
     sync_data = db.relationship("SyncData", backref="account_changes")
     instance = db.relationship("Instance", backref="account_changes")
 
-    def __init__(self, sync_data_id, instance_id, change_type, account_data):
+    def __init__(self, sync_data_id: int, instance_id: int, change_type: str, account_data: dict) -> None:
         """
         初始化账户变化记录
 
@@ -38,7 +38,7 @@ class AccountChange(db.Model):
         self.change_type = change_type
         self.account_data = account_data
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         转换为字典
 
@@ -56,7 +56,7 @@ class AccountChange(db.Model):
         }
 
     @staticmethod
-    def get_changes_by_sync(sync_data_id):
+    def get_changes_by_sync(sync_data_id: int) -> list:
         """
         获取指定同步的账户变化
 
@@ -69,7 +69,7 @@ class AccountChange(db.Model):
         return AccountChange.query.filter_by(sync_data_id=sync_data_id).all()
 
     @staticmethod
-    def get_changes_by_instance(instance_id, limit=100):
+    def get_changes_by_instance(instance_id: int, limit: int = 100) -> list:
         """
         获取指定实例的账户变化历史
 
@@ -87,5 +87,5 @@ class AccountChange(db.Model):
             .all()
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<AccountChange {self.change_type} for account {self.account_data.get('username', 'Unknown')}>"

@@ -31,10 +31,10 @@ class PermissionConfig(db.Model):
         db.Index("idx_permission_config_category", "category"),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<PermissionConfig {self.db_type}.{self.category}.{self.permission_name}>"
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """转换为字典"""
         return {
             "id": self.id,

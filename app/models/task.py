@@ -69,7 +69,7 @@ class Task(db.Model):
         self.is_active = is_active
         self.is_builtin = is_builtin
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         转换为字典格式
 
@@ -133,5 +133,5 @@ class Task(db.Model):
 
         return Instance.query.filter_by(db_type=self.db_type, is_active=True).all()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Task {self.name}>"

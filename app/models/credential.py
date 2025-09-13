@@ -128,7 +128,7 @@ class Credential(db.Model):
         # 如果都不是，可能是明文密码（不安全）
         return self.password
 
-    def to_dict(self, include_password=False):
+    def to_dict(self, include_password: bool = False) -> dict:
         """
         转换为字典
 
@@ -184,7 +184,7 @@ class Credential(db.Model):
         """根据数据库类型获取凭据"""
         return Credential.query.filter_by(db_type=db_type, deleted_at=None).all()
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         转换为字典格式
 
@@ -205,5 +205,5 @@ class Credential(db.Model):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Credential {self.name}>"

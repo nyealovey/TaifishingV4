@@ -44,10 +44,10 @@ class Account(db.Model):
 
     # 关联关系 - 注意：backref在Instance模型中定义
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Account {self.username}@{self.instance.name if self.instance else 'Unknown'}>"
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """转换为字典"""
         import json
 

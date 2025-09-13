@@ -81,7 +81,7 @@ class SyncData(db.Model):
         """
         return [self.id]
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         转换为字典
 
@@ -123,5 +123,5 @@ class SyncData(db.Model):
             query = query.filter_by(sync_type=sync_type)
         return query.order_by(SyncData.sync_time.desc()).first()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<SyncData {self.sync_type} for instance {self.instance_id}>"

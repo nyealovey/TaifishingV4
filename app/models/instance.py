@@ -172,7 +172,7 @@ class Instance(db.Model):
         except Exception as e:
             return {"status": "error", "message": f"Oracle连接失败: {str(e)}"}
 
-    def to_dict(self, include_password=False):
+    def to_dict(self, include_password: bool = False) -> dict:
         """
         转换为字典格式
 
@@ -262,5 +262,5 @@ class Instance(db.Model):
             ("testing", "测试环境"),
         ]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Instance {self.name}>"

@@ -32,7 +32,7 @@ class DatabaseTypeConfig(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, comment="创建时间")
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, comment="更新时间")
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<DatabaseTypeConfig {self.name}>"
 
     @property

@@ -63,7 +63,7 @@ class Log(db.Model):
         self.user_agent = user_agent
         self.source = source
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         转换为字典格式
 
@@ -239,5 +239,5 @@ class Log(db.Model):
         """获取错误日志"""
         return Log.query.filter(Log.level.in_(["ERROR", "CRITICAL"])).order_by(Log.created_at.desc()).limit(limit).all()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Log {self.level}:{self.message[:50]}>"

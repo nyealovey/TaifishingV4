@@ -38,10 +38,10 @@ class AccountClassification(db.Model):
         cascade="all, delete-orphan",
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<AccountClassification {self.name}>"
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """转换为字典"""
         return {
             "id": self.id,
@@ -73,10 +73,10 @@ class ClassificationRule(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<ClassificationRule {self.rule_name} for {self.db_type}>"
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """转换为字典"""
         return {
             "id": self.id,
@@ -89,14 +89,14 @@ class ClassificationRule(db.Model):
             "updated_at": self.updated_at.isoformat(),
         }
 
-    def get_rule_expression(self):
+    def get_rule_expression(self) -> dict:
         """获取规则表达式（解析JSON）"""
         try:
             return json.loads(self.rule_expression)
         except (json.JSONDecodeError, TypeError):
             return {}
 
-    def set_rule_expression(self, expression):
+    def set_rule_expression(self, expression: dict) -> None:
         """设置规则表达式（保存为JSON）"""
         self.rule_expression = json.dumps(expression, ensure_ascii=False)
 
@@ -120,10 +120,10 @@ class AccountClassificationAssignment(db.Model):
     # 唯一约束：一个账户只能有一个活跃的分类分配
     __table_args__ = (db.UniqueConstraint("account_id", "classification_id", name="unique_account_classification"),)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<AccountClassificationAssignment {self.account.username} -> {self.classification.name}>"
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """转换为字典"""
         return {
             "id": self.id,
