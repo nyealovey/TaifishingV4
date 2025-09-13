@@ -12,7 +12,7 @@
     .job-card.active { border-color: #28a745; }
     .job-card.paused { border-color: #ffc107; }
     .job-card.error { border-color: #dc3545; }
-    
+
     .job-status {
         padding: .25rem .5rem;
         border-radius: .25rem;
@@ -22,7 +22,7 @@
     .status-active { background-color: #28a745; color: white; }
     .status-paused { background-color: #ffc107; color: black; }
     .status-error { background-color: #dc3545; color: white; }
-    
+
     .trigger-info {
         font-family: 'Courier New', monospace;
         font-size: .875rem;
@@ -30,7 +30,7 @@
         padding: .5rem;
         border-radius: .25rem;
     }
-    
+
     .btn-group-vertical .btn {
         margin-bottom: .25rem;
     }
@@ -112,12 +112,12 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="editJobFunc" class="form-label">任务函数</label>
                         <input type="text" class="form-control" id="editJobFunc" readonly>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">触发器类型</label>
                         <div class="form-check">
@@ -139,7 +139,7 @@
                             </label>
                         </div>
                     </div>
-                    
+
                     <!-- Cron触发器配置 -->
                     <div id="editCronConfig" class="edit-trigger-config" style="display: none;">
                         <h6>Cron配置</h6>
@@ -162,7 +162,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- 间隔触发器配置 -->
                     <div id="editIntervalConfig" class="edit-trigger-config">
                         <h6>间隔配置</h6>
@@ -185,7 +185,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- 日期触发器配置 -->
                     <div id="editDateConfig" class="edit-trigger-config" style="display: none;">
                         <h6>执行时间</h6>
@@ -209,19 +209,19 @@
 <script>
 $(document).ready(function() {
     loadJobs();
-    
+
     // 触发器类型切换
     $('input[name="triggerType"]').change(function() {
         $('.trigger-config').hide();
         $('#' + $(this).val() + 'Config').show();
     });
-    
+
     // 编辑模态框触发器类型切换
     $('input[name="editTriggerType"]').change(function() {
         $('.edit-trigger-config').hide();
         $('#edit' + $(this).val().charAt(0).toUpperCase() + $(this).val().slice(1) + 'Config').show();
     });
-    
+
     // 设置默认日期时间
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -232,7 +232,7 @@ function loadJobs() {
     $('#loadingRow').show();
     $('#jobsContainer').empty();
     $('#emptyRow').hide();
-    
+
     $.ajax({
         url: '{{ url_for("scheduler.get_jobs") }}',
         method: 'GET',
@@ -266,7 +266,7 @@ function displayJobs(jobs) {
         $('#emptyRow').show();
         return;
     }
-    
+
     jobs.forEach(job => {
         const jobCard = createJobCard(job);
         $('#jobsContainer').append(jobCard);
@@ -278,25 +278,25 @@ function createJobCard(job) {
     const status = job.status || (job.next_run_time ? 'active' : 'paused');
     const statusText = status === 'active' ? '运行中' : '已暂停';
     const isPaused = job.is_paused || status === 'paused';
-    
+
     // 定义内置任务列表
     const builtinTasks = ['sync_accounts', 'cleanup_logs'];
     const isBuiltin = job.is_builtin || builtinTasks.includes(job.id);
-    
+
     // 检查用户权限（从模板中获取）
     const isAdmin = {{ 'true' if current_user.is_admin() else 'false' }};
-    
+
     // 为内置任务添加特殊标识
     const builtinBadge = isBuiltin ? '<span class="badge bg-info ms-2">内置任务</span>' : '';
-    
+
     // 状态标识
-    const statusBadge = isPaused ? 
-        '<span class="badge bg-warning ms-2">已禁用</span>' : 
+    const statusBadge = isPaused ?
+        '<span class="badge bg-warning ms-2">已禁用</span>' :
         '<span class="badge bg-success ms-2">已启用</span>';
-    
+
     // 根据用户权限和任务状态生成不同的按钮
     let actionButtons = '';
-    
+
     if (isAdmin) {
         // 管理员：完整功能
         if (isBuiltin) {
@@ -359,7 +359,7 @@ function createJobCard(job) {
             </div>
         `;
     }
-    
+
     return $(`
         <div class="col-md-6 col-lg-4">
             <div class="card job-card ${status}">
@@ -391,7 +391,7 @@ function createJob() {
         code: $('#jobCode').val(),
         trigger_type: $('input[name="triggerType"]:checked').val()
     };
-    
+
     // 根据触发器类型添加配置
     if (formData.trigger_type === 'cron') {
         formData.minute = $('#cronMinute').val();
@@ -406,7 +406,7 @@ function createJob() {
     } else if (formData.trigger_type === 'date') {
         formData.run_date = $('#runDate').val();
     }
-    
+
     $.ajax({
         url: '{{ url_for("scheduler.create_job") }}',
         method: 'POST',
@@ -445,11 +445,11 @@ function runJob(jobId) {
         showAlert('需要管理员权限才能执行任务', 'warning');
         return;
     }
-    
+
     if (confirm('确定要立即执行此任务吗？')) {
         // 记录操作开始日志
-        logUserAction('开始立即执行任务', { 
-            operation: 'run_job', 
+        logUserAction('开始立即执行任务', {
+            operation: 'run_job',
             job_id: jobId
         });
         $.ajax({
@@ -461,16 +461,16 @@ function runJob(jobId) {
             success: function(response) {
                 if (response.success === true) {
                     // 记录成功日志
-                    logUserAction('任务执行成功', { 
-                        operation: 'run_job', 
+                    logUserAction('任务执行成功', {
+                        operation: 'run_job',
                         job_id: jobId,
                         result: 'success'
                     });
                     showAlert('任务执行成功', 'success');
                 } else {
                     // 记录失败日志
-                    logError('执行任务失败', { 
-                        operation: 'run_job', 
+                    logError('执行任务失败', {
+                        operation: 'run_job',
                         job_id: jobId,
                         result: 'failed',
                         error: response.message
@@ -480,16 +480,16 @@ function runJob(jobId) {
             },
             error: function(xhr) {
                 if (xhr.status === 403) {
-                    logError('执行任务失败: 权限不足', { 
-                        operation: 'run_job', 
+                    logError('执行任务失败: 权限不足', {
+                        operation: 'run_job',
                         job_id: jobId,
                         result: 'permission_denied'
                     });
                     showAlert('需要管理员权限才能执行任务', 'warning');
                 } else {
                     const error = xhr.responseJSON;
-                    logErrorWithContext(xhr, '执行任务异常', { 
-                        operation: 'run_job', 
+                    logErrorWithContext(xhr, '执行任务异常', {
+                        operation: 'run_job',
                         job_id: jobId,
                         result: 'exception',
                         error: error ? error.message : '未知错误'
@@ -508,13 +508,13 @@ function pauseJob(jobId) {
         showAlert('需要管理员权限才能暂停任务', 'warning');
         return;
     }
-    
+
     // 记录操作开始日志
-    logUserAction('开始暂停任务', { 
-        operation: 'pause_job', 
+    logUserAction('开始暂停任务', {
+        operation: 'pause_job',
         job_id: jobId
     });
-    
+
     $.ajax({
         url: `{{ url_for("scheduler.pause_job", job_id="") }}${jobId}/pause`,
         method: 'POST',
@@ -524,8 +524,8 @@ function pauseJob(jobId) {
         success: function(response) {
             if (response.success === true) {
                 // 记录成功日志
-                logUserAction('任务暂停成功', { 
-                    operation: 'pause_job', 
+                logUserAction('任务暂停成功', {
+                    operation: 'pause_job',
                     job_id: jobId,
                     result: 'success'
                 });
@@ -533,8 +533,8 @@ function pauseJob(jobId) {
                 loadJobs();
             } else {
                 // 记录失败日志
-                logError('暂停任务失败', { 
-                    operation: 'pause_job', 
+                logError('暂停任务失败', {
+                    operation: 'pause_job',
                     job_id: jobId,
                     result: 'failed',
                     error: response.message
@@ -544,16 +544,16 @@ function pauseJob(jobId) {
         },
         error: function(xhr) {
             if (xhr.status === 403) {
-                logError('暂停任务失败: 权限不足', { 
-                    operation: 'pause_job', 
+                logError('暂停任务失败: 权限不足', {
+                    operation: 'pause_job',
                     job_id: jobId,
                     result: 'permission_denied'
                 });
                 showAlert('需要管理员权限才能暂停任务', 'warning');
             } else {
                 const error = xhr.responseJSON;
-                logErrorWithContext(xhr, '暂停任务异常', { 
-                    operation: 'pause_job', 
+                logErrorWithContext(xhr, '暂停任务异常', {
+                    operation: 'pause_job',
                     job_id: jobId,
                     result: 'exception',
                     error: error ? error.message : '未知错误'
@@ -571,21 +571,21 @@ function deleteJob(jobId) {
         showAlert('需要管理员权限才能删除任务', 'warning');
         return;
     }
-    
+
     // 检查是否为内置任务
     const builtinTasks = ['sync_accounts', 'cleanup_logs'];
     if (builtinTasks.includes(jobId)) {
         showAlert('内置任务无法删除！', 'warning');
         return;
     }
-    
+
     if (confirm('确定要删除此任务吗？此操作不可逆！')) {
         // 记录操作开始日志
-        logUserAction('开始删除任务', { 
-            operation: 'delete_job', 
+        logUserAction('开始删除任务', {
+            operation: 'delete_job',
             job_id: jobId
         });
-        
+
         $.ajax({
             url: `{{ url_for("scheduler.delete_job", job_id="") }}${jobId}`,
             method: 'DELETE',
@@ -595,8 +595,8 @@ function deleteJob(jobId) {
             success: function(response) {
                 if (response.success === true) {
                     // 记录成功日志
-                    logUserAction('任务删除成功', { 
-                        operation: 'delete_job', 
+                    logUserAction('任务删除成功', {
+                        operation: 'delete_job',
                         job_id: jobId,
                         result: 'success'
                     });
@@ -604,8 +604,8 @@ function deleteJob(jobId) {
                     loadJobs();
                 } else {
                     // 记录失败日志
-                    logError('删除任务失败', { 
-                        operation: 'delete_job', 
+                    logError('删除任务失败', {
+                        operation: 'delete_job',
                         job_id: jobId,
                         result: 'failed',
                         error: response.message
@@ -615,16 +615,16 @@ function deleteJob(jobId) {
             },
             error: function(xhr) {
                 if (xhr.status === 403) {
-                    logError('删除任务失败: 权限不足', { 
-                        operation: 'delete_job', 
+                    logError('删除任务失败: 权限不足', {
+                        operation: 'delete_job',
                         job_id: jobId,
                         result: 'permission_denied'
                     });
                     showAlert('需要管理员权限才能删除任务', 'warning');
                 } else {
                     const error = xhr.responseJSON;
-                    logErrorWithContext(xhr, '删除任务异常', { 
-                        operation: 'delete_job', 
+                    logErrorWithContext(xhr, '删除任务异常', {
+                        operation: 'delete_job',
                         job_id: jobId,
                         result: 'exception',
                         error: error ? error.message : '未知错误'
@@ -647,7 +647,7 @@ function editTrigger(jobId) {
         showAlert('需要管理员权限才能编辑触发器', 'warning');
         return;
     }
-    
+
     // 获取任务详情
     $.ajax({
         url: `{{ url_for("scheduler.get_job", job_id="") }}${jobId}`,
@@ -658,12 +658,12 @@ function editTrigger(jobId) {
         success: function(response) {
             if (response.success === true) {
                 const job = response.data;
-                
+
                 // 填充触发器编辑表单
                 $('#editJobId').val(job.id);
                 $('#editJobName').val(job.name);
                 $('#editJobFunc').val(job.func);
-                
+
                 // 解析触发器类型
                 let triggerType = 'interval';
                 if (job.trigger.includes('cron')) {
@@ -671,12 +671,12 @@ function editTrigger(jobId) {
                 } else if (job.trigger.includes('date')) {
                     triggerType = 'date';
                 }
-                
+
                 // 设置触发器类型
                 $(`input[name="editTriggerType"][value="${triggerType}"]`).prop('checked', true);
                 $('.edit-trigger-config').hide();
                 $(`#edit${triggerType.charAt(0).toUpperCase() + triggerType.slice(1)}Config`).show();
-                
+
                 // 解析触发器参数
                 if (triggerType === 'cron') {
                     // 解析cron表达式
@@ -693,13 +693,13 @@ function editTrigger(jobId) {
                         const hours = parseInt(intervalMatch[1]);
                         const minutes = parseInt(intervalMatch[2]);
                         const seconds = parseInt(intervalMatch[3]);
-                        
+
                         if (hours > 0) $('#editHours').val(hours);
                         if (minutes > 0) $('#editMinutes').val(minutes);
                         if (seconds > 0) $('#editSeconds').val(seconds);
                     }
                 }
-                
+
                 // 显示编辑模态框
                 $('#editJobModal').modal('show');
             } else {
@@ -716,12 +716,12 @@ function editTrigger(jobId) {
 function updateJob() {
     const jobId = $('#editJobId').val();
     const triggerType = $('input[name="editTriggerType"]:checked').val();
-    
+
     // 构建触发器数据
     let triggerData = {
         trigger_type: triggerType
     };
-    
+
     if (triggerType === 'cron') {
         triggerData.cron_minute = $('#editCronMinute').val();
         triggerData.cron_hour = $('#editCronHour').val();
@@ -735,7 +735,7 @@ function updateJob() {
     } else if (triggerType === 'date') {
         triggerData.run_date = $('#editRunDate').val();
     }
-    
+
     $.ajax({
         url: `{{ url_for("scheduler.update_job", job_id="") }}${jobId}`,
         method: 'PUT',
@@ -767,7 +767,7 @@ function disableJob(jobId) {
         showAlert('需要管理员权限才能禁用任务', 'warning');
         return;
     }
-    
+
     if (confirm('确定要禁用此任务吗？')) {
         $.ajax({
             url: `{{ url_for("scheduler.disable_job", job_id="PLACEHOLDER") }}`.replace('PLACEHOLDER', jobId),
@@ -802,7 +802,7 @@ function enableJob(jobId) {
         showAlert('需要管理员权限才能启用任务', 'warning');
         return;
     }
-    
+
     $.ajax({
         url: `{{ url_for("scheduler.enable_job", job_id="PLACEHOLDER") }}`.replace('PLACEHOLDER', jobId),
         method: 'POST',
@@ -836,7 +836,7 @@ function showAlert(message, type) {
         </div>
     `;
     $('body').prepend(alertHtml);
-    
+
     // 3秒后自动消失
     setTimeout(() => {
         $('.alert').fadeOut();

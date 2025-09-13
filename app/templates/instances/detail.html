@@ -47,7 +47,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -62,7 +62,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-12">
                         <div class="mb-3">
@@ -77,7 +77,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 {% if instance.description %}
                 <div class="mb-3">
                     <label class="form-label fw-bold">描述</label>
@@ -86,7 +86,7 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <!-- 连接信息 -->
         <div class="card mb-4">
             <div class="card-header">
@@ -117,7 +117,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -138,9 +138,9 @@
                 </div>
             </div>
         </div>
-        
+
     </div>
-    
+
     <div class="col-lg-4">
         <!-- 快速操作 -->
         <div class="card mb-4">
@@ -166,7 +166,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- 统计信息 -->
         <div class="card mb-4">
             <div class="card-header">
@@ -189,7 +189,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- 连接测试结果 -->
         <div class="card" id="testResult" style="display: none;">
             <div class="card-header">
@@ -506,20 +506,20 @@ document.addEventListener('DOMContentLoaded', function() {
 function testConnection() {
     const testBtn = event ? event.target : document.querySelector('button[onclick="testConnection()"]');
     const originalText = testBtn.innerHTML;
-    
+
     // 记录操作开始日志
-    logUserAction('开始测试连接', { 
-        operation: 'test_connection', 
+    logUserAction('开始测试连接', {
+        operation: 'test_connection',
         instance_id: {{ instance.id }},
         instance_name: '{{ instance.name }}'
     });
-    
+
     testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>测试中...';
     testBtn.disabled = true;
-    
+
     // 获取CSRF token
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-    
+
     fetch(`/instances/api/instances/{{ instance.id }}/test`, {
         method: 'GET',
         headers: {
@@ -543,20 +543,20 @@ function testConnection() {
         const statusBadge = document.getElementById('connectionStatus');
         const resultDiv = document.getElementById('testResult');
         const contentDiv = document.getElementById('testResultContent');
-        
+
         if (data.success) {
             // 记录成功日志
-            logUserAction('测试连接成功', { 
-                operation: 'test_connection', 
+            logUserAction('测试连接成功', {
+                operation: 'test_connection',
                 instance_id: {{ instance.id }},
                 instance_name: '{{ instance.name }}',
                 result: 'success',
                 message: data.message || '数据库连接正常'
             });
-            
+
             statusBadge.textContent = '正常';
             statusBadge.className = 'badge bg-success';
-            
+
             contentDiv.innerHTML = `
                 <div class="alert alert-success">
                     <i class="fas fa-check-circle me-2"></i>
@@ -566,17 +566,17 @@ function testConnection() {
             `;
         } else if (data.error) {
             // 记录失败日志
-            logError('测试连接失败', { 
-                operation: 'test_connection', 
+            logError('测试连接失败', {
+                operation: 'test_connection',
                 instance_id: {{ instance.id }},
                 instance_name: '{{ instance.name }}',
                 result: 'failed',
                 error: data.error
             });
-            
+
             statusBadge.textContent = '失败';
             statusBadge.className = 'badge bg-danger';
-            
+
             // 构建详细的错误信息
             let errorHtml = `
                 <div class="alert alert-danger">
@@ -584,34 +584,34 @@ function testConnection() {
                     <strong>连接失败！</strong><br>
                     <strong>错误类型：</strong>${data.error}<br>
             `;
-            
+
             // 添加详细信息
             if (data.details) {
                 errorHtml += `<strong>详细信息：</strong>${data.details}<br>`;
             }
-            
+
             // 添加解决方案
             if (data.solution) {
                 errorHtml += `<strong>解决方案：</strong>${data.solution}<br>`;
             }
-            
+
             // 添加错误类型
             if (data.error_type) {
                 errorHtml += `<small class="text-muted">错误类型: ${data.error_type}</small>`;
             }
-            
+
             errorHtml += `</div>`;
-            
+
             contentDiv.innerHTML = errorHtml;
         }
-        
+
         resultDiv.style.display = 'block';
     })
     .catch(error => {
         const statusBadge = document.getElementById('connectionStatus');
         statusBadge.textContent = '错误';
         statusBadge.className = 'badge bg-danger';
-        
+
         document.getElementById('testResultContent').innerHTML = `
             <div class="alert alert-danger">
                 <i class="fas fa-exclamation-triangle me-2"></i>
@@ -624,8 +624,8 @@ function testConnection() {
     })
     .catch(error => {
         // 记录异常日志
-        logErrorWithContext(error, '测试连接异常', { 
-            operation: 'test_connection', 
+        logErrorWithContext(error, '测试连接异常', {
+            operation: 'test_connection',
             instance_id: {{ instance.id }},
             instance_name: '{{ instance.name }}',
             result: 'exception'
@@ -640,20 +640,20 @@ function testConnection() {
 function syncAccounts() {
     const syncBtn = event.target;
     const originalText = syncBtn.innerHTML;
-    
+
     // 记录操作开始日志
-    logUserAction('开始同步账户', { 
-        operation: 'sync_accounts', 
+    logUserAction('开始同步账户', {
+        operation: 'sync_accounts',
         instance_id: {{ instance.id }},
         instance_name: '{{ instance.name }}'
     });
-    
+
     syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>同步中...';
     syncBtn.disabled = true;
-    
+
     // 获取CSRF token
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-    
+
     fetch(`/instances/{{ instance.id }}/sync`, {
         method: 'POST',
         headers: {
@@ -665,8 +665,8 @@ function syncAccounts() {
     .then(data => {
         if (data.message) {
             // 记录成功日志
-            logUserAction('同步账户成功', { 
-                operation: 'sync_accounts', 
+            logUserAction('同步账户成功', {
+                operation: 'sync_accounts',
                 instance_id: {{ instance.id }},
                 instance_name: '{{ instance.name }}',
                 result: 'success',
@@ -675,8 +675,8 @@ function syncAccounts() {
             showAlert('success', data.message);
         } else if (data.error) {
             // 记录失败日志
-            logError('同步账户失败', { 
-                operation: 'sync_accounts', 
+            logError('同步账户失败', {
+                operation: 'sync_accounts',
                 instance_id: {{ instance.id }},
                 instance_name: '{{ instance.name }}',
                 result: 'failed',
@@ -687,8 +687,8 @@ function syncAccounts() {
     })
     .catch(error => {
         // 记录异常日志
-        logErrorWithContext(error, '同步账户异常', { 
-            operation: 'sync_accounts', 
+        logErrorWithContext(error, '同步账户异常', {
+            operation: 'sync_accounts',
             instance_id: {{ instance.id }},
             instance_name: '{{ instance.name }}',
             result: 'exception'
@@ -721,9 +721,9 @@ function showAlert(type, message) {
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
+
     document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
-    
+
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);

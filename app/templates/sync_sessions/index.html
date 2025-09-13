@@ -1,0 +1,517 @@
+{% extends "base.html" %}
+
+{% block title %}同步会话管理 - 泰摸鱼吧{% endblock %}
+
+{% block extra_css %}
+<style>
+    .session-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid #007bff;
+    }
+    .session-card.running {
+        border-left-color: #28a745;
+    }
+    .session-card.completed {
+        border-left-color: #17a2b8;
+    }
+    .session-card.failed {
+        border-left-color: #dc3545;
+    }
+    .session-card.cancelled {
+        border-left-color: #6c757d;
+    }
+    .progress-bar {
+        height: 8px;
+        border-radius: 4px;
+    }
+    .status-badge {
+        font-size: 0.8em;
+        padding: 0.25rem 0.5rem;
+    }
+    .filter-section {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .statistics-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .stat-item {
+        text-align: center;
+    }
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-sync-alt"></i> 同步会话管理</h2>
+                <div>
+                    <button class="btn btn-primary" onclick="refreshData()">
+                        <i class="fas fa-sync"></i> 刷新
+                    </button>
+                </div>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="row" id="statistics-section">
+                <div class="col-md-3">
+                    <div class="statistics-card">
+                        <div class="stat-item">
+                            <div class="stat-number" id="total-sessions">-</div>
+                            <div class="stat-label">总会话数</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="statistics-card">
+                        <div class="stat-item">
+                            <div class="stat-number" id="running-sessions">-</div>
+                            <div class="stat-label">运行中</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="statistics-card">
+                        <div class="stat-item">
+                            <div class="stat-number" id="completed-sessions">-</div>
+                            <div class="stat-label">已完成</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="statistics-card">
+                        <div class="stat-item">
+                            <div class="stat-number" id="failed-sessions">-</div>
+                            <div class="stat-label">失败</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 过滤器 -->
+            <div class="filter-section">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="sync-type-filter" class="form-label">同步类型</label>
+                        <select class="form-select" id="sync-type-filter">
+                            <option value="">全部</option>
+                            <option value="scheduled">定时任务</option>
+                            <option value="manual_batch">手动批量</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sync-category-filter" class="form-label">同步分类</label>
+                        <select class="form-select" id="sync-category-filter">
+                            <option value="">全部</option>
+                            <option value="account">账户</option>
+                            <option value="capacity">容量</option>
+                            <option value="config">配置</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status-filter" class="form-label">状态</label>
+                        <select class="form-select" id="status-filter">
+                            <option value="">全部</option>
+                            <option value="running">运行中</option>
+                            <option value="completed">已完成</option>
+                            <option value="failed">失败</option>
+                            <option value="cancelled">已取消</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-outline-primary w-100" onclick="applyFilters()">
+                            <i class="fas fa-filter"></i> 应用筛选
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 会话列表 -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> 同步会话列表</h5>
+                </div>
+                <div class="card-body">
+                    <div id="sessions-loading" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2">正在加载会话数据...</p>
+                    </div>
+                    <div id="sessions-container" style="display: none;">
+                        <!-- 会话列表将在这里动态加载 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 会话详情模态框 -->
+<div class="modal fade" id="sessionDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">会话详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="session-detail-content">
+                    <!-- 会话详情将在这里动态加载 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 全局变量
+let currentSessions = [];
+let currentFilters = {};
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadStatistics();
+    loadSessions();
+    
+    // 设置自动刷新
+    setInterval(function() {
+        loadSessions();
+    }, 30000); // 30秒刷新一次
+});
+
+// 加载统计信息
+function loadStatistics() {
+    fetch('/sync_sessions/api/statistics')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateStatistics(data.data);
+            } else {
+                console.error('加载统计信息失败:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('加载统计信息出错:', error);
+        });
+}
+
+// 更新统计信息显示
+function updateStatistics(stats) {
+    document.getElementById('total-sessions').textContent = stats.total_sessions;
+    document.getElementById('running-sessions').textContent = stats.running_sessions;
+    document.getElementById('completed-sessions').textContent = stats.completed_sessions;
+    document.getElementById('failed-sessions').textContent = stats.failed_sessions;
+}
+
+// 加载会话列表
+function loadSessions() {
+    const params = new URLSearchParams();
+    if (currentFilters.sync_type) params.append('sync_type', currentFilters.sync_type);
+    if (currentFilters.sync_category) params.append('sync_category', currentFilters.sync_category);
+    if (currentFilters.status) params.append('status', currentFilters.status);
+    
+    fetch(`/sync_sessions/api/sessions?${params.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentSessions = data.data;
+                renderSessions(data.data);
+                document.getElementById('sessions-loading').style.display = 'none';
+                document.getElementById('sessions-container').style.display = 'block';
+            } else {
+                showAlert('danger', '加载会话列表失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('加载会话列表出错:', error);
+            showAlert('danger', '加载会话列表出错');
+        });
+}
+
+// 渲染会话列表
+function renderSessions(sessions) {
+    const container = document.getElementById('sessions-container');
+    
+    if (sessions.length === 0) {
+        container.innerHTML = '<div class="text-center py-4 text-muted">暂无同步会话</div>';
+        return;
+    }
+    
+    const html = sessions.map(session => {
+        const statusClass = getStatusClass(session.status);
+        const statusText = getStatusText(session.status);
+        const progress = session.progress_percentage || 0;
+        const startedAt = new Date(session.started_at).toLocaleString();
+        const completedAt = session.completed_at ? new Date(session.completed_at).toLocaleString() : '-';
+        
+        return `
+            <div class="card session-card ${statusClass} mb-3">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <h6 class="mb-1">${session.session_id.substring(0, 8)}...</h6>
+                            <small class="text-muted">${getSyncTypeText(session.sync_type)} - ${getSyncCategoryText(session.sync_category)}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <span class="badge status-badge bg-${getStatusColor(session.status)}">${statusText}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="progress progress-bar" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" style="width: ${progress}%"></div>
+                            </div>
+                            <small class="text-muted">${progress}% (${session.successful_instances}/${session.total_instances})</small>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i> ${startedAt}<br>
+                                <i class="fas fa-check-circle"></i> ${completedAt}
+                            </small>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewSessionDetail('${session.session_id}')">
+                                <i class="fas fa-eye"></i> 详情
+                            </button>
+                            ${session.status === 'running' ? `
+                                <button class="btn btn-sm btn-outline-danger" onclick="cancelSession('${session.session_id}')">
+                                    <i class="fas fa-stop"></i> 取消
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = html;
+}
+
+// 查看会话详情
+function viewSessionDetail(sessionId) {
+    fetch(`/sync_sessions/api/sessions/${sessionId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSessionDetail(data.data);
+            } else {
+                showAlert('danger', '加载会话详情失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('加载会话详情出错:', error);
+            showAlert('danger', '加载会话详情出错');
+        });
+}
+
+// 显示会话详情
+function showSessionDetail(session) {
+    const content = document.getElementById('session-detail-content');
+    const records = session.instance_records || [];
+    
+    const recordsHtml = records.map(record => {
+        const statusClass = getStatusClass(record.status);
+        const statusText = getStatusText(record.status);
+        const duration = record.started_at && record.completed_at ? 
+            Math.round((new Date(record.completed_at) - new Date(record.started_at)) / 1000) + '秒' : '-';
+        
+        return `
+            <div class="card mb-2">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <h6 class="mb-1">${record.instance_name}</h6>
+                            <small class="text-muted">ID: ${record.instance_id}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <span class="badge status-badge bg-${getStatusColor(record.status)}">${statusText}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">
+                                同步: ${record.accounts_synced} | 
+                                新增: ${record.accounts_created} | 
+                                更新: ${record.accounts_updated} | 
+                                删除: ${record.accounts_deleted}
+                            </small>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">
+                                耗时: ${duration}
+                                ${record.error_message ? `<br><span class="text-danger">${record.error_message}</span>` : ''}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    content.innerHTML = `
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <strong>会话ID:</strong> ${session.session_id}
+            </div>
+            <div class="col-md-6">
+                <strong>状态:</strong> <span class="badge bg-${getStatusColor(session.status)}">${getStatusText(session.status)}</span>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <strong>同步类型:</strong> ${getSyncTypeText(session.sync_type)}
+            </div>
+            <div class="col-md-6">
+                <strong>同步分类:</strong> ${getSyncCategoryText(session.sync_category)}
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <strong>开始时间:</strong> ${new Date(session.started_at).toLocaleString()}
+            </div>
+            <div class="col-md-6">
+                <strong>完成时间:</strong> ${session.completed_at ? new Date(session.completed_at).toLocaleString() : '未完成'}
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <strong>总实例数:</strong> ${session.total_instances}
+            </div>
+            <div class="col-md-4">
+                <strong>成功:</strong> ${session.successful_instances}
+            </div>
+            <div class="col-md-4">
+                <strong>失败:</strong> ${session.failed_instances}
+            </div>
+        </div>
+        <hr>
+        <h6>实例记录</h6>
+        <div class="max-height-400 overflow-auto">
+            ${recordsHtml || '<div class="text-muted">暂无实例记录</div>'}
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('sessionDetailModal'));
+    modal.show();
+}
+
+// 取消会话
+function cancelSession(sessionId) {
+    if (confirm('确定要取消这个同步会话吗？')) {
+        fetch(`/sync_sessions/api/sessions/${sessionId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', '会话已取消');
+                loadSessions();
+            } else {
+                showAlert('danger', '取消会话失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('取消会话出错:', error);
+            showAlert('danger', '取消会话出错');
+        });
+    }
+}
+
+// 应用筛选
+function applyFilters() {
+    currentFilters = {
+        sync_type: document.getElementById('sync-type-filter').value,
+        sync_category: document.getElementById('sync-category-filter').value,
+        status: document.getElementById('status-filter').value
+    };
+    loadSessions();
+}
+
+// 刷新数据
+function refreshData() {
+    loadStatistics();
+    loadSessions();
+}
+
+// 工具函数
+function getStatusClass(status) {
+    const statusMap = {
+        'running': 'running',
+        'completed': 'completed',
+        'failed': 'failed',
+        'cancelled': 'cancelled'
+    };
+    return statusMap[status] || '';
+}
+
+function getStatusText(status) {
+    const statusMap = {
+        'running': '运行中',
+        'completed': '已完成',
+        'failed': '失败',
+        'cancelled': '已取消',
+        'pending': '等待中'
+    };
+    return statusMap[status] || status;
+}
+
+function getStatusColor(status) {
+    const colorMap = {
+        'running': 'success',
+        'completed': 'info',
+        'failed': 'danger',
+        'cancelled': 'secondary',
+        'pending': 'warning'
+    };
+    return colorMap[status] || 'secondary';
+}
+
+function getSyncTypeText(type) {
+    const typeMap = {
+        'scheduled': '定时任务',
+        'manual_batch': '手动批量'
+    };
+    return typeMap[type] || type;
+}
+
+function getSyncCategoryText(category) {
+    const categoryMap = {
+        'account': '账户',
+        'capacity': '容量',
+        'config': '配置',
+        'other': '其他'
+    };
+    return categoryMap[category] || category;
+}
+
+// 获取CSRF令牌
+function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+}
+</script>
+{% endblock %}

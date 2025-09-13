@@ -10,10 +10,10 @@ from flask import Blueprint, Response, flash, jsonify, redirect, render_template
 from flask_login import current_user, login_required
 
 from app import db
-from app.utils.decorators import view_required
 from app.models.instance import Instance
 from app.models.sync_data import SyncData
 from app.services.account_sync_service import account_sync_service
+from app.utils.decorators import view_required
 from app.utils.structlog_config import get_api_logger, log_error, log_info, log_warning
 
 # 创建蓝图
@@ -248,37 +248,80 @@ def sync_records() -> str | Response:
 @account_sync_bp.route("/sync-all", methods=["POST"])
 @login_required
 def sync_all_accounts() -> str | Response | tuple[Response, int]:
-    """同步所有实例的账户"""
+    """同步所有实例的账户（使用新的会话管理架构）"""
+    from app.services.sync_session_service import sync_session_service
+    
     try:
-        log_info("开始同步所有账户", module="account_sync")
+        log_info("开始同步所有账户", module="account_sync", user_id=current_user.id)
 
         # 获取所有活跃实例
         instances = Instance.query.filter_by(is_active=True).all()
 
         if not instances:
-            log_warning("没有找到活跃的数据库实例", module="account_sync")
+            log_warning("没有找到活跃的数据库实例", module="account_sync", user_id=current_user.id)
             return jsonify({"success": False, "error": "没有找到活跃的数据库实例"}), 400
+
+        # 创建同步会话
+        session = sync_session_service.create_session(
+            sync_type='manual_batch',
+            sync_category='account',
+            created_by=current_user.id
+        )
+
+        log_info(
+            "创建手动批量同步会话",
+            module="account_sync",
+            session_id=session.session_id,
+            user_id=current_user.id,
+            instance_count=len(instances)
+        )
+
+        # 添加实例记录
+        instance_ids = [inst.id for inst in instances]
+        records = sync_session_service.add_instance_records(session.session_id, instance_ids)
 
         success_count = 0
         failed_count = 0
         results = []
 
         for instance in instances:
+            # 找到对应的记录
+            record = next((r for r in records if r.instance_id == instance.id), None)
+            if not record:
+                continue
+
             try:
-                log_info(f"开始同步实例: {instance.name}", module="account_sync", instance_id=instance.id)
+                # 开始实例同步
+                sync_session_service.start_instance_sync(record.id)
+
+                log_info(f"开始同步实例: {instance.name}", module="account_sync", 
+                        session_id=session.session_id, instance_id=instance.id)
 
                 # 使用统一的账户同步服务
-                result = account_sync_service.sync_accounts(instance, sync_type="batch")
+                result = account_sync_service.sync_accounts(instance, sync_type="batch", session_id=session.session_id)
 
                 if result["success"]:
                     success_count += 1
+                    
+                    # 完成实例同步
+                    sync_session_service.complete_instance_sync(
+                        record.id,
+                        accounts_synced=result.get("synced_count", 0),
+                        accounts_created=result.get("added_count", 0),
+                        accounts_updated=result.get("modified_count", 0),
+                        accounts_deleted=result.get("removed_count", 0),
+                        sync_details=result.get("details", {})
+                    )
+
                     log_info(
                         f"实例同步成功: {instance.name}",
                         module="account_sync",
+                        session_id=session.session_id,
                         instance_id=instance.id,
                         synced_count=result.get("synced_count", 0),
                     )
-                    # 记录同步成功
+                    
+                    # 记录同步成功（保持向后兼容）
                     sync_record = SyncData(  # type: ignore
                         instance_id=instance.id,
                         sync_type="batch",
@@ -288,23 +331,35 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
                         added_count=result.get("added_count", 0),
                         removed_count=result.get("removed_count", 0),
                         modified_count=result.get("modified_count", 0),
+                        data={"session_id": session.session_id}
                     )
                     db.session.add(sync_record)
                 else:
                     failed_count += 1
+                    
+                    # 标记实例同步失败
+                    sync_session_service.fail_instance_sync(
+                        record.id,
+                        error_message=result.get("error", "同步失败"),
+                        sync_details=result.get("details", {})
+                    )
+
                     log_error(
                         f"实例同步失败: {instance.name}",
                         module="account_sync",
+                        session_id=session.session_id,
                         instance_id=instance.id,
                         error=result.get("error", "同步失败"),
                     )
-                    # 记录同步失败
+                    
+                    # 记录同步失败（保持向后兼容）
                     sync_record = SyncData(  # type: ignore
                         instance_id=instance.id,
                         sync_type="batch",
                         status="failed",
                         message=result.get("error", "同步失败"),
                         synced_count=0,
+                        data={"session_id": session.session_id}
                     )
                     db.session.add(sync_record)
 
@@ -319,16 +374,31 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
 
             except Exception as e:
                 failed_count += 1
+                
+                # 标记实例同步失败
+                if record:
+                    sync_session_service.fail_instance_sync(
+                        record.id,
+                        error_message=str(e),
+                        sync_details={"exception": str(e)}
+                    )
+
                 log_error(
-                    f"实例同步异常: {instance.name}", module="account_sync", instance_id=instance.id, error=str(e)
+                    f"实例同步异常: {instance.name}", 
+                    module="account_sync", 
+                    session_id=session.session_id,
+                    instance_id=instance.id, 
+                    error=str(e)
                 )
-                # 记录同步失败
+                
+                # 记录同步失败（保持向后兼容）
                 sync_record = SyncData(  # type: ignore
                     instance_id=instance.id,
                     sync_type="batch",
                     status="failed",
                     message=f"同步失败: {str(e)}",
                     synced_count=0,
+                    data={"session_id": session.session_id}
                 )
                 db.session.add(sync_record)
 
@@ -348,6 +418,8 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
         log_info(
             f"批量同步完成: 成功 {success_count} 个实例，失败 {failed_count} 个实例",
             module="account_sync",
+            session_id=session.session_id,
+            user_id=current_user.id,
             total_instances=len(instances),
             success_count=success_count,
             failed_count=failed_count,
@@ -359,6 +431,7 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
             "批量同步账户完成",
             module="account_sync",
             operation_type="BATCH_SYNC_ACCOUNTS_COMPLETE",
+            session_id=session.session_id,
             user_id=current_user.id,
             total_instances=len(instances),
             success_count=success_count,

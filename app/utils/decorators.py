@@ -24,7 +24,7 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         system_logger = get_system_logger()
-        
+
         if not current_user.is_authenticated:
             system_logger.warning(
                 "未认证访问管理员功能",
@@ -33,9 +33,9 @@ def admin_required(f):
                 request_path=request.path,
                 request_method=request.method,
                 ip_address=request.remote_addr,
-                user_agent=request.headers.get('User-Agent', ''),
+                user_agent=request.headers.get("User-Agent", ""),
                 permission_type="admin",
-                failure_reason="not_authenticated"
+                failure_reason="not_authenticated",
             )
             if request.is_json:
                 return jsonify({"success": False, "message": "请先登录", "code": "UNAUTHORIZED"}), 401
@@ -54,9 +54,9 @@ def admin_required(f):
                 request_path=request.path,
                 request_method=request.method,
                 ip_address=request.remote_addr,
-                user_agent=request.headers.get('User-Agent', ''),
+                user_agent=request.headers.get("User-Agent", ""),
                 permission_type="admin",
-                failure_reason="insufficient_permissions"
+                failure_reason="insufficient_permissions",
             )
             if request.is_json:
                 return jsonify({"success": False, "message": "需要管理员权限", "code": "FORBIDDEN"}), 403
@@ -65,15 +65,17 @@ def admin_required(f):
             flash("需要管理员权限", "error")
             return redirect(url_for("main.index"))
 
-        system_logger.info(
-            "管理员权限验证通过",
-            module="decorators",
-            user_id=current_user.id,
-            username=current_user.username,
-            request_path=request.path,
-            request_method=request.method,
-            permission_type="admin"
-        )
+        # 只在调试模式下记录成功验证
+        if system_logger.isEnabledFor(10):  # DEBUG level
+            system_logger.debug(
+                "管理员权限验证通过",
+                module="decorators",
+                user_id=current_user.id,
+                username=current_user.username,
+                request_path=request.path,
+                request_method=request.method,
+                permission_type="admin",
+            )
         return f(*args, **kwargs)
 
     return decorated_function
@@ -94,7 +96,7 @@ def scheduler_manage_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         system_logger = get_system_logger()
-        
+
         if not current_user.is_authenticated:
             system_logger.warning(
                 "未认证访问任务管理功能",
@@ -103,9 +105,9 @@ def scheduler_manage_required(f):
                 request_path=request.path,
                 request_method=request.method,
                 ip_address=request.remote_addr,
-                user_agent=request.headers.get('User-Agent', ''),
+                user_agent=request.headers.get("User-Agent", ""),
                 permission_type="scheduler_manage",
-                failure_reason="not_authenticated"
+                failure_reason="not_authenticated",
             )
             if request.is_json:
                 return jsonify({"success": False, "message": "请先登录", "code": "UNAUTHORIZED"}), 401
@@ -124,9 +126,9 @@ def scheduler_manage_required(f):
                 request_path=request.path,
                 request_method=request.method,
                 ip_address=request.remote_addr,
-                user_agent=request.headers.get('User-Agent', ''),
+                user_agent=request.headers.get("User-Agent", ""),
                 permission_type="scheduler_manage",
-                failure_reason="insufficient_permissions"
+                failure_reason="insufficient_permissions",
             )
             if request.is_json:
                 return (
@@ -138,15 +140,17 @@ def scheduler_manage_required(f):
             flash("需要管理员权限才能管理定时任务", "error")
             return redirect(url_for("main.index"))
 
-        system_logger.info(
-            "任务管理权限验证通过",
-            module="decorators",
-            user_id=current_user.id,
-            username=current_user.username,
-            request_path=request.path,
-            request_method=request.method,
-            permission_type="scheduler_manage"
-        )
+        # 只在调试模式下记录成功验证
+        if system_logger.isEnabledFor(10):  # DEBUG level
+            system_logger.debug(
+                "任务管理权限验证通过",
+                module="decorators",
+                user_id=current_user.id,
+                username=current_user.username,
+                request_path=request.path,
+                request_method=request.method,
+                permission_type="scheduler_manage",
+            )
         return f(*args, **kwargs)
 
     return decorated_function
@@ -167,7 +171,7 @@ def scheduler_view_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         system_logger = get_system_logger()
-        
+
         if not current_user.is_authenticated:
             system_logger.warning(
                 "未认证访问任务查看功能",
@@ -176,9 +180,9 @@ def scheduler_view_required(f):
                 request_path=request.path,
                 request_method=request.method,
                 ip_address=request.remote_addr,
-                user_agent=request.headers.get('User-Agent', ''),
+                user_agent=request.headers.get("User-Agent", ""),
                 permission_type="scheduler_view",
-                failure_reason="not_authenticated"
+                failure_reason="not_authenticated",
             )
             if request.is_json:
                 return jsonify({"success": False, "message": "请先登录", "code": "UNAUTHORIZED"}), 401
@@ -187,15 +191,17 @@ def scheduler_view_required(f):
             flash("请先登录", "warning")
             return redirect(url_for("auth.login"))
 
-        system_logger.info(
-            "任务查看权限验证通过",
-            module="decorators",
-            user_id=current_user.id,
-            username=current_user.username,
-            request_path=request.path,
-            request_method=request.method,
-            permission_type="scheduler_view"
-        )
+        # 只在调试模式下记录成功验证
+        if system_logger.isEnabledFor(10):  # DEBUG level
+            system_logger.debug(
+                "任务查看权限验证通过",
+                module="decorators",
+                user_id=current_user.id,
+                username=current_user.username,
+                request_path=request.path,
+                request_method=request.method,
+                permission_type="scheduler_view",
+            )
         return f(*args, **kwargs)
 
     return decorated_function
@@ -215,7 +221,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         system_logger = get_system_logger()
-        
+
         if not current_user.is_authenticated:
             system_logger.warning(
                 "未认证访问受保护资源",
@@ -224,9 +230,9 @@ def login_required(f):
                 request_path=request.path,
                 request_method=request.method,
                 ip_address=request.remote_addr,
-                user_agent=request.headers.get('User-Agent', ''),
+                user_agent=request.headers.get("User-Agent", ""),
                 permission_type="login",
-                failure_reason="not_authenticated"
+                failure_reason="not_authenticated",
             )
             if request.is_json:
                 return jsonify({"success": False, "message": "请先登录", "code": "UNAUTHORIZED"}), 401
@@ -235,15 +241,17 @@ def login_required(f):
             flash("请先登录", "warning")
             return redirect(url_for("auth.login"))
 
-        system_logger.info(
-            "登录权限验证通过",
-            module="decorators",
-            user_id=current_user.id,
-            username=current_user.username,
-            request_path=request.path,
-            request_method=request.method,
-            permission_type="login"
-        )
+        # 只在调试模式下记录成功验证
+        if system_logger.isEnabledFor(10):  # DEBUG level
+            system_logger.debug(
+                "登录权限验证通过",
+                module="decorators",
+                user_id=current_user.id,
+                username=current_user.username,
+                request_path=request.path,
+                request_method=request.method,
+                permission_type="login",
+            )
         return f(*args, **kwargs)
 
     return decorated_function
@@ -350,7 +358,7 @@ def permission_required(permission):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             system_logger = get_system_logger()
-            
+
             if not current_user.is_authenticated:
                 system_logger.warning(
                     f"未认证访问{permission}权限资源",
@@ -359,9 +367,9 @@ def permission_required(permission):
                     request_path=request.path,
                     request_method=request.method,
                     ip_address=request.remote_addr,
-                    user_agent=request.headers.get('User-Agent', ''),
+                    user_agent=request.headers.get("User-Agent", ""),
                     permission_type=permission,
-                    failure_reason="not_authenticated"
+                    failure_reason="not_authenticated",
                 )
                 if request.is_json:
                     return jsonify({"success": False, "message": "请先登录", "code": "UNAUTHORIZED"}), 401
@@ -381,9 +389,9 @@ def permission_required(permission):
                     request_path=request.path,
                     request_method=request.method,
                     ip_address=request.remote_addr,
-                    user_agent=request.headers.get('User-Agent', ''),
+                    user_agent=request.headers.get("User-Agent", ""),
                     permission_type=permission,
-                    failure_reason="insufficient_permissions"
+                    failure_reason="insufficient_permissions",
                 )
                 if request.is_json:
                     return jsonify({"success": False, "message": f"需要{permission}权限", "code": "FORBIDDEN"}), 403
@@ -392,15 +400,17 @@ def permission_required(permission):
                 flash(f"需要{permission}权限", "error")
                 return redirect(url_for("main.index"))
 
-            system_logger.info(
-                f"{permission}权限验证通过",
-                module="decorators",
-                user_id=current_user.id,
-                username=current_user.username,
-                request_path=request.path,
-                request_method=request.method,
-                permission_type=permission
-            )
+            # 只在调试模式下记录成功验证
+            if system_logger.isEnabledFor(10):  # DEBUG level
+                system_logger.debug(
+                    f"{permission}权限验证通过",
+                    module="decorators",
+                    user_id=current_user.id,
+                    username=current_user.username,
+                    request_path=request.path,
+                    request_method=request.method,
+                    permission_type=permission,
+                )
             return f(*args, **kwargs)
 
         return decorated_function

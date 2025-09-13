@@ -384,6 +384,11 @@ def register_blueprints(app: Flask) -> None:
 
     app.register_blueprint(scheduler_bp)
 
+    # 注册同步会话管理蓝图
+    from app.routes.sync_sessions import sync_sessions_bp
+
+    app.register_blueprint(sync_sessions_bp)
+
     # 初始化定时任务调度器
     from app.scheduler import init_scheduler
 

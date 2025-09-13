@@ -34,20 +34,25 @@ class AccountSyncService:
     def __init__(self) -> None:
         self.sync_logger = get_sync_logger()
 
-    def sync_accounts(self, instance: Instance, sync_type: str = "batch") -> dict[str, Any]:
+    def sync_accounts(self, instance: Instance, sync_type: str = "batch", session_id: str = None) -> dict[str, Any]:
         """
         同步账户信息 - 统一入口
 
         Args:
             instance: 数据库实例
             sync_type: 同步类型 ('batch' 或 'task')
+            session_id: 同步会话ID（可选）
 
         Returns:
             Dict: 同步结果
         """
         try:
             self.sync_logger.info(
-                "开始账户同步", instance_name=instance.name, db_type=instance.db_type, sync_type=sync_type
+                "开始账户同步", 
+                instance_name=instance.name, 
+                db_type=instance.db_type, 
+                sync_type=sync_type,
+                session_id=session_id
             )
 
             # 获取数据库连接
@@ -136,6 +141,15 @@ class AccountSyncService:
                 "removed_count": removed_count,
                 "modified_count": modified_count,
                 "net_change": net_change,
+                "session_id": session_id,
+                "details": {
+                    "instance_id": instance.id,
+                    "instance_name": instance.name,
+                    "db_type": instance.db_type,
+                    "sync_type": sync_type,
+                    "before_count": before_count,
+                    "after_count": after_count,
+                }
             }
 
         except Exception as e:
@@ -174,6 +188,14 @@ class AccountSyncService:
                 "success": False,
                 "error": f"{instance.db_type.upper()}账户同步失败: {str(e)}",
                 "synced_count": 0,
+                "session_id": session_id,
+                "details": {
+                    "instance_id": instance.id,
+                    "instance_name": instance.name,
+                    "db_type": instance.db_type,
+                    "sync_type": sync_type,
+                    "exception": str(e),
+                }
             }
 
     def _get_connection(self, instance: Instance) -> "Any | None":

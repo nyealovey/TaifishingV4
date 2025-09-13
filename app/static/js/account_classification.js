@@ -1593,27 +1593,27 @@ function autoClassifyAll() {
     .then(data => {
         if (data.success) {
             // 记录成功日志
-            logUserAction('自动分类所有账户成功', { 
-                operation: 'auto_classify_all', 
+            logUserAction('自动分类所有账户成功', {
+                operation: 'auto_classify_all',
                 result: 'success',
-                message: data.message 
+                message: data.message
             });
             showAlert('success', data.message);
         } else {
             // 记录失败日志
-            logError('自动分类所有账户失败', { 
-                operation: 'auto_classify_all', 
+            logError('自动分类所有账户失败', {
+                operation: 'auto_classify_all',
                 result: 'failed',
-                error: data.error 
+                error: data.error
             });
             showAlert('danger', data.error);
         }
     })
     .catch(error => {
         // 记录异常日志
-        logErrorWithContext(error, '自动分类所有账户异常', { 
-            operation: 'auto_classify_all', 
-            result: 'exception' 
+        logErrorWithContext(error, '自动分类所有账户异常', {
+            operation: 'auto_classify_all',
+            result: 'exception'
         });
         showAlert('danger', '自动分类失败');
     });

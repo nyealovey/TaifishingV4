@@ -425,7 +425,7 @@ def delete(credential_id: int) -> "Response":
         credential_name = credential.name
         credential_type = credential.credential_type
         credential_id = credential.id
-        
+
         db.session.delete(credential)
         db.session.commit()
 

@@ -91,10 +91,11 @@ def _cleanup_temp_files():
 
 
 def sync_accounts():
-    """账户同步任务 - 同步所有数据库实例的账户"""
+    """账户同步任务 - 同步所有数据库实例的账户（使用新的会话管理架构）"""
     from app import db
     from app.models.instance import Instance
     from app.models.sync_data import SyncData
+    from app.services.sync_session_service import sync_session_service
 
     sync_logger = get_sync_logger()
     task_logger = get_task_logger()
@@ -110,7 +111,23 @@ def sync_accounts():
                 sync_logger.warning("没有找到活跃的数据库实例", module="scheduler")
                 return "没有找到活跃的数据库实例"
 
-            sync_logger.info("定时任务开始同步所有账户", module="scheduler", total_instances=total_instances)
+            # 创建同步会话
+            session = sync_session_service.create_session(
+                sync_type='scheduled',
+                sync_category='account',
+                created_by=None  # 定时任务没有用户
+            )
+
+            sync_logger.info(
+                "定时任务开始同步所有账户",
+                module="scheduler",
+                session_id=session.session_id,
+                total_instances=total_instances
+            )
+
+            # 添加实例记录
+            instance_ids = [inst.id for inst in instances]
+            records = sync_session_service.add_instance_records(session.session_id, instance_ids)
 
             success_count = 0
             failed_count = 0
@@ -121,17 +138,26 @@ def sync_accounts():
             results = []
 
             for instance in instances:
+                # 找到对应的记录
+                record = next((r for r in records if r.instance_id == instance.id), None)
+                if not record:
+                    continue
+
                 try:
+                    # 开始实例同步
+                    sync_session_service.start_instance_sync(record.id)
+
                     sync_logger.info(
                         "开始同步实例",
                         module="scheduler",
+                        session_id=session.session_id,
                         instance_name=instance.name,
                         db_type=instance.db_type,
                         instance_id=instance.id,
                     )
 
                     # 执行账户同步，使用task类型
-                    result = account_sync_service.sync_accounts(instance, sync_type="task")
+                    result = account_sync_service.sync_accounts(instance, sync_type="task", session_id=session.session_id)
 
                     if result.get("success"):
                         success_count += 1
@@ -141,9 +167,20 @@ def sync_accounts():
                         total_removed_count += result.get("removed_count", 0)
                         total_modified_count += result.get("modified_count", 0)
 
+                        # 完成实例同步
+                        sync_session_service.complete_instance_sync(
+                            record.id,
+                            accounts_synced=instance_sync_count,
+                            accounts_created=result.get("added_count", 0),
+                            accounts_updated=result.get("modified_count", 0),
+                            accounts_deleted=result.get("removed_count", 0),
+                            sync_details=result.get("details", {})
+                        )
+
                         sync_logger.info(
                             "实例同步完成",
                             module="scheduler",
+                            session_id=session.session_id,
                             instance_name=instance.name,
                             instance_id=instance.id,
                             synced_count=instance_sync_count,
@@ -160,9 +197,18 @@ def sync_accounts():
                     else:
                         failed_count += 1
                         error_msg = result.get("message", result.get("error", "未知错误"))
+                        
+                        # 标记实例同步失败
+                        sync_session_service.fail_instance_sync(
+                            record.id,
+                            error_message=error_msg,
+                            sync_details=result.get("details", {})
+                        )
+
                         sync_logger.warning(
                             "实例同步失败",
                             module="scheduler",
+                            session_id=session.session_id,
                             instance_name=instance.name,
                             instance_id=instance.id,
                             error_msg=error_msg,
@@ -179,9 +225,19 @@ def sync_accounts():
 
                 except Exception as e:
                     failed_count += 1
+                    
+                    # 标记实例同步失败
+                    if record:
+                        sync_session_service.fail_instance_sync(
+                            record.id,
+                            error_message=str(e),
+                            sync_details={"exception": str(e)}
+                        )
+
                     sync_logger.error(
                         "实例同步异常",
                         module="scheduler",
+                        session_id=session.session_id,
                         instance_name=instance.name,
                         instance_id=instance.id,
                         exception=e,
@@ -201,6 +257,7 @@ def sync_accounts():
                 "定时任务账户同步完成",
                 module="task",
                 operation_type="TASK_SYNC_ACCOUNTS_COMPLETE",
+                session_id=session.session_id,
                 total_instances=total_instances,
                 success_count=success_count,
                 failed_count=failed_count,
@@ -211,7 +268,7 @@ def sync_accounts():
                 results=results,
             )
 
-            # 创建聚合的同步记录
+            # 创建聚合的同步记录（保持向后兼容）
             sync_record = SyncData(
                 instance_id=None,  # 聚合记录没有单一实例ID
                 sync_type="task",
@@ -223,6 +280,7 @@ def sync_accounts():
                 modified_count=total_modified_count,
                 records_count=total_synced_count,
                 data={
+                    "session_id": session.session_id,
                     "total_instances": total_instances,
                     "success_count": success_count,
                     "failed_count": failed_count,
@@ -235,6 +293,7 @@ def sync_accounts():
             sync_logger.info(
                 "定时任务账户同步完成",
                 module="scheduler",
+                session_id=session.session_id,
                 total_synced_count=total_synced_count,
                 total_instances=total_instances,
             )
@@ -244,7 +303,7 @@ def sync_accounts():
         except Exception as e:
             sync_logger.error("定时任务账户同步失败", module="scheduler", exception=e)
 
-            # 记录失败的同步记录
+            # 记录失败的同步记录（保持向后兼容）
             sync_record = SyncData(
                 instance_id=None,
                 sync_type="task",

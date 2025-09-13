@@ -34,7 +34,7 @@
         <form method="GET" class="row g-3">
             <div class="col-md-3">
                 <label for="search" class="form-label">搜索</label>
-                <input type="text" class="form-control" id="search" name="search" 
+                <input type="text" class="form-control" id="search" name="search"
                        value="{{ search }}" placeholder="搜索实例名称、主机或描述">
             </div>
             <div class="col-md-2">
@@ -101,7 +101,7 @@
                 共 {{ instances.total }} 个实例
             </div>
         </div>
-        
+
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
@@ -125,7 +125,7 @@
                     <tr>
                         {% if current_user.role == 'admin' %}
                         <td>
-                            <input type="checkbox" class="form-check-input instance-checkbox" 
+                            <input type="checkbox" class="form-check-input instance-checkbox"
                                    value="{{ instance.id }}" onchange="updateBatchButtons()">
                         </td>
                         {% endif %}
@@ -181,30 +181,30 @@
                         <td>
                             {% if current_user.role == 'admin' %}
                             <div class="btn-group btn-group-sm" role="group">
-                                <a href="{{ url_for('instances.detail', instance_id=instance.id) }}" 
+                                <a href="{{ url_for('instances.detail', instance_id=instance.id) }}"
                                    class="btn btn-outline-primary" title="查看详情">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{{ url_for('instances.edit', instance_id=instance.id) }}" 
+                                <a href="{{ url_for('instances.edit', instance_id=instance.id) }}"
                                    class="btn btn-outline-warning" title="编辑">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button type="button" class="btn btn-outline-success" 
+                                <button type="button" class="btn btn-outline-success"
                                         onclick="testConnection({{ instance.id }})" title="测试连接">
                                     <i class="fas fa-plug"></i>
                                 </button>
-                                <button type="button" class="btn btn-outline-danger" 
+                                <button type="button" class="btn btn-outline-danger"
                                         onclick="deleteInstance({{ instance.id }}, '{{ instance.name }}')" title="删除">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                             {% else %}
                             <div class="btn-group btn-group-sm" role="group">
-                                <a href="{{ url_for('instances.detail', instance_id=instance.id) }}" 
+                                <a href="{{ url_for('instances.detail', instance_id=instance.id) }}"
                                    class="btn btn-outline-primary" title="查看详情">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <button type="button" class="btn btn-outline-success" 
+                                <button type="button" class="btn btn-outline-success"
                                         onclick="testConnection({{ instance.id }})" title="测试连接">
                                     <i class="fas fa-plug"></i>
                                 </button>
@@ -219,7 +219,7 @@
                 </tbody>
             </table>
         </div>
-        
+
         <!-- 分页 -->
         {% if instances.pages > 1 %}
         <nav aria-label="实例分页">
@@ -231,7 +231,7 @@
                     </a>
                 </li>
                 {% endif %}
-                
+
                 {% for page_num in instances.iter_pages() %}
                     {% if page_num %}
                         {% if page_num != instances.page %}
@@ -251,7 +251,7 @@
                     </li>
                     {% endif %}
                 {% endfor %}
-                
+
                 {% if instances.has_next %}
                 <li class="page-item">
                     <a class="page-link" href="{{ url_for('instances.index', page=instances.next_num, search=search, db_type=db_type) }}">
@@ -262,7 +262,7 @@
             </ul>
         </nav>
         {% endif %}
-        
+
         {% else %}
         <div class="text-center py-5">
             <i class="fas fa-database fa-3x text-muted mb-3"></i>
@@ -318,14 +318,14 @@
                         <label class="btn btn-outline-primary" for="fileUpload">
                             <i class="fas fa-upload me-2"></i>CSV文件上传
                         </label>
-                        
+
                         <input type="radio" class="btn-check" name="uploadMethod" id="jsonInput" value="json">
                         <label class="btn btn-outline-secondary" for="jsonInput">
                             <i class="fas fa-code me-2"></i>JSON输入
                         </label>
                     </div>
                 </div>
-                
+
                 <!-- CSV文件上传区域 -->
                 <div id="fileUploadArea" class="upload-method">
                     <div class="mb-3">
@@ -338,7 +338,7 @@
                             </a>
                         </div>
                     </div>
-                    
+
                     <div class="alert alert-info">
                         <h6><i class="fas fa-info-circle me-2"></i>CSV文件格式说明：</h6>
                         <p class="mb-2">CSV文件应包含以下列（必填字段用*标记）：</p>
@@ -354,12 +354,12 @@
                         </ul>
                     </div>
                 </div>
-                
+
                 <!-- JSON输入区域 -->
                 <div id="jsonInputArea" class="upload-method" style="display: none;">
                     <div class="mb-3">
                         <label class="form-label">实例数据 (JSON格式)</label>
-                        <textarea class="form-control" id="batchInstancesData" rows="10" 
+                        <textarea class="form-control" id="batchInstancesData" rows="10"
                                   placeholder='[
   {
     "name": "mysql-prod-01",
@@ -377,7 +377,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- 字段说明 -->
                 <div class="row">
                     <div class="col-md-6">
@@ -415,22 +415,22 @@ let deleteInstanceId = null;
 function testConnection(instanceId) {
     const btn = event.target.closest('button');
     const originalHtml = btn.innerHTML;
-    
+
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     btn.disabled = true;
-    
+
     // 获取CSRF token（从页面中查找）
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
                      document.querySelector('input[name="csrf_token"]')?.value;
-    
+
     const headers = {
         'Content-Type': 'application/json',
     };
-    
+
     if (csrfToken) {
         headers['X-CSRFToken'] = csrfToken;
     }
-    
+
     fetch(`/instances/api/instances/${instanceId}/test`, {
         method: 'GET',
         headers: headers
@@ -461,9 +461,9 @@ function deleteInstance(instanceId, instanceName) {
 document.getElementById('confirmDelete').addEventListener('click', function() {
     if (deleteInstanceId) {
         // 获取CSRF token
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
                          document.querySelector('input[name="csrf_token"]')?.value;
-        
+
         fetch(`/instances/${deleteInstanceId}/delete`, {
             method: 'POST',
             headers: {
@@ -494,9 +494,9 @@ function showAlert(type, message) {
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
+
     document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
-    
+
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);
@@ -506,18 +506,18 @@ function showAlert(type, message) {
 function toggleSelectAll() {
     const selectAllCheckbox = document.getElementById('selectAll');
     const instanceCheckboxes = document.querySelectorAll('.instance-checkbox');
-    
+
     instanceCheckboxes.forEach(checkbox => {
         checkbox.checked = selectAllCheckbox.checked;
     });
-    
+
     updateBatchButtons();
 }
 
 function updateBatchButtons() {
     const selectedCheckboxes = document.querySelectorAll('.instance-checkbox:checked');
     const batchDeleteBtn = document.getElementById('batchDeleteBtn');
-    
+
     if (selectedCheckboxes.length > 0) {
         batchDeleteBtn.disabled = false;
         batchDeleteBtn.textContent = `批量删除 (${selectedCheckboxes.length})`;
@@ -530,32 +530,32 @@ function updateBatchButtons() {
 function batchDelete() {
     const selectedCheckboxes = document.querySelectorAll('.instance-checkbox:checked');
     const instanceIds = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
-    
+
     if (instanceIds.length === 0) {
         showAlert('warning', '请选择要删除的实例');
         return;
     }
-    
+
     if (!confirm(`确定要删除选中的 ${instanceIds.length} 个实例吗？此操作不可撤销！`)) {
         return;
     }
-    
+
     // 记录操作开始日志
-    logUserAction('开始批量删除实例', { 
-        operation: 'batch_delete_instances', 
+    logUserAction('开始批量删除实例', {
+        operation: 'batch_delete_instances',
         instance_count: instanceIds.length,
         instance_ids: instanceIds
     });
-    
+
     const btn = document.getElementById('batchDeleteBtn');
     const originalText = btn.textContent;
-    
+
     btn.textContent = '删除中...';
     btn.disabled = true;
-    
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
                      document.querySelector('input[name="csrf_token"]')?.value;
-    
+
     fetch('/instances/batch-delete', {
         method: 'POST',
         headers: {
@@ -568,8 +568,8 @@ function batchDelete() {
     .then(data => {
         if (data.success) {
             // 记录成功日志
-            logUserAction('批量删除实例成功', { 
-                operation: 'batch_delete_instances', 
+            logUserAction('批量删除实例成功', {
+                operation: 'batch_delete_instances',
                 instance_count: instanceIds.length,
                 instance_ids: instanceIds,
                 result: 'success',
@@ -579,8 +579,8 @@ function batchDelete() {
             setTimeout(() => location.reload(), 1000);
         } else {
             // 记录失败日志
-            logError('批量删除实例失败', { 
-                operation: 'batch_delete_instances', 
+            logError('批量删除实例失败', {
+                operation: 'batch_delete_instances',
                 instance_count: instanceIds.length,
                 instance_ids: instanceIds,
                 result: 'failed',
@@ -591,8 +591,8 @@ function batchDelete() {
     })
     .catch(error => {
         // 记录异常日志
-        logErrorWithContext(error, '批量删除实例异常', { 
-            operation: 'batch_delete_instances', 
+        logErrorWithContext(error, '批量删除实例异常', {
+            operation: 'batch_delete_instances',
             instance_count: instanceIds.length,
             instance_ids: instanceIds,
             result: 'exception'
@@ -612,7 +612,7 @@ function showBatchCreateModal() {
     document.getElementById('fileUpload').checked = true;
     document.getElementById('fileUploadArea').style.display = 'block';
     document.getElementById('jsonInputArea').style.display = 'none';
-    
+
     new bootstrap.Modal(document.getElementById('batchCreateModal')).show();
 }
 
@@ -622,14 +622,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const jsonInputRadio = document.getElementById('jsonInput');
     const fileUploadArea = document.getElementById('fileUploadArea');
     const jsonInputArea = document.getElementById('jsonInputArea');
-    
+
     fileUploadRadio.addEventListener('change', function() {
         if (this.checked) {
             fileUploadArea.style.display = 'block';
             jsonInputArea.style.display = 'none';
         }
     });
-    
+
     jsonInputRadio.addEventListener('change', function() {
         if (this.checked) {
             fileUploadArea.style.display = 'none';
@@ -647,18 +647,18 @@ function handleFileSelect(event) {
             event.target.value = '';
             return;
         }
-        
+
         // 显示文件信息
         const fileInfo = document.createElement('div');
         fileInfo.className = 'mt-2 text-muted';
         fileInfo.innerHTML = `<i class="fas fa-file-csv me-1"></i>已选择文件: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-        
+
         // 移除之前的文件信息
         const existingInfo = event.target.parentNode.querySelector('.file-info');
         if (existingInfo) {
             existingInfo.remove();
         }
-        
+
         fileInfo.className += ' file-info';
         event.target.parentNode.appendChild(fileInfo);
     }
@@ -666,7 +666,7 @@ function handleFileSelect(event) {
 
 function submitBatchCreate() {
     const uploadMethod = document.querySelector('input[name="uploadMethod"]:checked').value;
-    
+
     if (uploadMethod === 'file') {
         submitFileUpload();
     } else {
@@ -677,24 +677,24 @@ function submitBatchCreate() {
 function submitFileUpload() {
     const fileInput = document.getElementById('csvFile');
     const file = fileInput.files[0];
-    
+
     if (!file) {
         showAlert('warning', '请选择CSV文件');
         return;
     }
-    
+
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const btn = document.querySelector('#batchCreateModal .btn-primary');
     const originalText = btn.textContent;
-    
+
     btn.textContent = '创建中...';
     btn.disabled = true;
-    
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
                      document.querySelector('input[name="csrf_token"]')?.value;
-    
+
     fetch('/instances/batch-create', {
         method: 'POST',
         headers: {
@@ -727,34 +727,34 @@ function submitFileUpload() {
 
 function submitJsonInput() {
     const dataText = document.getElementById('batchInstancesData').value.trim();
-    
+
     if (!dataText) {
         showAlert('warning', '请输入实例数据');
         return;
     }
-    
+
     try {
         const instances = JSON.parse(dataText);
-        
+
         if (!Array.isArray(instances)) {
             showAlert('warning', '实例数据必须是数组格式');
             return;
         }
-        
+
         if (instances.length === 0) {
             showAlert('warning', '至少需要提供一个实例');
             return;
         }
-        
+
         const btn = document.querySelector('#batchCreateModal .btn-primary');
         const originalText = btn.textContent;
-        
+
         btn.textContent = '创建中...';
         btn.disabled = true;
-        
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
                          document.querySelector('input[name="csrf_token"]')?.value;
-        
+
         fetch('/instances/batch-create', {
             method: 'POST',
             headers: {
@@ -784,7 +784,7 @@ function submitJsonInput() {
             btn.textContent = originalText;
             btn.disabled = false;
         });
-        
+
     } catch (error) {
         showAlert('danger', 'JSON格式错误，请检查输入数据');
     }

@@ -16,6 +16,8 @@ class SyncData(db.Model):
     sync_type = db.Column(db.String(50), nullable=False, index=True)
     instance_id = db.Column(db.Integer, db.ForeignKey("instances.id"), nullable=True)
     task_id = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=True, index=True)  # 关联任务ID
+    session_id = db.Column(db.String(36), nullable=True, index=True)  # 关联同步会话ID
+    sync_category = db.Column(db.String(20), nullable=True, index=True)  # 同步分类
     data = db.Column(db.JSON, nullable=True)
     sync_time = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     status = db.Column(db.String(20), default="success", index=True)
@@ -32,6 +34,8 @@ class SyncData(db.Model):
         sync_type: str,
         instance_id: int,
         task_id: str | None = None,
+        session_id: str | None = None,
+        sync_category: str | None = None,
         data: str | None = None,
         status: str = "success",
         message: str | None = None,
@@ -49,6 +53,8 @@ class SyncData(db.Model):
             sync_type: 同步类型
             instance_id: 实例ID
             task_id: 任务ID（可选）
+            session_id: 同步会话ID（可选）
+            sync_category: 同步分类（可选）
             data: 同步数据
             status: 同步状态
             message: 同步消息
@@ -62,6 +68,8 @@ class SyncData(db.Model):
         self.sync_type = sync_type
         self.instance_id = instance_id
         self.task_id = task_id
+        self.session_id = session_id
+        self.sync_category = sync_category
         self.data = data
         self.status = status
         self.message = message
@@ -93,6 +101,8 @@ class SyncData(db.Model):
             "sync_type": self.sync_type,
             "instance_id": self.instance_id,
             "task_id": self.task_id,
+            "session_id": self.session_id,
+            "sync_category": self.sync_category,
             "data": self.data,
             "sync_time": self.sync_time.isoformat() if self.sync_time else None,
             "status": self.status,

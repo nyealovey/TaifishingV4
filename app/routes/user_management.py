@@ -11,7 +11,7 @@ from app import db
 from app.models.user import User
 from app.utils.api_response import APIResponse
 from app.utils.decorators import create_required, delete_required, update_required, view_required
-from app.utils.structlog_config import get_system_logger, log_error, log_info
+from app.utils.structlog_config import log_error, log_info
 
 # 创建蓝图
 user_management_bp = Blueprint("user_management", __name__, url_prefix="/user-management")
@@ -147,11 +147,11 @@ def api_create_user() -> "Response":
         return APIResponse.success({"message": "用户创建成功", "user": user.to_dict()})
 
     except ValueError as e:
-        log_error(f"创建用户失败: 密码不符合要求", module="user_management", user_id=current_user.id, error=str(e))
+        log_error("创建用户失败: 密码不符合要求", module="user_management", user_id=current_user.id, error=str(e))
         return APIResponse.error(f"密码不符合要求: {str(e)}")
     except Exception as e:
         db.session.rollback()
-        log_error(f"创建用户失败", module="user_management", user_id=current_user.id, error=str(e))
+        log_error("创建用户失败", module="user_management", user_id=current_user.id, error=str(e))
         return APIResponse.error(f"创建用户失败: {str(e)}")
 
 
@@ -207,11 +207,19 @@ def api_update_user(user_id: int) -> "Response":
         return APIResponse.success({"message": "用户更新成功", "user": user.to_dict()})
 
     except ValueError as e:
-        log_error(f"更新用户失败: 密码不符合要求", module="user_management", user_id=current_user.id, target_user_id=user_id, error=str(e))
+        log_error(
+            "更新用户失败: 密码不符合要求",
+            module="user_management",
+            user_id=current_user.id,
+            target_user_id=user_id,
+            error=str(e),
+        )
         return APIResponse.error(f"密码不符合要求: {str(e)}")
     except Exception as e:
         db.session.rollback()
-        log_error(f"更新用户失败", module="user_management", user_id=current_user.id, target_user_id=user_id, error=str(e))
+        log_error(
+            "更新用户失败", module="user_management", user_id=current_user.id, target_user_id=user_id, error=str(e)
+        )
         return APIResponse.error(f"更新用户失败: {str(e)}")
 
 
@@ -226,17 +234,27 @@ def api_delete_user(user_id: int) -> "Response":
         # 记录删除前的用户信息
         deleted_username = user.username
         deleted_role = user.role
-        
+
         # 不能删除自己
         if user.id == current_user.id:
-            log_error(f"删除用户失败: 不能删除自己的账户", module="user_management", user_id=current_user.id, target_user_id=user_id)
+            log_error(
+                "删除用户失败: 不能删除自己的账户",
+                module="user_management",
+                user_id=current_user.id,
+                target_user_id=user_id,
+            )
             return APIResponse.error("不能删除自己的账户")
 
         # 不能删除最后一个管理员
         if user.role == "admin":
             admin_count = User.query.filter_by(role="admin").count()
             if admin_count <= 1:
-                log_error(f"删除用户失败: 不能删除最后一个管理员账户", module="user_management", user_id=current_user.id, target_user_id=user_id)
+                log_error(
+                    "删除用户失败: 不能删除最后一个管理员账户",
+                    module="user_management",
+                    user_id=current_user.id,
+                    target_user_id=user_id,
+                )
                 return APIResponse.error("不能删除最后一个管理员账户")
 
         db.session.delete(user)
@@ -256,7 +274,9 @@ def api_delete_user(user_id: int) -> "Response":
 
     except Exception as e:
         db.session.rollback()
-        log_error(f"删除用户失败", module="user_management", user_id=current_user.id, target_user_id=user_id, error=str(e))
+        log_error(
+            "删除用户失败", module="user_management", user_id=current_user.id, target_user_id=user_id, error=str(e)
+        )
         return APIResponse.error(f"删除用户失败: {str(e)}")
 
 
@@ -272,17 +292,27 @@ def api_toggle_user_status(user_id: int) -> "Response":
         old_status = user.is_active
         username = user.username
         role = user.role
-        
+
         # 不能禁用自己
         if user.id == current_user.id:
-            log_error(f"切换用户状态失败: 不能禁用自己的账户", module="user_management", user_id=current_user.id, target_user_id=user_id)
+            log_error(
+                "切换用户状态失败: 不能禁用自己的账户",
+                module="user_management",
+                user_id=current_user.id,
+                target_user_id=user_id,
+            )
             return APIResponse.error("不能禁用自己的账户")
 
         # 不能禁用最后一个管理员
         if user.role == "admin" and user.is_active:
             admin_count = User.query.filter_by(role="admin", is_active=True).count()
             if admin_count <= 1:
-                log_error(f"切换用户状态失败: 不能禁用最后一个管理员账户", module="user_management", user_id=current_user.id, target_user_id=user_id)
+                log_error(
+                    "切换用户状态失败: 不能禁用最后一个管理员账户",
+                    module="user_management",
+                    user_id=current_user.id,
+                    target_user_id=user_id,
+                )
                 return APIResponse.error("不能禁用最后一个管理员账户")
 
         user.is_active = not user.is_active
@@ -305,7 +335,9 @@ def api_toggle_user_status(user_id: int) -> "Response":
 
     except Exception as e:
         db.session.rollback()
-        log_error(f"切换用户状态失败", module="user_management", user_id=current_user.id, target_user_id=user_id, error=str(e))
+        log_error(
+            "切换用户状态失败", module="user_management", user_id=current_user.id, target_user_id=user_id, error=str(e)
+        )
         return APIResponse.error(f"切换用户状态失败: {str(e)}")
 
 

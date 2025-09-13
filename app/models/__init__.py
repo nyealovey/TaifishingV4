@@ -16,6 +16,8 @@ from .instance import Instance
 from .log import Log
 from .permission_config import PermissionConfig
 from .sync_data import SyncData
+from .sync_instance_record import SyncInstanceRecord
+from .sync_session import SyncSession
 from .task import Task
 
 # 导入所有模型
@@ -30,6 +32,8 @@ __all__ = [
     "Task",
     "Log",
     "SyncData",
+    "SyncSession",
+    "SyncInstanceRecord",
     "AccountChange",
     "AccountClassification",
     "ClassificationRule",
