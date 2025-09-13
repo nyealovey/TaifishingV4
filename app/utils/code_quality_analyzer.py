@@ -9,7 +9,7 @@ import os
 import re
 from collections import Counter
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -45,14 +45,14 @@ class CodeMetrics:
 class CodeQualityAnalyzer:
     """代码质量分析器"""
 
-    def __init__(self, project_root: str = None):
+    def __init__(self, project_root: Optional[str] = None) -> None:
         self.project_root = project_root or os.getcwd()
-        self.issues = []
-        self.metrics = {}
-        self.duplicate_patterns = {}
+        self.issues: List[CodeIssue] = []
+        self.metrics: Dict[str, Any] = {}
+        self.duplicate_patterns: Dict[str, List[Tuple[str, int]]] = {}
 
         # 代码质量规则
-        self.rules = {
+        self.rules: Dict[str, Dict[str, Union[int, str]]] = {
             "function_length": {"max_lines": 50, "severity": "warning"},
             "class_length": {"max_lines": 200, "severity": "warning"},
             "cyclomatic_complexity": {"max_complexity": 10, "severity": "warning"},
@@ -67,7 +67,7 @@ class CodeQualityAnalyzer:
             "naming_conventions": {"severity": "warning"},
         }
 
-    def analyze_project(self) -> dict[str, Any]:
+    def analyze_project(self) -> Dict[str, Any]:
         """分析整个项目"""
         logger.info("开始分析项目代码质量...")
 
@@ -85,7 +85,7 @@ class CodeQualityAnalyzer:
         # 生成报告
         return self._generate_quality_report()
 
-    def _find_python_files(self) -> list[str]:
+    def _find_python_files(self) -> List[str]:
         """查找Python文件"""
         python_files = []
 
@@ -99,7 +99,7 @@ class CodeQualityAnalyzer:
 
         return python_files
 
-    def _analyze_file(self, file_path: str):
+    def _analyze_file(self, file_path: str) -> None:
         """分析单个文件"""
         try:
             with open(file_path, encoding="utf-8") as f:
@@ -191,7 +191,7 @@ class CodeQualityAnalyzer:
 
         return min(100, max(0, maintainability))
 
-    def _check_code_issues(self, file_path: str, content: str, tree: ast.AST):
+    def _check_code_issues(self, file_path: str, content: str, tree: ast.AST) -> None:
         """检查代码问题"""
         lines = content.split("\n")
 
@@ -228,7 +228,7 @@ class CodeQualityAnalyzer:
         # 检查命名约定
         self._check_naming_conventions(file_path, tree)
 
-    def _check_function_length(self, file_path: str, tree: ast.AST, lines: list[str]):
+    def _check_function_length(self, file_path: str, tree: ast.AST, lines: List[str]) -> None:
         """检查函数长度"""
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
@@ -236,20 +236,20 @@ class CodeQualityAnalyzer:
                 end_line = node.end_lineno or start_line
                 function_lines = end_line - start_line + 1
 
-                if function_lines > self.rules["function_length"]["max_lines"]:
+                if function_lines > int(self.rules["function_length"]["max_lines"]):
                     self.issues.append(
                         CodeIssue(
                             file_path=file_path,
                             line_number=start_line,
                             issue_type="function_length",
-                            severity=self.rules["function_length"]["severity"],
+                                severity=str(self.rules["function_length"]["severity"]),
                             message=f"函数 '{node.name}' 过长 ({function_lines} 行)",
                             suggestion=f"将函数拆分为更小的函数，建议不超过 {self.rules['function_length']['max_lines']} 行",
-                            code_snippet=lines[start_line - 1 : end_line],
+                            code_snippet="\n".join(lines[start_line - 1 : end_line]),
                         )
                     )
 
-    def _check_class_length(self, file_path: str, tree: ast.AST, lines: list[str]):
+    def _check_class_length(self, file_path: str, tree: ast.AST, lines: List[str]) -> None:
         """检查类长度"""
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
@@ -257,70 +257,70 @@ class CodeQualityAnalyzer:
                 end_line = node.end_lineno or start_line
                 class_lines = end_line - start_line + 1
 
-                if class_lines > self.rules["class_length"]["max_lines"]:
+                if class_lines > int(self.rules["class_length"]["max_lines"]):
                     self.issues.append(
                         CodeIssue(
                             file_path=file_path,
                             line_number=start_line,
                             issue_type="class_length",
-                            severity=self.rules["class_length"]["severity"],
+                                severity=str(self.rules["class_length"]["severity"]),
                             message=f"类 '{node.name}' 过长 ({class_lines} 行)",
                             suggestion=f"将类拆分为更小的类，建议不超过 {self.rules['class_length']['max_lines']} 行",
-                            code_snippet=lines[start_line - 1 : end_line],
+                            code_snippet="\n".join(lines[start_line - 1 : end_line]),
                         )
                     )
 
-    def _check_cyclomatic_complexity(self, file_path: str, tree: ast.AST):
+    def _check_cyclomatic_complexity(self, file_path: str, tree: ast.AST) -> None:
         """检查圈复杂度"""
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
                 complexity = self._calculate_cyclomatic_complexity(node)
 
-                if complexity > self.rules["cyclomatic_complexity"]["max_complexity"]:
+                if complexity > int(self.rules["cyclomatic_complexity"]["max_complexity"]):
                     self.issues.append(
                         CodeIssue(
                             file_path=file_path,
                             line_number=node.lineno,
                             issue_type="cyclomatic_complexity",
-                            severity=self.rules["cyclomatic_complexity"]["severity"],
+                                severity=str(self.rules["cyclomatic_complexity"]["severity"]),
                             message=f"函数 '{node.name}' 圈复杂度过高 ({complexity})",
                             suggestion=f"简化函数逻辑，建议复杂度不超过 {self.rules['cyclomatic_complexity']['max_complexity']}",
                             code_snippet=f"def {node.name}(...):",
                         )
                     )
 
-    def _check_parameter_count(self, file_path: str, tree: ast.AST):
+    def _check_parameter_count(self, file_path: str, tree: ast.AST) -> None:
         """检查参数数量"""
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
                 param_count = len(node.args.args)
 
-                if param_count > self.rules["parameter_count"]["max_params"]:
+                if param_count > int(self.rules["parameter_count"]["max_params"]):
                     self.issues.append(
                         CodeIssue(
                             file_path=file_path,
                             line_number=node.lineno,
                             issue_type="parameter_count",
-                            severity=self.rules["parameter_count"]["severity"],
+                                severity=str(self.rules["parameter_count"]["severity"]),
                             message=f"函数 '{node.name}' 参数过多 ({param_count} 个)",
                             suggestion=f"减少参数数量，建议不超过 {self.rules['parameter_count']['max_params']} 个",
                             code_snippet=f"def {node.name}(...):",
                         )
                     )
 
-    def _check_nested_depth(self, file_path: str, tree: ast.AST):
+    def _check_nested_depth(self, file_path: str, tree: ast.AST) -> None:
         """检查嵌套深度"""
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
                 max_depth = self._calculate_nested_depth(node)
 
-                if max_depth > self.rules["nested_depth"]["max_depth"]:
+                if max_depth > int(self.rules["nested_depth"]["max_depth"]):
                     self.issues.append(
                         CodeIssue(
                             file_path=file_path,
                             line_number=node.lineno,
                             issue_type="nested_depth",
-                            severity=self.rules["nested_depth"]["severity"],
+                                severity=str(self.rules["nested_depth"]["severity"]),
                             message=f"函数 '{node.name}' 嵌套过深 ({max_depth} 层)",
                             suggestion=f"减少嵌套层级，建议不超过 {self.rules['nested_depth']['max_depth']} 层",
                             code_snippet=f"def {node.name}(...):",
@@ -344,23 +344,23 @@ class CodeQualityAnalyzer:
 
         return max_depth
 
-    def _check_line_length(self, file_path: str, lines: list[str]):
+    def _check_line_length(self, file_path: str, lines: List[str]) -> None:
         """检查行长度"""
         for i, line in enumerate(lines, 1):
-            if len(line) > self.rules["line_length"]["max_length"]:
+            if len(line) > int(self.rules["line_length"]["max_length"]):
                 self.issues.append(
                     CodeIssue(
                         file_path=file_path,
                         line_number=i,
                         issue_type="line_length",
-                        severity=self.rules["line_length"]["severity"],
+                            severity=str(self.rules["line_length"]["severity"]),
                         message=f"行过长 ({len(line)} 字符)",
                         suggestion=f"将长行拆分为多行，建议不超过 {self.rules['line_length']['max_length']} 字符",
                         code_snippet=line,
                     )
                 )
 
-    def _check_magic_numbers(self, file_path: str, tree: ast.AST):
+    def _check_magic_numbers(self, file_path: str, tree: ast.AST) -> None:
         """检查魔法数字"""
         for node in ast.walk(tree):
             if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
@@ -376,14 +376,14 @@ class CodeQualityAnalyzer:
                             file_path=file_path,
                             line_number=node.lineno,
                             issue_type="magic_number",
-                            severity=self.rules["magic_numbers"]["severity"],
+                                severity=str(self.rules["magic_numbers"]["severity"]),
                             message=f"发现魔法数字: {node.value}",
                             suggestion="将魔法数字定义为常量",
                             code_snippet=str(node.value),
                         )
                     )
 
-    def _check_unused_imports(self, file_path: str, tree: ast.AST):
+    def _check_unused_imports(self, file_path: str, tree: ast.AST) -> None:
         """检查未使用的导入"""
         imports = []
         used_names = set()
@@ -413,14 +413,14 @@ class CodeQualityAnalyzer:
                         file_path=file_path,
                         line_number=line_no,
                         issue_type="unused_import",
-                        severity=self.rules["unused_imports"]["severity"],
+                            severity=str(self.rules["unused_imports"]["severity"]),
                         message=f"未使用的导入: {full_name}",
                         suggestion="删除未使用的导入",
                         code_snippet=f"import {full_name}",
                     )
                 )
 
-    def _check_unused_variables(self, file_path: str, tree: ast.AST):
+    def _check_unused_variables(self, file_path: str, tree: ast.AST) -> None:
         """检查未使用的变量"""
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
@@ -441,14 +441,14 @@ class CodeQualityAnalyzer:
                                 file_path=file_path,
                                 line_number=node.lineno,
                                 issue_type="unused_variable",
-                                severity=self.rules["unused_variables"]["severity"],
+                                    severity=str(self.rules["unused_variables"]["severity"]),
                                 message=f"未使用的参数: {arg.arg}",
                                 suggestion="删除未使用的参数或使用下划线前缀",
                                 code_snippet=f"def {node.name}({arg.arg}, ...):",
                             )
                         )
 
-    def _check_docstrings(self, file_path: str, tree: ast.AST):
+    def _check_docstrings(self, file_path: str, tree: ast.AST) -> None:
         """检查文档字符串"""
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
@@ -458,14 +458,14 @@ class CodeQualityAnalyzer:
                             file_path=file_path,
                             line_number=node.lineno,
                             issue_type="missing_docstring",
-                            severity=self.rules["missing_docstrings"]["severity"],
+                                severity=str(self.rules["missing_docstrings"]["severity"]),
                             message=f"{'类' if isinstance(node, ast.ClassDef) else '函数'} '{node.name}' 缺少文档字符串",
                             suggestion="添加文档字符串描述功能",
                             code_snippet=f"{'class' if isinstance(node, ast.ClassDef) else 'def'} {node.name}(...):",
                         )
                     )
 
-    def _check_naming_conventions(self, file_path: str, tree: ast.AST):
+    def _check_naming_conventions(self, file_path: str, tree: ast.AST) -> None:
         """检查命名约定"""
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
@@ -475,7 +475,7 @@ class CodeQualityAnalyzer:
                             file_path=file_path,
                             line_number=node.lineno,
                             issue_type="naming_convention",
-                            severity=self.rules["naming_conventions"]["severity"],
+                                severity=str(self.rules["naming_conventions"]["severity"]),
                             message=f"函数名不符合约定: {node.name}",
                             suggestion="使用小写字母和下划线命名函数",
                             code_snippet=f"def {node.name}(...):",
@@ -488,14 +488,14 @@ class CodeQualityAnalyzer:
                             file_path=file_path,
                             line_number=node.lineno,
                             issue_type="naming_convention",
-                            severity=self.rules["naming_conventions"]["severity"],
+                                severity=str(self.rules["naming_conventions"]["severity"]),
                             message=f"类名不符合约定: {node.name}",
                             suggestion="使用大驼峰命名类",
                             code_snippet=f"class {node.name}(...):",
                         )
                     )
 
-    def _detect_duplicate_code(self):
+    def _detect_duplicate_code(self) -> None:
         """检测重复代码"""
         # 简化的重复代码检测
         file_contents = {}
@@ -523,7 +523,7 @@ class CodeQualityAnalyzer:
                                     file_path=file1,
                                     line_number=i + 1,
                                     issue_type="duplicate_code",
-                                    severity=self.rules["duplicate_code"]["severity"],
+                                        severity=str(self.rules["duplicate_code"]["severity"]),
                                     message=f"重复代码 (与 {file2}:{j + 1} 相同)",
                                     suggestion="提取重复代码为公共函数",
                                     code_snippet="\n".join(lines1[i : i + 5]),
