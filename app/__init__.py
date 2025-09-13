@@ -42,7 +42,7 @@ cors = CORS()
 csrf = CSRFProtect()
 
 
-def create_app(config_name=None):
+def create_app(config_name: str | None = None) -> Flask:
     """
     创建Flask应用实例
 
@@ -86,7 +86,7 @@ def create_app(config_name=None):
 
     # 注册高级错误处理器到Flask应用
     @app.errorhandler(Exception)
-    def handle_advanced_exception(error):
+    def handle_advanced_exception(error: Exception) -> tuple[str, int]:
         """全局高级错误处理"""
         from app.utils.advanced_error_handler import ErrorContext
 
@@ -109,7 +109,7 @@ def create_app(config_name=None):
     return app
 
 
-def configure_app(app, config_name):
+def configure_app(app: Flask, config_name: str | None) -> None:
     """
     配置Flask应用
 
@@ -217,7 +217,7 @@ def configure_app(app, config_name):
     app.config["ORACLE_PASSWORD"] = os.getenv("ORACLE_PASSWORD", "")
 
 
-def configure_session_security(app):
+def configure_session_security(app: Flask) -> None:
     """
     配置会话安全
 
@@ -237,7 +237,7 @@ def configure_session_security(app):
     app.config["SESSION_TIMEOUT"] = SystemConstants.SESSION_LIFETIME  # 1小时
 
 
-def initialize_extensions(app):
+def initialize_extensions(app: Flask) -> None:
     """
     初始化Flask扩展
 
@@ -279,7 +279,7 @@ def initialize_extensions(app):
 
     # 用户加载器
     @login_manager.user_loader
-    def load_user(user_id):
+    def load_user(user_id: str) -> User | None:
         from app.models.user import User
 
         return User.query.get(int(user_id))
@@ -322,7 +322,7 @@ def initialize_extensions(app):
     app.redis_client = redis_client
 
 
-def register_blueprints(app):
+def register_blueprints(app: Flask) -> None:
     """
     注册Flask蓝图
 
@@ -383,7 +383,7 @@ def register_blueprints(app):
     init_scheduler(app)
 
 
-def configure_logging(app):
+def configure_logging(app: Flask) -> None:
     """
     配置日志系统
 
@@ -412,13 +412,13 @@ def configure_logging(app):
         app.logger.info("泰摸鱼吧应用启动")
 
 
-def configure_error_handlers(app):
+def configure_error_handlers(app: Flask) -> None:
     """
     配置错误处理器 - 已移除，使用统一的错误处理器
     """
 
 
-def configure_template_filters(app):
+def configure_template_filters(app: Flask) -> None:
     """
     配置模板过滤器
 
@@ -428,17 +428,17 @@ def configure_template_filters(app):
     from app.utils.timezone import format_china_time
 
     @app.template_filter("china_time")
-    def china_time_filter(dt, format_str="%Y-%m-%d %H:%M:%S"):
+    def china_time_filter(dt: str | datetime, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
         """东八区时间格式化过滤器"""
         return format_china_time(dt, format_str)
 
     @app.template_filter("china_date")
-    def china_date_filter(dt):
+    def china_date_filter(dt: str | datetime) -> str:
         """东八区日期格式化过滤器"""
         return format_china_time(dt, "%Y-%m-%d")
 
     @app.template_filter("china_datetime")
-    def china_datetime_filter(dt):
+    def china_datetime_filter(dt: str | datetime) -> str:
         """东八区日期时间格式化过滤器"""
         return format_china_time(dt, "%Y-%m-%d %H:%M:%S")
 

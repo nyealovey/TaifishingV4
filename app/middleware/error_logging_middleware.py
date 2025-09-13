@@ -5,8 +5,9 @@
 
 import traceback
 import uuid
+from datetime import datetime
 
-from flask import g, request
+from flask import Flask, Response, g, request
 from flask_login import current_user
 
 from app import db
@@ -14,7 +15,7 @@ from app.models.log import Log
 from app.utils.enhanced_logger import enhanced_logger, log_exception
 
 
-def determine_log_source():
+def determine_log_source() -> str:
     """确定日志来源"""
     try:
         # 检查是否有用户认证
@@ -31,12 +32,12 @@ def determine_log_source():
         return "system_operation"  # 默认系统操作
 
 
-def register_error_logging_middleware(app):
+def register_error_logging_middleware(app: Flask) -> None:
     """注册错误日志中间件"""
     print("DEBUG: 注册错误日志中间件")
 
     @app.before_request
-    def log_request_start():
+    def log_request_start() -> None:
         """记录请求开始"""
         print(f"DEBUG: before_request 被调用: {request.method} {request.path}")
         try:
@@ -61,7 +62,7 @@ def register_error_logging_middleware(app):
             pass
 
     @app.after_request
-    def log_request_end(response):
+    def log_request_end(response: Response) -> None:
         """记录请求结束并合并日志"""
         print(f"DEBUG: after_request 被调用: {request.method} {request.path} - {response.status_code}")
         print(f"DEBUG: request.endpoint: {request.endpoint}")
@@ -153,25 +154,25 @@ def register_error_logging_middleware(app):
         return response
 
     @app.errorhandler(400)
-    def handle_bad_request(error):
+    def handle_bad_request(error: Exception) -> None:
         """处理400错误"""
         log_exception(error, "客户端请求错误", "error_handler", "WARNING")
         return {"error": "请求参数错误", "message": str(error), "status_code": 400}, 400
 
     @app.errorhandler(401)
-    def handle_unauthorized(error):
+    def handle_unauthorized(error: Exception) -> None:
         """处理401错误"""
         log_exception(error, "未授权访问", "error_handler", "WARNING")
         return {"error": "未授权访问", "message": "请先登录", "status_code": 401}, 401
 
     @app.errorhandler(403)
-    def handle_forbidden(error):
+    def handle_forbidden(error: Exception) -> None:
         """处理403错误"""
         log_exception(error, "禁止访问", "error_handler", "WARNING")
         return {"error": "禁止访问", "message": "您没有权限访问此资源", "status_code": 403}, 403
 
     @app.errorhandler(404)
-    def handle_not_found(error):
+    def handle_not_found(error: Exception) -> None:
         """处理404错误"""
         from flask import request
 
@@ -181,13 +182,13 @@ def register_error_logging_middleware(app):
         return {"error": "资源未找到", "message": "请求的资源不存在", "status_code": 404}, 404
 
     @app.errorhandler(500)
-    def handle_internal_server_error(error):
+    def handle_internal_server_error(error: Exception) -> None:
         """处理500错误"""
         log_exception(error, "服务器内部错误", "error_handler", "ERROR")
         return {"error": "服务器内部错误", "message": "系统出现错误，请稍后重试", "status_code": 500}, 500
 
     @app.errorhandler(Exception)
-    def handle_unhandled_exception(error):
+    def handle_unhandled_exception(error: Exception) -> None:
         """处理所有未捕获的异常"""
         # 记录详细的错误信息
         log_exception(error, "未处理的异常", "error_handler", "ERROR")
@@ -212,7 +213,7 @@ def register_error_logging_middleware(app):
         return {"error": "系统错误", "message": "系统出现错误，请稍后重试", "status_code": 500}, 500
 
 
-def log_database_operation_error(operation: str, error: Exception, module: str = None, details: str = None):
+def log_database_operation_error(operation: str, error: Exception, module: str | None = None, details: str | None = None) -> None:
     """记录数据库操作错误"""
     try:
         Log.log_error(
@@ -227,7 +228,7 @@ def log_database_operation_error(operation: str, error: Exception, module: str =
         enhanced_logger.critical(f"记录数据库错误日志失败: {log_error}", "database")
 
 
-def log_api_operation_error(endpoint: str, error: Exception, module: str = None, details: str = None):
+def log_api_operation_error(endpoint: str, error: Exception, module: str | None = None, details: str | None = None) -> None:
     """记录API操作错误"""
     try:
         Log.log_error(
@@ -242,7 +243,7 @@ def log_api_operation_error(endpoint: str, error: Exception, module: str = None,
         enhanced_logger.critical(f"记录API错误日志失败: {log_error}", "api")
 
 
-def log_sync_operation_error(operation: str, error: Exception, module: str = None, details: str = None):
+def log_sync_operation_error(operation: str, error: Exception, module: str | None = None, details: str | None = None) -> None:
     """记录同步操作错误"""
     try:
         Log.log_error(
@@ -257,7 +258,7 @@ def log_sync_operation_error(operation: str, error: Exception, module: str = Non
         enhanced_logger.critical(f"记录同步错误日志失败: {log_error}", "sync")
 
 
-def _find_related_sync_logs(start_time, end_time):
+def _find_related_sync_logs(start_time: datetime, end_time: datetime) -> list:
     """查找与批量同步相关的所有日志"""
     try:
         # 查找在时间范围内的所有同步相关日志
@@ -278,7 +279,7 @@ def _find_related_sync_logs(start_time, end_time):
         return []
 
 
-def _merge_batch_sync_logs(start_log, sync_logs, end_time, duration, status_code, response):
+def _merge_batch_sync_logs(start_log: Log, sync_logs: list, end_time: datetime, duration: float, status_code: int, response: Response) -> None:
     """合并批量同步日志"""
     try:
         # 统计信息
@@ -372,7 +373,7 @@ def _merge_batch_sync_logs(start_log, sync_logs, end_time, duration, status_code
         return None
 
 
-def _merge_regular_request_logs(start_log, end_time, duration, status_code, response):
+def _merge_regular_request_logs(start_log: Log, end_time: datetime, duration: float, status_code: int, response: Response) -> None:
     """合并普通请求日志"""
     try:
         # 创建合并后的日志
