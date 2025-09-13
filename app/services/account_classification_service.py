@@ -3,7 +3,6 @@
 """
 
 import json
-import logging
 from datetime import datetime
 from typing import Any
 
@@ -14,13 +13,14 @@ from app.models.account_classification import (
     AccountClassificationAssignment,
     ClassificationRule,
 )
-from app.utils.structlog_config import log_info, log_error, log_warning
+from app.utils.structlog_config import log_error, log_info, log_warning
 
 
 class AccountClassificationService:
     """账户分类管理服务"""
 
     def __init__(self) -> None:
+        """初始化账户分类服务"""
         # 使用统一日志系统，不需要单独的logger
 
     def create_classification(
@@ -49,11 +49,13 @@ class AccountClassificationService:
             db.session.add(classification)
             db.session.commit()
 
-            log_info("创建账户分类", 
-                    module="account_classification",
-                    classification_id=classification.id,
-                    classification_name=name,
-                    risk_level=risk_level)
+            log_info(
+                "创建账户分类",
+                module="account_classification",
+                classification_id=classification.id,
+                classification_name=name,
+                risk_level=risk_level,
+            )
 
             return {
                 "success": True,
@@ -81,10 +83,12 @@ class AccountClassificationService:
             classification.updated_at = datetime.utcnow()
             db.session.commit()
 
-            log_info("更新账户分类", 
-                    module="account_classification",
-                    classification_id=classification_id,
-                    updated_fields=list(kwargs.keys()))
+            log_info(
+                "更新账户分类",
+                module="account_classification",
+                classification_id=classification_id,
+                updated_fields=list(kwargs.keys()),
+            )
 
             return {
                 "success": True,
@@ -120,10 +124,12 @@ class AccountClassificationService:
             db.session.delete(classification)
             db.session.commit()
 
-            log_info("删除账户分类", 
-                    module="account_classification",
-                    classification_id=classification_id,
-                    classification_name=classification_name)
+            log_info(
+                "删除账户分类",
+                module="account_classification",
+                classification_id=classification_id,
+                classification_name=classification_name,
+            )
 
             return {
                 "success": True,
@@ -170,12 +176,14 @@ class AccountClassificationService:
             db.session.add(rule)
             db.session.commit()
 
-            log_info("创建分类规则", 
-                    module="account_classification",
-                    rule_id=rule.id,
-                    classification_id=classification_id,
-                    db_type=db_type,
-                    rule_name=rule_name)
+            log_info(
+                "创建分类规则",
+                module="account_classification",
+                rule_id=rule.id,
+                classification_id=classification_id,
+                db_type=db_type,
+                rule_name=rule_name,
+            )
 
             return {
                 "success": True,
@@ -206,10 +214,9 @@ class AccountClassificationService:
             rule.updated_at = datetime.utcnow()
             db.session.commit()
 
-            log_info("更新分类规则", 
-                    module="account_classification",
-                    rule_id=rule_id, 
-                    updated_fields=list(kwargs.keys()))
+            log_info(
+                "更新分类规则", module="account_classification", rule_id=rule_id, updated_fields=list(kwargs.keys())
+            )
 
             return {
                 "success": True,
@@ -233,10 +240,7 @@ class AccountClassificationService:
             db.session.delete(rule)
             db.session.commit()
 
-            log_info("删除分类规则", 
-                    module="account_classification",
-                    rule_id=rule_id, 
-                    rule_name=rule_name)
+            log_info("删除分类规则", module="account_classification", rule_id=rule_id, rule_name=rule_name)
 
             return {"success": True, "message": f'规则 "{rule_name}" 删除成功'}
 
@@ -348,11 +352,13 @@ class AccountClassificationService:
 
             db.session.commit()
 
-            log_info("分配账户分类", 
-                    module="account_classification",
-                    account_id=account_id,
-                    classification_id=classification_id,
-                    assignment_type=assignment_type)
+            log_info(
+                "分配账户分类",
+                module="account_classification",
+                account_id=account_id,
+                classification_id=classification_id,
+                assignment_type=assignment_type,
+            )
 
             return {
                 "success": True,
@@ -416,22 +422,26 @@ class AccountClassificationService:
                                 classified = True
                                 log_info(
                                     f"账户 {account.username} 按优先级 {rule.classification.priority if rule.classification else 0} 的规则 {rule.rule_name} 分类到 {rule.classification.name if rule.classification else '未知分类'}",
-                                    module="account_classification"
+                                    module="account_classification",
                                 )
                             # 移除break，允许匹配多个规则
 
                     # 如果没有规则匹配，账户保持未分类状态（已清除现有分类）
                     if not classified:
-                        log_info(f"账户 {account.username} 不满足任何规则，设置为未分类", module="account_classification")
+                        log_info(
+                            f"账户 {account.username} 不满足任何规则，设置为未分类", module="account_classification"
+                        )
 
                 except Exception as e:
                     errors.append(f"账户 {account.username}: {str(e)}")
 
-            log_info("自动分类账户", 
-                    module="account_classification",
-                    instance_id=instance_id,
-                    classified_count=classified_count,
-                    total_accounts=len(accounts))
+            log_info(
+                "自动分类账户",
+                module="account_classification",
+                instance_id=instance_id,
+                classified_count=classified_count,
+                total_accounts=len(accounts),
+            )
 
             return {
                 "success": True,
@@ -492,7 +502,10 @@ class AccountClassificationService:
                     # 检查是否有sysadmin角色
                     server_roles = permissions.get("server_roles", [])
                     if isinstance(server_roles, list) and "sysadmin" in server_roles:
-                        log_info(f"账户 {account.username} 匹配SQL Server规则: {rule_expression}", module="account_classification")
+                        log_info(
+                            f"账户 {account.username} 匹配SQL Server规则: {rule_expression}",
+                            module="account_classification",
+                        )
                         return True
                 elif rule_expression == "database_roles.db_owner":
                     # 检查是否有db_owner角色
@@ -500,14 +513,20 @@ class AccountClassificationService:
                     if isinstance(database_roles, dict):
                         for db_name, roles in database_roles.items():
                             if isinstance(roles, list) and "db_owner" in roles:
-                                log_info(f"账户 {account.username} 匹配SQL Server规则: {rule_expression}", module="account_classification")
+                                log_info(
+                                    f"账户 {account.username} 匹配SQL Server规则: {rule_expression}",
+                                    module="account_classification",
+                                )
                                 return True
                 elif rule_expression.startswith("server_permissions."):
                     # 检查服务器权限
                     perm_name = rule_expression.split(".", 1)[1]
                     server_permissions = permissions.get("server_permissions", [])
                     if isinstance(server_permissions, list) and perm_name in server_permissions:
-                        log_info(f"账户 {account.username} 匹配SQL Server规则: {rule_expression}", module="account_classification")
+                        log_info(
+                            f"账户 {account.username} 匹配SQL Server规则: {rule_expression}",
+                            module="account_classification",
+                        )
                         return True
 
             elif rule.db_type == "mysql":
@@ -521,7 +540,10 @@ class AccountClassificationService:
                                 and perm.get("privilege") == "SUPER"
                                 and perm.get("granted", False)
                             ):
-                                log_info(f"账户 {account.username} 匹配MySQL规则: {rule_expression}", module="account_classification")
+                                log_info(
+                                    f"账户 {account.username} 匹配MySQL规则: {rule_expression}",
+                                    module="account_classification",
+                                )
                                 return True
 
             elif rule.db_type == "postgresql":
@@ -529,7 +551,10 @@ class AccountClassificationService:
                     # 检查是否有CREATEROLE属性
                     role_attributes = permissions.get("role_attributes", [])
                     if isinstance(role_attributes, list) and "CREATEROLE" in role_attributes:
-                        log_info(f"账户 {account.username} 匹配PostgreSQL规则: {rule_expression}", module="account_classification")
+                        log_info(
+                            f"账户 {account.username} 匹配PostgreSQL规则: {rule_expression}",
+                            module="account_classification",
+                        )
                         return True
 
             elif rule.db_type == "oracle":
@@ -537,7 +562,10 @@ class AccountClassificationService:
                     # 检查是否有GRANT ANY PRIVILEGE权限
                     system_privileges = permissions.get("system_privileges", [])
                     if isinstance(system_privileges, list) and "GRANT ANY PRIVILEGE" in system_privileges:
-                        log_info(f"账户 {account.username} 匹配Oracle规则: {rule_expression}", module="account_classification")
+                        log_info(
+                            f"账户 {account.username} 匹配Oracle规则: {rule_expression}",
+                            module="account_classification",
+                        )
                         return True
 
             log_info(f"账户 {account.username} 不匹配规则: {rule_expression}", module="account_classification")
@@ -628,11 +656,14 @@ class AccountClassificationService:
                 match_results.append(server_perms_match)
 
                 if server_perms_match:
-                    log_info(f"账户 {account.username} 满足服务器权限要求: {required_server_perms}", module="account_classification")
+                    log_info(
+                        f"账户 {account.username} 满足服务器权限要求: {required_server_perms}",
+                        module="account_classification",
+                    )
                 else:
                     log_info(
                         f"账户 {account.username} 不满足服务器权限要求: 需要 {required_server_perms}, 实际 {actual_server_perms}",
-                        module="account_classification"
+                        module="account_classification",
                     )
 
             # 检查服务器角色
@@ -651,11 +682,14 @@ class AccountClassificationService:
                 match_results.append(server_roles_match)
 
                 if server_roles_match:
-                    log_info(f"账户 {account.username} 满足服务器角色要求: {required_server_roles}", module="account_classification")
+                    log_info(
+                        f"账户 {account.username} 满足服务器角色要求: {required_server_roles}",
+                        module="account_classification",
+                    )
                 else:
                     log_info(
                         f"账户 {account.username} 不满足服务器角色要求: 需要 {required_server_roles}, 实际 {actual_server_roles}",
-                        module="account_classification"
+                        module="account_classification",
                     )
 
             # 检查数据库角色
@@ -680,11 +714,14 @@ class AccountClassificationService:
                 match_results.append(db_roles_match)
 
                 if db_roles_match:
-                    log_info(f"账户 {account.username} 满足数据库角色要求: {required_db_roles}", module="account_classification")
+                    log_info(
+                        f"账户 {account.username} 满足数据库角色要求: {required_db_roles}",
+                        module="account_classification",
+                    )
                 else:
                     log_info(
                         f"账户 {account.username} 不满足数据库角色要求: 需要 {required_db_roles}, 实际 {list(all_db_roles)}",
-                        module="account_classification"
+                        module="account_classification",
                     )
 
             # 检查数据库权限
@@ -709,11 +746,14 @@ class AccountClassificationService:
                 match_results.append(db_privs_match)
 
                 if db_privs_match:
-                    log_info(f"账户 {account.username} 满足数据库权限要求: {required_db_privs}", module="account_classification")
+                    log_info(
+                        f"账户 {account.username} 满足数据库权限要求: {required_db_privs}",
+                        module="account_classification",
+                    )
                 else:
                     log_info(
                         f"账户 {account.username} 不满足数据库权限要求: 需要 {required_db_privs}, 实际 {list(all_db_permissions)}",
-                        module="account_classification"
+                        module="account_classification",
                     )
 
             # 根据操作符决定匹配逻辑
@@ -725,7 +765,9 @@ class AccountClassificationService:
             if operator.upper() == "AND":
                 # AND逻辑：所有条件都必须满足
                 result = all(match_results)
-                log_info(f"账户 {account.username} SQL Server规则AND匹配结果: {result}", module="account_classification")
+                log_info(
+                    f"账户 {account.username} SQL Server规则AND匹配结果: {result}", module="account_classification"
+                )
             else:
                 # OR逻辑：任一条件满足即可
                 result = any(match_results)
@@ -791,11 +833,13 @@ class AccountClassificationService:
             assignment.updated_at = datetime.utcnow()
             db.session.commit()
 
-            log_info("移除账户分类分配", 
-                    module="account_classification",
-                    assignment_id=assignment_id,
-                    account_id=assignment.account_id,
-                    classification_id=assignment.classification_id)
+            log_info(
+                "移除账户分类分配",
+                module="account_classification",
+                assignment_id=assignment_id,
+                account_id=assignment.account_id,
+                classification_id=assignment.classification_id,
+            )
 
             return {"success": True, "message": "账户分类分配已移除"}
 
@@ -859,14 +903,18 @@ class AccountClassificationService:
             required_db_perms = rule_expression.get("database_privileges", [])
             for required_perm in required_db_perms:
                 if required_perm not in permissions.get("database_privileges", []):
-                    log_info(f"账户 {account.username} 缺少数据库权限: {required_perm}", module="account_classification")
+                    log_info(
+                        f"账户 {account.username} 缺少数据库权限: {required_perm}", module="account_classification"
+                    )
                     return False
 
             # 检查表空间权限
             required_tablespace_perms = rule_expression.get("tablespace_privileges", [])
             for required_perm in required_tablespace_perms:
                 if required_perm not in permissions.get("tablespace_privileges", []):
-                    log_info(f"账户 {account.username} 缺少表空间权限: {required_perm}", module="account_classification")
+                    log_info(
+                        f"账户 {account.username} 缺少表空间权限: {required_perm}", module="account_classification"
+                    )
                     return False
 
             log_info(f"账户 {account.username} 匹配PostgreSQL规则", module="account_classification")
@@ -903,7 +951,9 @@ class AccountClassificationService:
                 account_system_perms = permissions.get("system_privileges", [])
                 for required_perm in required_system_perms:
                     if required_perm not in account_system_perms:
-                        log_info(f"账户 {account.username} 缺少系统权限: {required_perm}", module="account_classification")
+                        log_info(
+                            f"账户 {account.username} 缺少系统权限: {required_perm}", module="account_classification"
+                        )
                         return False
 
             # 检查表空间权限
@@ -912,7 +962,9 @@ class AccountClassificationService:
                 account_tablespace_perms = permissions.get("tablespace_privileges", [])
                 for required_perm in required_tablespace_perms:
                     if required_perm not in account_tablespace_perms:
-                        log_info(f"账户 {account.username} 缺少表空间权限: {required_perm}", module="account_classification")
+                        log_info(
+                            f"账户 {account.username} 缺少表空间权限: {required_perm}", module="account_classification"
+                        )
                         return False
 
             # 检查表空间配额

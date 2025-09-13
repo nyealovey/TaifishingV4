@@ -252,7 +252,7 @@ log_info("消息")  # 异步写入，不阻塞主线程
 for item in large_list:
     # 避免这样做
     log_debug(f"处理项目: {item}")
-    
+
     # 更好的做法
     if should_log:
         log_debug(f"处理项目: {item}")

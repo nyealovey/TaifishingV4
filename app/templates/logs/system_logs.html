@@ -194,7 +194,7 @@
                                 <a class="page-link" href="{{ url_for('logs.index', page=logs.prev_num, level=level, module=module, start_date=start_date, end_date=end_date) }}">上一页</a>
                             </li>
                             {% endif %}
-                            
+
                             {% for page_num in logs.iter_pages() %}
                                 {% if page_num %}
                                     {% if page_num != logs.page %}
@@ -212,7 +212,7 @@
                                 </li>
                                 {% endif %}
                             {% endfor %}
-                            
+
                             {% if logs.has_next %}
                             <li class="page-item">
                                 <a class="page-link" href="{{ url_for('logs.index', page=logs.next_num, level=level, module=module, start_date=start_date, end_date=end_date) }}">下一页</a>
@@ -348,9 +348,9 @@ function showNotification(message, type = 'info') {
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     // 自动隐藏
     setTimeout(() => {
         if (notification.parentNode) {

@@ -12,8 +12,8 @@ from flask_login import current_user
 
 from app import db
 from app.models.log import Log
-from app.utils.structlog_config import get_system_logger, log_error, log_critical
-from app.utils.enhanced_logger import log_exception, enhanced_logger
+from app.utils.enhanced_logger import log_exception
+from app.utils.structlog_config import get_system_logger, log_critical, log_error
 
 
 def determine_log_source() -> str:
@@ -58,12 +58,12 @@ def register_error_logging_middleware(app: Flask) -> None:
             if (
                 request.endpoint
                 and not request.endpoint.startswith("static")
-                and request.path == "/account-sync/sync-all" 
+                and request.path == "/account-sync/sync-all"
                 and request.method == "POST"
             ):
                 status_code = response.status_code
                 request_id = getattr(g, "request_id", "unknown")
-                
+
                 # 只对同步所有账户进行日志合并
                 _handle_batch_sync_log_merge(request_id, status_code, response)
         except Exception as e:
@@ -125,7 +125,7 @@ def register_error_logging_middleware(app: Flask) -> None:
                 ip_address=request.remote_addr,
                 user_agent=request.headers.get("User-Agent"),
             )
-        except Exception as log_error:
+        except Exception:
             # 如果数据库记录也失败，至少记录到文件
             log_critical("记录错误日志失败: {log_error}", module="error_handler")
 
@@ -145,7 +145,7 @@ def log_database_operation_error(
             ip_address=request.remote_addr if request else None,
             user_agent=request.headers.get("User-Agent") if request else None,
         )
-    except Exception as log_error:
+    except Exception:
         log_critical("记录数据库错误日志失败: {log_error}", module="database")
 
 
@@ -162,7 +162,7 @@ def log_api_operation_error(
             ip_address=request.remote_addr if request else None,
             user_agent=request.headers.get("User-Agent") if request else None,
         )
-    except Exception as log_error:
+    except Exception:
         log_critical("记录API错误日志失败: {log_error}", module="api")
 
 
@@ -179,7 +179,7 @@ def log_sync_operation_error(
             ip_address=request.remote_addr if request else None,
             user_agent=request.headers.get("User-Agent") if request else None,
         )
-    except Exception as log_error:
+    except Exception:
         log_critical("记录同步错误日志失败: {log_error}", module="sync")
 
 
@@ -305,18 +305,17 @@ def _handle_batch_sync_log_merge(request_id: str, status_code: int, response: Re
     try:
         if request_id == "unknown":
             return
-            
+
         # 查找对应的开始日志
         search_pattern = f"%请求开始: POST /account-sync/sync-all [request_id: {request_id}]%"
-        start_log = (
-            Log.query.filter(Log.message.like(search_pattern)).order_by(Log.created_at.desc()).first()
-        )
-        
+        start_log = Log.query.filter(Log.message.like(search_pattern)).order_by(Log.created_at.desc()).first()
+
         if not start_log:
             return
-            
+
         # 计算持续时间
         from datetime import datetime
+
         end_time = datetime.utcnow()
         duration = (end_time - start_log.created_at).total_seconds() * 1000
 
@@ -324,9 +323,7 @@ def _handle_batch_sync_log_merge(request_id: str, status_code: int, response: Re
         sync_logs = _find_related_sync_logs(start_log.created_at, end_time)
 
         # 合并所有相关日志
-        merged_log = _merge_batch_sync_logs(
-            start_log, sync_logs, end_time, duration, status_code, response
-        )
+        merged_log = _merge_batch_sync_logs(start_log, sync_logs, end_time, duration, status_code, response)
 
         if merged_log:
             # 删除所有相关的原始日志
@@ -336,8 +333,9 @@ def _handle_batch_sync_log_merge(request_id: str, status_code: int, response: Re
 
             # 提交事务
             db.session.commit()
-            
+
     except Exception as e:
         print(f"DEBUG: 批量同步日志合并失败: {e}")
         import traceback
+
         traceback.print_exc()

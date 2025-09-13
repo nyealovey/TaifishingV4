@@ -15,7 +15,7 @@ from app.models.account_classification import (
 )
 from app.services.account_classification_service import AccountClassificationService
 from app.utils.decorators import create_required, delete_required, update_required, view_required
-from app.utils.structlog_config import log_info, log_error, log_warning
+from app.utils.structlog_config import log_error, log_info
 
 account_classification_bp = Blueprint("account_classification", __name__, url_prefix="/account-classification")
 
@@ -494,21 +494,25 @@ def auto_classify() -> "Response":
     try:
         data = request.get_json()
         instance_id = data.get("instance_id")
-        
+
         log_info("开始自动分类账户", module="account_classification", instance_id=instance_id)
 
         service = AccountClassificationService()
         result = service.auto_classify_accounts(instance_id)
 
         if result.get("success"):
-            log_info(f"自动分类完成: {result.get('message', '分类成功')}", 
-                    module="account_classification", 
-                    instance_id=instance_id,
-                    classified_count=result.get("classified_count", 0))
+            log_info(
+                f"自动分类完成: {result.get('message', '分类成功')}",
+                module="account_classification",
+                instance_id=instance_id,
+                classified_count=result.get("classified_count", 0),
+            )
         else:
-            log_error(f"自动分类失败: {result.get('error', '未知错误')}", 
-                     module="account_classification", 
-                     instance_id=instance_id)
+            log_error(
+                f"自动分类失败: {result.get('error', '未知错误')}",
+                module="account_classification",
+                instance_id=instance_id,
+            )
 
         # 直接返回服务层的结果
         return jsonify(result)

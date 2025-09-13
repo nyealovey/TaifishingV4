@@ -11,7 +11,7 @@ from app.services.connection_factory import ConnectionFactory
 from app.services.database_filter_manager import database_filter_manager
 from app.services.permission_query_factory import PermissionQueryFactory
 from app.utils.database_type_utils import DatabaseTypeUtils
-from app.utils.structlog_config import get_db_logger, log_error, log_info, log_warning
+from app.utils.structlog_config import get_db_logger, log_error
 
 
 class DatabaseService:
@@ -32,9 +32,7 @@ class DatabaseService:
             Dict: 测试结果
         """
         try:
-            self.db_logger.info("开始测试数据库连接", 
-                               instance_name=instance.name, 
-                               db_type=instance.db_type)
+            self.db_logger.info("开始测试数据库连接", instance_name=instance.name, db_type=instance.db_type)
 
             # 使用连接工厂测试连接
             result = ConnectionFactory.test_connection(instance)
@@ -47,18 +45,15 @@ class DatabaseService:
                 instance.last_connected = now()
                 db.session.commit()
             else:
-                self.db_logger.warning("数据库连接测试失败", 
-                                      instance_name=instance.name, 
-                                      error=result.get('error'))
+                self.db_logger.warning("数据库连接测试失败", instance_name=instance.name, error=result.get("error"))
 
             return result
 
         except Exception as e:
             error_msg = f"连接测试失败: {str(e)}"
-            self.db_logger.error("数据库连接测试异常", 
-                                exception=e, 
-                                instance_name=instance.name, 
-                                db_type=instance.db_type)
+            self.db_logger.error(
+                "数据库连接测试异常", exception=e, instance_name=instance.name, db_type=instance.db_type
+            )
             return {"success": False, "error": error_msg}
 
     def sync_accounts(self, instance: Instance) -> dict[str, Any]:
@@ -75,9 +70,7 @@ class DatabaseService:
             from app import db
             from app.models.account import Account
 
-            self.db_logger.info("开始同步账户", 
-                               instance_name=instance.name, 
-                               db_type=instance.db_type)
+            self.db_logger.info("开始同步账户", instance_name=instance.name, db_type=instance.db_type)
 
             # 获取数据库连接
             conn = self.get_connection(instance)
@@ -93,9 +86,7 @@ class DatabaseService:
 
             # 记录同步前的账户数量
             before_count = Account.query.filter_by(instance_id=instance.id).count()
-            self.db_logger.info("同步前账户统计", 
-                               instance_name=instance.name, 
-                               before_count=before_count)
+            self.db_logger.info("同步前账户统计", instance_name=instance.name, before_count=before_count)
 
             # 获取同步前的账户快照
             before_accounts = {}
@@ -160,15 +151,17 @@ class DatabaseService:
             net_change = after_count - before_count
             total_operations = synced_count
 
-            self.db_logger.info("账户同步完成", 
-                               instance_name=instance.name,
-                               synced_count=synced_count,
-                               added_count=added_count,
-                               removed_count=removed_count,
-                               modified_count=modified_count,
-                               before_count=before_count,
-                               after_count=after_count,
-                               net_change=net_change)
+            self.db_logger.info(
+                "账户同步完成",
+                instance_name=instance.name,
+                synced_count=synced_count,
+                added_count=added_count,
+                removed_count=removed_count,
+                modified_count=modified_count,
+                before_count=before_count,
+                after_count=after_count,
+                net_change=net_change,
+            )
 
             # 创建同步报告记录
             from app.models.sync_data import SyncData
@@ -212,11 +205,8 @@ class DatabaseService:
                 },
             }
         except Exception as e:
-            self.db_logger.error("账户同步失败", 
-                                exception=e,
-                                instance_name=instance.name,
-                                db_type=instance.db_type)
-            
+            self.db_logger.error("账户同步失败", exception=e, instance_name=instance.name, db_type=instance.db_type)
+
             # 创建失败的同步报告记录
             from app.models.sync_data import SyncData
 
@@ -255,7 +245,7 @@ class DatabaseService:
             FROM mysql.user
             WHERE {where_clause}
         """  # noqa: B608
-        
+
         cursor.execute(query, params)
 
         # 获取服务器端的所有账户
@@ -415,7 +405,7 @@ class DatabaseService:
             FROM pg_roles
             WHERE {where_clause}
         """  # noqa: B608
-        
+
         cursor.execute(query, params)
 
         # 获取服务器端的所有账户
@@ -585,7 +575,7 @@ class DatabaseService:
             AND {where_clause}
             AND (name = 'sa' OR name NOT LIKE 'NT %')
         """  # noqa: B608
-        
+
         cursor.execute(query, params)
 
         # 获取服务器端的所有账户
@@ -727,7 +717,7 @@ class DatabaseService:
             WHERE {where_clause}
             ORDER BY username
         """  # noqa: B608
-        
+
         cursor.execute(query, params)
 
         # 获取服务器端的所有账户

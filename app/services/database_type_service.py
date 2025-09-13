@@ -69,11 +69,13 @@ class DatabaseTypeService:
             db.session.add(config)
             db.session.commit()
 
-            log_info("创建数据库类型", 
-                    module="database_type",
-                    type_name=config.name, 
-                    display_name=config.display_name, 
-                    driver=config.driver)
+            log_info(
+                "创建数据库类型",
+                module="database_type",
+                type_name=config.name,
+                display_name=config.display_name,
+                driver=config.driver,
+            )
 
             return {"success": True, "message": "数据库类型创建成功", "data": config.to_dict()}
 
@@ -108,11 +110,7 @@ class DatabaseTypeService:
 
             db.session.commit()
 
-            log_info("更新数据库类型", 
-                    module="database_type",
-                    type_id=type_id, 
-                    type_name=config.name, 
-                    changes=data)
+            log_info("更新数据库类型", module="database_type", type_id=type_id, type_name=config.name, changes=data)
 
             return {"success": True, "message": "数据库类型更新成功", "data": config.to_dict()}
 
@@ -143,10 +141,7 @@ class DatabaseTypeService:
             db.session.delete(config)
             db.session.commit()
 
-            log_info("删除数据库类型", 
-                    module="database_type",
-                    type_id=type_id, 
-                    type_name=config.name)
+            log_info("删除数据库类型", module="database_type", type_id=type_id, type_name=config.name)
 
             return {"success": True, "message": "数据库类型删除成功"}
 
@@ -166,11 +161,13 @@ class DatabaseTypeService:
             config.is_active = not config.is_active
             db.session.commit()
 
-            log_info("切换数据库类型状态", 
-                    module="database_type",
-                    type_id=type_id, 
-                    type_name=config.name, 
-                    new_status=config.is_active)
+            log_info(
+                "切换数据库类型状态",
+                module="database_type",
+                type_id=type_id,
+                type_name=config.name,
+                new_status=config.is_active,
+            )
 
             return {
                 "success": True,

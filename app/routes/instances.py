@@ -13,12 +13,12 @@ from app.models.credential import Credential
 from app.models.instance import Instance
 from app.services.database_service import DatabaseService
 from app.utils.decorators import create_required, delete_required, update_required, view_required
-from app.utils.structlog_config import get_api_logger, log_info, log_warning, log_error
 from app.utils.security import (
     sanitize_form_data,
     validate_db_type,
     validate_required_fields,
 )
+from app.utils.structlog_config import get_api_logger, log_error, log_info, log_warning
 
 # 创建蓝图
 instances_bp = Blueprint("instances", __name__)
@@ -192,12 +192,14 @@ def create() -> str | Response | tuple[Response, int]:
             db.session.commit()
 
             # 记录操作日志
-            api_logger.info("创建数据库实例", 
-                           user_id=current_user.id,
-                           instance_id=instance.id,
-                           instance_name=instance.name,
-                           db_type=instance.db_type,
-                           host=instance.host)
+            api_logger.info(
+                "创建数据库实例",
+                user_id=current_user.id,
+                instance_id=instance.id,
+                instance_name=instance.name,
+                db_type=instance.db_type,
+                host=instance.host,
+            )
 
             if request.is_json:
                 return (
@@ -490,23 +492,25 @@ def edit(instance_id: int) -> str | Response | tuple[Response, int]:
             db.session.commit()
 
             # 记录操作日志
-            log_info("更新数据库实例", 
-                    module="instances",
-                    user_id=current_user.id,
-                    instance_id=instance.id,
-                    instance_name=instance.name,
-                    db_type=instance.db_type,
-                    host=instance.host,
-                    changes={
-                        "name": data.get("name"),
-                        "db_type": data.get("db_type"),
-                        "host": data.get("host"),
-                        "port": data.get("port"),
-                        "environment": data.get("environment"),
-                        "credential_id": data.get("credential_id"),
-                        "description": data.get("description"),
-                        "is_active": data.get("is_active"),
-                    })
+            log_info(
+                "更新数据库实例",
+                module="instances",
+                user_id=current_user.id,
+                instance_id=instance.id,
+                instance_name=instance.name,
+                db_type=instance.db_type,
+                host=instance.host,
+                changes={
+                    "name": data.get("name"),
+                    "db_type": data.get("db_type"),
+                    "host": data.get("host"),
+                    "port": data.get("port"),
+                    "environment": data.get("environment"),
+                    "credential_id": data.get("credential_id"),
+                    "description": data.get("description"),
+                    "is_active": data.get("is_active"),
+                },
+            )
 
             if request.is_json:
                 return jsonify({"message": "实例更新成功", "instance": instance.to_dict()})
@@ -564,13 +568,15 @@ def delete(instance_id: int) -> str | Response | tuple[Response, int]:
 
     try:
         # 记录操作日志
-        log_info("删除数据库实例", 
-                module="instances",
-                user_id=current_user.id,
-                instance_id=instance.id,
-                instance_name=instance.name,
-                db_type=instance.db_type,
-                host=instance.host)
+        log_info(
+            "删除数据库实例",
+            module="instances",
+            user_id=current_user.id,
+            instance_id=instance.id,
+            instance_name=instance.name,
+            db_type=instance.db_type,
+            host=instance.host,
+        )
 
         # 级联删除相关数据
         # 1. 删除账户信息
@@ -653,13 +659,15 @@ def batch_delete() -> str | Response | tuple[Response, int]:
             instance = Instance.query.get(instance_id)
             if instance:
                 # 记录操作日志
-                log_info("批量删除数据库实例", 
-                        module="instances",
-                        user_id=current_user.id,
-                        instance_id=instance.id,
-                        instance_name=instance.name,
-                        db_type=instance.db_type,
-                        host=instance.host)
+                log_info(
+                    "批量删除数据库实例",
+                    module="instances",
+                    user_id=current_user.id,
+                    instance_id=instance.id,
+                    instance_name=instance.name,
+                    db_type=instance.db_type,
+                    host=instance.host,
+                )
 
                 # 删除相关数据
                 accounts_count = instance.accounts.count()
@@ -679,7 +687,10 @@ def batch_delete() -> str | Response | tuple[Response, int]:
 
         db.session.commit()
 
-        log_info(f"批量删除完成：{deleted_count} 个实例，{deleted_accounts} 个账户，{deleted_sync_data} 条同步数据", module="instances")
+        log_info(
+            f"批量删除完成：{deleted_count} 个实例，{deleted_accounts} 个账户，{deleted_sync_data} 条同步数据",
+            module="instances",
+        )
 
         return jsonify(
             {
@@ -811,13 +822,15 @@ def _process_instances_data(
             created_count += 1
 
             # 记录操作日志
-            log_info("批量创建数据库实例", 
-                    module="instances",
-                    user_id=current_user.id,
-                    instance_name=instance.name,
-                    db_type=instance.db_type,
-                    host=instance.host,
-                    environment=instance.environment)
+            log_info(
+                "批量创建数据库实例",
+                module="instances",
+                user_id=current_user.id,
+                instance_name=instance.name,
+                db_type=instance.db_type,
+                host=instance.host,
+                environment=instance.environment,
+            )
 
         except Exception as e:
             errors.append(f"第 {i + 1} 个实例创建失败: {str(e)}")
@@ -1064,13 +1077,15 @@ def sync_accounts(instance_id: int) -> str | Response | tuple[Response, int]:
 
     try:
         # 记录操作开始日志
-        log_info("开始同步账户", 
-                module="instances",
-                user_id=current_user.id,
-                instance_id=instance.id,
-                instance_name=instance.name,
-                db_type=instance.db_type,
-                host=instance.host)
+        log_info(
+            "开始同步账户",
+            module="instances",
+            user_id=current_user.id,
+            instance_id=instance.id,
+            instance_name=instance.name,
+            db_type=instance.db_type,
+            host=instance.host,
+        )
 
         # 使用数据库服务同步账户
         db_service = DatabaseService()
@@ -1082,15 +1097,17 @@ def sync_accounts(instance_id: int) -> str | Response | tuple[Response, int]:
             db.session.commit()
 
             # 记录操作成功日志
-            log_info("账户同步成功", 
-                    module="instances",
-                    user_id=current_user.id,
-                    instance_id=instance.id,
-                    instance_name=instance.name,
-                    db_type=instance.db_type,
-                    host=instance.host,
-                    synced_count=result.get("synced_count", 0),
-                    sync_count=instance.sync_count)
+            log_info(
+                "账户同步成功",
+                module="instances",
+                user_id=current_user.id,
+                instance_id=instance.id,
+                instance_name=instance.name,
+                db_type=instance.db_type,
+                host=instance.host,
+                synced_count=result.get("synced_count", 0),
+                sync_count=instance.sync_count,
+            )
 
             if request.is_json:
                 return jsonify({"message": "账户同步成功", "result": result})
@@ -1098,14 +1115,16 @@ def sync_accounts(instance_id: int) -> str | Response | tuple[Response, int]:
             flash("账户同步成功！", "success")
         else:
             # 记录操作失败日志
-            log_error("账户同步失败", 
-                     module="instances",
-                     user_id=current_user.id,
-                     instance_id=instance.id,
-                     instance_name=instance.name,
-                     db_type=instance.db_type,
-                     host=instance.host,
-                     error=result.get("error", "未知错误"))
+            log_error(
+                "账户同步失败",
+                module="instances",
+                user_id=current_user.id,
+                instance_id=instance.id,
+                instance_name=instance.name,
+                db_type=instance.db_type,
+                host=instance.host,
+                error=result.get("error", "未知错误"),
+            )
 
             if request.is_json:
                 return jsonify({"error": "账户同步失败", "result": result}), 400
@@ -1116,14 +1135,16 @@ def sync_accounts(instance_id: int) -> str | Response | tuple[Response, int]:
         log_error(f"同步账户失败: {e}", module="instances", instance_id=instance.id)
 
         # 记录操作异常日志
-        log_error("账户同步异常", 
-                 module="instances",
-                 user_id=current_user.id,
-                 instance_id=instance.id,
-                 instance_name=instance.name,
-                 db_type=instance.db_type,
-                 host=instance.host,
-                 error=str(e))
+        log_error(
+            "账户同步异常",
+            module="instances",
+            user_id=current_user.id,
+            instance_id=instance.id,
+            instance_name=instance.name,
+            db_type=instance.db_type,
+            host=instance.host,
+            error=str(e),
+        )
 
         if request.is_json:
             return jsonify({"error": "账户同步失败，请重试"}), 500

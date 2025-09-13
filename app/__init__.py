@@ -72,9 +72,10 @@ def create_app(config_name: str | None = None) -> Flask:
 
     # 配置日志
     configure_logging(app)
-    
+
     # 配置统一日志系统
     from app.utils.structlog_config import configure_structlog
+
     configure_structlog(app)
 
     # 注册全局错误处理器

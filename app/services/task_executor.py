@@ -8,7 +8,7 @@ from datetime import datetime
 from app import db
 from app.models.sync_data import SyncData
 from app.models.task import Task
-from app.utils.structlog_config import get_task_logger, log_info, log_error, log_warning
+from app.utils.structlog_config import get_task_logger
 from app.utils.timezone import now
 
 
@@ -51,10 +51,7 @@ class TaskExecutor:
                     "error": f"没有找到匹配的 {task.db_type} 类型实例",
                 }
 
-            self.task_logger.info("开始执行任务", 
-                                 task_name=task.name, 
-                                 instance_count=len(instances), 
-                                 timeout=timeout)
+            self.task_logger.info("开始执行任务", task_name=task.name, instance_count=len(instances), timeout=timeout)
 
             # 使用超时机制执行任务
             result = {"success": False, "error": "任务执行超时"}
@@ -86,10 +83,9 @@ class TaskExecutor:
                             self._record_sync_data(task, instance, instance_result)
 
                         except Exception as e:
-                            self.task_logger.error("执行任务在实例时出错", 
-                                                  task_name=task.name, 
-                                                  instance_name=instance.name, 
-                                                  exception=e)
+                            self.task_logger.error(
+                                "执行任务在实例时出错", task_name=task.name, instance_name=instance.name, exception=e
+                            )
                             total_failed += 1
                             results.append(
                                 {
@@ -106,9 +102,7 @@ class TaskExecutor:
                         "results": results,
                     }
                 except Exception as e:
-                    self.task_logger.error("任务执行失败", 
-                                          task_name=task.name, 
-                                          exception=e)
+                    self.task_logger.error("任务执行失败", task_name=task.name, exception=e)
                     result = {"success": False, "error": str(e)}
 
             # 使用线程执行任务，支持超时
@@ -119,9 +113,7 @@ class TaskExecutor:
             thread.join(timeout=timeout)
 
             if thread.is_alive():
-                self.task_logger.warning("任务执行超时", 
-                                        task_name=task.name, 
-                                        timeout=timeout)
+                self.task_logger.warning("任务执行超时", task_name=task.name, timeout=timeout)
                 return {"success": False, "error": f"任务执行超时 ({timeout}秒)"}
 
             # 更新任务状态 - 重新查询任务对象确保是最新的

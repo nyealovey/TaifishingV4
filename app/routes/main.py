@@ -85,10 +85,7 @@ def api_health() -> "Response":
     import time
 
     duration = (time.time() - start_time) * 1000
-    log_info("健康检查API调用", 
-            module="main",
-            ip_address=request.remote_addr,
-            duration_ms=duration)
+    log_info("健康检查API调用", module="main", ip_address=request.remote_addr, duration_ms=duration)
 
     return jsonify(result)
 

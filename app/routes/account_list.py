@@ -344,11 +344,13 @@ def sync_accounts(instance_id: int) -> "Response":
 
     except Exception as e:
         # 记录详细的错误日志
-        log_error("同步账户失败", 
-                 module="account_list",
-                 instance_id=instance_id,
-                 user_id=current_user.id if current_user else 'unknown',
-                 error=str(e))
+        log_error(
+            "同步账户失败",
+            module="account_list",
+            instance_id=instance_id,
+            user_id=current_user.id if current_user else "unknown",
+            error=str(e),
+        )
 
         # 记录同步失败
         sync_record = SyncData(

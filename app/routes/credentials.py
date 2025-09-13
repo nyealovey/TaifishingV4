@@ -2,8 +2,6 @@
 泰摸鱼吧 - 凭据管理路由
 """
 
-import logging
-
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
@@ -11,7 +9,6 @@ from app import db
 from app.models.credential import Credential
 from app.models.instance import Instance
 from app.utils.decorators import create_required, delete_required, update_required, view_required
-from app.utils.structlog_config import log_info, log_error, log_warning
 from app.utils.security import (
     sanitize_form_data,
     validate_credential_type,
@@ -20,6 +17,7 @@ from app.utils.security import (
     validate_required_fields,
     validate_username,
 )
+from app.utils.structlog_config import log_error, log_info
 
 # 创建蓝图
 credentials_bp = Blueprint("credentials", __name__)
@@ -182,13 +180,15 @@ def create() -> "str | Response":
             db.session.commit()
 
             # 记录操作日志
-            log_info("创建数据库凭据", 
-                    module="credentials",
-                    user_id=current_user.id,
-                    credential_id=credential.id,
-                    credential_name=credential.name,
-                    credential_type=credential.credential_type,
-                    db_type=credential.db_type)
+            log_info(
+                "创建数据库凭据",
+                module="credentials",
+                user_id=current_user.id,
+                credential_id=credential.id,
+                credential_name=credential.name,
+                credential_type=credential.credential_type,
+                db_type=credential.db_type,
+            )
 
             if request.is_json:
                 return (
@@ -370,12 +370,14 @@ def toggle(credential_id: int) -> "Response":
         db.session.commit()
 
         # 记录操作日志
-        log_info("切换凭据状态", 
-                module="credentials",
-                user_id=current_user.id,
-                credential_id=credential.id,
-                credential_name=credential.name,
-                is_active=is_active)
+        log_info(
+            "切换凭据状态",
+            module="credentials",
+            user_id=current_user.id,
+            credential_id=credential.id,
+            credential_name=credential.name,
+            is_active=is_active,
+        )
 
         action = "启用" if is_active else "禁用"
         message = f"凭据{action}成功"

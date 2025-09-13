@@ -2,7 +2,6 @@
 泰摸鱼吧 - 系统仪表板路由
 """
 
-import logging
 from datetime import datetime, timedelta
 
 import psutil
@@ -20,7 +19,7 @@ from app.models.user import User
 from app.utils.cache_manager import (
     cached,
 )
-from app.utils.structlog_config import log_info, log_error, log_warning, get_api_logger
+from app.utils.structlog_config import log_error, log_info, log_warning
 from app.utils.timezone import (
     CHINA_TZ,
     china_to_utc,
@@ -52,12 +51,14 @@ def index() -> str:
 
     # 记录操作日志
     duration = (time.time() - start_time) * 1000
-    log_info("访问仪表板", 
-            module="dashboard",
-            user_id=current_user.id,
-            ip_address=request.remote_addr,
-            user_agent=request.headers.get("User-Agent"),
-            duration_ms=duration)
+    log_info(
+        "访问仪表板",
+        module="dashboard",
+        user_id=current_user.id,
+        ip_address=request.remote_addr,
+        user_agent=request.headers.get("User-Agent"),
+        duration_ms=duration,
+    )
 
     if request.is_json:
         return jsonify(
@@ -88,11 +89,13 @@ def api_overview() -> "Response":
 
     # 记录API调用
     duration = (time.time() - start_time) * 1000
-    log_info("获取仪表板概览数据", 
-            module="dashboard",
-            user_id=current_user.id,
-            ip_address=request.remote_addr,
-            duration_ms=duration)
+    log_info(
+        "获取仪表板概览数据",
+        module="dashboard",
+        user_id=current_user.id,
+        ip_address=request.remote_addr,
+        duration_ms=duration,
+    )
 
     return jsonify(overview)
 
@@ -110,11 +113,13 @@ def api_charts() -> "Response":
 
     # 记录API调用
     duration = (time.time() - start_time) * 1000
-    log_info("获取仪表板图表数据", 
-            module="dashboard",
-            user_id=current_user.id,
-            ip_address=request.remote_addr,
-            duration_ms=duration)
+    log_info(
+        "获取仪表板图表数据",
+        module="dashboard",
+        user_id=current_user.id,
+        ip_address=request.remote_addr,
+        duration_ms=duration,
+    )
 
     return jsonify(charts)
 
@@ -138,11 +143,13 @@ def api_status() -> "Response":
 
     # 记录API调用
     duration = (time.time() - start_time) * 1000
-    log_info("获取仪表板系统状态", 
-            module="dashboard",
-            user_id=current_user.id,
-            ip_address=request.remote_addr,
-            duration_ms=duration)
+    log_info(
+        "获取仪表板系统状态",
+        module="dashboard",
+        user_id=current_user.id,
+        ip_address=request.remote_addr,
+        duration_ms=duration,
+    )
 
     return jsonify(status)
 

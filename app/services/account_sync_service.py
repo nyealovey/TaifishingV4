@@ -24,7 +24,7 @@ from app import db
 from app.models import Instance
 from app.models.account import Account
 from app.services.database_filter_manager import database_filter_manager
-from app.utils.structlog_config import get_sync_logger, log_error, log_info, log_warning
+from app.utils.structlog_config import get_sync_logger
 from app.utils.timezone import now
 
 
@@ -46,25 +46,20 @@ class AccountSyncService:
             Dict: 同步结果
         """
         try:
-            self.sync_logger.info("开始账户同步", 
-                                 instance_name=instance.name, 
-                                 db_type=instance.db_type,
-                                 sync_type=sync_type)
+            self.sync_logger.info(
+                "开始账户同步", instance_name=instance.name, db_type=instance.db_type, sync_type=sync_type
+            )
 
             # 获取数据库连接
             conn = self._get_connection(instance)
             if not conn:
                 error_msg = "无法获取数据库连接"
-                self.sync_logger.error("无法获取数据库连接", 
-                                      instance_name=instance.name, 
-                                      db_type=instance.db_type)
+                self.sync_logger.error("无法获取数据库连接", instance_name=instance.name, db_type=instance.db_type)
                 return {"success": False, "error": error_msg}
 
             # 记录同步前的账户数量
             before_count = Account.query.filter_by(instance_id=instance.id).count()
-            self.sync_logger.info("同步前账户统计", 
-                                 instance_name=instance.name, 
-                                 before_count=before_count)
+            self.sync_logger.info("同步前账户统计", instance_name=instance.name, before_count=before_count)
 
             # 获取同步前的账户快照
             self._get_account_snapshot(instance)
@@ -75,27 +70,23 @@ class AccountSyncService:
             modified_count = 0
 
             # 根据数据库类型执行同步
-            self.sync_logger.info("开始数据库账户同步", 
-                                 instance_name=instance.name, 
-                                 db_type=instance.db_type)
+            self.sync_logger.info("开始数据库账户同步", instance_name=instance.name, db_type=instance.db_type)
 
             if instance.db_type == "mysql":
                 result = self._sync_mysql_accounts(instance, conn)
             elif instance.db_type == "postgresql":
                 self.sync_logger.info("调用PostgreSQL账户同步函数", instance_name=instance.name)
                 result = self._sync_postgresql_accounts(instance, conn)
-                self.sync_logger.info("PostgreSQL同步完成", 
-                                     instance_name=instance.name,
-                                     synced_count=result.get('synced_count', 0))
+                self.sync_logger.info(
+                    "PostgreSQL同步完成", instance_name=instance.name, synced_count=result.get("synced_count", 0)
+                )
             elif instance.db_type == "sqlserver":
                 result = self._sync_sqlserver_accounts(instance, conn)
             elif instance.db_type == "oracle":
                 result = self._sync_oracle_accounts(instance, conn)
             else:
                 error_msg = f"不支持的数据库类型: {instance.db_type}"
-                self.sync_logger.warning("不支持的数据库类型", 
-                                        instance_name=instance.name, 
-                                        db_type=instance.db_type)
+                self.sync_logger.warning("不支持的数据库类型", instance_name=instance.name, db_type=instance.db_type)
                 return {
                     "success": False,
                     "error": error_msg,
@@ -149,11 +140,9 @@ class AccountSyncService:
 
         except Exception as e:
             # 记录详细的错误日志
-            self.sync_logger.error("账户同步失败", 
-                                  exception=e,
-                                  instance_name=instance.name, 
-                                  db_type=instance.db_type,
-                                  sync_type=sync_type)
+            self.sync_logger.error(
+                "账户同步失败", exception=e, instance_name=instance.name, db_type=instance.db_type, sync_type=sync_type
+            )
 
             # 创建失败的同步报告记录（定时任务跳过单个实例记录，只创建聚合记录）
             if sync_type != "task":
@@ -282,7 +271,7 @@ class AccountSyncService:
 
         # 获取MySQL过滤规则（使用安全的参数化查询）
         where_clause, params = database_filter_manager.get_safe_sql_filter_conditions("mysql", "User")
-        
+
         # 构建安全的参数化查询
         query = f"""
             SELECT
@@ -306,7 +295,7 @@ class AccountSyncService:
             WHERE {where_clause}
             ORDER BY User, Host
         """  # noqa: B608
-        
+
         cursor.execute(query, params)
 
         accounts = cursor.fetchall()
@@ -504,7 +493,7 @@ class AccountSyncService:
                 WHERE {where_clause}
                 ORDER BY rolname
         """  # noqa: B608
-        
+
         cursor.execute(query, params)
 
         accounts = cursor.fetchall()
@@ -826,7 +815,7 @@ class AccountSyncService:
             AND (name = 'sa' OR name NOT LIKE 'NT %')
             ORDER BY name
         """  # noqa: B608
-        
+
         cursor.execute(query, params)
 
         accounts = cursor.fetchall()
@@ -976,7 +965,7 @@ class AccountSyncService:
             WHERE {where_clause}
             ORDER BY username
         """  # noqa: B608
-        
+
         cursor.execute(query, params)
 
         accounts = cursor.fetchall()

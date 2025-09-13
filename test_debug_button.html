@@ -10,19 +10,19 @@
         .debug-toggle-btn {
             min-width: 120px;
         }
-        
+
         .debug-toggle-btn.enabled {
             background-color: #ffc107 !important;
             border-color: #ffc107 !important;
             color: #000 !important;
         }
-        
+
         .debug-toggle-btn.disabled {
             background-color: #6c757d !important;
             border-color: #6c757d !important;
             color: #fff !important;
         }
-        
+
         .debug-toggle-btn:not(:disabled) {
             cursor: pointer;
         }
@@ -53,24 +53,24 @@
             console.log('DEBUG按钮被点击');
             const button = document.getElementById('debugToggleBtn');
             const statusText = document.getElementById('debugStatusText');
-            
+
             if (!button) {
                 console.error('找不到DEBUG按钮');
                 return;
             }
-            
+
             // 切换状态
             const isEnabled = button.classList.contains('enabled');
             updateDebugButton(!isEnabled);
-            
-            document.getElementById('result').innerHTML = 
+
+            document.getElementById('result').innerHTML =
                 `<div class="alert alert-info">DEBUG日志已${!isEnabled ? '启用' : '关闭'}</div>`;
         }
 
         function updateDebugButton(enabled) {
             const button = document.getElementById('debugToggleBtn');
             const statusText = document.getElementById('debugStatusText');
-            
+
             if (enabled) {
                 button.className = 'btn debug-toggle-btn enabled';
                 statusText.textContent = 'DEBUG: 启用';
@@ -78,7 +78,7 @@
                 button.className = 'btn debug-toggle-btn disabled';
                 statusText.textContent = 'DEBUG: 关闭';
             }
-            
+
             // 确保按钮可点击
             button.disabled = false;
         }
