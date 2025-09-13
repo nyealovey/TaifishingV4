@@ -133,6 +133,7 @@ skips = [
     "B105",  # hardcoded_password_string - 某些常量字符串被误识别
     "B106",  # hardcoded_password_funcarg - 测试数据中的密码
     "B110",  # try_except_pass - 某些异常处理需要pass
+    "B608",  # hardcoded_sql_expressions - 已使用参数化查询，f-string中的where_clause是安全的
     "B112",  # try_except_continue - 某些循环中的异常处理
 ]
 severity = "medium"

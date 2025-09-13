@@ -34,12 +34,12 @@ def determine_log_source() -> str:
 
 def register_error_logging_middleware(app: Flask) -> None:
     """注册错误日志中间件"""
-    print("DEBUG: 注册错误日志中间件")
+    enhanced_logger.info("DEBUG: 注册错误日志中间件")
 
     @app.before_request
     def log_request_start() -> None:
         """记录请求开始"""
-        print(f"DEBUG: before_request 被调用: {request.method} {request.path}")
+        enhanced_logger.debug(f"DEBUG: before_request 被调用: {request.method} {request.path}")
         try:
             if request.endpoint and not request.endpoint.startswith("static"):
                 # 为每个请求生成唯一ID

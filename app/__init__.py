@@ -30,7 +30,7 @@ if oracle_instant_client_path and os.path.exists(oracle_instant_client_path):
     current_dyld_path = os.environ.get("DYLD_LIBRARY_PATH", "")
     if oracle_instant_client_path not in current_dyld_path:
         os.environ["DYLD_LIBRARY_PATH"] = f"{oracle_instant_client_path}:{current_dyld_path}"
-        print(f"🔧 已设置Oracle Instant Client环境变量: {oracle_instant_client_path}")
+        logger.info(f"🔧 已设置Oracle Instant Client环境变量: {oracle_instant_client_path}")
 
 # 初始化扩展
 db = SQLAlchemy()
@@ -94,11 +94,8 @@ def create_app(config_name: str | None = None) -> Flask:
         context = ErrorContext(error)
         error_response = advanced_error_handler.handle_error(error, context)
 
-        # 根据错误类型返回适当的响应
-        if hasattr(error, "code"):
-            status_code = error.code
-        else:
-            status_code = 500
+          # 根据错误类型返回适当的响应
+          status_code = error.code if hasattr(error, "code") else 500
 
         return jsonify(error_response), status_code
 
@@ -110,7 +107,7 @@ def create_app(config_name: str | None = None) -> Flask:
     return app
 
 
-def configure_app(app: Flask, config_name: str | None) -> None:
+def configure_app(app: Flask, config_name: str | None = None) -> None:
     """
     配置Flask应用
 
@@ -128,7 +125,7 @@ def configure_app(app: Flask, config_name: str | None) -> None:
             import secrets
 
             secret_key = secrets.token_urlsafe(32)
-            print("⚠️  开发环境使用随机生成的SECRET_KEY，生产环境请设置环境变量")
+            logger.warning("⚠️  开发环境使用随机生成的SECRET_KEY，生产环境请设置环境变量")
         else:
             error_msg = "SECRET_KEY environment variable must be set in production"
             raise ValueError(error_msg)
@@ -139,7 +136,7 @@ def configure_app(app: Flask, config_name: str | None) -> None:
             import secrets
 
             jwt_secret_key = secrets.token_urlsafe(32)
-            print("⚠️  开发环境使用随机生成的JWT_SECRET_KEY，生产环境请设置环境变量")
+            logger.warning("⚠️  开发环境使用随机生成的JWT_SECRET_KEY，生产环境请设置环境变量")
         else:
             error_msg = "JWT_SECRET_KEY environment variable must be set in production"
             raise ValueError(error_msg)

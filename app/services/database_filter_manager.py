@@ -6,9 +6,11 @@
 import logging
 import os
 import re
-from typing import Any
+from typing import Any, Tuple
 
 import yaml
+
+from app.utils.safe_query_builder import build_safe_filter_conditions
 
 logger = logging.getLogger(__name__)
 
@@ -157,6 +159,19 @@ class DatabaseFilterManager:
 
         # 如果没有任何条件，返回1=1（表示不过滤）
         return " AND ".join(conditions) if conditions else "1=1"
+    
+    def get_safe_sql_filter_conditions(self, db_type: str, username_field: str = "username") -> Tuple[str, List[Any]]:
+        """
+        获取安全的SQL过滤条件（参数化查询）
+        
+        Args:
+            db_type: 数据库类型 (mysql, postgresql, sqlserver, oracle)
+            username_field: 用户名字段名，默认为'username'
+            
+        Returns:
+            Tuple[str, List[Any]]: WHERE子句和参数列表
+        """
+        return build_safe_filter_conditions(db_type, username_field, self.filter_rules)
 
     def should_include_account(self, username: str, db_type: str) -> bool:
         """

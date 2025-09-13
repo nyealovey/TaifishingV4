@@ -1,4 +1,4 @@
-错误: 
+错误:
 
 标准输出:
 app/utils/security.py: note: In function "sanitize_input":
@@ -13,7 +13,7 @@ app/utils/security.py:155:30: error: Incompatible types in assignment
                                  ^~~~~
 app/services/database_filter_manager.py: note: In member "get_filter_rules" of class "DatabaseFilterManager":
 app/services/database_filter_manager.py:209:47: error: Incompatible default for
-argument "db_type" (default has type "None", argument has type "str") 
+argument "db_type" (default has type "None", argument has type "str")
 [assignment]
         def get_filter_rules(self, db_type: str = None) -> dict[str, Any]:
                                                   ^~~~
@@ -21,7 +21,7 @@ app/services/database_filter_manager.py:209:47: note: PEP 484 prohibits implicit
 app/services/database_filter_manager.py:209:47: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
 app/services/database_filter_manager.py: note: In member "get_filter_statistics" of class "DatabaseFilterManager":
 app/services/database_filter_manager.py:275:52: error: Incompatible default for
-argument "db_type" (default has type "None", argument has type "str") 
+argument "db_type" (default has type "None", argument has type "str")
 [assignment]
     ...  def get_filter_statistics(self, db_type: str = None) -> dict[str, An...
                                                         ^~~~
@@ -72,7 +72,7 @@ app/utils/password_manager.py:96:20: error: Call to untyped function
     password_manager = PasswordManager()
                        ^~~~~~~~~~~~~~~~~
 app/utils/rate_limiter.py: note: In member "__init__" of class "RateLimiter":
-app/utils/rate_limiter.py:18:5: error: Function is missing a type annotation 
+app/utils/rate_limiter.py:18:5: error: Function is missing a type annotation
 [no-untyped-def]
         def __init__(self, redis_client=None):
         ^
@@ -113,22 +113,22 @@ app/utils/rate_limiter.py:172:22: error: Missing type parameters for generic
 type "Callable"  [type-arg]
         identifier_func: Callable | None = None,
                          ^
-app/utils/rate_limiter.py:184:5: error: Function is missing a type annotation 
+app/utils/rate_limiter.py:184:5: error: Function is missing a type annotation
 [no-untyped-def]
         def rate_limit_decorator(f):
         ^
-app/utils/rate_limiter.py:186:9: error: Function is missing a type annotation 
+app/utils/rate_limiter.py:186:9: error: Function is missing a type annotation
 [no-untyped-def]
             def decorated_function(*args, **kwargs):
             ^
 app/utils/rate_limiter.py: note: At top level:
 app/utils/rate_limiter.py:191:1: error: Skipping analyzing "flask_login":
-module is installed, but missing library stubs or py.typed marker 
+module is installed, but missing library stubs or py.typed marker
 [import-untyped]
                     from flask_login import current_user
     ^
 app/utils/rate_limiter.py: note: In function "rate_limit":
-app/utils/rate_limiter.py:201:17: error: Statement is unreachable 
+app/utils/rate_limiter.py:201:17: error: Statement is unreachable
 [unreachable]
                     response = jsonify(
                     ^
@@ -242,7 +242,7 @@ for one or more arguments  [no-untyped-def]
     def task_execution_rate_limit(func=None, *, limit: int = 10, window: i...
     ^
 app/utils/rate_limiter.py: note: In function "init_rate_limiter":
-app/utils/rate_limiter.py:289:1: error: Function is missing a type annotation 
+app/utils/rate_limiter.py:289:1: error: Function is missing a type annotation
 [no-untyped-def]
     def init_rate_limiter(redis_client=None):
     ^
@@ -263,11 +263,11 @@ annotation  [no-untyped-def]
     ^
 app/utils/rate_limiter.py:303:1: note: Use "-> None" if function does not return a value
 app/utils/error_handler.py: note: In function "register_error_handlers":
-app/utils/error_handler.py:14:1: error: Function is missing a type annotation 
+app/utils/error_handler.py:14:1: error: Function is missing a type annotation
 [no-untyped-def]
     def register_error_handlers(app):
     ^
-app/utils/error_handler.py:23:5: error: Function is missing a type annotation 
+app/utils/error_handler.py:23:5: error: Function is missing a type annotation
 [no-untyped-def]
         def bad_request(error):
         ^
@@ -275,7 +275,7 @@ app/utils/error_handler.py:25:16: error: Call to untyped function
 "_handle_error" in typed context  [no-untyped-call]
             return _handle_error(error, 400, "请求参数错误")
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/utils/error_handler.py:28:5: error: Function is missing a type annotation 
+app/utils/error_handler.py:28:5: error: Function is missing a type annotation
 [no-untyped-def]
         def unauthorized(error):
         ^
@@ -283,7 +283,7 @@ app/utils/error_handler.py:30:16: error: Call to untyped function
 "_handle_error" in typed context  [no-untyped-call]
             return _handle_error(error, 401, "未授权访问")
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/utils/error_handler.py:33:5: error: Function is missing a type annotation 
+app/utils/error_handler.py:33:5: error: Function is missing a type annotation
 [no-untyped-def]
         def forbidden(error):
         ^
@@ -291,7 +291,7 @@ app/utils/error_handler.py:35:16: error: Call to untyped function
 "_handle_error" in typed context  [no-untyped-call]
             return _handle_error(error, 403, "禁止访问")
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/utils/error_handler.py:38:5: error: Function is missing a type annotation 
+app/utils/error_handler.py:38:5: error: Function is missing a type annotation
 [no-untyped-def]
         def not_found(error):
         ^
@@ -299,7 +299,7 @@ app/utils/error_handler.py:40:16: error: Call to untyped function
 "_handle_error" in typed context  [no-untyped-call]
             return _handle_error(error, 404, "页面不存在")
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/utils/error_handler.py:43:5: error: Function is missing a type annotation 
+app/utils/error_handler.py:43:5: error: Function is missing a type annotation
 [no-untyped-def]
         def too_many_requests(error):
         ^
@@ -307,7 +307,7 @@ app/utils/error_handler.py:45:16: error: Call to untyped function
 "_handle_error" in typed context  [no-untyped-call]
             return _handle_error(error, 429, "请求过于频繁")
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/utils/error_handler.py:48:5: error: Function is missing a type annotation 
+app/utils/error_handler.py:48:5: error: Function is missing a type annotation
 [no-untyped-def]
         def internal_server_error(error):
         ^
@@ -315,7 +315,7 @@ app/utils/error_handler.py:50:16: error: Call to untyped function
 "_handle_error" in typed context  [no-untyped-call]
             return _handle_error(error, 500, "服务器内部错误")
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/utils/error_handler.py:53:5: error: Function is missing a type annotation 
+app/utils/error_handler.py:53:5: error: Function is missing a type annotation
 [no-untyped-def]
         def handle_sqlalchemy_error(error):
         ^
@@ -335,7 +335,7 @@ app/utils/error_handler.py:67:16: error: Call to untyped function
 "_handle_error" in typed context  [no-untyped-call]
             return _handle_error(error, 500, "数据库操作错误")
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/utils/error_handler.py:70:5: error: Function is missing a type annotation 
+app/utils/error_handler.py:70:5: error: Function is missing a type annotation
 [no-untyped-def]
         def handle_generic_error(error):
         ^
@@ -344,7 +344,7 @@ app/utils/error_handler.py:74:16: error: Call to untyped function
             return _handle_error(error, 500, "系统错误")
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/utils/error_handler.py: note: In function "_handle_error":
-app/utils/error_handler.py:77:1: error: Function is missing a type annotation 
+app/utils/error_handler.py:77:1: error: Function is missing a type annotation
 [no-untyped-def]
     def _handle_error(error, status_code, message):
     ^
@@ -357,7 +357,7 @@ app/utils/error_handler.py:99:34: error: Call to untyped function
                         "timestamp": _get_timestamp(),
                                      ^~~~~~~~~~~~~~~~
 app/utils/error_handler.py: note: In function "_log_error":
-app/utils/error_handler.py:110:1: error: Function is missing a type annotation 
+app/utils/error_handler.py:110:1: error: Function is missing a type annotation
 [no-untyped-def]
     def _log_error(error, status_code):
     ^
@@ -367,17 +367,17 @@ annotation  [no-untyped-def]
     def _get_timestamp():
     ^
 app/utils/error_handler.py: note: In function "safe_error_message":
-app/utils/error_handler.py:151:1: error: Function is missing a type annotation 
+app/utils/error_handler.py:151:1: error: Function is missing a type annotation
 [no-untyped-def]
     def safe_error_message(error):
     ^
 app/utils/error_handler.py: note: In function "validate_error_response":
-app/utils/error_handler.py:169:1: error: Function is missing a type annotation 
+app/utils/error_handler.py:169:1: error: Function is missing a type annotation
 [no-untyped-def]
     def validate_error_response(response_data):
     ^
 app/utils/error_handler.py: note: In function "handle_security_error":
-app/utils/error_handler.py:195:1: error: Function is missing a type annotation 
+app/utils/error_handler.py:195:1: error: Function is missing a type annotation
 [no-untyped-def]
     def handle_security_error(error):
     ^
@@ -386,7 +386,7 @@ app/utils/error_handler.py:206:12: error: Call to untyped function
         return _handle_error(error, 403, "安全验证失败")
                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/utils/error_handler.py: note: In function "handle_validation_error":
-app/utils/error_handler.py:209:1: error: Function is missing a type annotation 
+app/utils/error_handler.py:209:1: error: Function is missing a type annotation
 [no-untyped-def]
     def handle_validation_error(error):
     ^
@@ -395,7 +395,7 @@ app/utils/error_handler.py:220:12: error: Call to untyped function
         return _handle_error(error, 400, str(error))
                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/utils/error_handler.py: note: In function "handle_business_logic_error":
-app/utils/error_handler.py:223:1: error: Function is missing a type annotation 
+app/utils/error_handler.py:223:1: error: Function is missing a type annotation
 [no-untyped-def]
     def handle_business_logic_error(error):
     ^
@@ -408,86 +408,86 @@ installed, but missing library stubs or py.typed marker  [import-untyped]
     from flask_login import current_user
     ^
 app/utils/decorators.py: note: In function "admin_required":
-app/utils/decorators.py:11:1: error: Function is missing a type annotation 
+app/utils/decorators.py:11:1: error: Function is missing a type annotation
 [no-untyped-def]
     def admin_required(f):
     ^
-app/utils/decorators.py:23:5: error: Function is missing a type annotation 
+app/utils/decorators.py:23:5: error: Function is missing a type annotation
 [no-untyped-def]
         def decorated_function(*args, **kwargs):
         ^
 app/utils/decorators.py: note: In function "scheduler_manage_required":
-app/utils/decorators.py:45:1: error: Function is missing a type annotation 
+app/utils/decorators.py:45:1: error: Function is missing a type annotation
 [no-untyped-def]
     def scheduler_manage_required(f):
     ^
-app/utils/decorators.py:58:5: error: Function is missing a type annotation 
+app/utils/decorators.py:58:5: error: Function is missing a type annotation
 [no-untyped-def]
         def decorated_function(*args, **kwargs):
         ^
 app/utils/decorators.py: note: In function "scheduler_view_required":
-app/utils/decorators.py:83:1: error: Function is missing a type annotation 
+app/utils/decorators.py:83:1: error: Function is missing a type annotation
 [no-untyped-def]
     def scheduler_view_required(f):
     ^
-app/utils/decorators.py:96:5: error: Function is missing a type annotation 
+app/utils/decorators.py:96:5: error: Function is missing a type annotation
 [no-untyped-def]
         def decorated_function(*args, **kwargs):
         ^
 app/utils/decorators.py: note: In function "login_required":
-app/utils/decorators.py:110:1: error: Function is missing a type annotation 
+app/utils/decorators.py:110:1: error: Function is missing a type annotation
 [no-untyped-def]
     def login_required(f):
     ^
-app/utils/decorators.py:122:5: error: Function is missing a type annotation 
+app/utils/decorators.py:122:5: error: Function is missing a type annotation
 [no-untyped-def]
         def decorated_function(*args, **kwargs):
         ^
 app/utils/decorators.py: note: In function "login_required_json":
-app/utils/decorators.py:136:1: error: Function is missing a type annotation 
+app/utils/decorators.py:136:1: error: Function is missing a type annotation
 [no-untyped-def]
     def login_required_json(f):
     ^
-app/utils/decorators.py:148:5: error: Function is missing a type annotation 
+app/utils/decorators.py:148:5: error: Function is missing a type annotation
 [no-untyped-def]
         def decorated_function(*args, **kwargs):
         ^
 app/utils/decorators.py: note: In function "rate_limit":
-app/utils/decorators.py:157:1: error: Function is missing a type annotation 
+app/utils/decorators.py:157:1: error: Function is missing a type annotation
 [no-untyped-def]
     def rate_limit(requests_per_minute=60):
     ^
-app/utils/decorators.py:168:5: error: Function is missing a type annotation 
+app/utils/decorators.py:168:5: error: Function is missing a type annotation
 [no-untyped-def]
         def decorator(f):
         ^
-app/utils/decorators.py:170:9: error: Function is missing a type annotation 
+app/utils/decorators.py:170:9: error: Function is missing a type annotation
 [no-untyped-def]
             def decorated_function(*args, **kwargs):
             ^
 app/utils/decorators.py: note: In function "validate_json":
-app/utils/decorators.py:180:1: error: Function is missing a type annotation 
+app/utils/decorators.py:180:1: error: Function is missing a type annotation
 [no-untyped-def]
     def validate_json(required_fields=None):
     ^
-app/utils/decorators.py:191:5: error: Function is missing a type annotation 
+app/utils/decorators.py:191:5: error: Function is missing a type annotation
 [no-untyped-def]
         def decorator(f):
         ^
-app/utils/decorators.py:193:9: error: Function is missing a type annotation 
+app/utils/decorators.py:193:9: error: Function is missing a type annotation
 [no-untyped-def]
             def decorated_function(*args, **kwargs):
             ^
 app/utils/decorators.py: note: In function "permission_required":
-app/utils/decorators.py:222:1: error: Function is missing a type annotation 
+app/utils/decorators.py:222:1: error: Function is missing a type annotation
 [no-untyped-def]
     def permission_required(permission):
     ^
-app/utils/decorators.py:233:5: error: Function is missing a type annotation 
+app/utils/decorators.py:233:5: error: Function is missing a type annotation
 [no-untyped-def]
         def decorator(f):
         ^
-app/utils/decorators.py:235:9: error: Function is missing a type annotation 
+app/utils/decorators.py:235:9: error: Function is missing a type annotation
 [no-untyped-def]
             def decorated_function(*args, **kwargs):
             ^
@@ -496,12 +496,12 @@ app/utils/decorators.py:245:20: error: Call to untyped function
                 if not has_permission(current_user, permission):
                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/utils/decorators.py: note: In function "has_permission":
-app/utils/decorators.py:260:1: error: Function is missing a type annotation 
+app/utils/decorators.py:260:1: error: Function is missing a type annotation
 [no-untyped-def]
     def has_permission(user, permission):
     ^
 app/utils/decorators.py: note: In function "view_required":
-app/utils/decorators.py:288:1: error: Function is missing a type annotation 
+app/utils/decorators.py:288:1: error: Function is missing a type annotation
 [no-untyped-def]
     def view_required(f):
     ^
@@ -510,7 +510,7 @@ app/utils/decorators.py:290:12: error: Call to untyped function
         return permission_required("view")(f)
                ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/utils/decorators.py: note: In function "create_required":
-app/utils/decorators.py:293:1: error: Function is missing a type annotation 
+app/utils/decorators.py:293:1: error: Function is missing a type annotation
 [no-untyped-def]
     def create_required(f):
     ^
@@ -519,7 +519,7 @@ app/utils/decorators.py:295:12: error: Call to untyped function
         return permission_required("create")(f)
                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/utils/decorators.py: note: In function "update_required":
-app/utils/decorators.py:298:1: error: Function is missing a type annotation 
+app/utils/decorators.py:298:1: error: Function is missing a type annotation
 [no-untyped-def]
     def update_required(f):
     ^
@@ -528,7 +528,7 @@ app/utils/decorators.py:300:12: error: Call to untyped function
         return permission_required("update")(f)
                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/utils/decorators.py: note: In function "delete_required":
-app/utils/decorators.py:303:1: error: Function is missing a type annotation 
+app/utils/decorators.py:303:1: error: Function is missing a type annotation
 [no-untyped-def]
     def delete_required(f):
     ^
@@ -537,22 +537,22 @@ app/utils/decorators.py:305:12: error: Call to untyped function
         return permission_required("delete")(f)
                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/utils/api_response.py: note: In member "success" of class "APIResponse":
-app/utils/api_response.py:12:23: error: Name "Any" is not defined 
+app/utils/api_response.py:12:23: error: Name "Any" is not defined
 [name-defined]
         def success(data: "Any" = None, message: str = "操作成功") -> "Respons...
                           ^
 app/utils/api_response.py:12:23: note: Did you forget to import it from "typing"? (Suggestion: "from typing import Any")
-app/utils/api_response.py:12:71: error: Name "Response" is not defined 
+app/utils/api_response.py:12:71: error: Name "Response" is not defined
 [name-defined]
     ... def success(data: "Any" = None, message: str = "操作成功") -> "Response":
                                                                           ^
 app/utils/api_response.py: note: In member "error" of class "APIResponse":
-app/utils/api_response.py:29:69: error: Name "Any" is not defined 
+app/utils/api_response.py:29:69: error: Name "Any" is not defined
 [name-defined]
     ...age: str = "操作失败", code: int = 400, data: "Any" = None) -> "Response":
                                                          ^
 app/utils/api_response.py:29:69: note: Did you forget to import it from "typing"? (Suggestion: "from typing import Any")
-app/utils/api_response.py:29:86: error: Name "Response" is not defined 
+app/utils/api_response.py:29:86: error: Name "Response" is not defined
 [name-defined]
     ...age: str = "操作失败", code: int = 400, data: "Any" = None) -> "Response":
                                                                           ^
@@ -563,7 +563,7 @@ app/routes/admin.py:34: error: Unused "type: ignore" comment  [unused-ignore]
                 return APIResponse.error("需要管理员权限", code=403)  # type: ign...
                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/scheduler.py: note: In member "__init__" of class "TaskScheduler":
-app/scheduler.py:21:5: error: Function is missing a type annotation 
+app/scheduler.py:21:5: error: Function is missing a type annotation
 [no-untyped-def]
         def __init__(self, app=None):
         ^
@@ -572,23 +572,23 @@ typed context  [no-untyped-call]
             self._setup_scheduler()
             ^~~~~~~~~~~~~~~~~~~~~~~
 app/scheduler.py: note: In member "_setup_scheduler" of class "TaskScheduler":
-app/scheduler.py:26:5: error: Function is missing a return type annotation 
+app/scheduler.py:26:5: error: Function is missing a return type annotation
 [no-untyped-def]
         def _setup_scheduler(self):
         ^
 app/scheduler.py:26:5: note: Use "-> None" if function does not return a value
 app/scheduler.py: note: In member "_job_executed" of class "TaskScheduler":
-app/scheduler.py:50:5: error: Function is missing a type annotation 
+app/scheduler.py:50:5: error: Function is missing a type annotation
 [no-untyped-def]
         def _job_executed(self, event):
         ^
 app/scheduler.py: note: In member "_job_error" of class "TaskScheduler":
-app/scheduler.py:54:5: error: Function is missing a type annotation 
+app/scheduler.py:54:5: error: Function is missing a type annotation
 [no-untyped-def]
         def _job_error(self, event):
         ^
 app/scheduler.py: note: In member "start" of class "TaskScheduler":
-app/scheduler.py:58:5: error: Function is missing a return type annotation 
+app/scheduler.py:58:5: error: Function is missing a return type annotation
 [no-untyped-def]
         def start(self):
         ^
@@ -602,7 +602,7 @@ app/scheduler.py:61:13: error: Item "None" of "Any | None" has no attribute
                 self.scheduler.start()
                 ^~~~~~~~~~~~~~~~~~~~
 app/scheduler.py: note: In member "stop" of class "TaskScheduler":
-app/scheduler.py:64:5: error: Function is missing a return type annotation 
+app/scheduler.py:64:5: error: Function is missing a return type annotation
 [no-untyped-def]
         def stop(self):
         ^
@@ -616,7 +616,7 @@ app/scheduler.py:67:13: error: Item "None" of "Any | None" has no attribute
                 self.scheduler.shutdown()
                 ^~~~~~~~~~~~~~~~~~~~~~~
 app/scheduler.py: note: In member "add_job" of class "TaskScheduler":
-app/scheduler.py:70:5: error: Function is missing a type annotation 
+app/scheduler.py:70:5: error: Function is missing a type annotation
 [no-untyped-def]
         def add_job(self, func, trigger, **kwargs):
         ^
@@ -625,7 +625,7 @@ app/scheduler.py:72:16: error: Item "None" of "Any | None" has no attribute
             return self.scheduler.add_job(func, trigger, **kwargs)
                    ^~~~~~~~~~~~~~~~~~~~~~
 app/scheduler.py: note: In member "remove_job" of class "TaskScheduler":
-app/scheduler.py:74:5: error: Function is missing a type annotation 
+app/scheduler.py:74:5: error: Function is missing a type annotation
 [no-untyped-def]
         def remove_job(self, job_id):
         ^
@@ -634,7 +634,7 @@ app/scheduler.py:77:13: error: Item "None" of "Any | None" has no attribute
                 self.scheduler.remove_job(job_id)
                 ^~~~~~~~~~~~~~~~~~~~~~~~~
 app/scheduler.py: note: In member "get_jobs" of class "TaskScheduler":
-app/scheduler.py:82:5: error: Function is missing a return type annotation 
+app/scheduler.py:82:5: error: Function is missing a return type annotation
 [no-untyped-def]
         def get_jobs(self):
         ^
@@ -643,7 +643,7 @@ app/scheduler.py:84:16: error: Item "None" of "Any | None" has no attribute
             return self.scheduler.get_jobs()
                    ^~~~~~~~~~~~~~~~~~~~~~~
 app/scheduler.py: note: In member "get_job" of class "TaskScheduler":
-app/scheduler.py:86:5: error: Function is missing a type annotation 
+app/scheduler.py:86:5: error: Function is missing a type annotation
 [no-untyped-def]
         def get_job(self, job_id):
         ^
@@ -652,7 +652,7 @@ app/scheduler.py:88:16: error: Item "None" of "Any | None" has no attribute
             return self.scheduler.get_job(job_id)
                    ^~~~~~~~~~~~~~~~~~~~~~
 app/scheduler.py: note: In member "pause_job" of class "TaskScheduler":
-app/scheduler.py:90:5: error: Function is missing a type annotation 
+app/scheduler.py:90:5: error: Function is missing a type annotation
 [no-untyped-def]
         def pause_job(self, job_id):
         ^
@@ -661,7 +661,7 @@ app/scheduler.py:92:9: error: Item "None" of "Any | None" has no attribute
             self.scheduler.pause_job(job_id)
             ^~~~~~~~~~~~~~~~~~~~~~~~
 app/scheduler.py: note: In member "resume_job" of class "TaskScheduler":
-app/scheduler.py:95:5: error: Function is missing a type annotation 
+app/scheduler.py:95:5: error: Function is missing a type annotation
 [no-untyped-def]
         def resume_job(self, job_id):
         ^
@@ -675,12 +675,12 @@ typed context  [no-untyped-call]
     scheduler = TaskScheduler()
                 ^~~~~~~~~~~~~~~
 app/scheduler.py: note: In function "get_scheduler":
-app/scheduler.py:106:1: error: Function is missing a return type annotation 
+app/scheduler.py:106:1: error: Function is missing a return type annotation
 [no-untyped-def]
     def get_scheduler():
     ^
 app/scheduler.py: note: In function "init_scheduler":
-app/scheduler.py:111:1: error: Function is missing a type annotation 
+app/scheduler.py:111:1: error: Function is missing a type annotation
 [no-untyped-def]
     def init_scheduler(app):
     ^
@@ -693,7 +693,7 @@ typed context  [no-untyped-call]
         _add_default_jobs()
         ^~~~~~~~~~~~~~~~~~~
 app/scheduler.py: note: In function "_add_default_jobs":
-app/scheduler.py:122:1: error: Function is missing a return type annotation 
+app/scheduler.py:122:1: error: Function is missing a return type annotation
 [no-untyped-def]
     def _add_default_jobs():
     ^
@@ -715,7 +715,7 @@ app/scheduler.py:174:9: error: Call to untyped function
             _add_hardcoded_default_jobs()
             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/scheduler.py: note: In function "_add_hardcoded_default_jobs":
-app/scheduler.py:179:1: error: Function is missing a return type annotation 
+app/scheduler.py:179:1: error: Function is missing a return type annotation
 [no-untyped-def]
     def _add_hardcoded_default_jobs():
     ^
@@ -729,24 +729,24 @@ context  [no-untyped-call]
         scheduler.add_job(sync_accounts, "interval", minutes=30, id="sync_...
         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
 app/scheduler.py: note: In function "scheduled_task":
-app/scheduler.py:193:1: error: Function is missing a type annotation 
+app/scheduler.py:193:1: error: Function is missing a type annotation
 [no-untyped-def]
     def scheduled_task(job_id=None, name=None):
     ^
-app/scheduler.py:196:5: error: Function is missing a type annotation 
+app/scheduler.py:196:5: error: Function is missing a type annotation
 [no-untyped-def]
         def decorator(func):
         ^
 app/utils/enhanced_logger.py:12:1: error: Skipping analyzing "flask_login":
-module is installed, but missing library stubs or py.typed marker 
+module is installed, but missing library stubs or py.typed marker
 [import-untyped]
     from flask_login import current_user
     ^
-app/utils/enhanced_logger.py:78: error: Unused "type: ignore" comment 
+app/utils/enhanced_logger.py:78: error: Unused "type: ignore" comment
 [unused-ignore]
                 Log.log_operation(  # type: ignore
                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/utils/enhanced_logger.py:302: error: Unused "type: ignore" comment 
+app/utils/enhanced_logger.py:302: error: Unused "type: ignore" comment
 [unused-ignore]
             log_entry = Log(  # type: ignore
             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -858,7 +858,7 @@ for one or more arguments  [no-untyped-def]
     ^
 app/utils/cache_manager.py: note: At top level:
 app/utils/cache_manager.py:211:1: error: Skipping analyzing "flask_login":
-module is installed, but missing library stubs or py.typed marker 
+module is installed, but missing library stubs or py.typed marker
 [import-untyped]
         from flask_login import current_user
     ^
@@ -924,7 +924,7 @@ app/utils/cache_manager.py:292:13: error: Item "None" of "CacheManager | None"
 has no attribute "set"  [union-attr]
                 cache_manager.set(f"task:{task.id}", task.to_dict(), 180)
                 ^~~~~~~~~~~~~~~~~
-app/routes/scheduler.py:361: error: Unused "type: ignore" comment 
+app/routes/scheduler.py:361: error: Unused "type: ignore" comment
 [unused-ignore]
                 app = create_app()  # type: ignore
                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -958,7 +958,7 @@ app/__init__.py:13:1: error: Skipping analyzing "flask_bcrypt": module is
 installed, but missing library stubs or py.typed marker  [import-untyped]
     from flask_bcrypt import Bcrypt
     ^
-app/__init__.py:15:1: error: Library stubs not installed for "flask_cors" 
+app/__init__.py:15:1: error: Library stubs not installed for "flask_cors"
 [import-untyped]
     from flask_cors import CORS
     ^
@@ -968,7 +968,7 @@ app/__init__.py:17:1: error: Skipping analyzing "flask_login": module is
 installed, but missing library stubs or py.typed marker  [import-untyped]
     from flask_login import LoginManager
     ^
-app/__init__.py:18:1: error: Library stubs not installed for "flask_migrate" 
+app/__init__.py:18:1: error: Library stubs not installed for "flask_migrate"
 [import-untyped]
     from flask_migrate import Migrate
     ^
@@ -983,7 +983,7 @@ app/__init__.py:76:5: error: Call to untyped function "register_error_handlers"
 in typed context  [no-untyped-call]
         register_error_handlers(app)
         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/__init__.py:81:5: error: "Flask" has no attribute "advanced_error_handler" 
+app/__init__.py:81:5: error: "Flask" has no attribute "advanced_error_handler"
 [attr-defined]
         app.advanced_error_handler = advanced_error_handler
         ^~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1143,7 +1143,7 @@ app/models/log.py:10:11: error: Name "db.Model" is not defined  [name-defined]
     class Log(db.Model):
               ^
 app/models/log.py: note: In class "Log":
-app/models/log.py:10:11: error: Class cannot subclass "Model" (has type "Any") 
+app/models/log.py:10:11: error: Class cannot subclass "Model" (has type "Any")
 [misc]
     class Log(db.Model):
               ^~~~~~~~
@@ -1197,7 +1197,7 @@ app/models/log.py:240:9: error: Returning Any from function declared to return
 "list[Any]"  [no-any-return]
             return Log.query.filter(Log.level.in_(["ERROR", "CRITICAL"]))....
             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
-app/models/instance.py:12:16: error: Name "db.Model" is not defined 
+app/models/instance.py:12:16: error: Name "db.Model" is not defined
 [name-defined]
     class Instance(db.Model):
                    ^
@@ -1296,7 +1296,7 @@ app/models/database_type_config.py:82:9: error: Returning Any from function
 declared to return "DatabaseTypeConfig"  [no-any-return]
             return cls.query.filter_by(name=name).first()
             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/models/credential.py:13:18: error: Name "db.Model" is not defined 
+app/models/credential.py:13:18: error: Name "db.Model" is not defined
 [name-defined]
     class Credential(db.Model):
                      ^
@@ -1371,7 +1371,7 @@ app/models/credential.py:187:26: error: Missing type parameters for generic
 type "dict"  [type-arg]
         def to_dict(self) -> dict:
                              ^
-app/models/account.py:10:15: error: Name "db.Model" is not defined 
+app/models/account.py:10:15: error: Name "db.Model" is not defined
 [name-defined]
     class Account(db.Model):
                   ^
@@ -1387,17 +1387,17 @@ app/models/account.py:50:26: error: Missing type parameters for generic type
                              ^
 app/utils/advanced_error_handler.py: note: In member "__init__" of class "AdvancedErrorHandler":
 app/utils/advanced_error_handler.py:70:9: error: Need type annotation for
-"error_handlers" (hint: "error_handlers: dict[<type>, <type>] = ...") 
+"error_handlers" (hint: "error_handlers: dict[<type>, <type>] = ...")
 [var-annotated]
             self.error_handlers = {}
             ^~~~~~~~~~~~~~~~~~~
 app/utils/advanced_error_handler.py:71:9: error: Need type annotation for
-"recovery_strategies" (hint: "recovery_strategies: dict[<type>, <type>] = ...") 
+"recovery_strategies" (hint: "recovery_strategies: dict[<type>, <type>] = ...")
 [var-annotated]
             self.recovery_strategies = {}
             ^~~~~~~~~~~~~~~~~~~~~~~~
 app/utils/advanced_error_handler.py:72:9: error: Need type annotation for
-"error_metrics" (hint: "error_metrics: dict[<type>, <type>] = ...") 
+"error_metrics" (hint: "error_metrics: dict[<type>, <type>] = ...")
 [var-annotated]
             self.error_metrics = {}
             ^~~~~~~~~~~~~~~~~~
@@ -1413,13 +1413,13 @@ generic type "Callable"  [type-arg]
                                                            ^
 app/utils/advanced_error_handler.py: note: In member "handle_error" of class "AdvancedErrorHandler":
 app/utils/advanced_error_handler.py:83:70: error: Incompatible default for
-argument "context" (default has type "None", argument has type "ErrorContext") 
+argument "context" (default has type "None", argument has type "ErrorContext")
 [assignment]
     ...(self, error: Exception, context: ErrorContext = None) -> dict[str, An...
                                                         ^~~~
 app/utils/advanced_error_handler.py:83:70: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
 app/utils/advanced_error_handler.py:83:70: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
-app/utils/advanced_error_handler.py:86:13: error: Statement is unreachable 
+app/utils/advanced_error_handler.py:86:13: error: Statement is unreachable
 [unreachable]
                 context = ErrorContext(error)
                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1429,16 +1429,16 @@ check (left operand type: "str", right operand type:
 "Literal[LogLevel.CRITICAL]")  [comparison-overlap]
             if log_level == LogLevel.CRITICAL:
                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/utils/advanced_error_handler.py:264:13: error: Statement is unreachable 
+app/utils/advanced_error_handler.py:264:13: error: Statement is unreachable
 [unreachable]
                 logger.critical(f"严重错误: {context.error_id}", extra=log_dat...
                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/utils/advanced_error_handler.py:265:14: error: Non-overlapping equality
-check (left operand type: "str", right operand type: "Literal[LogLevel.ERROR]") 
+check (left operand type: "str", right operand type: "Literal[LogLevel.ERROR]")
 [comparison-overlap]
             elif log_level == LogLevel.ERROR:
                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/utils/advanced_error_handler.py:266:13: error: Statement is unreachable 
+app/utils/advanced_error_handler.py:266:13: error: Statement is unreachable
 [unreachable]
                 logger.error(f"错误: {context.error_id}", extra=log_data)
                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1447,7 +1447,7 @@ check (left operand type: "str", right operand type:
 "Literal[LogLevel.WARNING]")  [comparison-overlap]
             elif log_level == LogLevel.WARNING:
                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/utils/advanced_error_handler.py:268:13: error: Statement is unreachable 
+app/utils/advanced_error_handler.py:268:13: error: Statement is unreachable
 [unreachable]
                 logger.warning(f"警告: {context.error_id}", extra=log_data)
                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1520,7 +1520,7 @@ app/services/database_type_service.py:238:51: error: Argument 1 to
                 if not DatabaseTypeConfig.get_by_name(type_data["name"]):
                                                       ^~~~~~~~~~~~~~~~~
 app/services/database_type_service.py:254:40: error: Incompatible types in
-assignment (expression has type "object", variable has type "list[str]") 
+assignment (expression has type "object", variable has type "list[str]")
 [assignment]
                     config.features_list = type_data.get("features", [])
                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1529,7 +1529,7 @@ has incompatible type "str"; expected "Exception"  [arg-type]
                 log_error(f"初始化默认数据库类型失败: {e}")
                           ^~~~~~~~~~~~~~~~~~~~~
 app/routes/user_management.py:8:1: error: Skipping analyzing "flask_login":
-module is installed, but missing library stubs or py.typed marker 
+module is installed, but missing library stubs or py.typed marker
 [import-untyped]
     from flask_login import current_user, login_required
     ^
@@ -1550,7 +1550,7 @@ app/routes/user_management.py:41:2: error: Untyped decorator makes function
     @view_required
      ^~~~~~~~~~~~~
 app/routes/user_management.py: note: In function "api_get_users":
-app/routes/user_management.py:42:24: error: Name "Response" is not defined 
+app/routes/user_management.py:42:24: error: Name "Response" is not defined
 [name-defined]
     def api_get_users() -> "Response":
                            ^
@@ -1564,7 +1564,7 @@ app/routes/user_management.py:100:2: error: Untyped decorator makes function
     @create_required
      ^~~~~~~~~~~~~~~
 app/routes/user_management.py: note: In function "api_create_user":
-app/routes/user_management.py:101:26: error: Name "Response" is not defined 
+app/routes/user_management.py:101:26: error: Name "Response" is not defined
 [name-defined]
     def api_create_user() -> "Response":
                              ^
@@ -1578,7 +1578,7 @@ app/routes/user_management.py:146:2: error: Untyped decorator makes function
     @update_required
      ^~~~~~~~~~~~~~~
 app/routes/user_management.py: note: In function "api_update_user":
-app/routes/user_management.py:147:38: error: Name "Response" is not defined 
+app/routes/user_management.py:147:38: error: Name "Response" is not defined
 [name-defined]
     def api_update_user(user_id: int) -> "Response":
                                          ^
@@ -1592,7 +1592,7 @@ app/routes/user_management.py:193:2: error: Untyped decorator makes function
     @delete_required
      ^~~~~~~~~~~~~~~
 app/routes/user_management.py: note: In function "api_delete_user":
-app/routes/user_management.py:194:38: error: Name "Response" is not defined 
+app/routes/user_management.py:194:38: error: Name "Response" is not defined
 [name-defined]
     def api_delete_user(user_id: int) -> "Response":
                                          ^
@@ -1606,7 +1606,7 @@ app/routes/user_management.py:221:2: error: Untyped decorator makes function
     @update_required
      ^~~~~~~~~~~~~~~
 app/routes/user_management.py: note: In function "api_toggle_user_status":
-app/routes/user_management.py:222:45: error: Name "Response" is not defined 
+app/routes/user_management.py:222:45: error: Name "Response" is not defined
 [name-defined]
     def api_toggle_user_status(user_id: int) -> "Response":
                                                 ^
@@ -1620,12 +1620,12 @@ app/routes/user_management.py:250:2: error: Untyped decorator makes function
     @view_required
      ^~~~~~~~~~~~~
 app/routes/user_management.py: note: In function "api_get_stats":
-app/routes/user_management.py:251:24: error: Name "Response" is not defined 
+app/routes/user_management.py:251:24: error: Name "Response" is not defined
 [name-defined]
     def api_get_stats() -> "Response":
                            ^
 app/routes/health.py: note: In function "health_check":
-app/routes/health.py:21:23: error: Name "Response" is not defined 
+app/routes/health.py:21:23: error: Name "Response" is not defined
 [name-defined]
     def health_check() -> "Response":
                           ^
@@ -1634,7 +1634,7 @@ app/routes/health.py:30:16: error: "type[APIResponse]" has no attribute
             return APIResponse.server_error("健康检查失败")
                    ^~~~~~~~~~~~~~~~~~~~~~~~
 app/routes/health.py: note: In function "detailed_health_check":
-app/routes/health.py:34:32: error: Name "Response" is not defined 
+app/routes/health.py:34:32: error: Name "Response" is not defined
 [name-defined]
     def detailed_health_check() -> "Response":
                                    ^
@@ -1658,7 +1658,7 @@ app/routes/health.py:113:30: error: Missing type parameters for generic type
     def check_system_health() -> dict:
                                  ^
 app/routes/health.py: note: In function "readiness_check":
-app/routes/health.py:149:26: error: Name "Response" is not defined 
+app/routes/health.py:149:26: error: Name "Response" is not defined
 [name-defined]
     def readiness_check() -> "Response":
                              ^
@@ -1667,7 +1667,7 @@ app/routes/health.py:161:16: error: "type[APIResponse]" has no attribute
             return APIResponse.server_error("就绪检查失败")
                    ^~~~~~~~~~~~~~~~~~~~~~~~
 app/routes/health.py: note: In function "liveness_check":
-app/routes/health.py:165:25: error: Name "Response" is not defined 
+app/routes/health.py:165:25: error: Name "Response" is not defined
 [name-defined]
     def liveness_check() -> "Response":
                             ^
@@ -1702,7 +1702,7 @@ app/routes/credentials.py:110:2: error: Untyped decorator makes function
     @create_required
      ^~~~~~~~~~~~~~~
 app/routes/credentials.py: note: In function "create":
-app/routes/credentials.py:111:17: error: Name "Response" is not defined 
+app/routes/credentials.py:111:17: error: Name "Response" is not defined
 [name-defined]
     def create() -> "str | Response":
                     ^
@@ -1728,7 +1728,7 @@ no attribute "strip"  [union-attr]
                     name=data.get("name").strip(),
                          ^~~~~~~~~~~~~~~~~~~~~~
 app/routes/credentials.py:174:33: error: Argument "credential_type" to
-"Credential" has incompatible type "Any | str | None"; expected "str" 
+"Credential" has incompatible type "Any | str | None"; expected "str"
 [arg-type]
                     credential_type=data.get("credential_type"),
                                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1764,7 +1764,7 @@ untyped  [misc]
     @update_required
      ^~~~~~~~~~~~~~~
 app/routes/credentials.py: note: In function "edit":
-app/routes/credentials.py:245:33: error: Name "Response" is not defined 
+app/routes/credentials.py:245:33: error: Name "Response" is not defined
 [name-defined]
     def edit(credential_id: int) -> "str | Response":
                                     ^
@@ -1799,7 +1799,7 @@ app/routes/credentials.py:364:2: error: Untyped decorator makes function
     @update_required
      ^~~~~~~~~~~~~~~
 app/routes/credentials.py: note: In function "toggle":
-app/routes/credentials.py:365:35: error: Name "Response" is not defined 
+app/routes/credentials.py:365:35: error: Name "Response" is not defined
 [name-defined]
     def toggle(credential_id: int) -> "Response":
                                       ^
@@ -1813,7 +1813,7 @@ app/routes/credentials.py:410:2: error: Untyped decorator makes function
     @delete_required
      ^~~~~~~~~~~~~~~
 app/routes/credentials.py: note: In function "delete":
-app/routes/credentials.py:411:35: error: Name "Response" is not defined 
+app/routes/credentials.py:411:35: error: Name "Response" is not defined
 [name-defined]
     def delete(credential_id: int) -> "Response":
                                       ^
@@ -1827,7 +1827,7 @@ app/routes/credentials.py:438:2: error: Untyped decorator makes function
     @view_required
      ^~~~~~~~~~~~~
 app/routes/credentials.py: note: In function "test_credential":
-app/routes/credentials.py:439:44: error: Name "Response" is not defined 
+app/routes/credentials.py:439:44: error: Name "Response" is not defined
 [name-defined]
     def test_credential(credential_id: int) -> "Response":
                                                ^
@@ -1841,7 +1841,7 @@ app/routes/credentials.py:470:2: error: Untyped decorator makes function
     @view_required
      ^~~~~~~~~~~~~
 app/routes/credentials.py: note: In function "api_list":
-app/routes/credentials.py:471:19: error: Name "Response" is not defined 
+app/routes/credentials.py:471:19: error: Name "Response" is not defined
 [name-defined]
     def api_list() -> "Response":
                       ^
@@ -1855,7 +1855,7 @@ app/routes/credentials.py:479:2: error: Untyped decorator makes function
     @view_required
      ^~~~~~~~~~~~~
 app/routes/credentials.py: note: In function "api_detail":
-app/routes/credentials.py:480:39: error: Name "Response" is not defined 
+app/routes/credentials.py:480:39: error: Name "Response" is not defined
 [name-defined]
     def api_detail(credential_id: int) -> "Response":
                                           ^
@@ -1882,7 +1882,7 @@ untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/auth.py: note: In function "profile":
-app/routes/auth.py:124:18: error: Name "Response" is not defined 
+app/routes/auth.py:124:18: error: Name "Response" is not defined
 [name-defined]
     def profile() -> "str | Response":
                      ^
@@ -1892,7 +1892,7 @@ app/routes/auth.py:143:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/auth.py: note: In function "change_password":
-app/routes/auth.py:145:26: error: Name "Response" is not defined 
+app/routes/auth.py:145:26: error: Name "Response" is not defined
 [name-defined]
     def change_password() -> "str | Response":
                              ^
@@ -1902,21 +1902,21 @@ untyped  [misc]
     @jwt_required(refresh=True)
      ^~~~~~~~~~~~~~~~~~~~~~~~~~
 app/routes/auth.py: note: In function "refresh":
-app/routes/auth.py:200:18: error: Name "Response" is not defined 
+app/routes/auth.py:200:18: error: Name "Response" is not defined
 [name-defined]
     def refresh() -> "Response":
                      ^
 app/routes/auth.py: note: At top level:
-app/routes/auth.py:208:2: error: Untyped decorator makes function "me" untyped 
+app/routes/auth.py:208:2: error: Untyped decorator makes function "me" untyped
 [misc]
     @jwt_required()
      ^~~~~~~~~~~~~~
 app/routes/auth.py: note: In function "me":
-app/routes/auth.py:209:13: error: Name "Response" is not defined 
+app/routes/auth.py:209:13: error: Name "Response" is not defined
 [name-defined]
     def me() -> "Response":
                 ^
-app/models/sync_data.py:10:16: error: Name "db.Model" is not defined 
+app/models/sync_data.py:10:16: error: Name "db.Model" is not defined
 [name-defined]
     class SyncData(db.Model):
                    ^
@@ -1940,7 +1940,7 @@ app/models/sync_data.py:124:9: error: Returning Any from function declared to
 return "SyncData | None"  [no-any-return]
             return query.order_by(SyncData.sync_time.desc()).first()
             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/models/permission_config.py:10:24: error: Name "db.Model" is not defined 
+app/models/permission_config.py:10:24: error: Name "db.Model" is not defined
 [name-defined]
     class PermissionConfig(db.Model):
                            ^
@@ -2021,7 +2021,7 @@ app/models/account_classification.py:126:26: error: Missing type parameters for
 generic type "dict"  [type-arg]
         def to_dict(self) -> dict:
                              ^
-app/models/account_change.py:10:21: error: Name "db.Model" is not defined 
+app/models/account_change.py:10:21: error: Name "db.Model" is not defined
 [name-defined]
     class AccountChange(db.Model):
                         ^
@@ -2065,7 +2065,7 @@ app/middleware/error_logging_middleware.py:11:1: error: Skipping analyzing
     ^
 app/middleware/error_logging_middleware.py: note: In function "register_error_logging_middleware":
 app/middleware/error_logging_middleware.py:112:38: error:
-"_merge_batch_sync_logs" does not return a value (it only ever returns None) 
+"_merge_batch_sync_logs" does not return a value (it only ever returns None)
 [func-returns-value]
                             merged_log = _merge_batch_sync_logs(
                                          ^
@@ -2079,7 +2079,7 @@ expected  [return-value]
             return response
             ^~~~~~~~~~~~~~~
 app/middleware/error_logging_middleware.py:156:6: error: Value of type variable
-"T_error_handler" of function cannot be "Callable[[Exception], None]" 
+"T_error_handler" of function cannot be "Callable[[Exception], None]"
 [type-var]
         @app.errorhandler(400)
          ^
@@ -2088,7 +2088,7 @@ expected  [return-value]
             return {"error": "请求参数错误", "message": str(error), "status_code...
             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
 app/middleware/error_logging_middleware.py:162:6: error: Value of type variable
-"T_error_handler" of function cannot be "Callable[[Exception], None]" 
+"T_error_handler" of function cannot be "Callable[[Exception], None]"
 [type-var]
         @app.errorhandler(401)
          ^
@@ -2097,7 +2097,7 @@ expected  [return-value]
             return {"error": "未授权访问", "message": "请先登录", "status_code": 40...
             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
 app/middleware/error_logging_middleware.py:168:6: error: Value of type variable
-"T_error_handler" of function cannot be "Callable[[Exception], None]" 
+"T_error_handler" of function cannot be "Callable[[Exception], None]"
 [type-var]
         @app.errorhandler(403)
          ^
@@ -2106,7 +2106,7 @@ expected  [return-value]
             return {"error": "禁止访问", "message": "您没有权限访问此资源", "status_code...
             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
 app/middleware/error_logging_middleware.py:174:6: error: Value of type variable
-"T_error_handler" of function cannot be "Callable[[Exception], None]" 
+"T_error_handler" of function cannot be "Callable[[Exception], None]"
 [type-var]
         @app.errorhandler(404)
          ^
@@ -2115,7 +2115,7 @@ expected  [return-value]
             return {"error": "资源未找到", "message": "请求的资源不存在", "status_code"...
             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
 app/middleware/error_logging_middleware.py:184:6: error: Value of type variable
-"T_error_handler" of function cannot be "Callable[[Exception], None]" 
+"T_error_handler" of function cannot be "Callable[[Exception], None]"
 [type-var]
         @app.errorhandler(500)
          ^
@@ -2124,7 +2124,7 @@ expected  [return-value]
             return {"error": "服务器内部错误", "message": "系统出现错误，请稍后重试", "status...
             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
 app/middleware/error_logging_middleware.py:190:6: error: Value of type variable
-"T_error_handler" of function cannot be "Callable[[Exception], None]" 
+"T_error_handler" of function cannot be "Callable[[Exception], None]"
 [type-var]
         @app.errorhandler(Exception)
          ^
@@ -2164,7 +2164,7 @@ default for argument "description" (default has type "None", argument has type
 app/services/account_classification_service.py:29:28: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
 app/services/account_classification_service.py:29:28: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
 app/services/account_classification_service.py:31:22: error: Incompatible
-default for argument "color" (default has type "None", argument has type "str") 
+default for argument "color" (default has type "None", argument has type "str")
 [assignment]
             color: str = None,
                          ^~~~
@@ -2202,7 +2202,7 @@ default for argument "assigned_by" (default has type "None", argument has type
 app/services/account_classification_service.py:318:28: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
 app/services/account_classification_service.py:318:28: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
 app/services/account_classification_service.py:319:22: error: Incompatible
-default for argument "notes" (default has type "None", argument has type "str") 
+default for argument "notes" (default has type "None", argument has type "str")
 [assignment]
             notes: str = None,
                          ^~~~
@@ -2250,7 +2250,7 @@ parameters for generic type "dict"  [type-arg]
     ...te_oracle_rule(self, account: Account, rule_expression: dict) -> bool:
                                                                ^
 app/routes/database_types.py:7:1: error: Skipping analyzing "flask_login":
-module is installed, but missing library stubs or py.typed marker 
+module is installed, but missing library stubs or py.typed marker
 [import-untyped]
     from flask_login import login_required
     ^
@@ -2263,7 +2263,7 @@ app/routes/database_types.py:23:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/database_types.py: note: In function "create":
-app/routes/database_types.py:24:17: error: Name "Response" is not defined 
+app/routes/database_types.py:24:17: error: Name "Response" is not defined
 [name-defined]
     def create() -> "Response":
                     ^
@@ -2273,7 +2273,7 @@ app/routes/database_types.py:33:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/database_types.py: note: In function "edit":
-app/routes/database_types.py:34:27: error: Name "Response" is not defined 
+app/routes/database_types.py:34:27: error: Name "Response" is not defined
 [name-defined]
     def edit(type_id: int) -> "Response":
                               ^
@@ -2283,7 +2283,7 @@ app/routes/database_types.py:43:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/database_types.py: note: In function "delete":
-app/routes/database_types.py:44:29: error: Name "Response" is not defined 
+app/routes/database_types.py:44:29: error: Name "Response" is not defined
 [name-defined]
     def delete(type_id: int) -> "Response":
                                 ^
@@ -2293,7 +2293,7 @@ app/routes/database_types.py:53:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/database_types.py: note: In function "toggle_status":
-app/routes/database_types.py:54:36: error: Name "Response" is not defined 
+app/routes/database_types.py:54:36: error: Name "Response" is not defined
 [name-defined]
     def toggle_status(type_id: int) -> "Response":
                                        ^
@@ -2303,7 +2303,7 @@ app/routes/database_types.py:60:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/database_types.py: note: In function "api_list":
-app/routes/database_types.py:61:19: error: Name "Response" is not defined 
+app/routes/database_types.py:61:19: error: Name "Response" is not defined
 [name-defined]
     def api_list() -> "Response":
                       ^
@@ -2313,7 +2313,7 @@ app/routes/database_types.py:68:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/database_types.py: note: In function "api_active":
-app/routes/database_types.py:69:21: error: Name "Response" is not defined 
+app/routes/database_types.py:69:21: error: Name "Response" is not defined
 [name-defined]
     def api_active() -> "Response":
                         ^
@@ -2323,7 +2323,7 @@ app/routes/database_types.py:76:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/database_types.py: note: In function "api_form_options":
-app/routes/database_types.py:77:27: error: Name "Response" is not defined 
+app/routes/database_types.py:77:27: error: Name "Response" is not defined
 [name-defined]
     def api_form_options() -> "Response":
                               ^
@@ -2333,7 +2333,7 @@ app/routes/database_types.py:84:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/database_types.py: note: In function "init_defaults":
-app/routes/database_types.py:85:24: error: Name "Response" is not defined 
+app/routes/database_types.py:85:24: error: Name "Response" is not defined
 [name-defined]
     def init_defaults() -> "Response":
                            ^
@@ -2356,7 +2356,7 @@ app/routes/dashboard.py:83:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/dashboard.py: note: In function "api_overview":
-app/routes/dashboard.py:84:23: error: Name "Response" is not defined 
+app/routes/dashboard.py:84:23: error: Name "Response" is not defined
 [name-defined]
     def api_overview() -> "Response":
                           ^
@@ -2366,7 +2366,7 @@ app/routes/dashboard.py:107:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/dashboard.py: note: In function "api_charts":
-app/routes/dashboard.py:108:21: error: Name "Response" is not defined 
+app/routes/dashboard.py:108:21: error: Name "Response" is not defined
 [name-defined]
     def api_charts() -> "Response":
                         ^
@@ -2376,7 +2376,7 @@ app/routes/dashboard.py:132:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/dashboard.py: note: In function "api_activities":
-app/routes/dashboard.py:133:25: error: Name "Response" is not defined 
+app/routes/dashboard.py:133:25: error: Name "Response" is not defined
 [name-defined]
     def api_activities() -> "Response":
                             ^
@@ -2386,7 +2386,7 @@ app/routes/dashboard.py:139:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/dashboard.py: note: In function "api_status":
-app/routes/dashboard.py:140:21: error: Name "Response" is not defined 
+app/routes/dashboard.py:140:21: error: Name "Response" is not defined
 [name-defined]
     def api_status() -> "Response":
                         ^
@@ -2471,7 +2471,7 @@ app/routes/dashboard.py:339:28: error: Missing type parameters for generic type
     def get_system_status() -> dict:
                                ^
 app/routes/account_static.py:10:1: error: Skipping analyzing "flask_login":
-module is installed, but missing library stubs or py.typed marker 
+module is installed, but missing library stubs or py.typed marker
 [import-untyped]
     from flask_login import login_required
     ^
@@ -2490,7 +2490,7 @@ app/routes/account_static.py:53:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/account_static.py: note: In function "account_statistics":
-app/routes/account_static.py:54:29: error: Name "Response" is not defined 
+app/routes/account_static.py:54:29: error: Name "Response" is not defined
 [name-defined]
     def account_statistics() -> "Response":
                                 ^
@@ -2500,7 +2500,7 @@ app/routes/account_static.py:69:2: error: Untyped decorator makes function
     @login_required
      ^~~~~~~~~~~~~~
 app/routes/account_static.py: note: In function "api_statistics":
-app/routes/account_static.py:70:25: error: Name "Response" is not defined 
+app/routes/account_static.py:70:25: error: Name "Response" is not defined
 [name-defined]
     def api_statistics() -> "Response":
                             ^
@@ -2528,7 +2528,7 @@ app/services/connection_factory.py:60:20: error: Item "None" of
                     or DatabaseTypeUtils.get_database_type_config("mysql")...
                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
 app/services/connection_factory.py: note: In member "disconnect" of class "MySQLConnection":
-app/services/connection_factory.py:81:13: error: Statement is unreachable 
+app/services/connection_factory.py:81:13: error: Statement is unreachable
 [unreachable]
                 try:
                 ^
@@ -2552,7 +2552,7 @@ app/services/connection_factory.py:144:20: error: Item "None" of
                     or DatabaseTypeUtils.get_database_type_config("postgre...
                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
 app/services/connection_factory.py: note: In member "disconnect" of class "PostgreSQLConnection":
-app/services/connection_factory.py:160:13: error: Statement is unreachable 
+app/services/connection_factory.py:160:13: error: Statement is unreachable
 [unreachable]
                 try:
                 ^
@@ -2571,12 +2571,12 @@ app/services/connection_factory.py:221:20: error: Item "None" of
                     or DatabaseTypeUtils.get_database_type_config("sqlserv...
                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
 app/services/connection_factory.py:225:31: error: Incompatible types in
-assignment (expression has type "Connection", variable has type "None") 
+assignment (expression has type "Connection", variable has type "None")
 [assignment]
                 self.connection = pymssql.connect(
                                   ^
 app/services/connection_factory.py: note: In member "disconnect" of class "SQLServerConnection":
-app/services/connection_factory.py:243:13: error: Statement is unreachable 
+app/services/connection_factory.py:243:13: error: Statement is unreachable
 [unreachable]
                 try:
                 ^
@@ -2595,17 +2595,17 @@ app/services/connection_factory.py:305:20: error: Item "None" of
                     or DatabaseTypeUtils.get_database_type_config("oracle"...
                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
 app/services/connection_factory.py:325:35: error: Incompatible types in
-assignment (expression has type "Connection", variable has type "None") 
+assignment (expression has type "Connection", variable has type "None")
 [assignment]
                     self.connection = oracledb.connect(
                                       ^
 app/services/connection_factory.py:335:43: error: Incompatible types in
-assignment (expression has type "Connection", variable has type "None") 
+assignment (expression has type "Connection", variable has type "None")
 [assignment]
                             self.connection = oracledb.connect(
                                               ^
 app/services/connection_factory.py: note: In member "disconnect" of class "OracleConnection":
-app/services/connection_factory.py:356:13: error: Statement is unreachable 
+app/services/connection_factory.py:356:13: error: Statement is unreachable
 [unreachable]
                 try:
                 ^
@@ -2643,12 +2643,12 @@ assignment (expression has type "None", variable has type Module)  [assignment]
                    ^~~~
 app/services/account_sync_service.py: note: In member "sync_accounts" of class "AccountSyncService":
 app/services/account_sync_service.py:111:26: error: Argument "data" to
-"SyncData" has incompatible type "dict[str, Any]"; expected "str | None" 
+"SyncData" has incompatible type "dict[str, Any]"; expected "str | None"
 [arg-type]
                         data={
                              ^
 app/services/account_sync_service.py:157:26: error: Argument "data" to
-"SyncData" has incompatible type "dict[str, Any]"; expected "str | None" 
+"SyncData" has incompatible type "dict[str, Any]"; expected "str | None"
 [arg-type]
                         data={
                              ^
@@ -2664,7 +2664,7 @@ generic type "dict"  [type-arg]
                                                                        ^
 app/services/account_sync_service.py: note: In member "_sync_mysql_accounts" of class "AccountSyncService":
 app/services/account_sync_service.py:467:13: error: Dict entry 4 has
-incompatible type "str": "list[dict[str, Any]]"; expected "str": "int" 
+incompatible type "str": "list[dict[str, Any]]"; expected "str": "int"
 [dict-item]
                 "removed_accounts": removed_accounts,
                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2674,46 +2674,46 @@ app/services/account_sync_service.py:634:23: error: Need type annotation for
             permissions = {
                           ^
 app/services/account_sync_service.py:782:43: error: Incompatible types in
-assignment (expression has type "bool", target has type "list[Any]") 
+assignment (expression has type "bool", target has type "list[Any]")
 [assignment]
                 permissions["is_superuser"] = is_superuser
                                               ^~~~~~~~~~~~
 app/services/account_sync_service.py:783:40: error: Incompatible types in
-assignment (expression has type "bool", target has type "list[Any]") 
+assignment (expression has type "bool", target has type "list[Any]")
 [assignment]
                 permissions["can_grant"] = can_grant
                                            ^~~~~~~~~
 app/services/account_sync_service.py:790:43: error: Incompatible types in
-assignment (expression has type "bool", target has type "list[Any]") 
+assignment (expression has type "bool", target has type "list[Any]")
 [assignment]
                 permissions["is_superuser"] = False
                                               ^~~~~
 app/services/account_sync_service.py:791:40: error: Incompatible types in
-assignment (expression has type "bool", target has type "list[Any]") 
+assignment (expression has type "bool", target has type "list[Any]")
 [assignment]
                 permissions["can_grant"] = False
                                            ^~~~~
 app/services/account_sync_service.py: note: In member "_sync_sqlserver_accounts" of class "AccountSyncService":
 app/services/account_sync_service.py:944:13: error: Dict entry 4 has
-incompatible type "str": "list[dict[str, Any]]"; expected "str": "int" 
+incompatible type "str": "list[dict[str, Any]]"; expected "str": "int"
 [dict-item]
                 "removed_accounts": removed_accounts,
                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/services/account_sync_service.py: note: In member "_sync_oracle_accounts" of class "AccountSyncService":
 app/services/account_sync_service.py:1087:13: error: Dict entry 4 has
-incompatible type "str": "list[dict[str, Any]]"; expected "str": "int" 
+incompatible type "str": "list[dict[str, Any]]"; expected "str": "int"
 [dict-item]
                 "removed_accounts": removed_accounts,
                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/services/account_sync_service.py: note: In member "_get_mysql_account_permissions" of class "AccountSyncService":
 app/services/account_sync_service.py:1174:13: error: Need type annotation for
-"db_permissions" (hint: "db_permissions: dict[<type>, <type>] = ...") 
+"db_permissions" (hint: "db_permissions: dict[<type>, <type>] = ...")
 [var-annotated]
                 db_permissions = {}
                 ^~~~~~~~~~~~~~
 app/services/account_sync_service.py: note: In member "_get_sqlserver_account_permissions" of class "AccountSyncService":
 app/services/account_sync_service.py:1298:17: error: Need type annotation for
-"db_permissions" (hint: "db_permissions: dict[<type>, <type>] = ...") 
+"db_permissions" (hint: "db_permissions: dict[<type>, <type>] = ...")
 [var-annotated]
                     db_permissions = {}
                     ^~~~~~~~~~~~~~
@@ -2841,7 +2841,7 @@ defined  [name-defined]
     def list_rules() -> "Response":
                         ^
 app/routes/account_classification.py:273:9: error: Need type annotation for
-"rules_by_db_type" (hint: "rules_by_db_type: dict[<type>, <type>] = ...") 
+"rules_by_db_type" (hint: "rules_by_db_type: dict[<type>, <type>] = ...")
 [var-annotated]
             rules_by_db_type = {}
             ^~~~~~~~~~~~~~~~
@@ -2991,7 +2991,7 @@ generic type "dict"  [type-arg]
     def _get_db_permissions(db_type: str) -> dict:
                                              ^
 app/tasks.py: note: In function "cleanup_old_logs":
-app/tasks.py:18:1: error: Function is missing a return type annotation 
+app/tasks.py:18:1: error: Function is missing a return type annotation
 [no-untyped-def]
     def cleanup_old_logs():
     ^
@@ -3000,12 +3000,12 @@ typed context  [no-untyped-call]
                 cleaned_files = _cleanup_temp_files()
                                 ^~~~~~~~~~~~~~~~~~~~~
 app/tasks.py: note: In function "_cleanup_temp_files":
-app/tasks.py:65:1: error: Function is missing a return type annotation 
+app/tasks.py:65:1: error: Function is missing a return type annotation
 [no-untyped-def]
     def _cleanup_temp_files():
     ^
 app/tasks.py: note: In function "sync_accounts":
-app/tasks.py:92:1: error: Function is missing a return type annotation 
+app/tasks.py:92:1: error: Function is missing a return type annotation
 [no-untyped-def]
     def sync_accounts():
     ^
@@ -3026,12 +3026,12 @@ app/tasks.py:245:22: error: Argument "data" to "SyncData" has incompatible type
                     data={"error": str(e)},
                          ^~~~~~~~~~~~~~~~~
 app/tasks.py: note: In function "health_check":
-app/tasks.py:253:1: error: Function is missing a return type annotation 
+app/tasks.py:253:1: error: Function is missing a return type annotation
 [no-untyped-def]
     def health_check():
     ^
 app/tasks.py: note: In function "cleanup_temp_files":
-app/tasks.py:283:1: error: Function is missing a return type annotation 
+app/tasks.py:283:1: error: Function is missing a return type annotation
 [no-untyped-def]
     def cleanup_temp_files():
     ^
@@ -3043,7 +3043,7 @@ assignment (expression has type "DatabaseConnection | None", variable has type
                                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
 app/services/permission_query_factory.py: note: In member "get_account_permissions" of class "SQLServerPermissionQuery":
 app/services/permission_query_factory.py:376:13: error: Need type annotation
-for "database_roles" (hint: "database_roles: dict[<type>, <type>] = ...") 
+for "database_roles" (hint: "database_roles: dict[<type>, <type>] = ...")
 [var-annotated]
                 database_roles = {}
                 ^~~~~~~~~~~~~~
@@ -3054,19 +3054,19 @@ for "database_privileges" (hint:
                 ^~~~~~~~~~~~~~~~~~~
 app/services/permission_query_factory.py: note: In member "get_database_permissions" of class "SQLServerPermissionQuery":
 app/services/permission_query_factory.py:471:13: error: Need type annotation
-for "db_permissions" (hint: "db_permissions: dict[<type>, <type>] = ...") 
+for "db_permissions" (hint: "db_permissions: dict[<type>, <type>] = ...")
 [var-annotated]
                 db_permissions = {}
                 ^~~~~~~~~~~~~~
 app/services/permission_query_factory.py: note: In member "get_table_permissions" of class "SQLServerPermissionQuery":
 app/services/permission_query_factory.py:534:13: error: Need type annotation
-for "table_permissions" (hint: "table_permissions: dict[<type>, <type>] = ...") 
+for "table_permissions" (hint: "table_permissions: dict[<type>, <type>] = ...")
 [var-annotated]
                 table_permissions = {}
                 ^~~~~~~~~~~~~~~~~
 app/services/permission_query_factory.py: note: In member "get_table_permissions" of class "OraclePermissionQuery":
 app/services/permission_query_factory.py:742:13: error: Need type annotation
-for "table_permissions" (hint: "table_permissions: dict[<type>, <type>] = ...") 
+for "table_permissions" (hint: "table_permissions: dict[<type>, <type>] = ...")
 [var-annotated]
                 table_permissions = {}
                 ^~~~~~~~~~~~~~~~~
@@ -3087,7 +3087,7 @@ for generic type "list"  [type-arg]
         def get_supported_types() -> list:
                                      ^
 app/routes/account_sync.py:10:1: error: Skipping analyzing "flask_login":
-module is installed, but missing library stubs or py.typed marker 
+module is installed, but missing library stubs or py.typed marker
 [import-untyped]
     from flask_login import current_user, login_required
     ^
@@ -3099,15 +3099,15 @@ app/routes/account_sync.py:247:2: error: Untyped decorator makes function
 "sync_all_accounts" untyped  [misc]
     @login_required
      ^~~~~~~~~~~~~~
-app/routes/account_sync.py:269: error: Unused "type: ignore" comment 
+app/routes/account_sync.py:269: error: Unused "type: ignore" comment
 [unused-ignore]
                         sync_record = SyncData(  # type: ignore
                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/routes/account_sync.py:283: error: Unused "type: ignore" comment 
+app/routes/account_sync.py:283: error: Unused "type: ignore" comment
 [unused-ignore]
                         sync_record = SyncData(  # type: ignore
                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/routes/account_sync.py:304: error: Unused "type: ignore" comment 
+app/routes/account_sync.py:304: error: Unused "type: ignore" comment
 [unused-ignore]
                     sync_record = SyncData(  # type: ignore
                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3122,7 +3122,7 @@ app/routes/account_sync.py:442:2: error: Untyped decorator makes function
 app/routes/account_sync.py: note: In function "sync_details":
 app/routes/account_sync.py:469:16: error: Incompatible return value type (got
 "werkzeug.wrappers.response.Response", expected
-"str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]") 
+"str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]")
 [return-value]
             return redirect(url_for("account_sync.sync_records"))
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3181,7 +3181,7 @@ app/services/database_service.py:884:27: error: Argument 1 to "log_error" has
 incompatible type "str"; expected "Exception"  [arg-type]
                     log_error(f"无法建立{instance.db_type}连接")
                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/services/database_service.py:889:17: error: Statement is unreachable 
+app/services/database_service.py:889:17: error: Statement is unreachable
 [unreachable]
                     self.connections[instance.id] = conn
                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3199,18 +3199,18 @@ app/services/database_service.py:1052:77: note: PEP 484 prohibits implicit Optio
 app/services/database_service.py:1052:77: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
 app/services/database_service.py: note: In member "_get_mysql_permissions" of class "DatabaseService":
 app/services/database_service.py:1256:17: error: Need type annotation for
-"db_permissions" (hint: "db_permissions: dict[<type>, <type>] = ...") 
+"db_permissions" (hint: "db_permissions: dict[<type>, <type>] = ...")
 [var-annotated]
                     db_permissions = {}
                     ^~~~~~~~~~~~~~
 app/services/database_service.py: note: In member "_get_sqlserver_permissions" of class "DatabaseService":
 app/services/database_service.py:1424:13: error: Need type annotation for
-"db_permissions" (hint: "db_permissions: dict[<type>, <type>] = ...") 
+"db_permissions" (hint: "db_permissions: dict[<type>, <type>] = ...")
 [var-annotated]
                 db_permissions = {}
                 ^~~~~~~~~~~~~~
 app/services/database_service.py:1451:13: error: Need type annotation for
-"database_roles" (hint: "database_roles: dict[<type>, <type>] = ...") 
+"database_roles" (hint: "database_roles: dict[<type>, <type>] = ...")
 [var-annotated]
                 database_roles = {}
                 ^~~~~~~~~~~~~~
@@ -3284,7 +3284,7 @@ type "Any | str | None"; expected
                                        ^~~~~~~~~~~~~~~~~~~~~~~~~
 app/routes/instances.py:211:20: error: Incompatible return value type (got
 "werkzeug.wrappers.response.Response", expected
-"str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]") 
+"str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]")
 [return-value]
                 return redirect(url_for("instances.index"))
                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3362,7 +3362,7 @@ attribute "strip"  [union-attr]
                                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/routes/instances.py:520:20: error: Incompatible return value type (got
 "werkzeug.wrappers.response.Response", expected
-"str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]") 
+"str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]")
 [return-value]
                 return redirect(url_for("instances.detail", instance_id=in...
                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
@@ -3378,13 +3378,13 @@ untyped  [misc]
 app/routes/instances.py: note: In function "delete":
 app/routes/instances.py:615:16: error: Incompatible return value type (got
 "werkzeug.wrappers.response.Response", expected
-"str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]") 
+"str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]")
 [return-value]
             return redirect(url_for("instances.index"))
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 app/routes/instances.py:625:16: error: Incompatible return value type (got
 "werkzeug.wrappers.response.Response", expected
-"str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]") 
+"str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]")
 [return-value]
             return redirect(url_for("instances.index"))
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3453,7 +3453,7 @@ app/routes/instances.py:1036:2: error: Untyped decorator makes function
 app/routes/instances.py: note: In function "test_connection":
 app/routes/instances.py:1069:12: error: Incompatible return value type (got
 "werkzeug.wrappers.response.Response", expected
-"str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]") 
+"str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]")
 [return-value]
         return redirect(url_for("instances.detail", instance_id=instance_i...
                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3469,7 +3469,7 @@ app/routes/instances.py:1074:2: error: Untyped decorator makes function
 app/routes/instances.py: note: In function "sync_accounts":
 app/routes/instances.py:1159:12: error: Incompatible return value type (got
 "werkzeug.wrappers.response.Response", expected
-"str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]") 
+"str | flask.wrappers.Response | tuple[flask.wrappers.Response, int]")
 [return-value]
         return redirect(url_for("instances.detail", instance_id=instance_i...
                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3535,7 +3535,7 @@ app/routes/account_list.py:25:2: error: Untyped decorator makes function
      ^~~~~~~~~~~~~
 app/routes/account_list.py: note: In function "list_accounts":
 app/routes/account_list.py:103:5: error: Need type annotation for
-"classifications" (hint: "classifications: dict[<type>, <type>] = ...") 
+"classifications" (hint: "classifications: dict[<type>, <type>] = ...")
 [var-annotated]
         classifications = {}
         ^~~~~~~~~~~~~~~
@@ -3553,12 +3553,12 @@ app/routes/account_list.py:159:2: error: Untyped decorator makes function
     @view_required
      ^~~~~~~~~~~~~
 app/routes/account_list.py: note: In function "export_accounts":
-app/routes/account_list.py:160:26: error: Name "Response" is not defined 
+app/routes/account_list.py:160:26: error: Name "Response" is not defined
 [name-defined]
     def export_accounts() -> "Response":
                              ^
 app/routes/account_list.py:209:5: error: Need type annotation for
-"classifications" (hint: "classifications: dict[<type>, <type>] = ...") 
+"classifications" (hint: "classifications: dict[<type>, <type>] = ...")
 [var-annotated]
         classifications = {}
         ^~~~~~~~~~~~~~~
@@ -3572,7 +3572,7 @@ app/routes/account_list.py:292:2: error: Untyped decorator makes function
     @update_required
      ^~~~~~~~~~~~~~~
 app/routes/account_list.py: note: In function "sync_accounts":
-app/routes/account_list.py:293:40: error: Name "Response" is not defined 
+app/routes/account_list.py:293:40: error: Name "Response" is not defined
 [name-defined]
     def sync_accounts(instance_id: int) -> "Response":
                                            ^
@@ -3586,7 +3586,7 @@ app/routes/account_list.py:378:2: error: Untyped decorator makes function
     @view_required
      ^~~~~~~~~~~~~
 app/routes/account_list.py: note: In function "get_account_permissions":
-app/routes/account_list.py:379:49: error: Name "Response" is not defined 
+app/routes/account_list.py:379:49: error: Name "Response" is not defined
 [name-defined]
     def get_account_permissions(account_id: int) -> "Response":
                                                     ^
@@ -3600,13 +3600,13 @@ app/routes/account_list.py:411:2: error: Untyped decorator makes function
     @update_required
      ^~~~~~~~~~~~~~~
 app/routes/account_list.py: note: In function "api_sync_accounts":
-app/routes/account_list.py:412:44: error: Name "Response" is not defined 
+app/routes/account_list.py:412:44: error: Name "Response" is not defined
 [name-defined]
     def api_sync_accounts(instance_id: int) -> "Response":
                                                ^
 app/utils/validation.py: note: In member "sanitize_html" of class "InputValidator":
 app/utils/validation.py:267:9: error: Need type annotation for
-"allowed_attributes" (hint: "allowed_attributes: dict[<type>, <type>] = ...") 
+"allowed_attributes" (hint: "allowed_attributes: dict[<type>, <type>] = ...")
 [var-annotated]
             allowed_attributes = {}
             ^~~~~~~~~~~~~~~~~~
@@ -3665,7 +3665,7 @@ app/utils/db_context.py:56:69: error: Missing type parameters for generic type
     ...ry(self, instance: Instance, query: str, params: tuple = None) -> Gene...
                                                         ^
 app/utils/db_context.py:56:77: error: Incompatible default for argument
-"params" (default has type "None", argument has type "tuple[Any, ...]") 
+"params" (default has type "None", argument has type "tuple[Any, ...]")
 [assignment]
     ... instance: Instance, query: str, params: tuple = None) -> Generator[di...
                                                         ^~~~
@@ -3686,7 +3686,7 @@ app/utils/db_context.py:144:62: error: Missing type parameters for generic type
     ...db_query(instance: Instance, query: str, params: tuple = None) -> Gene...
                                                         ^
 app/utils/db_context.py:144:70: error: Incompatible default for argument
-"params" (default has type "None", argument has type "tuple[Any, ...]") 
+"params" (default has type "None", argument has type "tuple[Any, ...]")
 [assignment]
     ...(instance: Instance, query: str, params: tuple = None) -> Generator[di...
                                                         ^~~~
@@ -3705,7 +3705,7 @@ assignment (expression has type "None", variable has type Module)  [assignment]
         oracledb = None
                    ^~~~
 app/services/database_size_service.py: note: In member "_get_connection" of class "DatabaseSizeService":
-app/services/database_size_service.py:121:21: error: Statement is unreachable 
+app/services/database_size_service.py:121:21: error: Statement is unreachable
 [unreachable]
                         error_msg = "oracledb模块未安装，无法连接Oracle"
                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3751,7 +3751,7 @@ app/services/task_executor.py:131:21: error: Argument 4 to
                         result["results"],
                         ^~~~~~~~~~~~~~~~~
 app/services/task_executor.py: note: In member "_execute_task_for_instance" of class "TaskExecutor":
-app/services/task_executor.py:145:48: error: Name "Any" is not defined 
+app/services/task_executor.py:145:48: error: Name "Any" is not defined
 [name-defined]
         def _execute_task_for_instance(self, task: "Any", instance: "Any")...
                                                    ^
@@ -3765,7 +3765,7 @@ declared to return "dict[Any, Any]"  [no-any-return]
                     return result
                     ^~~~~~~~~~~~~
 app/services/task_executor.py: note: In member "_record_task_execution_summary" of class "TaskExecutor":
-app/services/task_executor.py:210:52: error: Name "Any" is not defined 
+app/services/task_executor.py:210:52: error: Name "Any" is not defined
 [name-defined]
     ...  def _record_task_execution_summary(self, task: "Any", success_count:...
                                                         ^
@@ -3779,7 +3779,7 @@ app/services/task_executor.py:242:33: error: Argument "instance_id" to
                         instance_id=None,  # 不关联具体实例，表示任务汇总
                                     ^~~~
 app/services/task_executor.py: note: In member "_update_task_status" of class "TaskExecutor":
-app/services/task_executor.py:259:41: error: Name "Any" is not defined 
+app/services/task_executor.py:259:41: error: Name "Any" is not defined
 [name-defined]
         def _update_task_status(self, task: "Any", success_count: int, fai...
                                             ^
@@ -3800,11 +3800,11 @@ stubs or py.typed marker  [import-untyped]
             from app.templates.tasks.builtin_tasks import BUILTIN_TASKS
     ^
 app/services/task_executor.py: note: In member "create_builtin_tasks" of class "TaskExecutor":
-app/services/task_executor.py:371:13: error: No return value expected 
+app/services/task_executor.py:371:13: error: No return value expected
 [return-value]
                 return {
                 ^
-app/services/task_executor.py:379:13: error: No return value expected 
+app/services/task_executor.py:379:13: error: No return value expected
 [return-value]
                 return {"success": False, "error": f"创建内置任务失败: {str(e)}"}
                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

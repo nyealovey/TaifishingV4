@@ -219,16 +219,16 @@ class DatabaseService:
         """同步MySQL账户"""
         cursor = conn.cursor()
 
-        # 获取MySQL过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions("mysql", "User")
+        # 获取MySQL过滤规则（使用安全的参数化查询）
+        where_clause, params = database_filter_manager.get_safe_sql_filter_conditions("mysql", "User")
 
-        cursor.execute(
-            f"""
+        query = f"""
             SELECT User, Host, authentication_string, plugin, account_locked, password_expired, password_last_changed
             FROM mysql.user
-            WHERE {filter_conditions}
-        """
-        )
+            WHERE {where_clause}
+        """  # noqa: B608
+        
+        cursor.execute(query, params)
 
         # 获取服务器端的所有账户
         server_accounts = set()
@@ -372,11 +372,10 @@ class DatabaseService:
 
         cursor = conn.cursor()
 
-        # 获取PostgreSQL过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions("postgresql", "rolname")
+        # 获取PostgreSQL过滤规则（使用安全的参数化查询）
+        where_clause, params = database_filter_manager.get_safe_sql_filter_conditions("postgresql", "rolname")
 
-        cursor.execute(
-            f"""
+        query = f"""
             SELECT
                 rolname, rolsuper, rolinherit, rolcreaterole, rolcreatedb,
                 rolcanlogin, rolconnlimit,
@@ -386,9 +385,10 @@ class DatabaseService:
                 END as rolvaliduntil,
                 rolbypassrls, rolreplication
             FROM pg_roles
-            WHERE {filter_conditions}
-        """
-        )
+            WHERE {where_clause}
+        """  # noqa: B608
+        
+        cursor.execute(query, params)
 
         # 获取服务器端的所有账户
         server_accounts = set()
@@ -547,17 +547,18 @@ class DatabaseService:
         cursor = conn.cursor()
 
         # 获取SQL Server过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions("sqlserver", "name")
+        # 获取SQL Server过滤规则（使用安全的参数化查询）
+        where_clause, params = database_filter_manager.get_safe_sql_filter_conditions("sqlserver", "name")
 
-        cursor.execute(
-            f"""
+        query = f"""
             SELECT name, type_desc, is_disabled, create_date, modify_date
             FROM sys.server_principals
             WHERE type IN ('S', 'U', 'G')
-            AND {filter_conditions}
+            AND {where_clause}
             AND (name = 'sa' OR name NOT LIKE 'NT %')
-        """
-        )
+        """  # noqa: B608
+        
+        cursor.execute(query, params)
 
         # 获取服务器端的所有账户
         server_accounts = set()
@@ -688,18 +689,18 @@ class DatabaseService:
         """同步Oracle账户"""
         cursor = conn.cursor()
 
-        # 获取Oracle过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions("oracle", "username")
+        # 获取Oracle过滤规则（使用安全的参数化查询）
+        where_clause, params = database_filter_manager.get_safe_sql_filter_conditions("oracle", "username")
 
-        cursor.execute(
-            f"""
+        query = f"""
             SELECT username, user_id, account_status, lock_date, expiry_date,
                    default_tablespace, created, authentication_type
             FROM dba_users
-            WHERE {filter_conditions}
+            WHERE {where_clause}
             ORDER BY username
-        """
-        )
+        """  # noqa: B608
+        
+        cursor.execute(query, params)
 
         # 获取服务器端的所有账户
         server_accounts = set()

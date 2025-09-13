@@ -270,12 +270,11 @@ class AccountSyncService:
         """同步MySQL账户"""
         cursor = conn.cursor()
 
-        # 获取MySQL过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions("mysql", "User")
-
-        # 查询用户信息 - 包含完整的账户信息
-        cursor.execute(
-            f"""
+        # 获取MySQL过滤规则（使用安全的参数化查询）
+        where_clause, params = database_filter_manager.get_safe_sql_filter_conditions("mysql", "User")
+        
+        # 构建安全的参数化查询
+        query = f"""
             SELECT
                 User as username,
                 Host as host,
@@ -294,10 +293,11 @@ class AccountSyncService:
                 Drop_priv as can_drop,
                 Super_priv as is_superuser
             FROM mysql.user
-            WHERE {filter_conditions}
+            WHERE {where_clause}
             ORDER BY User, Host
-        """
-        )
+        """  # noqa: B608
+        
+        cursor.execute(query, params)
 
         accounts = cursor.fetchall()
         synced_count = 0
@@ -471,12 +471,11 @@ class AccountSyncService:
         """同步PostgreSQL账户"""
         cursor = conn.cursor()
 
-        # 获取PostgreSQL过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions("postgresql", "rolname")
+        # 获取PostgreSQL过滤规则（使用安全的参数化查询）
+        where_clause, params = database_filter_manager.get_safe_sql_filter_conditions("postgresql", "rolname")
 
         # 查询角色信息（PostgreSQL中用户和角色是同一个概念）
-        cursor.execute(
-            f"""
+        query = f"""
             SELECT
                     rolname as username,
                     rolsuper as is_superuser,
@@ -492,10 +491,11 @@ class AccountSyncService:
                     rolbypassrls as can_bypass_rls,
                     rolreplication as can_replicate
                 FROM pg_roles
-                WHERE {filter_conditions}
+                WHERE {where_clause}
                 ORDER BY rolname
-            """
-        )
+        """  # noqa: B608
+        
+        cursor.execute(query, params)
 
         accounts = cursor.fetchall()
         synced_count = 0
@@ -798,12 +798,11 @@ class AccountSyncService:
         """同步SQL Server账户"""
         cursor = conn.cursor()
 
-        # 获取SQL Server过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions("sqlserver", "name")
+        # 获取SQL Server过滤规则（使用安全的参数化查询）
+        where_clause, params = database_filter_manager.get_safe_sql_filter_conditions("sqlserver", "name")
 
         # 查询用户信息 - 只同步sa和用户创建的账户，排除内置账户
-        cursor.execute(
-            f"""
+        query = f"""
             SELECT
                 name as username,
                 type_desc as account_type,
@@ -813,11 +812,12 @@ class AccountSyncService:
                 modify_date as modified_date
             FROM sys.server_principals
             WHERE type IN ('S', 'U', 'G')
-            AND {filter_conditions}
+            AND {where_clause}
             AND (name = 'sa' OR name NOT LIKE 'NT %')
             ORDER BY name
-        """
-        )
+        """  # noqa: B608
+        
+        cursor.execute(query, params)
 
         accounts = cursor.fetchall()
         synced_count = 0
@@ -949,12 +949,11 @@ class AccountSyncService:
         print("DEBUG: 开始Oracle账户同步 - 函数被调用")
         cursor = conn.cursor()
 
-        # 获取Oracle过滤规则
-        filter_conditions = database_filter_manager.get_sql_filter_conditions("oracle", "username")
+        # 获取Oracle过滤规则（使用安全的参数化查询）
+        where_clause, params = database_filter_manager.get_safe_sql_filter_conditions("oracle", "username")
 
         # 查询用户信息
-        cursor.execute(
-            f"""
+        query = f"""
             SELECT
                 username,
                 authentication_type as account_type,
@@ -964,10 +963,11 @@ class AccountSyncService:
                 expiry_date,
                 profile
             FROM dba_users
-            WHERE {filter_conditions}
+            WHERE {where_clause}
             ORDER BY username
-        """
-        )
+        """  # noqa: B608
+        
+        cursor.execute(query, params)
 
         accounts = cursor.fetchall()
         synced_count = 0
