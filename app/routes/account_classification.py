@@ -490,7 +490,14 @@ def assign_classification() -> "Response":
         data = request.get_json()
 
         service = AccountClassificationService()
-        result = service.classify_account(data["account_id"], data["classification_id"], current_user.id)
+        result = service.classify_account(
+            data["account_id"], 
+            data["classification_id"], 
+            "manual", 
+            current_user.id, 
+            None,  # notes
+            None   # batch_id (手动分配不需要批次ID)
+        )
 
         return jsonify({"success": True, "assignment_id": result})
 

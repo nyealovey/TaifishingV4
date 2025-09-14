@@ -311,6 +311,7 @@ class AccountClassificationService:
         assignment_type: str = "manual",
         assigned_by: int = None,
         notes: str = None,
+        batch_id: str = None,
     ) -> dict[str, Any]:
         """为账户分配分类"""
         try:
@@ -334,12 +335,14 @@ class AccountClassificationService:
                     existing_assignment.assigned_by = assigned_by
                     existing_assignment.assignment_type = assignment_type
                     existing_assignment.notes = notes
+                    existing_assignment.batch_id = batch_id
                     existing_assignment.updated_at = datetime.utcnow()
                 else:
                     # 如果记录已存在且活跃，更新信息
                     existing_assignment.assigned_by = assigned_by
                     existing_assignment.assignment_type = assignment_type
                     existing_assignment.notes = notes
+                    existing_assignment.batch_id = batch_id
                     existing_assignment.updated_at = datetime.utcnow()
             else:
                 # 创建新分配
@@ -349,6 +352,7 @@ class AccountClassificationService:
                     assigned_by=assigned_by,
                     assignment_type=assignment_type,
                     notes=notes,
+                    batch_id=batch_id,
                 )
                 db.session.add(assignment)
 
@@ -430,6 +434,8 @@ class AccountClassificationService:
                                 rule.classification_id,
                                 "auto",
                                 None,  # assigned_by
+                                None,  # notes
+                                batch_id,  # batch_id
                             )
                             if result["success"]:
                                 classified_count += 1
