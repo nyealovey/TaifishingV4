@@ -683,11 +683,9 @@ def get_batch_stats(batch_id: str) -> "Response":
 def api_get_batch_matches(batch_id: str) -> "Response":
     """获取批次匹配详情"""
     try:
-        from app.models.account_classification_assignment import AccountClassificationAssignment
+        from app.models.account_classification import AccountClassificationAssignment, AccountClassification, ClassificationRule
         from app.models.account import Account
         from app.models.instance import Instance
-        from app.models.account_classification import AccountClassification
-        from app.models.classification_rule import ClassificationRule
         
         # 获取该批次的所有匹配记录
         assignments = db.session.query(

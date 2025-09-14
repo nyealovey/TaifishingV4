@@ -113,6 +113,7 @@ class AccountClassificationAssignment(db.Model):
     assignment_type = db.Column(db.String(20), nullable=False, default="auto")  # auto, manual
     confidence_score = db.Column(db.Float, nullable=True)  # 自动分配的置信度分数
     notes = db.Column(db.Text, nullable=True)  # 备注
+    batch_id = db.Column(db.String(36), nullable=True)  # 批次ID
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
