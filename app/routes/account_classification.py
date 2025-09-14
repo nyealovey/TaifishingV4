@@ -677,6 +677,56 @@ def get_batch_stats(batch_id: str) -> "Response":
         return jsonify({"success": False, "error": str(e)})
 
 
+@account_classification_bp.route("/api/batches/<batch_id>/matches")
+@login_required
+@view_required
+def api_get_batch_matches(batch_id: str) -> "Response":
+    """获取批次匹配详情"""
+    try:
+        from app.models.account_classification_assignment import AccountClassificationAssignment
+        from app.models.account import Account
+        from app.models.instance import Instance
+        from app.models.classification_rule import ClassificationRule
+        
+        # 获取该批次的所有匹配记录
+        assignments = db.session.query(
+            AccountClassificationAssignment,
+            Account,
+            Instance,
+            ClassificationRule
+        ).join(
+            Account, AccountClassificationAssignment.account_id == Account.id
+        ).join(
+            Instance, Account.instance_id == Instance.id
+        ).join(
+            ClassificationRule, AccountClassificationAssignment.rule_id == ClassificationRule.id
+        ).filter(
+            AccountClassificationAssignment.batch_id == batch_id
+        ).all()
+
+        matches = []
+        for assignment, account, instance, rule in assignments:
+            matches.append({
+                "assignment_id": assignment.id,
+                "account_id": account.id,
+                "account_name": account.username,
+                "instance_id": instance.id,
+                "instance_name": instance.name,
+                "instance_type": instance.db_type,
+                "rule_id": rule.id,
+                "rule_name": rule.name,
+                "rule_description": rule.description,
+                "matched_at": assignment.created_at.isoformat() if assignment.created_at else None,
+                "confidence": getattr(assignment, 'confidence', None)
+            })
+
+        return jsonify({"success": True, "matches": matches})
+
+    except Exception as e:
+        log_error("获取批次匹配详情失败", module="account_classification", batch_id=batch_id, error=str(e))
+        return jsonify({"success": False, "error": str(e)})
+
+
 def _get_db_permissions(db_type: str) -> dict:
     """获取数据库权限列表"""
     from app.models.permission_config import PermissionConfig
