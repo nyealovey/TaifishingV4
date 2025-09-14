@@ -31,25 +31,6 @@
         padding: 1rem;
         margin-bottom: 1.5rem;
     }
-    .statistics-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 0.5rem;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-    .stat-item {
-        text-align: center;
-    }
-    .stat-number {
-        font-size: 2rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-    }
-    .stat-label {
-        font-size: 0.9rem;
-        opacity: 0.9;
-    }
     .success-rate {
         font-weight: bold;
     }
@@ -75,45 +56,6 @@
                     <button class="btn btn-primary" onclick="refreshData()">
                         <i class="fas fa-sync"></i> 刷新
                     </button>
-                    <button class="btn btn-success" onclick="runAutoClassify()">
-                        <i class="fas fa-magic"></i> 执行自动分类
-                    </button>
-                </div>
-            </div>
-
-            <!-- 统计信息 -->
-            <div class="row" id="statistics-section">
-                <div class="col-md-3">
-                    <div class="statistics-card">
-                        <div class="stat-item">
-                            <div class="stat-number" id="total-batches">-</div>
-                            <div class="stat-label">总批次数</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="statistics-card">
-                        <div class="stat-item">
-                            <div class="stat-number" id="running-batches">-</div>
-                            <div class="stat-label">运行中</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="statistics-card">
-                        <div class="stat-item">
-                            <div class="stat-number" id="completed-batches">-</div>
-                            <div class="stat-label">已完成</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="statistics-card">
-                        <div class="stat-item">
-                            <div class="stat-number" id="failed-batches">-</div>
-                            <div class="stat-label">失败</div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -196,40 +138,6 @@
     </div>
 </div>
 
-<!-- 执行自动分类模态框 -->
-<div class="modal fade" id="runClassifyModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">执行自动分类</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="classify-form">
-                    <div class="mb-3">
-                        <label for="instance-select" class="form-label">选择实例（可选）</label>
-                        <select class="form-select" id="instance-select">
-                            <option value="">全部分类</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="batch-type-select" class="form-label">批次类型</label>
-                        <select class="form-select" id="batch-type-select" required>
-                            <option value="manual">手动</option>
-                            <option value="api">API</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" onclick="executeAutoClassify()">
-                    <i class="fas fa-magic"></i> 开始分类
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- 匹配详情模态框 -->
 <div class="modal fade" id="matchesModal" tabindex="-1">
@@ -296,9 +204,7 @@ let currentFilters = {};
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
-    loadStatistics();
     loadBatches();
-    loadInstances();
 
     // 设置自动刷新
     setInterval(function() {
@@ -306,34 +212,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 30000); // 30秒刷新一次
 });
 
-// 加载统计信息
-function loadStatistics() {
-    fetch('/account-classification/api/batches')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                updateStatistics(data.batches);
-            } else {
-                console.error('加载统计信息失败:', data.error);
-            }
-        })
-        .catch(error => {
-            console.error('加载统计信息出错:', error);
-        });
-}
-
-// 更新统计信息显示
-function updateStatistics(batches) {
-    const total = batches.length;
-    const running = batches.filter(b => b.status === 'running').length;
-    const completed = batches.filter(b => b.status === 'completed').length;
-    const failed = batches.filter(b => b.status === 'failed').length;
-
-    document.getElementById('total-batches').textContent = total;
-    document.getElementById('running-batches').textContent = running;
-    document.getElementById('completed-batches').textContent = completed;
-    document.getElementById('failed-batches').textContent = failed;
-}
 
 // 加载批次列表
 function loadBatches() {
@@ -607,67 +485,6 @@ function displayMatches(batchId, matches) {
     document.getElementById('matches-content').style.display = 'block';
 }
 
-// 加载实例列表
-function loadInstances() {
-    fetch('/instances/api/instances')
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const select = document.getElementById('instance-select');
-                select.innerHTML = '<option value="">全部分类</option>' +
-                    data.instances.map(instance =>
-                        `<option value="${instance.id}">${instance.name} (${instance.db_type})</option>`
-                    ).join('');
-            }
-        })
-        .catch(error => {
-            console.error('加载实例列表出错:', error);
-        });
-}
-
-// 执行自动分类
-function runAutoClassify() {
-    const modal = new bootstrap.Modal(document.getElementById('runClassifyModal'));
-    modal.show();
-}
-
-// 执行自动分类
-function executeAutoClassify() {
-    const instanceId = document.getElementById('instance-select').value;
-    const batchType = document.getElementById('batch-type-select').value;
-
-    const data = {
-        instance_id: instanceId ? parseInt(instanceId) : null,
-        batch_type: batchType
-    };
-
-    showAlert('正在执行自动分类，请稍候...', 'info');
-
-    fetch('/account-classification/auto-classify', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCSRFToken()
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showAlert(`自动分类完成: ${data.message}`, 'success');
-            const modal = bootstrap.Modal.getInstance(document.getElementById('runClassifyModal'));
-            modal.hide();
-            loadBatches();
-        } else {
-            showAlert(`自动分类失败: ${data.error}`, 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('执行自动分类出错:', error);
-        showAlert('执行自动分类出错', 'danger');
-    });
-}
-
 // 应用筛选
 function applyFilters() {
     currentFilters = {
@@ -679,7 +496,6 @@ function applyFilters() {
 
 // 刷新数据
 function refreshData() {
-    loadStatistics();
     loadBatches();
 }
 
