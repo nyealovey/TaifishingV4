@@ -4,6 +4,8 @@
 
 from datetime import datetime
 
+from sqlalchemy.ext.declarative import declared_attr
+
 from app import db
 
 
@@ -13,7 +15,11 @@ class BaseSyncData(db.Model):
     __abstract__ = True
 
     id = db.Column(db.Integer, primary_key=True)
-    instance_id = db.Column(db.Integer, db.ForeignKey("instances.id"), nullable=False, index=True)
+
+    @declared_attr
+    def instance_id(cls):
+        return db.Column(db.Integer, db.ForeignKey("instances.id"), nullable=False, index=True)
+
     db_type = db.Column(db.String(20), nullable=False, index=True)  # 'mysql', 'postgresql', 'sqlserver', 'oracle'
     session_id = db.Column(db.String(36), nullable=True, index=True)
     sync_time = db.Column(db.DateTime, default=datetime.utcnow, index=True)
