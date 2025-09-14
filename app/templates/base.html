@@ -203,6 +203,9 @@
                             <li><a class="dropdown-item" href="{{ url_for('sync_sessions.index') }}">
                                 <i class="fas fa-tasks me-2"></i>同步会话管理
                             </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('account_classification.batches') }}">
+                                <i class="fas fa-tags me-2"></i>自动分类记录
+                            </a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('database_types.index') }}">
                                 <i class="fas fa-database me-2"></i>数据库类型管理
@@ -308,7 +311,7 @@
     <!-- 通用工具组件 -->
     <script src="{{ url_for('static', filename='js/common/console-utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/common/alert-utils.js') }}"></script>
-    
+
     <!-- 权限查看组件 -->
     <script src="{{ url_for('static', filename='js/common/permission-viewer.js') }}"></script>
     <script src="{{ url_for('static', filename='js/common/permission-modal.js') }}"></script>

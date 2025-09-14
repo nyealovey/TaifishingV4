@@ -108,4 +108,3 @@ volumes:
 networks:
   taifish-test-network:
     driver: bridge
-

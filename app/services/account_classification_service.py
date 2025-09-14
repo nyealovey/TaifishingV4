@@ -8,12 +8,12 @@ from typing import Any
 
 from app import db
 from app.models.account import Account
-from app.models.instance import Instance
 from app.models.account_classification import (
     AccountClassification,
     AccountClassificationAssignment,
     ClassificationRule,
 )
+from app.models.instance import Instance
 from app.services.classification_batch_service import ClassificationBatchService
 from app.utils.structlog_config import log_error, log_info, log_warning
 
@@ -372,7 +372,9 @@ class AccountClassificationService:
             log_error(f"分配账户分类失败: {e}", module="account_classification")
             return {"success": False, "error": f"分配账户分类失败: {str(e)}"}
 
-    def auto_classify_accounts(self, instance_id: int = None, batch_type: str = "manual", created_by: int = None) -> dict[str, Any]:
+    def auto_classify_accounts(
+        self, instance_id: int = None, batch_type: str = "manual", created_by: int = None
+    ) -> dict[str, Any]:
         """自动分类账户"""
         batch_id = None
         try:
@@ -385,7 +387,7 @@ class AccountClassificationService:
             # 获取需要分类的账户（只包括活跃实例的账户）
             query = Account.query.join(Instance).filter(
                 Instance.is_active == True,
-                Instance.deleted_at.is_(None)  # 排除已删除的实例
+                Instance.deleted_at.is_(None),  # 排除已删除的实例
             )
             if instance_id:
                 query = query.filter_by(instance_id=instance_id)
@@ -394,10 +396,7 @@ class AccountClassificationService:
 
             # 创建批次记录
             batch_id = ClassificationBatchService.create_batch(
-                batch_type=batch_type,
-                created_by=created_by,
-                total_rules=len(rules),
-                active_rules=len(rules)
+                batch_type=batch_type, created_by=created_by, total_rules=len(rules), active_rules=len(rules)
             )
 
             classified_count = 0
@@ -441,7 +440,7 @@ class AccountClassificationService:
                                     batch_id=batch_id,
                                     account_id=account.id,
                                     rule_id=rule.id,
-                                    classification_id=rule.classification_id
+                                    classification_id=rule.classification_id,
                                 )
                             # 移除break，允许匹配多个规则
 
@@ -457,7 +456,7 @@ class AccountClassificationService:
                         module="account_classification",
                         batch_id=batch_id,
                         account_id=account.id,
-                        error=str(e)
+                        error=str(e),
                     )
 
             # 更新批次统计信息
@@ -465,20 +464,20 @@ class AccountClassificationService:
                 batch_id=batch_id,
                 total_accounts=len(accounts),
                 matched_accounts=classified_count,
-                failed_accounts=failed_count
+                failed_accounts=failed_count,
             )
 
             # 完成批次
             ClassificationBatchService.complete_batch(
                 batch_id=batch_id,
-                status='completed' if not errors else 'failed',
-                error_message='; '.join(errors) if errors else None,
+                status="completed" if not errors else "failed",
+                error_message="; ".join(errors) if errors else None,
                 batch_details={
-                    'instance_id': instance_id,
-                    'total_rules': len(rules),
-                    'active_rules': len(rules),
-                    'errors': errors
-                }
+                    "instance_id": instance_id,
+                    "total_rules": len(rules),
+                    "active_rules": len(rules),
+                    "errors": errors,
+                },
             )
 
             log_info(
@@ -504,18 +503,9 @@ class AccountClassificationService:
         except Exception as e:
             # 如果批次已创建，标记为失败
             if batch_id:
-                ClassificationBatchService.complete_batch(
-                    batch_id=batch_id,
-                    status='failed',
-                    error_message=str(e)
-                )
-            
-            log_error(
-                f"自动分类账户失败: {e}",
-                module="account_classification",
-                batch_id=batch_id,
-                error=str(e)
-            )
+                ClassificationBatchService.complete_batch(batch_id=batch_id, status="failed", error_message=str(e))
+
+            log_error(f"自动分类账户失败: {e}", module="account_classification", batch_id=batch_id, error=str(e))
             return {"success": False, "error": f"自动分类账户失败: {str(e)}", "batch_id": batch_id}
 
     def evaluate_rule(self, rule: ClassificationRule, account: Account) -> bool:
@@ -528,7 +518,7 @@ class AccountClassificationService:
             # 首先检查账户的数据库类型是否与规则的数据库类型匹配
             if account.instance.db_type != rule.db_type:
                 return False
-                
+
             rule_expression = rule.get_rule_expression()
             if not rule_expression:
                 # 处理旧格式的规则表达式（字符串格式）
@@ -903,10 +893,14 @@ class AccountClassificationService:
 
             # 重新运行规则评估，统计真正匹配该规则的账户数量（只包括活跃实例的账户）
             matched_count = 0
-            accounts = Account.query.join(Instance).filter(
-                Instance.is_active == True,
-                Instance.deleted_at.is_(None)  # 排除已删除的实例
-            ).all()
+            accounts = (
+                Account.query.join(Instance)
+                .filter(
+                    Instance.is_active == True,
+                    Instance.deleted_at.is_(None),  # 排除已删除的实例
+                )
+                .all()
+            )
 
             for account in accounts:
                 if self._evaluate_rule(account, rule):

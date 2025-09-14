@@ -1,11 +1,11 @@
-错误: warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:247: B608
-warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:413: B608
-warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:589: B608
-warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:737: B608
-warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:319: B608
-warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:517: B608
-warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:839: B608
-warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:989: B608
+错误: warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:336: B608
+warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:534: B608
+warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:856: B608
+warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:1006: B608
+warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:249: B608
+warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:415: B608
+warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:591: B608
+warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:739: B608
 
 
 标准输出:
@@ -307,6 +307,107 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "message": "`datetime.datetime.utcnow()` used",
     "noqa_row": 317,
     "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
+  },
+  {
+    "cell": null,
+    "code": "ANN204",
+    "end_location": {
+      "column": 17,
+      "row": 66
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/models/classification_batch.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": " -> str",
+          "end_location": {
+            "column": 23,
+            "row": 66
+          },
+          "location": {
+            "column": 23,
+            "row": 66
+          }
+        }
+      ],
+      "message": "Add return type annotation: `str`"
+    },
+    "location": {
+      "column": 9,
+      "row": 66
+    },
+    "message": "Missing return type annotation for special method `__repr__`",
+    "noqa_row": 66,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-special-method"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 16,
+      "row": 69
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/models/classification_batch.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 69
+    },
+    "message": "Missing return type annotation for public function `to_dict`",
+    "noqa_row": 69,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 17,
+      "row": 91
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/models/classification_batch.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 91
+    },
+    "message": "Missing return type annotation for public function `duration`",
+    "noqa_row": 91,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
+  },
+  {
+    "cell": null,
+    "code": "DTZ003",
+    "end_location": {
+      "column": 38,
+      "row": 96
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/models/classification_batch.py",
+    "fix": null,
+    "location": {
+      "column": 21,
+      "row": 96
+    },
+    "message": "`datetime.datetime.utcnow()` used",
+    "noqa_row": 96,
+    "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
+  },
+  {
+    "cell": null,
+    "code": "ANN201",
+    "end_location": {
+      "column": 21,
+      "row": 100
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/models/classification_batch.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 100
+    },
+    "message": "Missing return type annotation for public function `success_rate`",
+    "noqa_row": 100,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
   },
   {
     "cell": null,
@@ -1138,16 +1239,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 39,
-      "row": 42
+      "row": 43
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 31,
-      "row": 42
+      "row": 43
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 42,
+    "noqa_row": 43,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1155,16 +1256,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 41,
-      "row": 86
+      "row": 87
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 33,
-      "row": 86
+      "row": 87
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 86,
+    "noqa_row": 87,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1172,16 +1273,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 60,
-      "row": 127
+      "row": 128
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 52,
-      "row": 127
+      "row": 128
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 127,
+    "noqa_row": 128,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1189,16 +1290,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 63,
-      "row": 157
+      "row": 158
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 55,
-      "row": 157
+      "row": 158
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 157,
+    "noqa_row": 158,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1206,16 +1307,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 63,
-      "row": 182
+      "row": 183
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 55,
-      "row": 182
+      "row": 183
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 182,
+    "noqa_row": 183,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1223,16 +1324,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 29,
-      "row": 205
+      "row": 206
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 205
+      "row": 206
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 205,
+    "noqa_row": 206,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1240,16 +1341,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 30,
-      "row": 247
+      "row": 248
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 247
+      "row": 248
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 247,
+    "noqa_row": 248,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1257,16 +1358,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 31,
-      "row": 291
+      "row": 292
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 23,
-      "row": 291
+      "row": 292
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 291,
+    "noqa_row": 292,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1274,16 +1375,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 40,
-      "row": 321
+      "row": 322
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 32,
-      "row": 321
+      "row": 322
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 321,
+    "noqa_row": 322,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1291,16 +1392,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 43,
-      "row": 354
+      "row": 355
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 35,
-      "row": 354
+      "row": 355
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 354,
+    "noqa_row": 355,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1308,33 +1409,66 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 52,
-      "row": 381
+      "row": 382
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 44,
-      "row": 381
+      "row": 382
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 381,
+    "noqa_row": 382,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
+  },
+  {
+    "cell": null,
+    "code": "E712",
+    "end_location": {
+      "column": 43,
+      "row": 402
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "Instance.is_active",
+          "end_location": {
+            "column": 43,
+            "row": 402
+          },
+          "location": {
+            "column": 17,
+            "row": 402
+          }
+        }
+      ],
+      "message": "Replace with `Instance.is_active`"
+    },
+    "location": {
+      "column": 17,
+      "row": 402
+    },
+    "message": "Avoid equality comparisons to `True`; use `Instance.is_active:` for truth checks",
+    "noqa_row": 402,
+    "url": "https://docs.astral.sh/ruff/rules/true-false-comparison"
   },
   {
     "cell": null,
     "code": "F821",
     "end_location": {
       "column": 43,
-      "row": 455
+      "row": 460
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 35,
-      "row": 455
+      "row": 460
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 455,
+    "noqa_row": 460,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1342,16 +1476,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 41,
-      "row": 474
+      "row": 479
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 33,
-      "row": 474
+      "row": 479
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 474,
+    "noqa_row": 479,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1359,16 +1493,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 33,
-      "row": 492
+      "row": 497
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 25,
-      "row": 492
+      "row": 497
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 492,
+    "noqa_row": 497,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1376,16 +1510,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 35,
-      "row": 530
+      "row": 542
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 27,
-      "row": 530
+      "row": 542
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 530,
+    "noqa_row": 542,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1393,16 +1527,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 55,
-      "row": 565
+      "row": 577
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 47,
-      "row": 565
+      "row": 577
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 565,
+    "noqa_row": 577,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1410,16 +1544,67 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "F821",
     "end_location": {
       "column": 47,
-      "row": 583
+      "row": 595
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 39,
-      "row": 583
+      "row": 595
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 583,
+    "noqa_row": 595,
+    "url": "https://docs.astral.sh/ruff/rules/undefined-name"
+  },
+  {
+    "cell": null,
+    "code": "F821",
+    "end_location": {
+      "column": 31,
+      "row": 609
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
+    "fix": null,
+    "location": {
+      "column": 23,
+      "row": 609
+    },
+    "message": "Undefined name `Response`",
+    "noqa_row": 609,
+    "url": "https://docs.astral.sh/ruff/rules/undefined-name"
+  },
+  {
+    "cell": null,
+    "code": "F821",
+    "end_location": {
+      "column": 42,
+      "row": 633
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 633
+    },
+    "message": "Undefined name `Response`",
+    "noqa_row": 633,
+    "url": "https://docs.astral.sh/ruff/rules/undefined-name"
+  },
+  {
+    "cell": null,
+    "code": "F821",
+    "end_location": {
+      "column": 48,
+      "row": 650
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
+    "fix": null,
+    "location": {
+      "column": 40,
+      "row": 650
+    },
+    "message": "Undefined name `Response`",
+    "noqa_row": 650,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1427,7 +1612,7 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "RET504",
     "end_location": {
       "column": 23,
-      "row": 601
+      "row": 671
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": {
@@ -1437,22 +1622,22 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
           "content": "return",
           "end_location": {
             "column": 18,
-            "row": 599
+            "row": 669
           },
           "location": {
             "column": 5,
-            "row": 599
+            "row": 669
           }
         },
         {
           "content": "",
           "end_location": {
             "column": 1,
-            "row": 602
+            "row": 672
           },
           "location": {
             "column": 1,
-            "row": 601
+            "row": 671
           }
         }
       ],
@@ -1460,10 +1645,10 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     },
     "location": {
       "column": 12,
-      "row": 601
+      "row": 671
     },
     "message": "Unnecessary assignment to `permissions` before `return` statement",
-    "noqa_row": 601,
+    "noqa_row": 671,
     "url": "https://docs.astral.sh/ruff/rules/unnecessary-assign"
   },
   {
@@ -2757,16 +2942,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "C901",
     "end_location": {
       "column": 33,
-      "row": 1194
+      "row": 1198
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/instances.py",
     "fix": null,
     "location": {
       "column": 5,
-      "row": 1194
+      "row": 1198
     },
     "message": "`api_test_instance_connection` is too complex (11 > 10)",
-    "noqa_row": 1194,
+    "noqa_row": 1198,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
   },
   {
@@ -4751,16 +4936,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN003",
     "end_location": {
       "column": 69,
-      "row": 71
+      "row": 73
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": null,
     "location": {
       "column": 61,
-      "row": 71
+      "row": 73
     },
     "message": "Missing type annotation for `**kwargs`",
-    "noqa_row": 71,
+    "noqa_row": 73,
     "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
   },
   {
@@ -4768,16 +4953,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "DTZ003",
     "end_location": {
       "column": 58,
-      "row": 83
+      "row": 85
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": null,
     "location": {
       "column": 41,
-      "row": 83
+      "row": 85
     },
     "message": "`datetime.datetime.utcnow()` used",
-    "noqa_row": 83,
+    "noqa_row": 85,
     "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
   },
   {
@@ -4785,16 +4970,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN003",
     "end_location": {
       "column": 49,
-      "row": 199
+      "row": 201
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": null,
     "location": {
       "column": 41,
-      "row": 199
+      "row": 201
     },
     "message": "Missing type annotation for `**kwargs`",
-    "noqa_row": 199,
+    "noqa_row": 201,
     "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
   },
   {
@@ -4802,16 +4987,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "DTZ003",
     "end_location": {
       "column": 48,
-      "row": 214
+      "row": 216
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": null,
     "location": {
       "column": 31,
-      "row": 214
+      "row": 216
     },
     "message": "`datetime.datetime.utcnow()` used",
-    "noqa_row": 214,
+    "noqa_row": 216,
     "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
   },
   {
@@ -4819,16 +5004,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "FBT001",
     "end_location": {
       "column": 51,
-      "row": 252
+      "row": 254
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": null,
     "location": {
       "column": 35,
-      "row": 252
+      "row": 254
     },
     "message": "Boolean-typed positional argument in function definition",
-    "noqa_row": 252,
+    "noqa_row": 254,
     "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
   },
   {
@@ -4836,16 +5021,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "FBT002",
     "end_location": {
       "column": 51,
-      "row": 252
+      "row": 254
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": null,
     "location": {
       "column": 35,
-      "row": 252
+      "row": 254
     },
     "message": "Boolean default positional argument in function definition",
-    "noqa_row": 252,
+    "noqa_row": 254,
     "url": "https://docs.astral.sh/ruff/rules/boolean-default-value-positional-argument"
   },
   {
@@ -4853,16 +5038,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "DTZ003",
     "end_location": {
       "column": 71,
-      "row": 335
+      "row": 337
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": null,
     "location": {
       "column": 54,
-      "row": 335
+      "row": 337
     },
     "message": "`datetime.datetime.utcnow()` used",
-    "noqa_row": 335,
+    "noqa_row": 337,
     "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
   },
   {
@@ -4870,16 +5055,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "DTZ003",
     "end_location": {
       "column": 71,
-      "row": 341
+      "row": 343
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": null,
     "location": {
       "column": 54,
-      "row": 341
+      "row": 343
     },
     "message": "`datetime.datetime.utcnow()` used",
-    "noqa_row": 341,
+    "noqa_row": 343,
     "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
   },
   {
@@ -4887,33 +5072,99 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "C901",
     "end_location": {
       "column": 31,
-      "row": 373
+      "row": 375
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 373
+      "row": 375
     },
     "message": "`auto_classify_accounts` is too complex (11 > 10)",
-    "noqa_row": 373,
+    "noqa_row": 375,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
+  },
+  {
+    "cell": null,
+    "code": "E712",
+    "end_location": {
+      "column": 43,
+      "row": 389
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "Instance.is_active",
+          "end_location": {
+            "column": 43,
+            "row": 389
+          },
+          "location": {
+            "column": 17,
+            "row": 389
+          }
+        }
+      ],
+      "message": "Replace with `Instance.is_active`"
+    },
+    "location": {
+      "column": 17,
+      "row": 389
+    },
+    "message": "Avoid equality comparisons to `True`; use `Instance.is_active:` for truth checks",
+    "noqa_row": 389,
+    "url": "https://docs.astral.sh/ruff/rules/true-false-comparison"
+  },
+  {
+    "cell": null,
+    "code": "F841",
+    "end_location": {
+      "column": 43,
+      "row": 436
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 437
+          },
+          "location": {
+            "column": 1,
+            "row": 436
+          }
+        }
+      ],
+      "message": "Remove assignment to unused variable `classified`"
+    },
+    "location": {
+      "column": 33,
+      "row": 436
+    },
+    "message": "Local variable `classified` is assigned to but never used",
+    "noqa_row": 436,
+    "url": "https://docs.astral.sh/ruff/rules/unused-variable"
   },
   {
     "cell": null,
     "code": "C901",
     "end_location": {
       "column": 30,
-      "row": 486
+      "row": 543
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 486
+      "row": 543
     },
     "message": "`_evaluate_legacy_rule` is too complex (23 > 10)",
-    "noqa_row": 486,
+    "noqa_row": 543,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
   },
   {
@@ -4921,7 +5172,7 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "B007",
     "end_location": {
       "column": 36,
-      "row": 514
+      "row": 571
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": {
@@ -4931,11 +5182,11 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
           "content": "_db_name",
           "end_location": {
             "column": 36,
-            "row": 514
+            "row": 571
           },
           "location": {
             "column": 29,
-            "row": 514
+            "row": 571
           }
         }
       ],
@@ -4943,10 +5194,10 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     },
     "location": {
       "column": 29,
-      "row": 514
+      "row": 571
     },
     "message": "Loop control variable `db_name` not used within loop body",
-    "noqa_row": 514,
+    "noqa_row": 571,
     "url": "https://docs.astral.sh/ruff/rules/unused-loop-control-variable"
   },
   {
@@ -4954,7 +5205,7 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "SIM102",
     "end_location": {
       "column": 79,
-      "row": 561
+      "row": 618
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": {
@@ -4964,11 +5215,11 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
           "content": "            elif rule.db_type == \"oracle\" and rule_expression == \"system_privileges.GRANT ANY PRIVILEGE\":\n                # 检查是否有GRANT ANY PRIVILEGE权限\n                system_privileges = permissions.get(\"system_privileges\", [])\n                if isinstance(system_privileges, list) and \"GRANT ANY PRIVILEGE\" in system_privileges:\n                    log_info(\n                        f\"账户 {account.username} 匹配Oracle规则: {rule_expression}\",\n                        module=\"account_classification\",\n                    )\n                    return True",
           "end_location": {
             "column": 36,
-            "row": 569
+            "row": 626
           },
           "location": {
             "column": 1,
-            "row": 560
+            "row": 617
           }
         }
       ],
@@ -4976,61 +5227,27 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     },
     "location": {
       "column": 13,
-      "row": 560
+      "row": 617
     },
     "message": "Use a single `if` statement instead of nested `if` statements",
-    "noqa_row": 560,
+    "noqa_row": 617,
     "url": "https://docs.astral.sh/ruff/rules/collapsible-if"
-  },
-  {
-    "cell": null,
-    "code": "G004",
-    "end_location": {
-      "column": 101,
-      "row": 598
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
-    "fix": null,
-    "location": {
-      "column": 25,
-      "row": 598
-    },
-    "message": "Logging statement uses f-string",
-    "noqa_row": 598,
-    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "G004",
-    "end_location": {
-      "column": 109,
-      "row": 612
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
-    "fix": null,
-    "location": {
-      "column": 25,
-      "row": 612
-    },
-    "message": "Logging statement uses f-string",
-    "noqa_row": 612,
-    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
     "cell": null,
     "code": "C901",
     "end_location": {
       "column": 33,
-      "row": 623
+      "row": 674
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 623
+      "row": 674
     },
     "message": "`_evaluate_sqlserver_rule` is too complex (28 > 10)",
-    "noqa_row": 623,
+    "noqa_row": 674,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
   },
   {
@@ -5038,7 +5255,7 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "B007",
     "end_location": {
       "column": 32,
-      "row": 704
+      "row": 744
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": {
@@ -5048,11 +5265,11 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
           "content": "_db_name",
           "end_location": {
             "column": 32,
-            "row": 704
+            "row": 744
           },
           "location": {
             "column": 25,
-            "row": 704
+            "row": 744
           }
         }
       ],
@@ -5060,10 +5277,10 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     },
     "location": {
       "column": 25,
-      "row": 704
+      "row": 744
     },
     "message": "Loop control variable `db_name` not used within loop body",
-    "noqa_row": 704,
+    "noqa_row": 744,
     "url": "https://docs.astral.sh/ruff/rules/unused-loop-control-variable"
   },
   {
@@ -5071,7 +5288,7 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "B007",
     "end_location": {
       "column": 32,
-      "row": 736
+      "row": 771
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": {
@@ -5081,11 +5298,11 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
           "content": "_db_name",
           "end_location": {
             "column": 32,
-            "row": 736
+            "row": 771
           },
           "location": {
             "column": 25,
-            "row": 736
+            "row": 771
           }
         }
       ],
@@ -5093,27 +5310,44 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     },
     "location": {
       "column": 25,
-      "row": 736
+      "row": 771
     },
     "message": "Loop control variable `db_name` not used within loop body",
-    "noqa_row": 736,
+    "noqa_row": 771,
     "url": "https://docs.astral.sh/ruff/rules/unused-loop-control-variable"
+  },
+  {
+    "cell": null,
+    "code": "SIM108",
+    "end_location": {
+      "column": 44,
+      "row": 800
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
+    "fix": null,
+    "location": {
+      "column": 13,
+      "row": 795
+    },
+    "message": "Use ternary operator `result = all(match_results) if operator.upper() == \"AND\" else any(match_results)` instead of `if`-`else`-block",
+    "noqa_row": 795,
+    "url": "https://docs.astral.sh/ruff/rules/if-else-block-instead-of-if-exp"
   },
   {
     "cell": null,
     "code": "DTZ003",
     "end_location": {
       "column": 58,
-      "row": 799
+      "row": 824
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": null,
     "location": {
       "column": 41,
-      "row": 799
+      "row": 824
     },
     "message": "`datetime.datetime.utcnow()` used",
-    "noqa_row": 799,
+    "noqa_row": 824,
     "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
   },
   {
@@ -5121,118 +5355,83 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "DTZ003",
     "end_location": {
       "column": 54,
-      "row": 833
+      "row": 858
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": null,
     "location": {
       "column": 37,
-      "row": 833
+      "row": 858
     },
     "message": "`datetime.datetime.utcnow()` used",
-    "noqa_row": 833,
+    "noqa_row": 858,
     "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
+  },
+  {
+    "cell": null,
+    "code": "E712",
+    "end_location": {
+      "column": 47,
+      "row": 899
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "Instance.is_active",
+          "end_location": {
+            "column": 47,
+            "row": 899
+          },
+          "location": {
+            "column": 21,
+            "row": 899
+          }
+        }
+      ],
+      "message": "Replace with `Instance.is_active`"
+    },
+    "location": {
+      "column": 21,
+      "row": 899
+    },
+    "message": "Avoid equality comparisons to `True`; use `Instance.is_active:` for truth checks",
+    "noqa_row": 899,
+    "url": "https://docs.astral.sh/ruff/rules/true-false-comparison"
   },
   {
     "cell": null,
     "code": "C901",
     "end_location": {
       "column": 30,
-      "row": 927
+      "row": 952
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 927
+      "row": 952
     },
     "message": "`_evaluate_oracle_rule` is too complex (16 > 10)",
-    "noqa_row": 927,
+    "noqa_row": 952,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
-  },
-  {
-    "cell": null,
-    "code": "G004",
-    "end_location": {
-      "column": 93,
-      "row": 976
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
-    "fix": null,
-    "location": {
-      "column": 43,
-      "row": 976
-    },
-    "message": "Logging statement uses f-string",
-    "noqa_row": 976,
-    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "G004",
-    "end_location": {
-      "column": 77,
-      "row": 988
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
-    "fix": null,
-    "location": {
-      "column": 35,
-      "row": 988
-    },
-    "message": "Logging statement uses f-string",
-    "noqa_row": 988,
-    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "G004",
-    "end_location": {
-      "column": 66,
-      "row": 991
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
-    "fix": null,
-    "location": {
-      "column": 31,
-      "row": 991
-    },
-    "message": "Logging statement uses f-string",
-    "noqa_row": 991,
-    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
-  },
-  {
-    "cell": null,
-    "code": "G004",
-    "end_location": {
-      "column": 51,
-      "row": 995
-    },
-    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_classification_service.py",
-    "fix": null,
-    "location": {
-      "column": 31,
-      "row": 995
-    },
-    "message": "Logging statement uses f-string",
-    "noqa_row": 995,
-    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
     "cell": null,
     "code": "ANN401",
     "end_location": {
       "column": 66,
-      "row": 201
+      "row": 218
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 54,
-      "row": 201
+      "row": 218
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `_get_connection`",
-    "noqa_row": 201,
+    "noqa_row": 218,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -5240,16 +5439,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 72,
-      "row": 210
+      "row": 227
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 40,
-      "row": 210
+      "row": 227
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 210,
+    "noqa_row": 227,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5257,16 +5456,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 63,
-      "row": 216
+      "row": 233
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 36,
-      "row": 216
+      "row": 233
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 216,
+    "noqa_row": 233,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5274,16 +5473,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 56,
-      "row": 220
+      "row": 237
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 36,
-      "row": 220
+      "row": 237
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 220,
+    "noqa_row": 237,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5291,16 +5490,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "S112",
     "end_location": {
       "column": 25,
-      "row": 248
+      "row": 265
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 13,
-      "row": 247
+      "row": 264
     },
     "message": "`try`-`except`-`continue` detected, consider logging the exception",
-    "noqa_row": 247,
+    "noqa_row": 264,
     "url": "https://docs.astral.sh/ruff/rules/try-except-continue"
   },
   {
@@ -5308,16 +5507,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "C901",
     "end_location": {
       "column": 29,
-      "row": 290
+      "row": 307
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 290
+      "row": 307
     },
     "message": "`_sync_mysql_accounts` is too complex (19 > 10)",
-    "noqa_row": 290,
+    "noqa_row": 307,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
   },
   {
@@ -5325,16 +5524,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 67,
-      "row": 290
+      "row": 307
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 62,
-      "row": 290
+      "row": 307
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 290,
+    "noqa_row": 307,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -5342,16 +5541,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "S608",
     "end_location": {
       "column": 12,
-      "row": 319
+      "row": 336
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 17,
-      "row": 298
+      "row": 315
     },
     "message": "Possible SQL injection vector through string-based query construction",
-    "noqa_row": 319,
+    "noqa_row": 336,
     "url": "https://docs.astral.sh/ruff/rules/hardcoded-sql-expression"
   },
   {
@@ -5359,16 +5558,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "C901",
     "end_location": {
       "column": 34,
-      "row": 491
+      "row": 508
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 491
+      "row": 508
     },
     "message": "`_sync_postgresql_accounts` is too complex (16 > 10)",
-    "noqa_row": 491,
+    "noqa_row": 508,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
   },
   {
@@ -5376,16 +5575,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 72,
-      "row": 491
+      "row": 508
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 67,
-      "row": 491
+      "row": 508
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 491,
+    "noqa_row": 508,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -5393,16 +5592,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "S608",
     "end_location": {
       "column": 12,
-      "row": 517
+      "row": 534
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 17,
-      "row": 499
+      "row": 516
     },
     "message": "Possible SQL injection vector through string-based query construction",
-    "noqa_row": 517,
+    "noqa_row": 534,
     "url": "https://docs.astral.sh/ruff/rules/hardcoded-sql-expression"
   },
   {
@@ -5410,7 +5609,7 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "SIM108",
     "end_location": {
       "column": 63,
-      "row": 559
+      "row": 576
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": {
@@ -5420,11 +5619,11 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
           "content": "password_expired = False if str(valid_until).lower() == \"infinity\" else valid_until < now()",
           "end_location": {
             "column": 63,
-            "row": 559
+            "row": 576
           },
           "location": {
             "column": 21,
-            "row": 556
+            "row": 573
           }
         }
       ],
@@ -5432,10 +5631,10 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     },
     "location": {
       "column": 21,
-      "row": 556
+      "row": 573
     },
     "message": "Use ternary operator `password_expired = False if str(valid_until).lower() == \"infinity\" else valid_until < now()` instead of `if`-`else`-block",
-    "noqa_row": 556,
+    "noqa_row": 573,
     "url": "https://docs.astral.sh/ruff/rules/if-else-block-instead-of-if-exp"
   },
   {
@@ -5443,16 +5642,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 90,
-      "row": 630
+      "row": 647
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 43,
-      "row": 630
+      "row": 647
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 630,
+    "noqa_row": 647,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5460,16 +5659,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 80,
-      "row": 632
+      "row": 649
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 42,
-      "row": 632
+      "row": 649
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 632,
+    "noqa_row": 649,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5477,16 +5676,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "C901",
     "end_location": {
       "column": 44,
-      "row": 651
+      "row": 668
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 651
+      "row": 668
     },
     "message": "`_get_postgresql_account_permissions` is too complex (27 > 10)",
-    "noqa_row": 651,
+    "noqa_row": 668,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
   },
   {
@@ -5494,16 +5693,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ARG002",
     "end_location": {
       "column": 59,
-      "row": 651
+      "row": 668
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 51,
-      "row": 651
+      "row": 668
     },
     "message": "Unused method argument: `instance`",
-    "noqa_row": 651,
+    "noqa_row": 668,
     "url": "https://docs.astral.sh/ruff/rules/unused-method-argument"
   },
   {
@@ -5511,16 +5710,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 82,
-      "row": 651
+      "row": 668
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 77,
-      "row": 651
+      "row": 668
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 651,
+    "noqa_row": 668,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -5528,16 +5727,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 71,
-      "row": 663
+      "row": 680
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 35,
-      "row": 663
+      "row": 680
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 663,
+    "noqa_row": 680,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5545,16 +5744,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 72,
-      "row": 668
+      "row": 685
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 42,
-      "row": 668
+      "row": 685
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 668,
+    "noqa_row": 685,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5562,16 +5761,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 71,
-      "row": 671
+      "row": 688
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 35,
-      "row": 671
+      "row": 688
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 671,
+    "noqa_row": 688,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5579,16 +5778,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 83,
-      "row": 694
+      "row": 711
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 42,
-      "row": 694
+      "row": 711
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 694,
+    "noqa_row": 711,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5596,16 +5795,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 82,
-      "row": 736
+      "row": 753
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 42,
-      "row": 736
+      "row": 753
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 736,
+    "noqa_row": 753,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5613,16 +5812,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 87,
-      "row": 744
+      "row": 761
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 39,
-      "row": 744
+      "row": 761
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 744,
+    "noqa_row": 761,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5630,16 +5829,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 84,
-      "row": 775
+      "row": 792
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 48,
-      "row": 775
+      "row": 792
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 775,
+    "noqa_row": 792,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5647,16 +5846,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 83,
-      "row": 779
+      "row": 796
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 42,
-      "row": 779
+      "row": 796
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 779,
+    "noqa_row": 796,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5664,16 +5863,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 83,
-      "row": 797
+      "row": 814
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 42,
-      "row": 797
+      "row": 814
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 797,
+    "noqa_row": 814,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5681,16 +5880,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 83,
-      "row": 806
+      "row": 823
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 35,
-      "row": 806
+      "row": 823
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 806,
+    "noqa_row": 823,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5698,16 +5897,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 74,
-      "row": 809
+      "row": 826
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 36,
-      "row": 809
+      "row": 826
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 809,
+    "noqa_row": 826,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5715,16 +5914,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "C901",
     "end_location": {
       "column": 33,
-      "row": 818
+      "row": 835
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 818
+      "row": 835
     },
     "message": "`_sync_sqlserver_accounts` is too complex (15 > 10)",
-    "noqa_row": 818,
+    "noqa_row": 835,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
   },
   {
@@ -5732,16 +5931,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 71,
-      "row": 818
+      "row": 835
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 66,
-      "row": 818
+      "row": 835
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 818,
+    "noqa_row": 835,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -5749,16 +5948,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "S608",
     "end_location": {
       "column": 12,
-      "row": 839
+      "row": 856
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 17,
-      "row": 826
+      "row": 843
     },
     "message": "Possible SQL injection vector through string-based query construction",
-    "noqa_row": 839,
+    "noqa_row": 856,
     "url": "https://docs.astral.sh/ruff/rules/hardcoded-sql-expression"
   },
   {
@@ -5766,16 +5965,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "C901",
     "end_location": {
       "column": 30,
-      "row": 968
+      "row": 985
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 968
+      "row": 985
     },
     "message": "`_sync_oracle_accounts` is too complex (12 > 10)",
-    "noqa_row": 968,
+    "noqa_row": 985,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
   },
   {
@@ -5783,16 +5982,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 68,
-      "row": 968
+      "row": 985
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 63,
-      "row": 968
+      "row": 985
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 968,
+    "noqa_row": 985,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -5800,16 +5999,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "S608",
     "end_location": {
       "column": 12,
-      "row": 989
+      "row": 1006
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 17,
-      "row": 977
+      "row": 994
     },
     "message": "Possible SQL injection vector through string-based query construction",
-    "noqa_row": 989,
+    "noqa_row": 1006,
     "url": "https://docs.astral.sh/ruff/rules/hardcoded-sql-expression"
   },
   {
@@ -5817,16 +6016,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 72,
-      "row": 1074
+      "row": 1091
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 31,
-      "row": 1074
+      "row": 1091
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1074,
+    "noqa_row": 1091,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5834,16 +6033,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 76,
-      "row": 1075
+      "row": 1092
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 31,
-      "row": 1075
+      "row": 1092
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1075,
+    "noqa_row": 1092,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5851,41 +6050,126 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 85,
-      "row": 1080
+      "row": 1097
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 39,
-      "row": 1080
+      "row": 1097
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1080,
+    "noqa_row": 1097,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
+  },
+  {
+    "cell": null,
+    "code": "C901",
+    "end_location": {
+      "column": 39,
+      "row": 1129
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 1129
+    },
+    "message": "`_get_mysql_account_permissions` is too complex (11 > 10)",
+    "noqa_row": 1129,
+    "url": "https://docs.astral.sh/ruff/rules/complex-structure"
   },
   {
     "cell": null,
     "code": "ANN401",
     "end_location": {
       "column": 57,
-      "row": 1112
+      "row": 1129
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 52,
-      "row": 1112
+      "row": 1129
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 1112,
+    "noqa_row": 1129,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
+  },
+  {
+    "cell": null,
+    "code": "G004",
+    "end_location": {
+      "column": 73,
+      "row": 1136
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
+    "fix": null,
+    "location": {
+      "column": 35,
+      "row": 1136
+    },
+    "message": "Logging statement uses f-string",
+    "noqa_row": 1136,
+    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
+  },
+  {
+    "cell": null,
+    "code": "G004",
+    "end_location": {
+      "column": 74,
+      "row": 1141
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
+    "fix": null,
+    "location": {
+      "column": 42,
+      "row": 1141
+    },
+    "message": "Logging statement uses f-string",
+    "noqa_row": 1141,
+    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
+  },
+  {
+    "cell": null,
+    "code": "G004",
+    "end_location": {
+      "column": 73,
+      "row": 1148
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
+    "fix": null,
+    "location": {
+      "column": 35,
+      "row": 1148
+    },
+    "message": "Logging statement uses f-string",
+    "noqa_row": 1148,
+    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
+  },
+  {
+    "cell": null,
+    "code": "G004",
+    "end_location": {
+      "column": 65,
+      "row": 1174
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
+    "fix": null,
+    "location": {
+      "column": 21,
+      "row": 1174
+    },
+    "message": "Logging statement uses f-string",
+    "noqa_row": 1174,
+    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
     "cell": null,
     "code": "B007",
     "end_location": {
       "column": 35,
-      "row": 1176
+      "row": 1211
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": {
@@ -5895,11 +6179,11 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
           "content": "_field_name",
           "end_location": {
             "column": 35,
-            "row": 1176
+            "row": 1211
           },
           "location": {
             "column": 25,
-            "row": 1176
+            "row": 1211
           }
         }
       ],
@@ -5907,27 +6191,146 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     },
     "location": {
       "column": 25,
-      "row": 1176
+      "row": 1211
     },
     "message": "Loop control variable `field_name` not used within loop body",
-    "noqa_row": 1176,
+    "noqa_row": 1211,
     "url": "https://docs.astral.sh/ruff/rules/unused-loop-control-variable"
   },
   {
     "cell": null,
     "code": "G004",
     "end_location": {
-      "column": 55,
-      "row": 1220
+      "column": 90,
+      "row": 1221
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
+    "fix": null,
+    "location": {
+      "column": 21,
+      "row": 1221
+    },
+    "message": "Logging statement uses f-string",
+    "noqa_row": 1221,
+    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
+  },
+  {
+    "cell": null,
+    "code": "G004",
+    "end_location": {
+      "column": 77,
+      "row": 1225
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
+    "fix": null,
+    "location": {
+      "column": 42,
+      "row": 1225
+    },
+    "message": "Logging statement uses f-string",
+    "noqa_row": 1225,
+    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
+  },
+  {
+    "cell": null,
+    "code": "G004",
+    "end_location": {
+      "column": 74,
+      "row": 1228
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
+    "fix": null,
+    "location": {
+      "column": 35,
+      "row": 1228
+    },
+    "message": "Logging statement uses f-string",
+    "noqa_row": 1228,
+    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
+  },
+  {
+    "cell": null,
+    "code": "G004",
+    "end_location": {
+      "column": 83,
+      "row": 1249
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
+    "fix": null,
+    "location": {
+      "column": 17,
+      "row": 1249
+    },
+    "message": "Logging statement uses f-string",
+    "noqa_row": 1249,
+    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
+  },
+  {
+    "cell": null,
+    "code": "G004",
+    "end_location": {
+      "column": 92,
+      "row": 1259
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
+    "fix": null,
+    "location": {
+      "column": 17,
+      "row": 1259
+    },
+    "message": "Logging statement uses f-string",
+    "noqa_row": 1259,
+    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
+  },
+  {
+    "cell": null,
+    "code": "G004",
+    "end_location": {
+      "column": 72,
+      "row": 1270
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
+    "fix": null,
+    "location": {
+      "column": 17,
+      "row": 1270
+    },
+    "message": "Logging statement uses f-string",
+    "noqa_row": 1270,
+    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
+  },
+  {
+    "cell": null,
+    "code": "G004",
+    "end_location": {
+      "column": 89,
+      "row": 1274
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
+    "fix": null,
+    "location": {
+      "column": 35,
+      "row": 1274
+    },
+    "message": "Logging statement uses f-string",
+    "noqa_row": 1274,
+    "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
+  },
+  {
+    "cell": null,
+    "code": "G004",
+    "end_location": {
+      "column": 76,
+      "row": 1283
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 36,
-      "row": 1220
+      "row": 1283
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1220,
+    "noqa_row": 1283,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5935,16 +6338,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "C901",
     "end_location": {
       "column": 43,
-      "row": 1229
+      "row": 1292
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 1229
+      "row": 1292
     },
     "message": "`_get_sqlserver_account_permissions` is too complex (18 > 10)",
-    "noqa_row": 1229,
+    "noqa_row": 1292,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
   },
   {
@@ -5952,16 +6355,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 61,
-      "row": 1229
+      "row": 1292
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 56,
-      "row": 1229
+      "row": 1292
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 1229,
+    "noqa_row": 1292,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -5969,16 +6372,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 84,
-      "row": 1308
+      "row": 1371
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 48,
-      "row": 1308
+      "row": 1371
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1308,
+    "noqa_row": 1371,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -5986,16 +6389,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 57,
-      "row": 1316
+      "row": 1379
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 40,
-      "row": 1316
+      "row": 1379
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1316,
+    "noqa_row": 1379,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -6003,16 +6406,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 84,
-      "row": 1350
+      "row": 1413
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 48,
-      "row": 1350
+      "row": 1413
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1350,
+    "noqa_row": 1413,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -6020,16 +6423,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 57,
-      "row": 1358
+      "row": 1421
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 40,
-      "row": 1358
+      "row": 1421
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1358,
+    "noqa_row": 1421,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -6037,16 +6440,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 60,
-      "row": 1392
+      "row": 1455
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 36,
-      "row": 1392
+      "row": 1455
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1392,
+    "noqa_row": 1455,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
   },
   {
@@ -6054,16 +6457,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 58,
-      "row": 1408
+      "row": 1471
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 53,
-      "row": 1408
+      "row": 1471
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 1408,
+    "noqa_row": 1471,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -6071,17 +6474,34 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "G004",
     "end_location": {
       "column": 56,
-      "row": 1501
+      "row": 1564
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/account_sync_service.py",
     "fix": null,
     "location": {
       "column": 36,
-      "row": 1501
+      "row": 1564
     },
     "message": "Logging statement uses f-string",
-    "noqa_row": 1501,
+    "noqa_row": 1564,
     "url": "https://docs.astral.sh/ruff/rules/logging-f-string"
+  },
+  {
+    "cell": null,
+    "code": "DTZ003",
+    "end_location": {
+      "column": 51,
+      "row": 136
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/classification_batch_service.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 136
+    },
+    "message": "`datetime.datetime.utcnow()` used",
+    "noqa_row": 136,
+    "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
   },
   {
     "cell": null,
@@ -6492,16 +6912,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 67,
-      "row": 236
+      "row": 238
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 62,
-      "row": 236
+      "row": 238
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 236,
+    "noqa_row": 238,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -6509,16 +6929,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "S608",
     "end_location": {
       "column": 12,
-      "row": 247
+      "row": 249
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 17,
-      "row": 243
+      "row": 245
     },
     "message": "Possible SQL injection vector through string-based query construction",
-    "noqa_row": 247,
+    "noqa_row": 249,
     "url": "https://docs.astral.sh/ruff/rules/hardcoded-sql-expression"
   },
   {
@@ -6526,16 +6946,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "C901",
     "end_location": {
       "column": 34,
-      "row": 379
+      "row": 381
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 379
+      "row": 381
     },
     "message": "`_sync_postgresql_accounts` is too complex (12 > 10)",
-    "noqa_row": 379,
+    "noqa_row": 381,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
   },
   {
@@ -6543,16 +6963,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 72,
-      "row": 379
+      "row": 381
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 67,
-      "row": 379
+      "row": 381
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 379,
+    "noqa_row": 381,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -6560,16 +6980,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 51,
-      "row": 382
+      "row": 384
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 46,
-      "row": 382
+      "row": 384
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `valid_until`",
-    "noqa_row": 382,
+    "noqa_row": 384,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -6577,16 +6997,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "S608",
     "end_location": {
       "column": 12,
-      "row": 413
+      "row": 415
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 17,
-      "row": 402
+      "row": 404
     },
     "message": "Possible SQL injection vector through string-based query construction",
-    "noqa_row": 413,
+    "noqa_row": 415,
     "url": "https://docs.astral.sh/ruff/rules/hardcoded-sql-expression"
   },
   {
@@ -6594,16 +7014,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 71,
-      "row": 575
+      "row": 577
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 66,
-      "row": 575
+      "row": 577
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 575,
+    "noqa_row": 577,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -6611,16 +7031,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "S608",
     "end_location": {
       "column": 12,
-      "row": 589
+      "row": 591
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 17,
-      "row": 583
+      "row": 585
     },
     "message": "Possible SQL injection vector through string-based query construction",
-    "noqa_row": 589,
+    "noqa_row": 591,
     "url": "https://docs.astral.sh/ruff/rules/hardcoded-sql-expression"
   },
   {
@@ -6628,16 +7048,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 68,
-      "row": 724
+      "row": 726
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 63,
-      "row": 724
+      "row": 726
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 724,
+    "noqa_row": 726,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -6645,16 +7065,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "S608",
     "end_location": {
       "column": 12,
-      "row": 737
+      "row": 739
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 17,
-      "row": 731
+      "row": 733
     },
     "message": "Possible SQL injection vector through string-based query construction",
-    "noqa_row": 737,
+    "noqa_row": 739,
     "url": "https://docs.astral.sh/ruff/rules/hardcoded-sql-expression"
   },
   {
@@ -6662,16 +7082,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 63,
-      "row": 895
+      "row": 897
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 53,
-      "row": 895
+      "row": 897
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `get_connection`",
-    "noqa_row": 895,
+    "noqa_row": 897,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -6679,16 +7099,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 67,
-      "row": 948
+      "row": 950
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 62,
-      "row": 948
+      "row": 950
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 948,
+    "noqa_row": 950,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -6696,16 +7116,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 52,
-      "row": 973
+      "row": 975
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 47,
-      "row": 973
+      "row": 975
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 973,
+    "noqa_row": 975,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -6713,16 +7133,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "S110",
     "end_location": {
       "column": 21,
-      "row": 1066
+      "row": 1068
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 13,
-      "row": 1064
+      "row": 1066
     },
     "message": "`try`-`except`-`pass` detected, consider logging the exception",
-    "noqa_row": 1064,
+    "noqa_row": 1066,
     "url": "https://docs.astral.sh/ruff/rules/try-except-pass"
   },
   {
@@ -6730,7 +7150,7 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "SIM103",
     "end_location": {
       "column": 20,
-      "row": 1202
+      "row": 1204
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": {
@@ -6740,11 +7160,11 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
           "content": "return not len(query) > 10000",
           "end_location": {
             "column": 20,
-            "row": 1202
+            "row": 1204
           },
           "location": {
             "column": 9,
-            "row": 1199
+            "row": 1201
           }
         }
       ],
@@ -6752,10 +7172,10 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     },
     "location": {
       "column": 9,
-      "row": 1199
+      "row": 1201
     },
     "message": "Return the condition `not len(query) > 10000` directly",
-    "noqa_row": 1199,
+    "noqa_row": 1201,
     "url": "https://docs.astral.sh/ruff/rules/needless-bool"
   },
   {
@@ -6763,16 +7183,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "SLF001",
     "end_location": {
       "column": 75,
-      "row": 1367
+      "row": 1369
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 27,
-      "row": 1367
+      "row": 1369
     },
     "message": "Private member accessed: `_get_postgresql_account_permissions`",
-    "noqa_row": 1367,
+    "noqa_row": 1369,
     "url": "https://docs.astral.sh/ruff/rules/private-member-access"
   },
   {
@@ -6780,16 +7200,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "C901",
     "end_location": {
       "column": 35,
-      "row": 1413
+      "row": 1415
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 1413
+      "row": 1415
     },
     "message": "`_get_sqlserver_permissions` is too complex (14 > 10)",
-    "noqa_row": 1413,
+    "noqa_row": 1415,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
   },
   {
@@ -6797,16 +7217,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "SLF001",
     "end_location": {
       "column": 76,
-      "row": 1574
+      "row": 1576
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 32,
-      "row": 1574
+      "row": 1576
     },
     "message": "Private member accessed: `_get_oracle_account_permissions`",
-    "noqa_row": 1574,
+    "noqa_row": 1576,
     "url": "https://docs.astral.sh/ruff/rules/private-member-access"
   },
   {
@@ -6814,16 +7234,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 45,
-      "row": 1610
+      "row": 1612
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 40,
-      "row": 1610
+      "row": 1612
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 1610,
+    "noqa_row": 1612,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -6831,16 +7251,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 50,
-      "row": 1622
+      "row": 1624
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 45,
-      "row": 1622
+      "row": 1624
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 1622,
+    "noqa_row": 1624,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -6848,16 +7268,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 49,
-      "row": 1638
+      "row": 1640
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 44,
-      "row": 1638
+      "row": 1640
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 1638,
+    "noqa_row": 1640,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -6865,16 +7285,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 46,
-      "row": 1654
+      "row": 1656
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/database_service.py",
     "fix": null,
     "location": {
       "column": 41,
-      "row": 1654
+      "row": 1656
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `conn`",
-    "noqa_row": 1654,
+    "noqa_row": 1656,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -7137,16 +7557,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ARG002",
     "end_location": {
       "column": 63,
-      "row": 354
+      "row": 379
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/permission_query_factory.py",
     "fix": null,
     "location": {
       "column": 55,
-      "row": 354
+      "row": 379
     },
     "message": "Unused method argument: `database`",
-    "noqa_row": 354,
+    "noqa_row": 379,
     "url": "https://docs.astral.sh/ruff/rules/unused-method-argument"
   },
   {
@@ -7154,16 +7574,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "C901",
     "end_location": {
       "column": 32,
-      "row": 413
+      "row": 438
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/permission_query_factory.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 413
+      "row": 438
     },
     "message": "`get_account_permissions` is too complex (12 > 10)",
-    "noqa_row": 413,
+    "noqa_row": 438,
     "url": "https://docs.astral.sh/ruff/rules/complex-structure"
   },
   {
@@ -7171,16 +7591,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ARG002",
     "end_location": {
       "column": 63,
-      "row": 578
+      "row": 603
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/permission_query_factory.py",
     "fix": null,
     "location": {
       "column": 55,
-      "row": 578
+      "row": 603
     },
     "message": "Unused method argument: `database`",
-    "noqa_row": 578,
+    "noqa_row": 603,
     "url": "https://docs.astral.sh/ruff/rules/unused-method-argument"
   },
   {
@@ -7188,16 +7608,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN401",
     "end_location": {
       "column": 47,
-      "row": 800
+      "row": 825
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/permission_query_factory.py",
     "fix": null,
     "location": {
       "column": 42,
-      "row": 800
+      "row": 825
     },
     "message": "Dynamically typed expressions (typing.Any) are disallowed in `bytes_value`",
-    "noqa_row": 800,
+    "noqa_row": 825,
     "url": "https://docs.astral.sh/ruff/rules/any-type"
   },
   {
@@ -7205,16 +7625,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ARG002",
     "end_location": {
       "column": 63,
-      "row": 811
+      "row": 836
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/services/permission_query_factory.py",
     "fix": null,
     "location": {
       "column": 55,
-      "row": 811
+      "row": 836
     },
     "message": "Unused method argument: `database`",
-    "noqa_row": 811,
+    "noqa_row": 836,
     "url": "https://docs.astral.sh/ruff/rules/unused-method-argument"
   },
   {
@@ -13471,11 +13891,11 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
         {
           "content": " -> None",
           "end_location": {
-            "column": 61,
+            "column": 97,
             "row": 439
           },
           "location": {
-            "column": 61,
+            "column": 97,
             "row": 439
           }
         }
@@ -13494,13 +13914,13 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "cell": null,
     "code": "ANN003",
     "end_location": {
-      "column": 60,
+      "column": 96,
       "row": 439
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
-      "column": 52,
+      "column": 88,
       "row": 439
     },
     "message": "Missing type annotation for `**kwargs`",
@@ -13512,7 +13932,7 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN201",
     "end_location": {
       "column": 14,
-      "row": 445
+      "row": 448
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": {
@@ -13522,11 +13942,11 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
           "content": " -> None",
           "end_location": {
             "column": 95,
-            "row": 445
+            "row": 448
           },
           "location": {
             "column": 95,
-            "row": 445
+            "row": 448
           }
         }
       ],
@@ -13534,10 +13954,10 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     },
     "location": {
       "column": 5,
-      "row": 445
+      "row": 448
     },
     "message": "Missing return type annotation for public function `log_error`",
-    "noqa_row": 445,
+    "noqa_row": 448,
     "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
   },
   {
@@ -13545,16 +13965,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN003",
     "end_location": {
       "column": 94,
-      "row": 445
+      "row": 448
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 86,
-      "row": 445
+      "row": 448
     },
     "message": "Missing type annotation for `**kwargs`",
-    "noqa_row": 445,
+    "noqa_row": 448,
     "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
   },
   {
@@ -13562,7 +13982,7 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN201",
     "end_location": {
       "column": 17,
-      "row": 454
+      "row": 457
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": {
@@ -13572,11 +13992,11 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
           "content": " -> None",
           "end_location": {
             "column": 98,
-            "row": 454
+            "row": 457
           },
           "location": {
             "column": 98,
-            "row": 454
+            "row": 457
           }
         }
       ],
@@ -13584,10 +14004,10 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     },
     "location": {
       "column": 5,
-      "row": 454
+      "row": 457
     },
     "message": "Missing return type annotation for public function `log_critical`",
-    "noqa_row": 454,
+    "noqa_row": 457,
     "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
   },
   {
@@ -13595,16 +14015,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN003",
     "end_location": {
       "column": 97,
-      "row": 454
+      "row": 457
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 89,
-      "row": 454
+      "row": 457
     },
     "message": "Missing type annotation for `**kwargs`",
-    "noqa_row": 454,
+    "noqa_row": 457,
     "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
   },
   {
@@ -13612,7 +14032,7 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN201",
     "end_location": {
       "column": 14,
-      "row": 463
+      "row": 466
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": {
@@ -13622,11 +14042,11 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
           "content": " -> None",
           "end_location": {
             "column": 59,
-            "row": 463
+            "row": 466
           },
           "location": {
             "column": 59,
-            "row": 463
+            "row": 466
           }
         }
       ],
@@ -13634,10 +14054,10 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     },
     "location": {
       "column": 5,
-      "row": 463
+      "row": 466
     },
     "message": "Missing return type annotation for public function `log_debug`",
-    "noqa_row": 463,
+    "noqa_row": 466,
     "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
   },
   {
@@ -13645,16 +14065,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN003",
     "end_location": {
       "column": 58,
-      "row": 463
+      "row": 466
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 50,
-      "row": 463
+      "row": 466
     },
     "message": "Missing type annotation for `**kwargs`",
-    "noqa_row": 463,
+    "noqa_row": 466,
     "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
   },
   {
@@ -13662,16 +14082,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN003",
     "end_location": {
       "column": 26,
-      "row": 503
+      "row": 506
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 18,
-      "row": 503
+      "row": 506
     },
     "message": "Missing type annotation for `**kwargs`",
-    "noqa_row": 503,
+    "noqa_row": 506,
     "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
   },
   {
@@ -13679,7 +14099,7 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN204",
     "end_location": {
       "column": 17,
-      "row": 537
+      "row": 540
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": {
@@ -13689,11 +14109,11 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
           "content": " -> None",
           "end_location": {
             "column": 33,
-            "row": 537
+            "row": 540
           },
           "location": {
             "column": 33,
-            "row": 537
+            "row": 540
           }
         }
       ],
@@ -13701,10 +14121,10 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     },
     "location": {
       "column": 9,
-      "row": 537
+      "row": 540
     },
     "message": "Missing return type annotation for special method `__init__`",
-    "noqa_row": 537,
+    "noqa_row": 540,
     "url": "https://docs.astral.sh/ruff/rules/missing-return-type-special-method"
   },
   {
@@ -13712,16 +14132,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN003",
     "end_location": {
       "column": 32,
-      "row": 537
+      "row": 540
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 24,
-      "row": 537
+      "row": 540
     },
     "message": "Missing type annotation for `**kwargs`",
-    "noqa_row": 537,
+    "noqa_row": 540,
     "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
   },
   {
@@ -13729,16 +14149,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN204",
     "end_location": {
       "column": 18,
-      "row": 541
+      "row": 544
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 541
+      "row": 544
     },
     "message": "Missing return type annotation for special method `__enter__`",
-    "noqa_row": 541,
+    "noqa_row": 544,
     "url": "https://docs.astral.sh/ruff/rules/missing-return-type-special-method"
   },
   {
@@ -13746,16 +14166,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN204",
     "end_location": {
       "column": 17,
-      "row": 547
+      "row": 550
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 547
+      "row": 550
     },
     "message": "Missing return type annotation for special method `__exit__`",
-    "noqa_row": 547,
+    "noqa_row": 550,
     "url": "https://docs.astral.sh/ruff/rules/missing-return-type-special-method"
   },
   {
@@ -13763,16 +14183,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN001",
     "end_location": {
       "column": 32,
-      "row": 547
+      "row": 550
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 24,
-      "row": 547
+      "row": 550
     },
     "message": "Missing type annotation for function argument `exc_type`",
-    "noqa_row": 547,
+    "noqa_row": 550,
     "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
   },
   {
@@ -13780,16 +14200,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN001",
     "end_location": {
       "column": 41,
-      "row": 547
+      "row": 550
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 34,
-      "row": 547
+      "row": 550
     },
     "message": "Missing type annotation for function argument `exc_val`",
-    "noqa_row": 547,
+    "noqa_row": 550,
     "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
   },
   {
@@ -13797,16 +14217,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN001",
     "end_location": {
       "column": 49,
-      "row": 547
+      "row": 550
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 43,
-      "row": 547
+      "row": 550
     },
     "message": "Missing type annotation for function argument `exc_tb`",
-    "noqa_row": 547,
+    "noqa_row": 550,
     "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
   },
   {
@@ -13814,16 +14234,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN201",
     "end_location": {
       "column": 21,
-      "row": 554
+      "row": 557
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 5,
-      "row": 554
+      "row": 557
     },
     "message": "Missing return type annotation for public function `with_log_context`",
-    "noqa_row": 554,
+    "noqa_row": 557,
     "url": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function"
   },
   {
@@ -13831,16 +14251,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN003",
     "end_location": {
       "column": 31,
-      "row": 554
+      "row": 557
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 554
+      "row": 557
     },
     "message": "Missing type annotation for `**context`",
-    "noqa_row": 554,
+    "noqa_row": 557,
     "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
   },
   {
@@ -13848,16 +14268,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN202",
     "end_location": {
       "column": 18,
-      "row": 557
+      "row": 560
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 9,
-      "row": 557
+      "row": 560
     },
     "message": "Missing return type annotation for private function `decorator`",
-    "noqa_row": 557,
+    "noqa_row": 560,
     "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
   },
   {
@@ -13865,16 +14285,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN001",
     "end_location": {
       "column": 23,
-      "row": 557
+      "row": 560
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 19,
-      "row": 557
+      "row": 560
     },
     "message": "Missing type annotation for function argument `func`",
-    "noqa_row": 557,
+    "noqa_row": 560,
     "url": "https://docs.astral.sh/ruff/rules/missing-type-function-argument"
   },
   {
@@ -13882,16 +14302,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN202",
     "end_location": {
       "column": 20,
-      "row": 558
+      "row": 561
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 13,
-      "row": 558
+      "row": 561
     },
     "message": "Missing return type annotation for private function `wrapper`",
-    "noqa_row": 558,
+    "noqa_row": 561,
     "url": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function"
   },
   {
@@ -13899,16 +14319,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN002",
     "end_location": {
       "column": 26,
-      "row": 558
+      "row": 561
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 558
+      "row": 561
     },
     "message": "Missing type annotation for `*args`",
-    "noqa_row": 558,
+    "noqa_row": 561,
     "url": "https://docs.astral.sh/ruff/rules/missing-type-args"
   },
   {
@@ -13916,16 +14336,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/account_sync_ser
     "code": "ANN003",
     "end_location": {
       "column": 36,
-      "row": 558
+      "row": 561
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/utils/structlog_config.py",
     "fix": null,
     "location": {
       "column": 28,
-      "row": 558
+      "row": 561
     },
     "message": "Missing type annotation for `**kwargs`",
-    "noqa_row": 558,
+    "noqa_row": 561,
     "url": "https://docs.astral.sh/ruff/rules/missing-type-kwargs"
   },
   {

@@ -1,0 +1,594 @@
+{% extends "base.html" %}
+
+{% block title %}自动分类记录 - 泰摸鱼吧{% endblock %}
+
+{% block extra_css %}
+<style>
+    .batch-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid #007bff;
+    }
+    .batch-card.running {
+        border-left-color: #28a745;
+    }
+    .batch-card.completed {
+        border-left-color: #17a2b8;
+    }
+    .batch-card.failed {
+        border-left-color: #dc3545;
+    }
+    .progress-bar {
+        height: 8px;
+        border-radius: 4px;
+    }
+    .status-badge {
+        font-size: 0.8em;
+        padding: 0.25rem 0.5rem;
+    }
+    .filter-section {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .statistics-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .stat-item {
+        text-align: center;
+    }
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .success-rate {
+        font-weight: bold;
+    }
+    .success-rate.high {
+        color: #28a745;
+    }
+    .success-rate.medium {
+        color: #ffc107;
+    }
+    .success-rate.low {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-tags"></i> 自动分类记录</h2>
+                <div>
+                    <button class="btn btn-primary" onclick="refreshData()">
+                        <i class="fas fa-sync"></i> 刷新
+                    </button>
+                    <button class="btn btn-success" onclick="runAutoClassify()">
+                        <i class="fas fa-magic"></i> 执行自动分类
+                    </button>
+                </div>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="row" id="statistics-section">
+                <div class="col-md-3">
+                    <div class="statistics-card">
+                        <div class="stat-item">
+                            <div class="stat-number" id="total-batches">-</div>
+                            <div class="stat-label">总批次数</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="statistics-card">
+                        <div class="stat-item">
+                            <div class="stat-number" id="running-batches">-</div>
+                            <div class="stat-label">运行中</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="statistics-card">
+                        <div class="stat-item">
+                            <div class="stat-number" id="completed-batches">-</div>
+                            <div class="stat-label">已完成</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="statistics-card">
+                        <div class="stat-item">
+                            <div class="stat-number" id="failed-batches">-</div>
+                            <div class="stat-label">失败</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 过滤器 -->
+            <div class="filter-section">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="batch-type-filter" class="form-label">批次类型</label>
+                        <select class="form-select" id="batch-type-filter">
+                            <option value="">全部</option>
+                            <option value="manual">手动</option>
+                            <option value="scheduled">定时</option>
+                            <option value="api">API</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status-filter" class="form-label">状态</label>
+                        <select class="form-select" id="status-filter">
+                            <option value="">全部</option>
+                            <option value="running">运行中</option>
+                            <option value="completed">已完成</option>
+                            <option value="failed">失败</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="date-range-filter" class="form-label">时间范围</label>
+                        <select class="form-select" id="date-range-filter">
+                            <option value="">全部</option>
+                            <option value="today">今天</option>
+                            <option value="week">本周</option>
+                            <option value="month">本月</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-outline-primary w-100" onclick="applyFilters()">
+                            <i class="fas fa-filter"></i> 应用筛选
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 批次列表 -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> 分类批次列表</h5>
+                </div>
+                <div class="card-body">
+                    <div id="batches-loading" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2">正在加载批次数据...</p>
+                    </div>
+                    <div id="batches-container" style="display: none;">
+                        <!-- 批次列表将在这里动态加载 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批次详情模态框 -->
+<div class="modal fade" id="batchDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">批次详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="batch-detail-content">
+                    <!-- 批次详情将在这里动态加载 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 执行自动分类模态框 -->
+<div class="modal fade" id="runClassifyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">执行自动分类</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="classify-form">
+                    <div class="mb-3">
+                        <label for="instance-select" class="form-label">选择实例（可选）</label>
+                        <select class="form-select" id="instance-select">
+                            <option value="">全部分类</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="batch-type-select" class="form-label">批次类型</label>
+                        <select class="form-select" id="batch-type-select" required>
+                            <option value="manual">手动</option>
+                            <option value="api">API</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="executeAutoClassify()">
+                    <i class="fas fa-magic"></i> 开始分类
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 全局变量
+let currentBatches = [];
+let currentFilters = {};
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadStatistics();
+    loadBatches();
+    loadInstances();
+
+    // 设置自动刷新
+    setInterval(function() {
+        loadBatches();
+    }, 30000); // 30秒刷新一次
+});
+
+// 加载统计信息
+function loadStatistics() {
+    fetch('/account-classification/batches')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateStatistics(data.batches);
+            } else {
+                console.error('加载统计信息失败:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('加载统计信息出错:', error);
+        });
+}
+
+// 更新统计信息显示
+function updateStatistics(batches) {
+    const total = batches.length;
+    const running = batches.filter(b => b.status === 'running').length;
+    const completed = batches.filter(b => b.status === 'completed').length;
+    const failed = batches.filter(b => b.status === 'failed').length;
+
+    document.getElementById('total-batches').textContent = total;
+    document.getElementById('running-batches').textContent = running;
+    document.getElementById('completed-batches').textContent = completed;
+    document.getElementById('failed-batches').textContent = failed;
+}
+
+// 加载批次列表
+function loadBatches() {
+    const params = new URLSearchParams();
+    if (currentFilters.batch_type) params.append('batch_type', currentFilters.batch_type);
+    if (currentFilters.status) params.append('status', currentFilters.status);
+
+    fetch(`/account-classification/batches?${params.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentBatches = data.batches;
+                renderBatches(data.batches);
+                document.getElementById('batches-loading').style.display = 'none';
+                document.getElementById('batches-container').style.display = 'block';
+            } else {
+                showAlert('danger', '加载批次列表失败: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('加载批次列表出错:', error);
+            showAlert('danger', '加载批次列表出错');
+        });
+}
+
+// 渲染批次列表
+function renderBatches(batches) {
+    const container = document.getElementById('batches-container');
+
+    if (batches.length === 0) {
+        container.innerHTML = '<div class="text-center py-4 text-muted">暂无分类批次</div>';
+        return;
+    }
+
+    const html = batches.map(batch => {
+        const statusClass = getStatusClass(batch.status);
+        const statusText = getStatusText(batch.status);
+        const successRate = batch.success_rate || 0;
+        const successRateClass = getSuccessRateClass(successRate);
+        const startedAt = new Date(batch.started_at).toLocaleString();
+        const completedAt = batch.completed_at ? new Date(batch.completed_at).toLocaleString() : '-';
+        const duration = batch.duration ? Math.round(batch.duration) + '秒' : '-';
+
+        return `
+            <div class="card batch-card ${statusClass} mb-3">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <h6 class="mb-1">${batch.batch_id.substring(0, 8)}...</h6>
+                            <small class="text-muted">${getBatchTypeText(batch.batch_type)}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <span class="badge status-badge bg-${getStatusColor(batch.status)}">${statusText}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <div class="success-rate ${successRateClass}">${successRate}%</div>
+                                <small class="text-muted">成功率</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">
+                                总账户: ${batch.total_accounts} | 
+                                匹配: ${batch.matched_accounts} | 
+                                失败: ${batch.failed_accounts}
+                            </small>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i> ${startedAt}<br>
+                                <i class="fas fa-stopwatch"></i> ${duration}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = html;
+}
+
+// 查看批次详情
+function viewBatchDetail(batchId) {
+    fetch(`/account-classification/batches/${batchId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showBatchDetail(data.batch);
+            } else {
+                showAlert('danger', '加载批次详情失败: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('加载批次详情出错:', error);
+            showAlert('danger', '加载批次详情出错');
+        });
+}
+
+// 显示批次详情
+function showBatchDetail(batch) {
+    const content = document.getElementById('batch-detail-content');
+    const successRate = batch.success_rate || 0;
+    const successRateClass = getSuccessRateClass(successRate);
+    const duration = batch.duration ? Math.round(batch.duration) + '秒' : '-';
+    const batchDetails = batch.batch_details ? JSON.parse(batch.batch_details) : {};
+
+    content.innerHTML = `
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <strong>批次ID:</strong> ${batch.batch_id}
+            </div>
+            <div class="col-md-6">
+                <strong>状态:</strong> <span class="badge bg-${getStatusColor(batch.status)}">${getStatusText(batch.status)}</span>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <strong>批次类型:</strong> ${getBatchTypeText(batch.batch_type)}
+            </div>
+            <div class="col-md-6">
+                <strong>创建者:</strong> ${batch.created_by ? '用户ID: ' + batch.created_by : '系统'}
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <strong>开始时间:</strong> ${new Date(batch.started_at).toLocaleString()}
+            </div>
+            <div class="col-md-6">
+                <strong>完成时间:</strong> ${batch.completed_at ? new Date(batch.completed_at).toLocaleString() : '未完成'}
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <strong>总账户数:</strong> ${batch.total_accounts}
+            </div>
+            <div class="col-md-4">
+                <strong>匹配账户:</strong> ${batch.matched_accounts}
+            </div>
+            <div class="col-md-4">
+                <strong>失败账户:</strong> ${batch.failed_accounts}
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <strong>总规则数:</strong> ${batch.total_rules}
+            </div>
+            <div class="col-md-4">
+                <strong>活跃规则:</strong> ${batch.active_rules}
+            </div>
+            <div class="col-md-4">
+                <strong>成功率:</strong> <span class="success-rate ${successRateClass}">${successRate}%</span>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <strong>执行时长:</strong> ${duration}
+            </div>
+            <div class="col-md-6">
+                <strong>实例ID:</strong> ${batchDetails.instance_id || '全部'}
+            </div>
+        </div>
+        ${batch.error_message ? `
+            <div class="row mb-3">
+                <div class="col-12">
+                    <strong>错误信息:</strong>
+                    <div class="alert alert-danger mt-2">${batch.error_message}</div>
+                </div>
+            </div>
+        ` : ''}
+        <div class="row">
+            <div class="col-12">
+                <button class="btn btn-primary" onclick="viewBatchLogs('${batch.batch_id}')">
+                    <i class="fas fa-list"></i> 查看相关日志
+                </button>
+            </div>
+        </div>
+    `;
+
+    const modal = new bootstrap.Modal(document.getElementById('batchDetailModal'));
+    modal.show();
+}
+
+// 查看批次相关日志
+function viewBatchLogs(batchId) {
+    // 跳转到日志页面，并过滤显示该批次的日志
+    window.open(`/logs/?batch_id=${batchId}`, '_blank');
+}
+
+// 加载实例列表
+function loadInstances() {
+    fetch('/instances/api/instances')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const select = document.getElementById('instance-select');
+                select.innerHTML = '<option value="">全部分类</option>' +
+                    data.instances.map(instance => 
+                        `<option value="${instance.id}">${instance.name} (${instance.db_type})</option>`
+                    ).join('');
+            }
+        })
+        .catch(error => {
+            console.error('加载实例列表出错:', error);
+        });
+}
+
+// 执行自动分类
+function runAutoClassify() {
+    const modal = new bootstrap.Modal(document.getElementById('runClassifyModal'));
+    modal.show();
+}
+
+// 执行自动分类
+function executeAutoClassify() {
+    const instanceId = document.getElementById('instance-select').value;
+    const batchType = document.getElementById('batch-type-select').value;
+
+    const data = {
+        instance_id: instanceId ? parseInt(instanceId) : null,
+        batch_type: batchType
+    };
+
+    showAlert('info', '正在执行自动分类，请稍候...');
+
+    fetch('/account-classification/auto-classify', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', `自动分类完成: ${data.message}`);
+            const modal = bootstrap.Modal.getInstance(document.getElementById('runClassifyModal'));
+            modal.hide();
+            loadBatches();
+        } else {
+            showAlert('danger', `自动分类失败: ${data.error}`);
+        }
+    })
+    .catch(error => {
+        console.error('执行自动分类出错:', error);
+        showAlert('danger', '执行自动分类出错');
+    });
+}
+
+// 应用筛选
+function applyFilters() {
+    currentFilters = {
+        batch_type: document.getElementById('batch-type-filter').value,
+        status: document.getElementById('status-filter').value
+    };
+    loadBatches();
+}
+
+// 刷新数据
+function refreshData() {
+    loadStatistics();
+    loadBatches();
+}
+
+// 工具函数
+function getStatusClass(status) {
+    const statusMap = {
+        'running': 'running',
+        'completed': 'completed',
+        'failed': 'failed'
+    };
+    return statusMap[status] || '';
+}
+
+function getStatusText(status) {
+    const statusMap = {
+        'running': '运行中',
+        'completed': '已完成',
+        'failed': '失败'
+    };
+    return statusMap[status] || status;
+}
+
+function getStatusColor(status) {
+    const colorMap = {
+        'running': 'success',
+        'completed': 'info',
+        'failed': 'danger'
+    };
+    return colorMap[status] || 'secondary';
+}
+
+function getBatchTypeText(type) {
+    const typeMap = {
+        'manual': '手动',
+        'scheduled': '定时',
+        'api': 'API'
+    };
+    return typeMap[type] || type;
+}
+
+function getSuccessRateClass(rate) {
+    if (rate >= 80) return 'high';
+    if (rate >= 50) return 'medium';
+    return 'low';
+}
+
+// 获取CSRF令牌
+function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+}
+</script>
+{% endblock %}

@@ -13,7 +13,6 @@ from app.models.account_classification import (
     AccountClassificationAssignment,
     ClassificationRule,
 )
-from app.models.classification_batch import ClassificationBatch
 from app.services.account_classification_service import AccountClassificationService
 from app.services.classification_batch_service import ClassificationBatchService
 from app.utils.decorators import create_required, delete_required, update_required, view_required
@@ -28,6 +27,14 @@ account_classification_bp = Blueprint("account_classification", __name__, url_pr
 def index() -> str:
     """账户分类管理首页"""
     return render_template("account_classification/index.html")
+
+
+@account_classification_bp.route("/batches")
+@login_required
+@view_required
+def batches() -> str:
+    """自动分类批次管理页面"""
+    return render_template("account_classification/batches.html")
 
 
 @account_classification_bp.route("/rules-page")
@@ -401,7 +408,7 @@ def get_matched_accounts(rule_id: int) -> "Response":
             .filter(
                 Instance.db_type == rule.db_type,
                 Instance.is_active == True,
-                Instance.deleted_at.is_(None)  # 排除已删除的实例
+                Instance.deleted_at.is_(None),  # 排除已删除的实例
             )
             .all()
         )
@@ -508,7 +515,7 @@ def auto_classify() -> "Response":
         result = service.auto_classify_accounts(
             instance_id=instance_id,
             batch_type=batch_type,
-            created_by=current_user.id if current_user.is_authenticated else None
+            created_by=current_user.id if current_user.is_authenticated else None,
         )
 
         if result.get("success"):
@@ -616,10 +623,7 @@ def get_batches() -> "Response":
         offset = int(request.args.get("offset", 0))
 
         batches = ClassificationBatchService.get_batches(
-            batch_type=batch_type,
-            status=status,
-            limit=limit,
-            offset=offset
+            batch_type=batch_type, status=status, limit=limit, offset=offset
         )
 
         result = [batch.to_dict() for batch in batches]
