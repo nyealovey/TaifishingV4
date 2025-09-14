@@ -441,24 +441,16 @@ class AccountClassificationService:
                                 classified_accounts += 1
                                 account_matched = True
 
-                    # 比较当前分类和新分类，只在有变化时更新
+                    # 比较当前分类和新分类
                     if current_classification_ids != new_classification_ids:
+                        # 分类有变化，更新账户记录
+                        account.last_classified_at = datetime.utcnow()
+                        account.last_classification_batch_id = batch_id
+
                         # 清除当前所有分类
                         for assignment in current_assignments:
                             assignment.is_active = False
                             assignment.updated_at = datetime.utcnow()
-
-                        # 添加新的分类
-                        for classification_id in new_classification_ids:
-                            assignment = AccountClassificationAssignment(
-                                account_id=account.id,
-                                classification_id=classification_id,
-                                assigned_by=None,  # 自动分类
-                                assignment_type="auto",
-                                notes=None,
-                                batch_id=batch_id,
-                            )
-                            db.session.add(assignment)
 
                         # 记录分类变化日志
                         if new_classification_ids:
@@ -467,7 +459,7 @@ class AccountClassificationService:
                                 classification = AccountClassification.query.get(cid)
                                 if classification:
                                     classification_names.append(classification.name)
-                            
+
                             log_info(
                                 f"账户 {account.username} 分类已更新: {', '.join(classification_names)}",
                                 module="account_classification",
@@ -485,8 +477,34 @@ class AccountClassificationService:
                                 old_classifications=list(current_classification_ids),
                             )
                     else:
-                        # 分类没有变化，不记录日志
-                        pass
+                        # 分类没有变化，不更新账户记录，但为了批次记录完整性，仍然记录当前分类
+                        log_info(
+                            f"账户 {account.username} 分类无变化，保持现有分类",
+                            module="account_classification",
+                            batch_id=batch_id,
+                            account_id=account.id,
+                            current_classifications=list(current_classification_ids),
+                        )
+
+                    # 无论分类是否有变化，都创建新的批次记录以保持批次完整性
+                    # 先清除该账户的所有现有批次记录，避免重复
+                    existing_batch_assignments = AccountClassificationAssignment.query.filter_by(
+                        account_id=account.id, batch_id=batch_id
+                    ).all()
+                    for assignment in existing_batch_assignments:
+                        db.session.delete(assignment)
+
+                    # 创建新的批次记录
+                    for classification_id in new_classification_ids:
+                        assignment = AccountClassificationAssignment(
+                            account_id=account.id,
+                            classification_id=classification_id,
+                            assigned_by=None,  # 自动分类
+                            assignment_type="auto",
+                            notes=None,
+                            batch_id=batch_id,
+                        )
+                        db.session.add(assignment)
 
                 except Exception as e:
                     failed_count += 1
@@ -499,6 +517,9 @@ class AccountClassificationService:
                         account_id=account.id,
                         error=str(e),
                     )
+
+            # 提交数据库事务
+            db.session.commit()
 
             # 更新批次统计信息
             ClassificationBatchService.update_batch_stats(

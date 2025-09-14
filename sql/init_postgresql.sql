@@ -329,7 +329,159 @@ CREATE INDEX IF NOT EXISTS idx_logs_source ON logs(source);
 CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at);
 
 -- ============================================================================
--- 12. 插入真实数据（基于现有 SQLite 数据库）
+-- 12. 同步会话管理模块
+-- ============================================================================
+
+-- 同步会话表
+CREATE TABLE IF NOT EXISTS sync_sessions (
+    id SERIAL PRIMARY KEY,
+    session_id VARCHAR(36) UNIQUE NOT NULL,
+    sync_type VARCHAR(20) NOT NULL CHECK (sync_type IN ('scheduled', 'manual_batch')),
+    sync_category VARCHAR(20) NOT NULL DEFAULT 'account' CHECK (sync_category IN ('account', 'capacity', 'config', 'other')),
+    status VARCHAR(20) NOT NULL DEFAULT 'running' CHECK (status IN ('running', 'completed', 'failed', 'cancelled')),
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMP WITH TIME ZONE,
+    total_instances INTEGER DEFAULT 0,
+    successful_instances INTEGER DEFAULT 0,
+    failed_instances INTEGER DEFAULT 0,
+    created_by INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 同步实例记录表
+CREATE TABLE IF NOT EXISTS sync_instance_records (
+    id SERIAL PRIMARY KEY,
+    session_id VARCHAR(36) NOT NULL,
+    instance_id INTEGER NOT NULL,
+    instance_name VARCHAR(255),
+    sync_category VARCHAR(20) NOT NULL DEFAULT 'account' CHECK (sync_category IN ('account', 'capacity', 'config', 'other')),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'failed')),
+    started_at TIMESTAMP WITH TIME ZONE,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    -- 账户同步统计字段
+    accounts_synced INTEGER DEFAULT 0,
+    accounts_created INTEGER DEFAULT 0,
+    accounts_updated INTEGER DEFAULT 0,
+    accounts_deleted INTEGER DEFAULT 0,
+    -- 通用字段
+    error_message TEXT,
+    sync_details JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    FOREIGN KEY (session_id) REFERENCES sync_sessions(session_id) ON DELETE CASCADE,
+    FOREIGN KEY (instance_id) REFERENCES instances(id) ON DELETE CASCADE
+);
+
+-- 同步会话表索引
+CREATE INDEX IF NOT EXISTS idx_sync_sessions_session_id ON sync_sessions(session_id);
+CREATE INDEX IF NOT EXISTS idx_sync_sessions_sync_type ON sync_sessions(sync_type);
+CREATE INDEX IF NOT EXISTS idx_sync_sessions_sync_category ON sync_sessions(sync_category);
+CREATE INDEX IF NOT EXISTS idx_sync_sessions_status ON sync_sessions(status);
+CREATE INDEX IF NOT EXISTS idx_sync_sessions_created_at ON sync_sessions(created_at);
+
+-- 同步实例记录表索引
+CREATE INDEX IF NOT EXISTS idx_sync_instance_records_session_id ON sync_instance_records(session_id);
+CREATE INDEX IF NOT EXISTS idx_sync_instance_records_instance_id ON sync_instance_records(instance_id);
+CREATE INDEX IF NOT EXISTS idx_sync_instance_records_sync_category ON sync_instance_records(sync_category);
+CREATE INDEX IF NOT EXISTS idx_sync_instance_records_status ON sync_instance_records(status);
+CREATE INDEX IF NOT EXISTS idx_sync_instance_records_created_at ON sync_instance_records(created_at);
+
+-- ============================================================================
+-- 13. 自动分类批次管理模块
+-- ============================================================================
+
+-- 自动分类批次表
+CREATE TABLE IF NOT EXISTS classification_batches (
+    id SERIAL PRIMARY KEY,
+    batch_id VARCHAR(36) UNIQUE NOT NULL,
+    batch_type VARCHAR(20) NOT NULL CHECK (batch_type IN ('manual', 'scheduled', 'api')),
+    status VARCHAR(20) NOT NULL DEFAULT 'running' CHECK (status IN ('running', 'completed', 'failed')),
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMP WITH TIME ZONE,
+    total_accounts INTEGER DEFAULT 0,
+    matched_accounts INTEGER DEFAULT 0,
+    failed_accounts INTEGER DEFAULT 0,
+    total_rules INTEGER DEFAULT 0,
+    active_rules INTEGER DEFAULT 0,
+    error_message TEXT,
+    batch_details JSONB,
+    created_by INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- 自动分类批次表索引
+CREATE INDEX IF NOT EXISTS idx_classification_batches_batch_id ON classification_batches(batch_id);
+CREATE INDEX IF NOT EXISTS idx_classification_batches_batch_type ON classification_batches(batch_type);
+CREATE INDEX IF NOT EXISTS idx_classification_batches_status ON classification_batches(status);
+CREATE INDEX IF NOT EXISTS idx_classification_batches_started_at ON classification_batches(started_at);
+CREATE INDEX IF NOT EXISTS idx_classification_batches_created_by ON classification_batches(created_by);
+
+-- ============================================================================
+-- 14. 统一日志管理模块
+-- ============================================================================
+
+-- 统一日志表
+CREATE TABLE IF NOT EXISTS unified_logs (
+    id SERIAL PRIMARY KEY,
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    level VARCHAR(8) NOT NULL CHECK (level IN ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')),
+    module VARCHAR(100) NOT NULL,
+    message TEXT NOT NULL,
+    traceback TEXT,
+    context JSONB,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- 统一日志表索引
+CREATE INDEX IF NOT EXISTS idx_unified_logs_timestamp ON unified_logs(timestamp);
+CREATE INDEX IF NOT EXISTS idx_unified_logs_level ON unified_logs(level);
+CREATE INDEX IF NOT EXISTS idx_unified_logs_module ON unified_logs(module);
+CREATE INDEX IF NOT EXISTS idx_unified_logs_created_at ON unified_logs(created_at);
+
+-- ============================================================================
+-- 15. 更新现有表结构
+-- ============================================================================
+
+-- 为sync_data表添加新字段
+ALTER TABLE sync_data ADD COLUMN IF NOT EXISTS session_id VARCHAR(36);
+ALTER TABLE sync_data ADD COLUMN IF NOT EXISTS sync_category VARCHAR(20);
+
+-- 为accounts表添加分类相关字段
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS last_classified_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS last_classification_batch_id VARCHAR(36);
+
+-- 创建新字段的索引
+CREATE INDEX IF NOT EXISTS idx_sync_data_session_id ON sync_data(session_id);
+CREATE INDEX IF NOT EXISTS idx_sync_data_sync_category ON sync_data(sync_category);
+CREATE INDEX IF NOT EXISTS idx_accounts_last_classified_at ON accounts(last_classified_at);
+CREATE INDEX IF NOT EXISTS idx_accounts_last_classification_batch_id ON accounts(last_classification_batch_id);
+
+-- ============================================================================
+-- 16. 创建触发器
+-- ============================================================================
+
+-- 创建updated_at字段自动更新触发器函数
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- 为各表创建updated_at触发器
+CREATE TRIGGER update_instances_updated_at BEFORE UPDATE ON instances FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_credentials_updated_at BEFORE UPDATE ON credentials FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_accounts_updated_at BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_account_classifications_updated_at BEFORE UPDATE ON account_classifications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_classification_rules_updated_at BEFORE UPDATE ON classification_rules FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_account_classification_assignments_updated_at BEFORE UPDATE ON account_classification_assignments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_sync_sessions_updated_at BEFORE UPDATE ON sync_sessions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_classification_batches_updated_at BEFORE UPDATE ON classification_batches FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================================
+-- 17. 插入真实数据（基于现有 SQLite 数据库）
 -- ============================================================================
 
 -- 插入用户数据
@@ -643,16 +795,16 @@ SELECT setval('permission_configs_id_seq', (SELECT MAX(id) FROM permission_confi
 
 -- 插入任务数据
 INSERT INTO tasks (id, name, task_type, db_type, schedule, description, python_code, config, is_active, is_builtin, last_run, last_run_at, last_status, last_message, run_count, success_count, created_at, updated_at) VALUES
-(1, 'account_sync', 'sync_accounts', 'mysql', '*/5 * * * *', '测试', '# 账户同步任务 - MySQL                                       
+(1, 'account_sync', 'sync_accounts', 'mysql', '*/5 * * * *', '测试', '# 账户同步任务 - MySQL
 # 此任务将使用统一的AccountSyncService进行账户同步
 # 无需手动编写代码，系统会自动调用相应的服务
 
 def sync_mysql_accounts(instance, config):
     """同步MySQL数据库账户信息 - 使用统一服务"""
-    from app.services.account_sync_service import account_sync_service                                            
-    
+    from app.services.account_sync_service import account_sync_service
+
     # 调用统一的账户同步服务
-    result = account_sync_service.sync_accounts(instance, sync_type='task')                                       
+    result = account_sync_service.sync_accounts(instance, sync_type='task')
     return result', '{}', TRUE, FALSE, NULL, NULL, NULL, NULL, 0, 0, '2025-09-12 01:20:05.772007', '2025-09-12 01:20:05.772013')
 ON CONFLICT (id) DO NOTHING;
 
@@ -689,7 +841,7 @@ CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks FOR EACH ROW EXECU
 
 -- 账户统计视图
 CREATE OR REPLACE VIEW account_stats AS
-SELECT 
+SELECT
     i.db_type,
     i.environment,
     COUNT(a.id) as total_accounts,
@@ -703,7 +855,7 @@ GROUP BY i.db_type, i.environment;
 
 -- 同步统计视图
 CREATE OR REPLACE VIEW sync_stats AS
-SELECT 
+SELECT
     sync_type,
     status,
     COUNT(*) as count,
@@ -723,14 +875,14 @@ COMMIT;
 -- ============================================================================
 
 -- 显示表统计信息
-SELECT 
+SELECT
     schemaname,
     tablename,
     attname,
     n_distinct,
     correlation
-FROM pg_stats 
-WHERE schemaname = 'public' 
+FROM pg_stats
+WHERE schemaname = 'public'
 ORDER BY tablename, attname;
 
 -- 显示初始数据统计

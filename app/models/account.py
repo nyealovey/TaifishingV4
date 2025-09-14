@@ -39,6 +39,10 @@ class Account(db.Model):
     # SQL Server特有字段
     account_created_at = db.Column(db.DateTime, nullable=True)  # 账户在数据库中的创建时间
 
+    # 分类相关字段
+    last_classified_at = db.Column(db.DateTime, nullable=True)  # 最后分类时间
+    last_classification_batch_id = db.Column(db.String(36), nullable=True)  # 最后分类批次ID
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

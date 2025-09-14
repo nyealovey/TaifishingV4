@@ -118,8 +118,10 @@ class AccountClassificationAssignment(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # 唯一约束：一个账户只能有一个活跃的分类分配
-    __table_args__ = (db.UniqueConstraint("account_id", "classification_id", name="unique_account_classification"),)
+    # 唯一约束：一个账户在同一个批次中只能有一个分类分配
+    __table_args__ = (
+        db.UniqueConstraint("account_id", "classification_id", "batch_id", name="unique_account_classification_batch"),
+    )
 
     def __repr__(self) -> str:
         return f"<AccountClassificationAssignment {self.account.username} -> {self.classification.name}>"

@@ -404,6 +404,7 @@ class AccountSyncService:
                 )
                 db.session.add(account)
                 added_count += 1
+                synced_count += 1
             else:
                 # 检查是否有变化
                 has_changes = False

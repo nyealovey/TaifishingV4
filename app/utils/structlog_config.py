@@ -56,22 +56,27 @@ class SQLAlchemyLogHandler:
         if log_entry:
             # 直接同步写入数据库
             try:
-                with current_app.app_context():
-                    # 确保时间戳是datetime对象，使用东八区时间
-                    if isinstance(log_entry.get("timestamp"), str):
-                        from datetime import datetime
+                # 检查是否有应用上下文
+                if has_request_context() or current_app:
+                    with current_app.app_context():
+                        # 确保时间戳是datetime对象，使用东八区时间
+                        if isinstance(log_entry.get("timestamp"), str):
+                            from datetime import datetime
 
-                        try:
-                            log_entry["timestamp"] = datetime.fromisoformat(
-                                log_entry["timestamp"].replace("Z", "+00:00")
-                            )
-                        except ValueError:
-                            log_entry["timestamp"] = now()
+                            try:
+                                log_entry["timestamp"] = datetime.fromisoformat(
+                                    log_entry["timestamp"].replace("Z", "+00:00")
+                                )
+                            except ValueError:
+                                log_entry["timestamp"] = now()
 
-                    # 创建并保存日志条目
-                    unified_log = UnifiedLog.create_log_entry(**log_entry)
-                    db.session.add(unified_log)
-                    db.session.commit()
+                        # 创建并保存日志条目
+                        unified_log = UnifiedLog.create_log_entry(**log_entry)
+                        db.session.add(unified_log)
+                        db.session.commit()
+                else:
+                    # 如果没有应用上下文，跳过数据库写入
+                    pass
             except Exception as e:
                 # 使用标准logging避免循环依赖
                 import logging
