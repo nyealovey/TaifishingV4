@@ -614,7 +614,15 @@ def get_permissions(db_type: str) -> "Response":
 @account_classification_bp.route("/batches")
 @login_required
 @view_required
-def get_batches() -> "Response":
+def batches_page() -> "Response":
+    """自动分类记录页面"""
+    return render_template("account_classification/batches.html")
+
+
+@account_classification_bp.route("/api/batches")
+@login_required
+@view_required
+def api_get_batches() -> "Response":
     """获取自动分类批次列表"""
     try:
         batch_type = request.args.get("batch_type")
@@ -635,10 +643,10 @@ def get_batches() -> "Response":
         return jsonify({"success": False, "error": str(e)})
 
 
-@account_classification_bp.route("/batches/<batch_id>")
+@account_classification_bp.route("/api/batches/<batch_id>")
 @login_required
 @view_required
-def get_batch(batch_id: str) -> "Response":
+def api_get_batch(batch_id: str) -> "Response":
     """获取批次详情"""
     try:
         batch = ClassificationBatchService.get_batch(batch_id)

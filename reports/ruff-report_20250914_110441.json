@@ -1,11 +1,11 @@
-错误: warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:336: B608
-warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:534: B608
-warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:856: B608
-warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:1006: B608
-warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:249: B608
+错误: warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:249: B608
 warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:415: B608
 warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:591: B608
 warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:739: B608
+warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:336: B608
+warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:534: B608
+warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:856: B608
+warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:1006: B608
 
 
 标准输出:
@@ -1239,16 +1239,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 39,
-      "row": 43
+      "row": 51
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 31,
-      "row": 43
+      "row": 51
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 43,
+    "noqa_row": 51,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1256,16 +1256,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 41,
-      "row": 87
+      "row": 95
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 33,
-      "row": 87
+      "row": 95
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 87,
+    "noqa_row": 95,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1273,16 +1273,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 60,
-      "row": 128
+      "row": 136
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 52,
-      "row": 128
+      "row": 136
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 128,
+    "noqa_row": 136,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1290,16 +1290,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 63,
-      "row": 158
+      "row": 166
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 55,
-      "row": 158
+      "row": 166
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 158,
+    "noqa_row": 166,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1307,16 +1307,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 63,
-      "row": 183
+      "row": 191
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 55,
-      "row": 183
+      "row": 191
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 183,
+    "noqa_row": 191,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1324,16 +1324,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 29,
-      "row": 206
+      "row": 214
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 21,
-      "row": 206
+      "row": 214
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 206,
+    "noqa_row": 214,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1341,16 +1341,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 30,
-      "row": 248
+      "row": 256
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 22,
-      "row": 248
+      "row": 256
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 248,
+    "noqa_row": 256,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1358,16 +1358,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 31,
-      "row": 292
+      "row": 300
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 23,
-      "row": 292
+      "row": 300
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 292,
+    "noqa_row": 300,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1375,16 +1375,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 40,
-      "row": 322
+      "row": 330
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 32,
-      "row": 322
+      "row": 330
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 322,
+    "noqa_row": 330,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1392,16 +1392,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 43,
-      "row": 355
+      "row": 363
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 35,
-      "row": 355
+      "row": 363
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 355,
+    "noqa_row": 363,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1409,16 +1409,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 52,
-      "row": 382
+      "row": 390
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 44,
-      "row": 382
+      "row": 390
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 382,
+    "noqa_row": 390,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1426,7 +1426,7 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "E712",
     "end_location": {
       "column": 43,
-      "row": 402
+      "row": 410
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": {
@@ -1436,11 +1436,11 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
           "content": "Instance.is_active",
           "end_location": {
             "column": 43,
-            "row": 402
+            "row": 410
           },
           "location": {
             "column": 17,
-            "row": 402
+            "row": 410
           }
         }
       ],
@@ -1448,10 +1448,10 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     },
     "location": {
       "column": 17,
-      "row": 402
+      "row": 410
     },
     "message": "Avoid equality comparisons to `True`; use `Instance.is_active:` for truth checks",
-    "noqa_row": 402,
+    "noqa_row": 410,
     "url": "https://docs.astral.sh/ruff/rules/true-false-comparison"
   },
   {
@@ -1459,16 +1459,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 43,
-      "row": 460
+      "row": 468
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 35,
-      "row": 460
+      "row": 468
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 460,
+    "noqa_row": 468,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1476,16 +1476,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 41,
-      "row": 479
+      "row": 487
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 33,
-      "row": 479
+      "row": 487
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 479,
+    "noqa_row": 487,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1493,16 +1493,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 33,
-      "row": 497
+      "row": 505
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 25,
-      "row": 497
+      "row": 505
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 497,
+    "noqa_row": 505,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1510,16 +1510,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 35,
-      "row": 542
+      "row": 550
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 27,
-      "row": 542
+      "row": 550
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 542,
+    "noqa_row": 550,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1527,16 +1527,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 55,
-      "row": 577
+      "row": 585
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 47,
-      "row": 577
+      "row": 585
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 577,
+    "noqa_row": 585,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1544,16 +1544,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 47,
-      "row": 595
+      "row": 603
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 39,
-      "row": 595
+      "row": 603
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 595,
+    "noqa_row": 603,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1561,16 +1561,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 31,
-      "row": 609
+      "row": 617
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 23,
-      "row": 609
+      "row": 617
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 609,
+    "noqa_row": 617,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1578,16 +1578,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 42,
-      "row": 633
+      "row": 641
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 34,
-      "row": 633
+      "row": 641
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 633,
+    "noqa_row": 641,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1595,16 +1595,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 48,
-      "row": 650
+      "row": 658
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": null,
     "location": {
       "column": 40,
-      "row": 650
+      "row": 658
     },
     "message": "Undefined name `Response`",
-    "noqa_row": 650,
+    "noqa_row": 658,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -1612,7 +1612,7 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "RET504",
     "end_location": {
       "column": 23,
-      "row": 671
+      "row": 679
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py",
     "fix": {
@@ -1622,22 +1622,22 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
           "content": "return",
           "end_location": {
             "column": 18,
-            "row": 669
+            "row": 677
           },
           "location": {
             "column": 5,
-            "row": 669
+            "row": 677
           }
         },
         {
           "content": "",
           "end_location": {
             "column": 1,
-            "row": 672
+            "row": 680
           },
           "location": {
             "column": 1,
-            "row": 671
+            "row": 679
           }
         }
       ],
@@ -1645,10 +1645,10 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     },
     "location": {
       "column": 12,
-      "row": 671
+      "row": 679
     },
     "message": "Unnecessary assignment to `permissions` before `return` statement",
-    "noqa_row": 671,
+    "noqa_row": 679,
     "url": "https://docs.astral.sh/ruff/rules/unnecessary-assign"
   },
   {

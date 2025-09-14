@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 加载统计信息
 function loadStatistics() {
-    fetch('/account-classification/batches')
+    fetch('/account-classification/api/batches')
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -285,7 +285,7 @@ function loadBatches() {
     if (currentFilters.batch_type) params.append('batch_type', currentFilters.batch_type);
     if (currentFilters.status) params.append('status', currentFilters.status);
 
-    fetch(`/account-classification/batches?${params.toString()}`)
+    fetch(`/account-classification/api/batches?${params.toString()}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -294,12 +294,12 @@ function loadBatches() {
                 document.getElementById('batches-loading').style.display = 'none';
                 document.getElementById('batches-container').style.display = 'block';
             } else {
-                showAlert('danger', '加载批次列表失败: ' + data.error);
+                showAlert('加载批次列表失败: ' + data.error, 'danger');
             }
         })
         .catch(error => {
             console.error('加载批次列表出错:', error);
-            showAlert('danger', '加载批次列表出错');
+            showAlert('加载批次列表出错', 'danger');
         });
 }
 
@@ -340,8 +340,8 @@ function renderBatches(batches) {
                         </div>
                         <div class="col-md-3">
                             <small class="text-muted">
-                                总账户: ${batch.total_accounts} | 
-                                匹配: ${batch.matched_accounts} | 
+                                总账户: ${batch.total_accounts} |
+                                匹配: ${batch.matched_accounts} |
                                 失败: ${batch.failed_accounts}
                             </small>
                         </div>
@@ -362,18 +362,18 @@ function renderBatches(batches) {
 
 // 查看批次详情
 function viewBatchDetail(batchId) {
-    fetch(`/account-classification/batches/${batchId}`)
+    fetch(`/account-classification/api/batches/${batchId}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 showBatchDetail(data.batch);
             } else {
-                showAlert('danger', '加载批次详情失败: ' + data.error);
+                showAlert('加载批次详情失败: ' + data.error, 'danger');
             }
         })
         .catch(error => {
             console.error('加载批次详情出错:', error);
-            showAlert('danger', '加载批次详情出错');
+            showAlert('加载批次详情出错', 'danger');
         });
 }
 
@@ -475,7 +475,7 @@ function loadInstances() {
             if (data.success) {
                 const select = document.getElementById('instance-select');
                 select.innerHTML = '<option value="">全部分类</option>' +
-                    data.instances.map(instance => 
+                    data.instances.map(instance =>
                         `<option value="${instance.id}">${instance.name} (${instance.db_type})</option>`
                     ).join('');
             }
@@ -501,7 +501,7 @@ function executeAutoClassify() {
         batch_type: batchType
     };
 
-    showAlert('info', '正在执行自动分类，请稍候...');
+    showAlert('正在执行自动分类，请稍候...', 'info');
 
     fetch('/account-classification/auto-classify', {
         method: 'POST',
@@ -514,17 +514,17 @@ function executeAutoClassify() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showAlert('success', `自动分类完成: ${data.message}`);
+            showAlert(`自动分类完成: ${data.message}`, 'success');
             const modal = bootstrap.Modal.getInstance(document.getElementById('runClassifyModal'));
             modal.hide();
             loadBatches();
         } else {
-            showAlert('danger', `自动分类失败: ${data.error}`);
+            showAlert(`自动分类失败: ${data.error}`, 'danger');
         }
     })
     .catch(error => {
         console.error('执行自动分类出错:', error);
-        showAlert('danger', '执行自动分类出错');
+        showAlert('执行自动分类出错', 'danger');
     });
 }
 
