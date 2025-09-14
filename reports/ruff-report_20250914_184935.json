@@ -1,11 +1,11 @@
-错误: warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:249: B608
-warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:415: B608
-warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:591: B608
-warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:739: B608
-warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:336: B608
+错误: warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:336: B608
 warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:535: B608
 warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:857: B608
 warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:1007: B608
+warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:249: B608
+warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:415: B608
+warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:591: B608
+warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:739: B608
 
 
 标准输出:

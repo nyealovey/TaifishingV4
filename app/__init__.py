@@ -346,6 +346,7 @@ def register_blueprints(app: Flask) -> None:
     from app.routes.dashboard import dashboard_bp
     from app.routes.database_types import database_types_bp
     from app.routes.health import health_bp
+    from app.routes.instance_accounts import instance_accounts_bp
     from app.routes.instances import instances_bp
     from app.routes.logs import logs_bp
     from app.routes.main import main_bp
@@ -355,6 +356,7 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(instances_bp, url_prefix="/instances")
+    app.register_blueprint(instance_accounts_bp, url_prefix="/instance_accounts")
     app.register_blueprint(credentials_bp, url_prefix="/credentials")
 
     # 新的账户相关蓝图

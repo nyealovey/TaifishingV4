@@ -43,6 +43,8 @@
 - [部署指南](guides/README_DEPLOYMENT.md) - 生产环境部署说明
 - [UV使用指南](guides/UV_USAGE_GUIDE.md) - Python包管理工具使用
 - [Oracle环境配置](guides/ORACLE_SETUP.md) - Oracle环境搭建指南
+- [优化同步模型使用指南](guides/optimized_sync_models_guide.md) - 新同步模型使用说明
+- [数据库迁移指南](guides/migration_guide.md) - 从旧模型迁移到新模型
 
 ### 📝 项目文档 (project/)
 - [需求文档](project/需求.md) - 项目需求规格说明

@@ -494,6 +494,98 @@
         </div>
     </div>
 </div>
+
+<!-- 优化后的账户列表 - 横跨整个宽度 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users me-2"></i>优化账户列表
+                    <div class="btn-group ms-3">
+                        <button class="btn btn-sm btn-outline-primary" onclick="refreshOptimizedAccounts()">
+                            <i class="fas fa-sync"></i> 刷新
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleDeletedAccounts()">
+                            <i class="fas fa-eye"></i> 显示已删除
+                        </button>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-info dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-filter"></i> 数据库类型
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="filterByDbType('all')">全部</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterByDbType('mysql')">MySQL</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterByDbType('postgresql')">PostgreSQL</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterByDbType('sqlserver')">SQL Server</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterByDbType('oracle')">Oracle</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped" id="optimizedAccountsTable">
+                        <thead>
+                            <tr>
+                                <th>用户名</th>
+                                <th>数据库类型</th>
+                                <th>超级用户</th>
+                                <th>最后同步</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="optimizedAccountsTableBody">
+                            <!-- 动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="optimizedAccountsLoading" class="text-center py-4" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2 text-muted">正在加载账户列表...</p>
+                </div>
+                <div id="optimizedAccountsEmpty" class="text-center py-4" style="display: none;">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">暂无账户信息</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 权限查看模态框 -->
+<div class="modal fade" id="permissionsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">权限详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="permissionsContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 变更历史模态框 -->
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">变更历史</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="historyContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -727,6 +819,325 @@ function showAlert(type, message) {
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);
+}
+
+// 优化账户列表相关功能
+let currentDbType = 'all';
+let showDeleted = false;
+
+// 页面加载时自动加载优化账户列表
+document.addEventListener('DOMContentLoaded', function() {
+    loadOptimizedAccounts();
+});
+
+function loadOptimizedAccounts() {
+    const loadingDiv = document.getElementById('optimizedAccountsLoading');
+    const emptyDiv = document.getElementById('optimizedAccountsEmpty');
+    const tableBody = document.getElementById('optimizedAccountsTableBody');
+    
+    // 显示加载状态
+    loadingDiv.style.display = 'block';
+    emptyDiv.style.display = 'none';
+    tableBody.innerHTML = '';
+    
+    // 构建API URL
+    let apiUrl = `/instance_accounts/{{ instance.id }}/accounts`;
+    const params = new URLSearchParams();
+    if (currentDbType !== 'all') {
+        params.append('db_type', currentDbType);
+    }
+    if (showDeleted) {
+        params.append('include_deleted', 'true');
+    }
+    if (params.toString()) {
+        apiUrl += '?' + params.toString();
+    }
+    
+    // 获取CSRF token
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    
+    fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        loadingDiv.style.display = 'none';
+        
+        if (data.success && data.data.length > 0) {
+            renderOptimizedAccountsTable(data.data);
+        } else {
+            emptyDiv.style.display = 'block';
+        }
+    })
+    .catch(error => {
+        loadingDiv.style.display = 'none';
+        console.error('加载优化账户列表失败:', error);
+        showAlert('danger', '加载账户列表失败: ' + error.message);
+    });
+}
+
+function renderOptimizedAccountsTable(accounts) {
+    const tableBody = document.getElementById('optimizedAccountsTableBody');
+    tableBody.innerHTML = '';
+    
+    accounts.forEach(account => {
+        const row = document.createElement('tr');
+        
+        // 状态徽章
+        let statusBadge = '';
+        if (account.is_deleted) {
+            statusBadge = `<span class="badge bg-danger">已删除</span>`;
+        } else {
+            statusBadge = `<span class="badge bg-success">活跃</span>`;
+        }
+        
+        // 超级用户徽章
+        const superuserBadge = account.is_superuser ? 
+            `<span class="badge bg-warning">超级用户</span>` : 
+            `<span class="text-muted">普通用户</span>`;
+        
+        // 数据库类型徽章
+        const dbTypeBadge = getDbTypeBadge(account.db_type);
+        
+        // 最后同步时间
+        const lastSyncTime = account.last_sync_time ? 
+            new Date(account.last_sync_time).toLocaleString() : 
+            '未知';
+        
+        row.innerHTML = `
+            <td>
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-user text-primary me-2"></i>
+                    <strong>${account.username}</strong>
+                </div>
+            </td>
+            <td>${dbTypeBadge}</td>
+            <td>${superuserBadge}</td>
+            <td><small class="text-muted">${lastSyncTime}</small></td>
+            <td>${statusBadge}</td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="viewOptimizedAccountPermissions('${account.username}', '${account.db_type}')">
+                        <i class="fas fa-eye"></i> 权限
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="viewOptimizedAccountHistory('${account.username}', '${account.db_type}')">
+                        <i class="fas fa-history"></i> 历史
+                    </button>
+                    ${!account.is_deleted ? `
+                    <button class="btn btn-outline-danger" onclick="deleteOptimizedAccount('${account.username}', '${account.db_type}')">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                    ` : ''}
+                </div>
+            </td>
+        `;
+        
+        tableBody.appendChild(row);
+    });
+}
+
+function getDbTypeBadge(dbType) {
+    const badges = {
+        'mysql': '<span class="badge bg-success">MySQL</span>',
+        'postgresql': '<span class="badge bg-primary">PostgreSQL</span>',
+        'sqlserver': '<span class="badge bg-warning">SQL Server</span>',
+        'oracle': '<span class="badge bg-info">Oracle</span>'
+    };
+    return badges[dbType] || `<span class="badge bg-secondary">${dbType}</span>`;
+}
+
+function refreshOptimizedAccounts() {
+    loadOptimizedAccounts();
+}
+
+function toggleDeletedAccounts() {
+    showDeleted = !showDeleted;
+    const button = event.target;
+    button.innerHTML = showDeleted ? 
+        '<i class="fas fa-eye-slash"></i> 隐藏已删除' : 
+        '<i class="fas fa-eye"></i> 显示已删除';
+    loadOptimizedAccounts();
+}
+
+function filterByDbType(dbType) {
+    currentDbType = dbType;
+    loadOptimizedAccounts();
+}
+
+function viewOptimizedAccountPermissions(username, dbType) {
+    const loadingDiv = document.getElementById('permissionsModal').querySelector('.modal-body');
+    loadingDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p class="mt-2">加载中...</p></div>';
+    
+    // 显示模态框
+    new bootstrap.Modal(document.getElementById('permissionsModal')).show();
+    
+    // 获取CSRF token
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    
+    fetch(`/instance_accounts/{{ instance.id }}/accounts/${username}/permissions?db_type=${dbType}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayPermissions(data.data);
+        } else {
+            loadingDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+        }
+    })
+    .catch(error => {
+        loadingDiv.innerHTML = `<div class="alert alert-danger">加载权限信息失败: ${error.message}</div>`;
+    });
+}
+
+function viewOptimizedAccountHistory(username, dbType) {
+    const loadingDiv = document.getElementById('historyModal').querySelector('.modal-body');
+    loadingDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p class="mt-2">加载中...</p></div>';
+    
+    // 显示模态框
+    new bootstrap.Modal(document.getElementById('historyModal')).show();
+    
+    // 获取CSRF token
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    
+    fetch(`/instance_accounts/{{ instance.id }}/accounts/${username}/history?db_type=${dbType}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayHistory(data.data);
+        } else {
+            loadingDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+        }
+    })
+    .catch(error => {
+        loadingDiv.innerHTML = `<div class="alert alert-danger">加载历史信息失败: ${error.message}</div>`;
+    });
+}
+
+function displayPermissions(accountData) {
+    const contentDiv = document.getElementById('permissionsContent');
+    
+    let html = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>基本信息</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>用户名:</strong></td><td>${accountData.username}</td></tr>
+                    <tr><td><strong>数据库类型:</strong></td><td>${accountData.db_type.toUpperCase()}</td></tr>
+                    <tr><td><strong>超级用户:</strong></td><td>${accountData.is_superuser ? '是' : '否'}</td></tr>
+                    <tr><td><strong>状态:</strong></td><td>${accountData.is_deleted ? '已删除' : '活跃'}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6>时间信息</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>最后同步:</strong></td><td>${accountData.last_sync_time ? new Date(accountData.last_sync_time).toLocaleString() : '未知'}</td></tr>
+                    <tr><td><strong>最后变更:</strong></td><td>${accountData.last_change_time ? new Date(accountData.last_change_time).toLocaleString() : '未知'}</td></tr>
+                </table>
+            </div>
+        </div>
+        <hr>
+        <h6>权限详情</h6>
+        <pre class="bg-light p-3 rounded">${JSON.stringify(accountData.permissions, null, 2)}</pre>
+    `;
+    
+    contentDiv.innerHTML = html;
+}
+
+function displayHistory(historyData) {
+    const contentDiv = document.getElementById('historyContent');
+    
+    if (historyData.length === 0) {
+        contentDiv.innerHTML = '<div class="text-center text-muted">暂无变更历史</div>';
+        return;
+    }
+    
+    let html = '';
+    historyData.forEach(change => {
+        const changeTime = new Date(change.change_time).toLocaleString();
+        const changeTypeBadge = getChangeTypeBadge(change.change_type);
+        
+        html += `
+            <div class="card mb-2">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-title">${changeTypeBadge} - ${changeTime}</h6>
+                            <p class="card-text text-muted">${change.message || '无描述'}</p>
+                        </div>
+                        <span class="badge bg-${change.status === 'success' ? 'success' : 'danger'}">${change.status}</span>
+                    </div>
+                    ${change.privilege_diff ? `
+                        <div class="mt-2">
+                            <h6 class="text-primary">权限变更:</h6>
+                            <pre class="bg-light p-2 rounded small">${JSON.stringify(change.privilege_diff, null, 2)}</pre>
+                        </div>
+                    ` : ''}
+                    ${change.other_diff ? `
+                        <div class="mt-2">
+                            <h6 class="text-secondary">其他变更:</h6>
+                            <pre class="bg-light p-2 rounded small">${JSON.stringify(change.other_diff, null, 2)}</pre>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    contentDiv.innerHTML = html;
+}
+
+function getChangeTypeBadge(changeType) {
+    const badges = {
+        'add': '<span class="badge bg-success">新增</span>',
+        'modify_privilege': '<span class="badge bg-warning">权限修改</span>',
+        'modify_other': '<span class="badge bg-info">其他修改</span>',
+        'delete': '<span class="badge bg-danger">删除</span>'
+    };
+    return badges[changeType] || `<span class="badge bg-secondary">${changeType}</span>`;
+}
+
+function deleteOptimizedAccount(username, dbType) {
+    if (!confirm(`确定要删除账户 ${username} 吗？此操作不可恢复。`)) {
+        return;
+    }
+    
+    // 获取CSRF token
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    
+    fetch(`/instance_accounts/{{ instance.id }}/accounts/${username}/delete?db_type=${dbType}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', '账户已标记为删除');
+            loadOptimizedAccounts(); // 刷新列表
+        } else {
+            showAlert('danger', '删除失败: ' + data.error);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', '删除失败: ' + error.message);
+    });
 }
 </script>
 {% endblock %}
