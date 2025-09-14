@@ -112,15 +112,20 @@ function renderPermissionsByType(permissions, dbType) {
  * @returns {string} 渲染的HTML
  */
 function renderMySQLPermissions(permissions) {
+    // 检查权限数据是否存在
+    if (!permissions || typeof permissions !== 'object') {
+        return '<p class="text-muted">无权限信息</p>';
+    }
+    
     return `
         <div class="mb-3">
             <h6><i class="fas fa-shield-alt text-primary me-2"></i>全局权限</h6>
-            ${permissions.global_privileges && permissions.global_privileges.length > 0 ? `
+            ${permissions.global_privileges && Array.isArray(permissions.global_privileges) && permissions.global_privileges.length > 0 ? `
                 <div class="row">
                     ${permissions.global_privileges.map(perm => `
                         <div class="col-md-6 mb-2">
                             <span class="badge bg-primary me-2">
-                                <i class="fas fa-shield-alt me-1"></i>${perm.privilege}
+                                <i class="fas fa-shield-alt me-1"></i>${perm.privilege || perm}
                             </span>
                         </div>
                     `).join('')}
@@ -129,7 +134,7 @@ function renderMySQLPermissions(permissions) {
         </div>
         <div class="mb-3">
             <h6><i class="fas fa-database text-success me-2"></i>数据库权限</h6>
-            ${permissions.database_privileges && permissions.database_privileges.length > 0 ? `
+            ${permissions.database_privileges && Array.isArray(permissions.database_privileges) && permissions.database_privileges.length > 0 ? `
                 <div class="table-responsive">
                     <table class="table table-sm">
                         <thead>
@@ -143,9 +148,9 @@ function renderMySQLPermissions(permissions) {
                                 <tr>
                                     <td>${db.database}</td>
                                     <td>
-                                        ${db.privileges.map(priv => `
+                                        ${Array.isArray(db.privileges) ? db.privileges.map(priv => `
                                             <span class="badge bg-success me-1">${priv}</span>
-                                        `).join('')}
+                                        `).join('') : '<span class="text-muted">无权限</span>'}
                                     </td>
                                 </tr>
                             `).join('')}
@@ -153,6 +158,35 @@ function renderMySQLPermissions(permissions) {
                     </table>
                 </div>
             ` : '<p class="text-muted">无数据库权限</p>'}
+        </div>
+        <div class="mb-3">
+            <h6><i class="fas fa-table text-info me-2"></i>表权限</h6>
+            ${permissions.table_privileges && Array.isArray(permissions.table_privileges) && permissions.table_privileges.length > 0 ? `
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>数据库</th>
+                                <th>表</th>
+                                <th>权限</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${permissions.table_privileges.map(table => `
+                                <tr>
+                                    <td>${table.database}</td>
+                                    <td>${table.table}</td>
+                                    <td>
+                                        ${Array.isArray(table.privileges) ? table.privileges.map(priv => `
+                                            <span class="badge bg-info me-1">${priv}</span>
+                                        `).join('') : '<span class="text-muted">无权限</span>'}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            ` : '<p class="text-muted">无表权限</p>'}
         </div>
     `;
 }
@@ -163,10 +197,15 @@ function renderMySQLPermissions(permissions) {
  * @returns {string} 渲染的HTML
  */
 function renderPostgreSQLPermissions(permissions) {
+    // 检查权限数据是否存在
+    if (!permissions || typeof permissions !== 'object') {
+        return '<p class="text-muted">无权限信息</p>';
+    }
+    
     return `
         <div class="mb-3">
             <h6><i class="fas fa-user-shield text-primary me-2"></i>角色属性</h6>
-            ${permissions.role_attributes && permissions.role_attributes.length > 0 ? `
+            ${permissions.role_attributes && Array.isArray(permissions.role_attributes) && permissions.role_attributes.length > 0 ? `
                 <div class="row">
                     ${permissions.role_attributes.map(attr => `
                         <div class="col-md-6 mb-2">
@@ -180,7 +219,7 @@ function renderPostgreSQLPermissions(permissions) {
         </div>
         <div class="mb-3">
             <h6><i class="fas fa-database text-success me-2"></i>数据库权限</h6>
-            ${permissions.database_privileges && permissions.database_privileges.length > 0 ? `
+            ${permissions.database_privileges && Array.isArray(permissions.database_privileges) && permissions.database_privileges.length > 0 ? `
                 <div class="table-responsive">
                     <table class="table table-sm">
                         <thead>
@@ -194,9 +233,9 @@ function renderPostgreSQLPermissions(permissions) {
                                 <tr>
                                     <td>${db.database}</td>
                                     <td>
-                                        ${db.privileges.map(priv => `
+                                        ${Array.isArray(db.privileges) ? db.privileges.map(priv => `
                                             <span class="badge bg-success me-1">${priv}</span>
-                                        `).join('')}
+                                        `).join('') : '<span class="text-muted">无权限</span>'}
                                     </td>
                                 </tr>
                             `).join('')}
@@ -207,7 +246,7 @@ function renderPostgreSQLPermissions(permissions) {
         </div>
         <div class="mb-3">
             <h6><i class="fas fa-hdd text-info me-2"></i>表空间权限</h6>
-            ${permissions.tablespace_privileges && permissions.tablespace_privileges.length > 0 ? `
+            ${permissions.tablespace_privileges && Array.isArray(permissions.tablespace_privileges) && permissions.tablespace_privileges.length > 0 ? `
                 <div class="row">
                     ${permissions.tablespace_privileges.map(priv => `
                         <div class="col-md-6 mb-2">
@@ -228,10 +267,15 @@ function renderPostgreSQLPermissions(permissions) {
  * @returns {string} 渲染的HTML
  */
 function renderOraclePermissions(permissions) {
+    // 检查权限数据是否存在
+    if (!permissions || typeof permissions !== 'object') {
+        return '<p class="text-muted">无权限信息</p>';
+    }
+    
     return `
         <div class="mb-3">
             <h6><i class="fas fa-crown text-primary me-2"></i>角色</h6>
-            ${permissions.roles && permissions.roles.length > 0 ? `
+            ${permissions.roles && Array.isArray(permissions.roles) && permissions.roles.length > 0 ? `
                 <div class="row">
                     ${permissions.roles.map(role => `
                         <div class="col-md-6 mb-2">
@@ -245,7 +289,7 @@ function renderOraclePermissions(permissions) {
         </div>
         <div class="mb-3">
             <h6><i class="fas fa-shield-alt text-success me-2"></i>系统权限</h6>
-            ${permissions.system_privileges && permissions.system_privileges.length > 0 ? `
+            ${permissions.system_privileges && Array.isArray(permissions.system_privileges) && permissions.system_privileges.length > 0 ? `
                 <div class="row">
                     ${permissions.system_privileges.map(priv => `
                         <div class="col-md-6 mb-2">
@@ -259,7 +303,7 @@ function renderOraclePermissions(permissions) {
         </div>
         <div class="mb-3">
             <h6><i class="fas fa-hdd text-info me-2"></i>表空间权限</h6>
-            ${permissions.tablespace_privileges && permissions.tablespace_privileges.length > 0 ? `
+            ${permissions.tablespace_privileges && Array.isArray(permissions.tablespace_privileges) && permissions.tablespace_privileges.length > 0 ? `
                 <div class="row">
                     ${permissions.tablespace_privileges.map(priv => `
                         <div class="col-md-6 mb-2">
@@ -273,7 +317,7 @@ function renderOraclePermissions(permissions) {
         </div>
         <div class="mb-3">
             <h6><i class="fas fa-chart-pie text-warning me-2"></i>表空间配额</h6>
-            ${permissions.tablespace_quotas && permissions.tablespace_quotas.length > 0 ? `
+            ${permissions.tablespace_quotas && Array.isArray(permissions.tablespace_quotas) && permissions.tablespace_quotas.length > 0 ? `
                 <div class="row">
                     ${permissions.tablespace_quotas.map(quota => `
                         <div class="col-md-6 mb-2">
@@ -294,10 +338,15 @@ function renderOraclePermissions(permissions) {
  * @returns {string} 渲染的HTML
  */
 function renderSQLServerPermissions(permissions) {
+    // 检查权限数据是否存在
+    if (!permissions || typeof permissions !== 'object') {
+        return '<p class="text-muted">无权限信息</p>';
+    }
+    
     return `
         <div class="mb-3">
             <h6><i class="fas fa-crown text-primary me-2"></i>服务器角色</h6>
-            ${permissions.server_roles && permissions.server_roles.length > 0 ? `
+            ${permissions.server_roles && Array.isArray(permissions.server_roles) && permissions.server_roles.length > 0 ? `
                 <div class="row">
                     ${permissions.server_roles.map(role => `
                         <div class="col-md-6 mb-2">
@@ -311,7 +360,7 @@ function renderSQLServerPermissions(permissions) {
         </div>
         <div class="mb-3">
             <h6><i class="fas fa-database text-info me-2"></i>数据库角色</h6>
-            ${permissions.database_roles && Object.keys(permissions.database_roles).length > 0 ? `
+            ${permissions.database_roles && typeof permissions.database_roles === 'object' && Object.keys(permissions.database_roles).length > 0 ? `
                 <div class="table-responsive">
                     <table class="table table-sm">
                         <thead>
@@ -325,9 +374,9 @@ function renderSQLServerPermissions(permissions) {
                                 <tr>
                                     <td>${dbName}</td>
                                     <td>
-                                        ${roles.map(role => `
+                                        ${Array.isArray(roles) ? roles.map(role => `
                                             <span class="badge bg-info me-1">${role}</span>
-                                        `).join('')}
+                                        `).join('') : '<span class="text-muted">无角色</span>'}
                                     </td>
                                 </tr>
                             `).join('')}
@@ -338,7 +387,7 @@ function renderSQLServerPermissions(permissions) {
         </div>
         <div class="mb-3">
             <h6><i class="fas fa-shield-alt text-success me-2"></i>服务器权限</h6>
-            ${permissions.server_permissions && permissions.server_permissions.length > 0 ? `
+            ${permissions.server_permissions && Array.isArray(permissions.server_permissions) && permissions.server_permissions.length > 0 ? `
                 <div class="row">
                     ${permissions.server_permissions.map(perm => `
                         <div class="col-md-6 mb-2">
@@ -352,7 +401,7 @@ function renderSQLServerPermissions(permissions) {
         </div>
         <div class="mb-3">
             <h6><i class="fas fa-database text-warning me-2"></i>数据库权限</h6>
-            ${permissions.database_privileges && Object.keys(permissions.database_privileges).length > 0 ? `
+            ${permissions.database_privileges && typeof permissions.database_privileges === 'object' && Object.keys(permissions.database_privileges).length > 0 ? `
                 <div class="table-responsive">
                     <table class="table table-sm">
                         <thead>
@@ -366,9 +415,9 @@ function renderSQLServerPermissions(permissions) {
                                 <tr>
                                     <td>${dbName}</td>
                                     <td>
-                                        ${perms.map(perm => `
+                                        ${Array.isArray(perms) ? perms.map(perm => `
                                             <span class="badge bg-warning me-1">${perm}</span>
-                                        `).join('')}
+                                        `).join('') : '<span class="text-muted">无权限</span>'}
                                     </td>
                                 </tr>
                             `).join('')}
@@ -387,6 +436,11 @@ function renderSQLServerPermissions(permissions) {
  * @returns {string} 渲染的HTML
  */
 function renderDefaultPermissions(permissions, dbType) {
+    // 检查权限数据是否存在
+    if (!permissions || typeof permissions !== 'object') {
+        return '<p class="text-muted">无权限信息</p>';
+    }
+    
     return `
         <div class="alert alert-warning">
             <i class="fas fa-exclamation-triangle me-2"></i>
