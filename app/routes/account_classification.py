@@ -686,6 +686,7 @@ def api_get_batch_matches(batch_id: str) -> "Response":
         from app.models.account_classification import AccountClassificationAssignment, AccountClassification, ClassificationRule
         from app.models.account import Account
         from app.models.instance import Instance
+        import json
         
         # 获取该批次的所有匹配记录
         assignments = db.session.query(
@@ -703,15 +704,66 @@ def api_get_batch_matches(batch_id: str) -> "Response":
         ).join(
             ClassificationRule, AccountClassification.id == ClassificationRule.classification_id
         ).filter(
-            AccountClassificationAssignment.batch_id == batch_id
+            AccountClassificationAssignment.batch_id == batch_id,
+            AccountClassificationAssignment.is_active == True  # 只显示正确匹配的记录
         ).all()
 
         matches = []
         for assignment, account, instance, classification, rule in assignments:
+            # 解析账户权限信息
+            account_permissions = []
+            if account.permissions:
+                try:
+                    permissions_data = json.loads(account.permissions)
+                    if isinstance(permissions_data, dict):
+                        for category, perms in permissions_data.items():
+                            if isinstance(perms, list):
+                                for perm in perms:
+                                    if isinstance(perm, dict) and 'name' in perm:
+                                        account_permissions.append({
+                                            "category": category,
+                                            "name": perm['name'],
+                                            "description": perm.get('description', ''),
+                                            "granted": perm.get('granted', False)
+                                        })
+                                    elif isinstance(perm, str):
+                                        account_permissions.append({
+                                            "category": category,
+                                            "name": perm,
+                                            "description": "",
+                                            "granted": True
+                                        })
+                except (json.JSONDecodeError, TypeError):
+                    account_permissions = []
+
+            # 解析规则表达式，获取匹配的权限
+            matched_permissions = []
+            try:
+                rule_expression = json.loads(rule.rule_expression)
+                if isinstance(rule_expression, dict) and 'permissions' in rule_expression:
+                    rule_perms = rule_expression['permissions']
+                    if isinstance(rule_perms, list):
+                        for perm in rule_perms:
+                            if isinstance(perm, dict) and 'name' in perm:
+                                matched_permissions.append({
+                                    "name": perm['name'],
+                                    "description": perm.get('description', ''),
+                                    "category": perm.get('category', '')
+                                })
+                            elif isinstance(perm, str):
+                                matched_permissions.append({
+                                    "name": perm,
+                                    "description": "",
+                                    "category": ""
+                                })
+            except (json.JSONDecodeError, TypeError):
+                matched_permissions = []
+
             matches.append({
                 "assignment_id": assignment.id,
                 "account_id": account.id,
                 "account_name": account.username,
+                "account_host": account.host,
                 "instance_id": instance.id,
                 "instance_name": instance.name,
                 "instance_type": instance.db_type,
@@ -721,7 +773,11 @@ def api_get_batch_matches(batch_id: str) -> "Response":
                 "rule_name": rule.rule_name,
                 "rule_description": rule.rule_expression,
                 "matched_at": assignment.created_at.isoformat() if assignment.created_at else None,
-                "confidence": getattr(assignment, 'confidence_score', None)
+                "confidence": getattr(assignment, 'confidence_score', None),
+                "account_permissions": account_permissions,
+                "matched_permissions": matched_permissions,
+                "is_superuser": account.is_superuser,
+                "can_grant": account.can_grant
             })
 
         return jsonify({"success": True, "matches": matches})

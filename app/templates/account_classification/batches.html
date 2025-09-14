@@ -169,12 +169,12 @@
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>账户名</th>
+                                    <th>账户信息</th>
                                     <th>实例</th>
-                                    <th>数据库类型</th>
                                     <th>分类</th>
                                     <th>匹配规则</th>
-                                    <th>规则表达式</th>
+                                    <th>命中权限</th>
+                                    <th>账户权限</th>
                                     <th>匹配时间</th>
                                 </tr>
                             </thead>
@@ -455,29 +455,63 @@ function displayMatches(batchId, matches) {
     tbody.innerHTML = matches.map(match => `
         <tr>
             <td>
-                <strong>${match.account_name}</strong>
-                <br><small class="text-muted">ID: ${match.account_id}</small>
+                <div>
+                    <strong>${match.account_name}</strong>
+                    ${match.account_host ? `@${match.account_host}` : ''}
+                    <br><small class="text-muted">ID: ${match.account_id}</small>
+                    ${match.is_superuser ? '<br><span class="badge bg-danger">超级用户</span>' : ''}
+                    ${match.can_grant ? '<br><span class="badge bg-warning">可授权</span>' : ''}
+                </div>
             </td>
             <td>
-                ${match.instance_name}
-                <br><small class="text-muted">ID: ${match.instance_id}</small>
+                <div>
+                    <strong>${match.instance_name}</strong>
+                    <br><span class="badge bg-info">${match.instance_type}</span>
+                    <br><small class="text-muted">ID: ${match.instance_id}</small>
+                </div>
             </td>
             <td>
-                <span class="badge bg-info">${match.instance_type}</span>
+                <div>
+                    <strong>${match.classification_name}</strong>
+                    <br><small class="text-muted">ID: ${match.classification_id}</small>
+                </div>
             </td>
             <td>
-                <strong>${match.classification_name}</strong>
-                <br><small class="text-muted">ID: ${match.classification_id}</small>
+                <div>
+                    <strong>${match.rule_name}</strong>
+                    <br><small class="text-muted">ID: ${match.rule_id}</small>
+                </div>
             </td>
             <td>
-                <strong>${match.rule_name}</strong>
-                <br><small class="text-muted">ID: ${match.rule_id}</small>
+                <div style="max-height: 150px; overflow-y: auto;">
+                    ${match.matched_permissions && match.matched_permissions.length > 0 
+                        ? match.matched_permissions.map(perm => `
+                            <div class="mb-1">
+                                <span class="badge bg-success">${perm.name}</span>
+                                ${perm.category ? `<br><small class="text-muted">${perm.category}</small>` : ''}
+                                ${perm.description ? `<br><small class="text-muted">${perm.description}</small>` : ''}
+                            </div>
+                        `).join('')
+                        : '<small class="text-muted">无权限信息</small>'
+                    }
+                </div>
             </td>
             <td>
-                <small class="text-muted" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;" title="${match.rule_description || '无表达式'}">${match.rule_description || '无表达式'}</small>
+                <div style="max-height: 150px; overflow-y: auto;">
+                    ${match.account_permissions && match.account_permissions.length > 0 
+                        ? match.account_permissions.map(perm => `
+                            <div class="mb-1">
+                                <span class="badge ${perm.granted ? 'bg-primary' : 'bg-secondary'}">${perm.name}</span>
+                                ${perm.category ? `<br><small class="text-muted">${perm.category}</small>` : ''}
+                                ${perm.description ? `<br><small class="text-muted">${perm.description}</small>` : ''}
+                            </div>
+                        `).join('')
+                        : '<small class="text-muted">无权限信息</small>'
+                    }
+                </div>
             </td>
             <td>
-                ${match.matched_at ? new Date(match.matched_at).toLocaleString() : '-'}
+                <small>${match.matched_at ? new Date(match.matched_at).toLocaleString() : '-'}</small>
             </td>
         </tr>
     `).join('');
