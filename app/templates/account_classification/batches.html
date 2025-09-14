@@ -31,18 +31,6 @@
         padding: 1rem;
         margin-bottom: 1.5rem;
     }
-    .success-rate {
-        font-weight: bold;
-    }
-    .success-rate.high {
-        color: #28a745;
-    }
-    .success-rate.medium {
-        color: #ffc107;
-    }
-    .success-rate.low {
-        color: #dc3545;
-    }
 </style>
 {% endblock %}
 
@@ -249,8 +237,6 @@ function renderBatches(batches) {
     const html = batches.map(batch => {
         const statusClass = getStatusClass(batch.status);
         const statusText = getStatusText(batch.status);
-        const successRate = batch.success_rate || 0;
-        const successRateClass = getSuccessRateClass(successRate);
         const startedAt = new Date(batch.started_at).toLocaleString();
         const completedAt = batch.completed_at ? new Date(batch.completed_at).toLocaleString() : '-';
         const duration = batch.duration ? Math.round(batch.duration) + '秒' : '-';
@@ -268,8 +254,8 @@ function renderBatches(batches) {
                         </div>
                         <div class="col-md-2">
                             <div class="text-center">
-                                <div class="success-rate ${successRateClass}">${successRate}%</div>
-                                <small class="text-muted">成功率</small>
+                                <div class="text-muted">${batch.matched_accounts}/${batch.total_accounts}</div>
+                                <small class="text-muted">匹配/总数</small>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -324,8 +310,6 @@ function viewBatchDetail(batchId) {
 // 显示批次详情
 function showBatchDetail(batch) {
     const content = document.getElementById('batch-detail-content');
-    const successRate = batch.success_rate || 0;
-    const successRateClass = getSuccessRateClass(successRate);
     const duration = batch.duration ? Math.round(batch.duration) + '秒' : '-';
     const batchDetails = batch.batch_details ? JSON.parse(batch.batch_details) : {};
 
@@ -373,7 +357,7 @@ function showBatchDetail(batch) {
                 <strong>活跃规则:</strong> ${batch.active_rules}
             </div>
             <div class="col-md-4">
-                <strong>成功率:</strong> <span class="success-rate ${successRateClass}">${successRate}%</span>
+                <strong>匹配情况:</strong> <span class="text-muted">${batch.matched_accounts}/${batch.total_accounts}</span>
             </div>
         </div>
         <div class="row mb-3">
@@ -570,11 +554,6 @@ function getBatchTypeText(type) {
     return typeMap[type] || type;
 }
 
-function getSuccessRateClass(rate) {
-    if (rate >= 80) return 'high';
-    if (rate >= 50) return 'medium';
-    return 'low';
-}
 
 // 获取CSRF令牌
 function getCSRFToken() {
