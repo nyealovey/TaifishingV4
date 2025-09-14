@@ -1396,14 +1396,16 @@ def get_account_permissions(instance_id: int, account_id: int) -> dict[str, Any]
     account = Account.query.filter_by(id=account_id, instance_id=instance_id).first_or_404()
 
     try:
-        from app.services.database_service import DatabaseService
-
-        db_service = DatabaseService()
-
-        # 获取账户权限
-        permissions = db_service.get_account_permissions(instance, account)
-        log_info(f"DEBUG API: 获取到的权限数据: {permissions}", module="instances")
-        log_info(f"DEBUG API: 权限数据类型: {type(permissions)}", module="instances")
+        # 直接从本地数据库获取权限信息
+        permissions = None
+        if account.permissions:
+            import json
+            try:
+                permissions = json.loads(account.permissions)
+            except json.JSONDecodeError:
+                permissions = {"error": "权限数据格式错误"}
+        else:
+            permissions = {"error": "无权限信息"}
 
         response = {
             "success": True,
@@ -1416,7 +1418,6 @@ def get_account_permissions(instance_id: int, account_id: int) -> dict[str, Any]
             },
             "permissions": permissions,
         }
-        log_info(f"DEBUG API: 完整响应: {response}", module="instances")
 
         return jsonify(response)
 
