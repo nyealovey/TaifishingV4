@@ -49,7 +49,7 @@ function viewAccountPermissions(accountId, options = {}) {
         if (data.success) {
             // 调用权限模态框显示
             if (window.showPermissionsModal) {
-                window.showPermissionsModal(data.permissions.permissions, data.account);
+                window.showPermissionsModal(data.permissions, data.account);
             } else {
                 console.error('showPermissionsModal 函数未定义');
             }
