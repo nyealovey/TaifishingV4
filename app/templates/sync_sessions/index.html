@@ -337,12 +337,14 @@ function showSessionDetail(session) {
         const statusText = getStatusText(record.status);
         const duration = record.started_at && record.completed_at ?
             Math.round((new Date(record.completed_at) - new Date(record.started_at)) / 1000) + '秒' : '-';
+        const startedAt = formatChinaTime(record.started_at);
+        const completedAt = record.completed_at ? formatChinaTime(record.completed_at) : '-';
 
         return `
             <div class="card mb-2">
                 <div class="card-body">
                     <div class="row align-items-center">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <h6 class="mb-1">${record.instance_name}</h6>
                             <small class="text-muted">ID: ${record.instance_id}</small>
                         </div>
@@ -357,10 +359,12 @@ function showSessionDetail(session) {
                                 删除: ${record.accounts_deleted}
                             </small>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <small class="text-muted">
-                                耗时: ${duration}
-                                ${record.error_message ? `<br><span class="text-danger">${record.error_message}</span>` : ''}
+                                <div>开始: ${startedAt}</div>
+                                <div>完成: ${completedAt}</div>
+                                <div>耗时: ${duration}</div>
+                                ${record.error_message ? `<div class="text-danger">${record.error_message}</div>` : ''}
                             </small>
                         </div>
                     </div>
