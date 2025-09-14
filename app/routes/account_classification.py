@@ -700,23 +700,25 @@ def api_get_batch_matches(batch_id: str) -> "Response":
             AccountClassificationAssignment,
             Account,
             Instance,
-            AccountClassification,
-            ClassificationRule
+            AccountClassification
         ).join(
             Account, AccountClassificationAssignment.account_id == Account.id
         ).join(
             Instance, Account.instance_id == Instance.id
         ).join(
             AccountClassification, AccountClassificationAssignment.classification_id == AccountClassification.id
-        ).join(
-            ClassificationRule, AccountClassification.id == ClassificationRule.classification_id
         ).filter(
             AccountClassificationAssignment.batch_id == batch_id,
             AccountClassificationAssignment.is_active == True  # 只显示正确匹配的记录
         ).all()
 
         matches = []
-        for assignment, account, instance, classification, rule in assignments:
+        for assignment, account, instance, classification in assignments:
+            # 获取该分类的第一个规则（用于显示）
+            rule = ClassificationRule.query.filter_by(
+                classification_id=classification.id,
+                is_active=True
+            ).first()
             # 解析账户权限信息
             account_permissions = []
             if account.permissions:
@@ -745,26 +747,27 @@ def api_get_batch_matches(batch_id: str) -> "Response":
 
             # 解析规则表达式，获取匹配的权限
             matched_permissions = []
-            try:
-                rule_expression = json.loads(rule.rule_expression)
-                if isinstance(rule_expression, dict) and 'permissions' in rule_expression:
-                    rule_perms = rule_expression['permissions']
-                    if isinstance(rule_perms, list):
-                        for perm in rule_perms:
-                            if isinstance(perm, dict) and 'name' in perm:
-                                matched_permissions.append({
-                                    "name": perm['name'],
-                                    "description": perm.get('description', ''),
-                                    "category": perm.get('category', '')
-                                })
-                            elif isinstance(perm, str):
-                                matched_permissions.append({
-                                    "name": perm,
-                                    "description": "",
-                                    "category": ""
-                                })
-            except (json.JSONDecodeError, TypeError):
-                matched_permissions = []
+            if rule:
+                try:
+                    rule_expression = json.loads(rule.rule_expression)
+                    if isinstance(rule_expression, dict) and 'permissions' in rule_expression:
+                        rule_perms = rule_expression['permissions']
+                        if isinstance(rule_perms, list):
+                            for perm in rule_perms:
+                                if isinstance(perm, dict) and 'name' in perm:
+                                    matched_permissions.append({
+                                        "name": perm['name'],
+                                        "description": perm.get('description', ''),
+                                        "category": perm.get('category', '')
+                                    })
+                                elif isinstance(perm, str):
+                                    matched_permissions.append({
+                                        "name": perm,
+                                        "description": "",
+                                        "category": ""
+                                    })
+                except (json.JSONDecodeError, TypeError):
+                    matched_permissions = []
 
             matches.append({
                 "assignment_id": assignment.id,
@@ -776,9 +779,9 @@ def api_get_batch_matches(batch_id: str) -> "Response":
                 "instance_type": instance.db_type,
                 "classification_id": classification.id,
                 "classification_name": classification.name,
-                "rule_id": rule.id,
-                "rule_name": rule.rule_name,
-                "rule_description": rule.rule_expression,
+                "rule_id": rule.id if rule else None,
+                "rule_name": rule.rule_name if rule else "无规则",
+                "rule_description": rule.rule_expression if rule else "无规则表达式",
                 "matched_at": assignment.created_at.isoformat() if assignment.created_at else None,
                 "confidence": getattr(assignment, 'confidence_score', None),
                 "account_permissions": account_permissions,
