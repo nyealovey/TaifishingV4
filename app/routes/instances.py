@@ -1396,16 +1396,67 @@ def get_account_permissions(instance_id: int, account_id: int) -> dict[str, Any]
     account = Account.query.filter_by(id=account_id, instance_id=instance_id).first_or_404()
 
     try:
-        # 直接从本地数据库获取权限信息
+        # 首先尝试从优化同步数据表获取权限信息
+        from app.models.current_account_sync_data import CurrentAccountSyncData
+        
+        sync_data = CurrentAccountSyncData.query.filter_by(
+            instance_id=instance_id,
+            username=account.username,
+            db_type=instance.db_type
+        ).first()
+        
         permissions = None
-        if account.permissions:
-            import json
-            try:
-                permissions = json.loads(account.permissions)
-            except json.JSONDecodeError:
-                permissions = {"error": "权限数据格式错误"}
+        if sync_data:
+            # 从优化同步数据构建权限信息
+            permissions = {
+                "数据库类型": instance.db_type.upper(),
+                "用户名": sync_data.username,
+                "超级用户": "是" if sync_data.is_superuser else "否",
+                "最后同步时间": sync_data.last_sync_time.strftime('%Y-%m-%d %H:%M:%S') if sync_data.last_sync_time else "未知"
+            }
+            
+            # 根据数据库类型添加具体权限
+            if instance.db_type == 'mysql':
+                if sync_data.global_privileges:
+                    permissions["全局权限"] = sync_data.global_privileges
+                if sync_data.database_privileges:
+                    permissions["数据库权限"] = sync_data.database_privileges
+                    
+            elif instance.db_type == 'postgresql':
+                if sync_data.predefined_roles:
+                    permissions["预定义角色"] = sync_data.predefined_roles
+                if sync_data.role_attributes:
+                    permissions["角色属性"] = sync_data.role_attributes
+                if sync_data.database_privileges_pg:
+                    permissions["数据库权限"] = sync_data.database_privileges_pg
+                    
+            elif instance.db_type == 'sqlserver':
+                if sync_data.server_roles:
+                    permissions["服务器角色"] = sync_data.server_roles
+                if sync_data.server_permissions:
+                    permissions["服务器权限"] = sync_data.server_permissions
+                if sync_data.database_roles:
+                    permissions["数据库角色"] = sync_data.database_roles
+                if sync_data.database_permissions:
+                    permissions["数据库权限"] = sync_data.database_permissions
+                    
+            elif instance.db_type == 'oracle':
+                if sync_data.oracle_roles:
+                    permissions["Oracle角色"] = sync_data.oracle_roles
+                if sync_data.system_privileges:
+                    permissions["系统权限"] = sync_data.system_privileges
+                if sync_data.tablespace_privileges_oracle:
+                    permissions["表空间权限"] = sync_data.tablespace_privileges_oracle
         else:
-            permissions = {"error": "无权限信息"}
+            # 回退到原始权限数据
+            if account.permissions:
+                import json
+                try:
+                    permissions = json.loads(account.permissions)
+                except json.JSONDecodeError:
+                    permissions = {"error": "权限数据格式错误"}
+            else:
+                permissions = {"error": "无权限信息"}
 
         response = {
             "success": True,
