@@ -20,7 +20,7 @@ cp userdata/taifish_dev.db userdata/taifish_dev_backup_$(date +%Y%m%d_%H%M%S).db
 
 ```sql
 -- 检查现有同步数据表
-SELECT table_name FROM information_schema.tables 
+SELECT table_name FROM information_schema.tables
 WHERE table_name LIKE '%sync%' OR table_name LIKE '%account%';
 
 -- 检查数据量
@@ -80,7 +80,7 @@ from app.models.account_change_log import AccountChangeLog
 def migrate_sync_data():
     """迁移同步数据"""
     app = create_app()
-    
+
     with app.app_context():
         # 获取现有同步数据
         old_sync_data = db.session.execute("""
@@ -88,9 +88,9 @@ def migrate_sync_data():
             FROM sync_data
             ORDER BY sync_time DESC
         """).fetchall()
-        
+
         print(f"找到 {len(old_sync_data)} 条同步记录")
-        
+
         # 迁移到新表
         for record in old_sync_data:
             # 这里需要根据实际的数据结构进行映射
@@ -100,16 +100,16 @@ def migrate_sync_data():
 def migrate_account_data():
     """迁移账户数据"""
     app = create_app()
-    
+
     with app.app_context():
         # 获取现有账户数据
         old_accounts = db.session.execute("""
             SELECT id, instance_id, username, db_type, created_at, updated_at
             FROM accounts
         """).fetchall()
-        
+
         print(f"找到 {len(old_accounts)} 个账户")
-        
+
         # 迁移到新表
         for account in old_accounts:
             new_account = CurrentAccountSyncData(
@@ -121,7 +121,7 @@ def migrate_account_data():
                 is_deleted=False
             )
             db.session.add(new_account)
-        
+
         db.session.commit()
         print("账户数据迁移完成")
 
@@ -137,13 +137,13 @@ SELECT COUNT(*) FROM current_account_sync_data;
 SELECT COUNT(*) FROM account_change_log;
 
 -- 检查数据完整性
-SELECT db_type, COUNT(*) as count 
-FROM current_account_sync_data 
+SELECT db_type, COUNT(*) as count
+FROM current_account_sync_data
 GROUP BY db_type;
 
 -- 检查索引
-SELECT indexname, tablename 
-FROM pg_indexes 
+SELECT indexname, tablename
+FROM pg_indexes
 WHERE tablename IN ('current_account_sync_data', 'account_change_log');
 ```
 
@@ -262,10 +262,10 @@ DROP TABLE IF EXISTS current_account_sync_data;
 
 ```sql
 -- 根据查询模式添加复合索引
-CREATE INDEX idx_current_account_instance_dbtype_username 
+CREATE INDEX idx_current_account_instance_dbtype_username
 ON current_account_sync_data(instance_id, db_type, username);
 
-CREATE INDEX idx_change_log_username_time 
+CREATE INDEX idx_change_log_username_time
 ON account_change_log(username, change_time DESC);
 ```
 
@@ -273,12 +273,12 @@ ON account_change_log(username, change_time DESC);
 
 ```sql
 -- 定期清理旧的变更日志（保留最近30天）
-DELETE FROM account_change_log 
+DELETE FROM account_change_log
 WHERE change_time < NOW() - INTERVAL '30 days';
 
 -- 清理已删除的账户（可选）
-DELETE FROM current_account_sync_data 
-WHERE is_deleted = true 
+DELETE FROM current_account_sync_data
+WHERE is_deleted = true
 AND deleted_time < NOW() - INTERVAL '90 days';
 ```
 
@@ -299,20 +299,20 @@ accounts = CurrentAccountSyncData.query.filter_by(
 
 ```sql
 -- 监控表大小
-SELECT 
+SELECT
     schemaname,
     tablename,
     pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
-FROM pg_tables 
+FROM pg_tables
 WHERE tablename IN ('current_account_sync_data', 'account_change_log');
 
 -- 监控索引使用情况
-SELECT 
+SELECT
     indexrelname,
     idx_scan,
     idx_tup_read,
     idx_tup_fetch
-FROM pg_stat_user_indexes 
+FROM pg_stat_user_indexes
 WHERE relname IN ('current_account_sync_data', 'account_change_log');
 ```
 
@@ -322,21 +322,21 @@ WHERE relname IN ('current_account_sync_data', 'account_change_log');
 def check_data_consistency():
     """检查数据一致性"""
     app = create_app()
-    
+
     with app.app_context():
         # 检查孤立的变更日志
         orphaned_logs = db.session.execute("""
             SELECT cl.id FROM account_change_log cl
-            LEFT JOIN current_account_sync_data ca 
-            ON cl.instance_id = ca.instance_id 
-            AND cl.db_type = ca.db_type 
+            LEFT JOIN current_account_sync_data ca
+            ON cl.instance_id = ca.instance_id
+            AND cl.db_type = ca.db_type
             AND cl.username = ca.username
             WHERE ca.id IS NULL
         """).fetchall()
-        
+
         if orphaned_logs:
             print(f"发现 {len(orphaned_logs)} 条孤立的变更日志")
-        
+
         # 检查重复的账户记录
         duplicates = db.session.execute("""
             SELECT instance_id, db_type, username, COUNT(*)
@@ -344,7 +344,7 @@ def check_data_consistency():
             GROUP BY instance_id, db_type, username
             HAVING COUNT(*) > 1
         """).fetchall()
-        
+
         if duplicates:
             print(f"发现 {len(duplicates)} 组重复的账户记录")
 ```
@@ -377,6 +377,6 @@ A: 检查权限数据格式，确保与数据库类型匹配。
 
 ---
 
-**作者**: AI Assistant  
-**更新时间**: 2025-01-14  
+**作者**: AI Assistant
+**更新时间**: 2025-01-14
 **版本**: 4.0.0

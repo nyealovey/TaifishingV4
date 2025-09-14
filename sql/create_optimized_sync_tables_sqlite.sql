@@ -12,44 +12,44 @@ CREATE TABLE IF NOT EXISTS current_account_sync_data (
     status VARCHAR(20) DEFAULT 'success',
     message TEXT,
     error_message TEXT,
-    
+
     -- 账户基本信息
     username VARCHAR(255) NOT NULL,
     is_superuser BOOLEAN DEFAULT FALSE,
-    
+
     -- MySQL权限字段
     global_privileges TEXT,  -- JSON存储
     database_privileges TEXT,  -- JSON存储
-    
+
     -- PostgreSQL权限字段
     predefined_roles TEXT,  -- JSON存储
     role_attributes TEXT,  -- JSON存储
     database_privileges_pg TEXT,  -- JSON存储
     tablespace_privileges TEXT,  -- JSON存储
-    
+
     -- SQL Server权限字段
     server_roles TEXT,  -- JSON存储
     server_permissions TEXT,  -- JSON存储
     database_roles TEXT,  -- JSON存储
     database_permissions TEXT,  -- JSON存储
-    
+
     -- Oracle权限字段（移除表空间配额）
     oracle_roles TEXT,  -- JSON存储
     system_privileges TEXT,  -- JSON存储
     tablespace_privileges_oracle TEXT,  -- JSON存储
-    
+
     -- 通用扩展字段
     type_specific TEXT,  -- JSON存储
-    
+
     -- 时间戳和状态字段
     last_sync_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_change_type VARCHAR(20) DEFAULT 'add',
     last_change_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    
+
     -- 删除标记（不支持恢复）
     is_deleted BOOLEAN DEFAULT FALSE,
     deleted_time DATETIME,
-    
+
     -- 唯一约束
     UNIQUE (instance_id, db_type, username)
 );
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS account_change_log (
     session_id VARCHAR(36),
     status VARCHAR(20) DEFAULT 'success',
     message TEXT,
-    
+
     -- 变更差异
     privilege_diff TEXT,  -- JSON存储
     other_diff TEXT  -- JSON存储

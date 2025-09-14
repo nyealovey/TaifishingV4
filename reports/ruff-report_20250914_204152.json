@@ -1,11 +1,11 @@
-错误: warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:336: B608
-warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:535: B608
-warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:857: B608
-warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:1007: B608
-warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:249: B608
+错误: warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:249: B608
 warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:415: B608
 warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:591: B608
 warning: Invalid rule code provided to `# noqa` at app/services/database_service.py:739: B608
+warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:336: B608
+warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:535: B608
+warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:857: B608
+warning: Invalid rule code provided to `# noqa` at app/services/account_sync_service.py:1007: B608
 
 
 标准输出:
@@ -83,16 +83,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F401",
     "end_location": {
       "column": 56,
-      "row": 352
+      "row": 353
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/__init__.py",
     "fix": null,
     "location": {
       "column": 41,
-      "row": 352
+      "row": 353
     },
     "message": "`app.routes.unified_logs.unified_logs_bp` imported but unused",
-    "noqa_row": 352,
+    "noqa_row": 353,
     "url": "https://docs.astral.sh/ruff/rules/unused-import"
   },
   {
@@ -100,16 +100,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 51,
-      "row": 443
+      "row": 445
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/__init__.py",
     "fix": null,
     "location": {
       "column": 43,
-      "row": 443
+      "row": 445
     },
     "message": "Undefined name `datetime`",
-    "noqa_row": 443,
+    "noqa_row": 445,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -117,16 +117,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 51,
-      "row": 448
+      "row": 450
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/__init__.py",
     "fix": null,
     "location": {
       "column": 43,
-      "row": 448
+      "row": 450
     },
     "message": "Undefined name `datetime`",
-    "noqa_row": 448,
+    "noqa_row": 450,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -134,16 +134,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "F821",
     "end_location": {
       "column": 55,
-      "row": 453
+      "row": 455
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/__init__.py",
     "fix": null,
     "location": {
       "column": 47,
-      "row": 453
+      "row": 455
     },
     "message": "Undefined name `datetime`",
-    "noqa_row": 453,
+    "noqa_row": 455,
     "url": "https://docs.astral.sh/ruff/rules/undefined-name"
   },
   {
@@ -151,16 +151,16 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "code": "E402",
     "end_location": {
       "column": 2,
-      "row": 470
+      "row": 472
     },
     "filename": "/Users/shiyijiufei/TaifishingV4/app/__init__.py",
     "fix": null,
     "location": {
       "column": 1,
-      "row": 462
+      "row": 464
     },
     "message": "Module level import not at top of file",
-    "noqa_row": 462,
+    "noqa_row": 464,
     "url": "https://docs.astral.sh/ruff/rules/module-import-not-at-top-of-file"
   },
   {
@@ -8088,6 +8088,757 @@ warning: Invalid rule code provided to `# noqa` at app/services/database_service
     "message": "Unused method argument: `database`",
     "noqa_row": 836,
     "url": "https://docs.astral.sh/ruff/rules/unused-method-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN204",
+    "end_location": {
+      "column": 17,
+      "row": 16
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": " -> None",
+          "end_location": {
+            "column": 23,
+            "row": 16
+          },
+          "location": {
+            "column": 23,
+            "row": 16
+          }
+        }
+      ],
+      "message": "Add return type annotation: `None`"
+    },
+    "location": {
+      "column": 9,
+      "row": 16
+    },
+    "message": "Missing return type annotation for special method `__init__`",
+    "noqa_row": 16,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-special-method"
+  },
+  {
+    "cell": null,
+    "code": "FBT001",
+    "end_location": {
+      "column": 83,
+      "row": 21
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 68,
+      "row": 21
+    },
+    "message": "Boolean-typed positional argument in function definition",
+    "noqa_row": 21,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "FBT002",
+    "end_location": {
+      "column": 83,
+      "row": 21
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 68,
+      "row": 21
+    },
+    "message": "Boolean default positional argument in function definition",
+    "noqa_row": 21,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-default-value-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "FBT001",
+    "end_location": {
+      "column": 72,
+      "row": 32
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 57,
+      "row": 32
+    },
+    "message": "Boolean-typed positional argument in function definition",
+    "noqa_row": 32,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "FBT002",
+    "end_location": {
+      "column": 72,
+      "row": 32
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 57,
+      "row": 32
+    },
+    "message": "Boolean default positional argument in function definition",
+    "noqa_row": 32,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-default-value-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "FBT001",
+    "end_location": {
+      "column": 21,
+      "row": 55
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 55
+    },
+    "message": "Boolean-typed positional argument in function definition",
+    "noqa_row": 55,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "FBT002",
+    "end_location": {
+      "column": 21,
+      "row": 55
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 9,
+      "row": 55
+    },
+    "message": "Boolean default positional argument in function definition",
+    "noqa_row": 55,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-default-value-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "EM102",
+    "end_location": {
+      "column": 49,
+      "row": 68
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "msg = f\"不支持的数据库类型: {db_type}\"\n        ",
+          "end_location": {
+            "column": 9,
+            "row": 68
+          },
+          "location": {
+            "column": 9,
+            "row": 68
+          }
+        },
+        {
+          "content": "msg",
+          "end_location": {
+            "column": 49,
+            "row": 68
+          },
+          "location": {
+            "column": 26,
+            "row": 68
+          }
+        }
+      ],
+      "message": "Assign to variable; remove f-string literal"
+    },
+    "location": {
+      "column": 26,
+      "row": 68
+    },
+    "message": "Exception must not use an f-string literal, assign to variable first",
+    "noqa_row": 68,
+    "url": "https://docs.astral.sh/ruff/rules/f-string-in-exception"
+  },
+  {
+    "cell": null,
+    "code": "FBT001",
+    "end_location": {
+      "column": 83,
+      "row": 72
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 72
+    },
+    "message": "Boolean-typed positional argument in function definition",
+    "noqa_row": 72,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "FBT001",
+    "end_location": {
+      "column": 83,
+      "row": 102
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 102
+    },
+    "message": "Boolean-typed positional argument in function definition",
+    "noqa_row": 102,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "FBT001",
+    "end_location": {
+      "column": 83,
+      "row": 134
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 134
+    },
+    "message": "Boolean-typed positional argument in function definition",
+    "noqa_row": 134,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "FBT001",
+    "end_location": {
+      "column": 83,
+      "row": 166
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 71,
+      "row": 166
+    },
+    "message": "Boolean-typed positional argument in function definition",
+    "noqa_row": 166,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "ANN206",
+    "end_location": {
+      "column": 30,
+      "row": 344
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": " -> None",
+          "end_location": {
+            "column": 112,
+            "row": 344
+          },
+          "location": {
+            "column": 112,
+            "row": 344
+          }
+        }
+      ],
+      "message": "Add return type annotation: `None`"
+    },
+    "location": {
+      "column": 9,
+      "row": 344
+    },
+    "message": "Missing return type annotation for classmethod `_update_mysql_account`",
+    "noqa_row": 344,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-class-method"
+  },
+  {
+    "cell": null,
+    "code": "FBT001",
+    "end_location": {
+      "column": 105,
+      "row": 344
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 93,
+      "row": 344
+    },
+    "message": "Boolean-typed positional argument in function definition",
+    "noqa_row": 344,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "DTZ003",
+    "end_location": {
+      "column": 53,
+      "row": 351
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 36,
+      "row": 351
+    },
+    "message": "`datetime.datetime.utcnow()` used",
+    "noqa_row": 351,
+    "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
+  },
+  {
+    "cell": null,
+    "code": "DTZ003",
+    "end_location": {
+      "column": 51,
+      "row": 352
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 352
+    },
+    "message": "`datetime.datetime.utcnow()` used",
+    "noqa_row": 352,
+    "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
+  },
+  {
+    "cell": null,
+    "code": "ANN206",
+    "end_location": {
+      "column": 35,
+      "row": 356
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": " -> None",
+          "end_location": {
+            "column": 117,
+            "row": 356
+          },
+          "location": {
+            "column": 117,
+            "row": 356
+          }
+        }
+      ],
+      "message": "Add return type annotation: `None`"
+    },
+    "location": {
+      "column": 9,
+      "row": 356
+    },
+    "message": "Missing return type annotation for classmethod `_update_postgresql_account`",
+    "noqa_row": 356,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-class-method"
+  },
+  {
+    "cell": null,
+    "code": "FBT001",
+    "end_location": {
+      "column": 110,
+      "row": 356
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 98,
+      "row": 356
+    },
+    "message": "Boolean-typed positional argument in function definition",
+    "noqa_row": 356,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "DTZ003",
+    "end_location": {
+      "column": 53,
+      "row": 365
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 36,
+      "row": 365
+    },
+    "message": "`datetime.datetime.utcnow()` used",
+    "noqa_row": 365,
+    "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
+  },
+  {
+    "cell": null,
+    "code": "DTZ003",
+    "end_location": {
+      "column": 51,
+      "row": 366
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 366
+    },
+    "message": "`datetime.datetime.utcnow()` used",
+    "noqa_row": 366,
+    "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
+  },
+  {
+    "cell": null,
+    "code": "ANN206",
+    "end_location": {
+      "column": 34,
+      "row": 370
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": " -> None",
+          "end_location": {
+            "column": 116,
+            "row": 370
+          },
+          "location": {
+            "column": 116,
+            "row": 370
+          }
+        }
+      ],
+      "message": "Add return type annotation: `None`"
+    },
+    "location": {
+      "column": 9,
+      "row": 370
+    },
+    "message": "Missing return type annotation for classmethod `_update_sqlserver_account`",
+    "noqa_row": 370,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-class-method"
+  },
+  {
+    "cell": null,
+    "code": "FBT001",
+    "end_location": {
+      "column": 109,
+      "row": 370
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 97,
+      "row": 370
+    },
+    "message": "Boolean-typed positional argument in function definition",
+    "noqa_row": 370,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "DTZ003",
+    "end_location": {
+      "column": 53,
+      "row": 379
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 36,
+      "row": 379
+    },
+    "message": "`datetime.datetime.utcnow()` used",
+    "noqa_row": 379,
+    "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
+  },
+  {
+    "cell": null,
+    "code": "DTZ003",
+    "end_location": {
+      "column": 51,
+      "row": 380
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 380
+    },
+    "message": "`datetime.datetime.utcnow()` used",
+    "noqa_row": 380,
+    "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
+  },
+  {
+    "cell": null,
+    "code": "ANN206",
+    "end_location": {
+      "column": 31,
+      "row": 384
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": " -> None",
+          "end_location": {
+            "column": 113,
+            "row": 384
+          },
+          "location": {
+            "column": 113,
+            "row": 384
+          }
+        }
+      ],
+      "message": "Add return type annotation: `None`"
+    },
+    "location": {
+      "column": 9,
+      "row": 384
+    },
+    "message": "Missing return type annotation for classmethod `_update_oracle_account`",
+    "noqa_row": 384,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-class-method"
+  },
+  {
+    "cell": null,
+    "code": "FBT001",
+    "end_location": {
+      "column": 106,
+      "row": 384
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 94,
+      "row": 384
+    },
+    "message": "Boolean-typed positional argument in function definition",
+    "noqa_row": 384,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "DTZ003",
+    "end_location": {
+      "column": 53,
+      "row": 392
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 36,
+      "row": 392
+    },
+    "message": "`datetime.datetime.utcnow()` used",
+    "noqa_row": 392,
+    "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
+  },
+  {
+    "cell": null,
+    "code": "DTZ003",
+    "end_location": {
+      "column": 51,
+      "row": 393
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 34,
+      "row": 393
+    },
+    "message": "`datetime.datetime.utcnow()` used",
+    "noqa_row": 393,
+    "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
+  },
+  {
+    "cell": null,
+    "code": "ANN206",
+    "end_location": {
+      "column": 21,
+      "row": 397
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": " -> None",
+          "end_location": {
+            "column": 112,
+            "row": 397
+          },
+          "location": {
+            "column": 112,
+            "row": 397
+          }
+        }
+      ],
+      "message": "Add return type annotation: `None`"
+    },
+    "location": {
+      "column": 9,
+      "row": 397
+    },
+    "message": "Missing return type annotation for classmethod `_log_changes`",
+    "noqa_row": 397,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-class-method"
+  },
+  {
+    "cell": null,
+    "code": "ANN206",
+    "end_location": {
+      "column": 29,
+      "row": 412
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": " -> None",
+          "end_location": {
+            "column": 105,
+            "row": 412
+          },
+          "location": {
+            "column": 105,
+            "row": 412
+          }
+        }
+      ],
+      "message": "Add return type annotation: `None`"
+    },
+    "location": {
+      "column": 9,
+      "row": 412
+    },
+    "message": "Missing return type annotation for classmethod `mark_account_deleted`",
+    "noqa_row": 412,
+    "url": "https://docs.astral.sh/ruff/rules/missing-return-type-class-method"
+  },
+  {
+    "cell": null,
+    "code": "DTZ003",
+    "end_location": {
+      "column": 53,
+      "row": 417
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 36,
+      "row": 417
+    },
+    "message": "`datetime.datetime.utcnow()` used",
+    "noqa_row": 417,
+    "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
+  },
+  {
+    "cell": null,
+    "code": "DTZ003",
+    "end_location": {
+      "column": 57,
+      "row": 419
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 40,
+      "row": 419
+    },
+    "message": "`datetime.datetime.utcnow()` used",
+    "noqa_row": 419,
+    "url": "https://docs.astral.sh/ruff/rules/call-datetime-utcnow"
+  },
+  {
+    "cell": null,
+    "code": "FBT001",
+    "end_location": {
+      "column": 67,
+      "row": 434
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 52,
+      "row": 434
+    },
+    "message": "Boolean-typed positional argument in function definition",
+    "noqa_row": 434,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "FBT002",
+    "end_location": {
+      "column": 67,
+      "row": 434
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 52,
+      "row": 434
+    },
+    "message": "Boolean default positional argument in function definition",
+    "noqa_row": 434,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-default-value-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "FBT001",
+    "end_location": {
+      "column": 61,
+      "row": 443
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 46,
+      "row": 443
+    },
+    "message": "Boolean-typed positional argument in function definition",
+    "noqa_row": 443,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument"
+  },
+  {
+    "cell": null,
+    "code": "FBT002",
+    "end_location": {
+      "column": 61,
+      "row": 443
+    },
+    "filename": "/Users/shiyijiufei/TaifishingV4/app/services/sync_data_manager.py",
+    "fix": null,
+    "location": {
+      "column": 46,
+      "row": 443
+    },
+    "message": "Boolean default positional argument in function definition",
+    "noqa_row": 443,
+    "url": "https://docs.astral.sh/ruff/rules/boolean-default-value-positional-argument"
   },
   {
     "cell": null,

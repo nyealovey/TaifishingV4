@@ -4,7 +4,7 @@ ERROR: /Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py Impo
 
 标准输出:
 --- /Users/shiyijiufei/TaifishingV4/app/models/unified_log.py:before	2025-09-13 19:39:34.900771
-+++ /Users/shiyijiufei/TaifishingV4/app/models/unified_log.py:after	2025-09-14 18:49:37.574890
++++ /Users/shiyijiufei/TaifishingV4/app/models/unified_log.py:after	2025-09-14 20:39:28.371946
 @@ -7,8 +7,9 @@
  from enum import Enum
  from typing import Any
@@ -17,7 +17,7 @@ ERROR: /Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py Impo
  from app import db
  from app.utils.timezone import now, utc_to_china
 --- /Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py:before	2025-09-14 11:29:20.536745
-+++ /Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py:after	2025-09-14 18:49:37.613682
++++ /Users/shiyijiufei/TaifishingV4/app/routes/account_classification.py:after	2025-09-14 20:39:28.416695
 @@ -690,13 +690,18 @@
  def api_get_batch_matches(batch_id: str) -> "Response":
      """获取批次匹配详情"""

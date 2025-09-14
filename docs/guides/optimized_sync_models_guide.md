@@ -31,28 +31,28 @@ class CurrentAccountSyncData(BaseSyncData):
     # 基本信息
     username = db.Column(db.String(255), nullable=False)
     is_superuser = db.Column(db.Boolean, default=False)
-    
+
     # MySQL权限
     global_privileges = db.Column(db.JSON, nullable=True)
     database_privileges = db.Column(db.JSON, nullable=True)
-    
+
     # PostgreSQL权限
     predefined_roles = db.Column(db.JSON, nullable=True)
     role_attributes = db.Column(db.JSON, nullable=True)
     database_privileges_pg = db.Column(db.JSON, nullable=True)
     tablespace_privileges = db.Column(db.JSON, nullable=True)
-    
+
     # SQL Server权限
     server_roles = db.Column(db.JSON, nullable=True)
     server_permissions = db.Column(db.JSON, nullable=True)
     database_roles = db.Column(db.JSON, nullable=True)
     database_permissions = db.Column(db.JSON, nullable=True)
-    
+
     # Oracle权限
     oracle_roles = db.Column(db.JSON, nullable=True)
     system_privileges = db.Column(db.JSON, nullable=True)
     tablespace_privileges_oracle = db.Column(db.JSON, nullable=True)
-    
+
     # 状态字段
     is_deleted = db.Column(db.Boolean, default=False)
     last_sync_time = db.Column(db.DateTime, default=datetime.utcnow)
@@ -69,7 +69,7 @@ class AccountChangeLog(db.Model):
     username = db.Column(db.String(255), nullable=False)
     change_type = db.Column(db.String(50), nullable=False)
     change_time = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # 变更差异
     privilege_diff = db.Column(db.JSON, nullable=True)
     other_diff = db.Column(db.JSON, nullable=True)
@@ -342,6 +342,6 @@ print(f"检测到变更: {changes}")
 
 ---
 
-**作者**: AI Assistant  
-**更新时间**: 2025-01-14  
+**作者**: AI Assistant
+**更新时间**: 2025-01-14
 **版本**: 4.0.0

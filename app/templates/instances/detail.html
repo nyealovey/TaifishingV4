@@ -834,12 +834,12 @@ function loadOptimizedAccounts() {
     const loadingDiv = document.getElementById('optimizedAccountsLoading');
     const emptyDiv = document.getElementById('optimizedAccountsEmpty');
     const tableBody = document.getElementById('optimizedAccountsTableBody');
-    
+
     // 显示加载状态
     loadingDiv.style.display = 'block';
     emptyDiv.style.display = 'none';
     tableBody.innerHTML = '';
-    
+
     // 构建API URL
     let apiUrl = `/instance_accounts/{{ instance.id }}/accounts`;
     const params = new URLSearchParams();
@@ -852,10 +852,10 @@ function loadOptimizedAccounts() {
     if (params.toString()) {
         apiUrl += '?' + params.toString();
     }
-    
+
     // 获取CSRF token
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-    
+
     fetch(apiUrl, {
         method: 'GET',
         headers: {
@@ -866,7 +866,7 @@ function loadOptimizedAccounts() {
     .then(response => response.json())
     .then(data => {
         loadingDiv.style.display = 'none';
-        
+
         if (data.success && data.data.length > 0) {
             renderOptimizedAccountsTable(data.data);
         } else {
@@ -883,10 +883,10 @@ function loadOptimizedAccounts() {
 function renderOptimizedAccountsTable(accounts) {
     const tableBody = document.getElementById('optimizedAccountsTableBody');
     tableBody.innerHTML = '';
-    
+
     accounts.forEach(account => {
         const row = document.createElement('tr');
-        
+
         // 状态徽章
         let statusBadge = '';
         if (account.is_deleted) {
@@ -894,20 +894,20 @@ function renderOptimizedAccountsTable(accounts) {
         } else {
             statusBadge = `<span class="badge bg-success">活跃</span>`;
         }
-        
+
         // 超级用户徽章
-        const superuserBadge = account.is_superuser ? 
-            `<span class="badge bg-warning">超级用户</span>` : 
+        const superuserBadge = account.is_superuser ?
+            `<span class="badge bg-warning">超级用户</span>` :
             `<span class="text-muted">普通用户</span>`;
-        
+
         // 数据库类型徽章
         const dbTypeBadge = getDbTypeBadge(account.db_type);
-        
+
         // 最后同步时间
-        const lastSyncTime = account.last_sync_time ? 
-            new Date(account.last_sync_time).toLocaleString() : 
+        const lastSyncTime = account.last_sync_time ?
+            new Date(account.last_sync_time).toLocaleString() :
             '未知';
-        
+
         row.innerHTML = `
             <td>
                 <div class="d-flex align-items-center">
@@ -935,7 +935,7 @@ function renderOptimizedAccountsTable(accounts) {
                 </div>
             </td>
         `;
-        
+
         tableBody.appendChild(row);
     });
 }
@@ -957,8 +957,8 @@ function refreshOptimizedAccounts() {
 function toggleDeletedAccounts() {
     showDeleted = !showDeleted;
     const button = event.target;
-    button.innerHTML = showDeleted ? 
-        '<i class="fas fa-eye-slash"></i> 隐藏已删除' : 
+    button.innerHTML = showDeleted ?
+        '<i class="fas fa-eye-slash"></i> 隐藏已删除' :
         '<i class="fas fa-eye"></i> 显示已删除';
     loadOptimizedAccounts();
 }
@@ -971,13 +971,13 @@ function filterByDbType(dbType) {
 function viewOptimizedAccountPermissions(username, dbType) {
     const loadingDiv = document.getElementById('permissionsModal').querySelector('.modal-body');
     loadingDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p class="mt-2">加载中...</p></div>';
-    
+
     // 显示模态框
     new bootstrap.Modal(document.getElementById('permissionsModal')).show();
-    
+
     // 获取CSRF token
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-    
+
     fetch(`/instance_accounts/{{ instance.id }}/accounts/${username}/permissions?db_type=${dbType}`, {
         method: 'GET',
         headers: {
@@ -1001,13 +1001,13 @@ function viewOptimizedAccountPermissions(username, dbType) {
 function viewOptimizedAccountHistory(username, dbType) {
     const loadingDiv = document.getElementById('historyModal').querySelector('.modal-body');
     loadingDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p class="mt-2">加载中...</p></div>';
-    
+
     // 显示模态框
     new bootstrap.Modal(document.getElementById('historyModal')).show();
-    
+
     // 获取CSRF token
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-    
+
     fetch(`/instance_accounts/{{ instance.id }}/accounts/${username}/history?db_type=${dbType}`, {
         method: 'GET',
         headers: {
@@ -1030,7 +1030,7 @@ function viewOptimizedAccountHistory(username, dbType) {
 
 function displayPermissions(accountData) {
     const contentDiv = document.getElementById('permissionsContent');
-    
+
     let html = `
         <div class="row">
             <div class="col-md-6">
@@ -1054,23 +1054,23 @@ function displayPermissions(accountData) {
         <h6>权限详情</h6>
         <pre class="bg-light p-3 rounded">${JSON.stringify(accountData.permissions, null, 2)}</pre>
     `;
-    
+
     contentDiv.innerHTML = html;
 }
 
 function displayHistory(historyData) {
     const contentDiv = document.getElementById('historyContent');
-    
+
     if (historyData.length === 0) {
         contentDiv.innerHTML = '<div class="text-center text-muted">暂无变更历史</div>';
         return;
     }
-    
+
     let html = '';
     historyData.forEach(change => {
         const changeTime = new Date(change.change_time).toLocaleString();
         const changeTypeBadge = getChangeTypeBadge(change.change_type);
-        
+
         html += `
             <div class="card mb-2">
                 <div class="card-body">
@@ -1097,7 +1097,7 @@ function displayHistory(historyData) {
             </div>
         `;
     });
-    
+
     contentDiv.innerHTML = html;
 }
 
@@ -1115,10 +1115,10 @@ function deleteOptimizedAccount(username, dbType) {
     if (!confirm(`确定要删除账户 ${username} 吗？此操作不可恢复。`)) {
         return;
     }
-    
+
     // 获取CSRF token
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-    
+
     fetch(`/instance_accounts/{{ instance.id }}/accounts/${username}/delete?db_type=${dbType}`, {
         method: 'POST',
         headers: {

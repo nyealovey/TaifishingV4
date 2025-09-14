@@ -382,29 +382,29 @@ app/__init__.py:328:5: error: "Flask" has no attribute "redis_client"; maybe
         app.redis_client = redis_client
         ^~~~~~~~~~~~~~~~
 app/__init__.py: note: In function "register_blueprints":
-app/__init__.py:395:5: error: Call to untyped function "init_scheduler" in
+app/__init__.py:397:5: error: Call to untyped function "init_scheduler" in
 typed context  [no-untyped-call]
         init_scheduler(app)
         ^~~~~~~~~~~~~~~~~~~
 app/__init__.py: note: In function "configure_template_filters":
-app/__init__.py:443:42: error: Name "datetime" is not defined  [name-defined]
+app/__init__.py:445:42: error: Name "datetime" is not defined  [name-defined]
         def china_time_filter(dt: Union[str, "datetime"], format_str: str ...
                                              ^
-app/__init__.py:445:16: error: Incompatible return value type (got
+app/__init__.py:447:16: error: Incompatible return value type (got
 "str | None", expected "str")  [return-value]
             return format_china_time(dt, format_str)
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/__init__.py:448:42: error: Name "datetime" is not defined  [name-defined]
+app/__init__.py:450:42: error: Name "datetime" is not defined  [name-defined]
         def china_date_filter(dt: Union[str, "datetime"]) -> str:
                                              ^
-app/__init__.py:450:16: error: Incompatible return value type (got
+app/__init__.py:452:16: error: Incompatible return value type (got
 "str | None", expected "str")  [return-value]
             return format_china_time(dt, "%Y-%m-%d")
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-app/__init__.py:453:46: error: Name "datetime" is not defined  [name-defined]
+app/__init__.py:455:46: error: Name "datetime" is not defined  [name-defined]
         def china_datetime_filter(dt: Union[str, "datetime"]) -> str:
                                                  ^
-app/__init__.py:455:16: error: Incompatible return value type (got
+app/__init__.py:457:16: error: Incompatible return value type (got
 "str | None", expected "str")  [return-value]
             return format_china_time(dt, "%Y-%m-%d %H:%M:%S")
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1086,6 +1086,20 @@ app/models/classification_batch.py:100:5: error: Function is missing a return
 type annotation  [no-untyped-def]
         def success_rate(self):
         ^
+app/models/base_sync_data.py:10:20: error: Name "db.Model" is not defined
+[name-defined]
+    class BaseSyncData(db.Model):
+                       ^
+app/models/base_sync_data.py: note: In class "BaseSyncData":
+app/models/base_sync_data.py:10:20: error: Class cannot subclass "Model" (has
+type "Any")  [misc]
+    class BaseSyncData(db.Model):
+                       ^~~~~~~~
+app/models/base_sync_data.py: note: In member "to_dict" of class "BaseSyncData":
+app/models/base_sync_data.py:26:26: error: Missing type parameters for generic
+type "dict"  [type-arg]
+        def to_dict(self) -> dict:
+                             ^
 app/models/account_classification.py:11:29: error: Name "db.Model" is not
 defined  [name-defined]
     class AccountClassification(db.Model):
@@ -1141,6 +1155,20 @@ app/models/account_classification.py:104:39: error: Class cannot subclass
                                           ^~~~~~~~
 app/models/account_classification.py: note: In member "to_dict" of class "AccountClassificationAssignment":
 app/models/account_classification.py:129:26: error: Missing type parameters for
+generic type "dict"  [type-arg]
+        def to_dict(self) -> dict:
+                             ^
+app/models/account_change_log.py:10:24: error: Name "db.Model" is not defined
+[name-defined]
+    class AccountChangeLog(db.Model):
+                           ^
+app/models/account_change_log.py: note: In class "AccountChangeLog":
+app/models/account_change_log.py:10:24: error: Class cannot subclass "Model"
+(has type "Any")  [misc]
+    class AccountChangeLog(db.Model):
+                           ^~~~~~~~
+app/models/account_change_log.py: note: In member "to_dict" of class "AccountChangeLog":
+app/models/account_change_log.py:41:26: error: Missing type parameters for
 generic type "dict"  [type-arg]
         def to_dict(self) -> dict:
                              ^
@@ -1448,6 +1476,16 @@ app/routes/account_static.py:177:9: error: Need type annotation for
 "permission_stats"  [var-annotated]
             permission_stats = defaultdict(int)
             ^~~~~~~~~~~~~~~~
+app/models/current_account_sync_data.py: note: In member "to_dict" of class "CurrentAccountSyncData":
+app/models/current_account_sync_data.py:65:26: error: Missing type parameters
+for generic type "dict"  [type-arg]
+        def to_dict(self) -> dict:
+                             ^
+app/models/current_account_sync_data.py: note: In member "get_permissions_by_db_type" of class "CurrentAccountSyncData":
+app/models/current_account_sync_data.py:95:45: error: Missing type parameters
+for generic type "dict"  [type-arg]
+        def get_permissions_by_db_type(self) -> dict:
+                                                ^
 app/utils/rate_limiter.py: note: In member "__init__" of class "RateLimiter":
 app/utils/rate_limiter.py:17:5: error: Function is missing a type annotation
 [no-untyped-def]
@@ -2152,6 +2190,220 @@ app/services/sync_session_service.py:332:24: error: Call to untyped function
 "SyncSessionService" in typed context  [no-untyped-call]
     sync_session_service = SyncSessionService()
                            ^~~~~~~~~~~~~~~~~~~~
+app/services/sync_data_manager.py: note: In member "__init__" of class "SyncDataManager":
+app/services/sync_data_manager.py:16:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def __init__(self):
+        ^
+app/services/sync_data_manager.py:16:5: note: Use "-> None" if function does not return a value
+app/services/sync_data_manager.py: note: In member "get_account_latest" of class "SyncDataManager":
+app/services/sync_data_manager.py:21:62: error: Incompatible default for
+argument "username" (default has type "None", argument has type "str")
+[assignment]
+    ... db_type: str, instance_id: int, username: str = None, include_deleted...
+                                                        ^~~~
+app/services/sync_data_manager.py:21:62: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+app/services/sync_data_manager.py:21:62: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+app/services/sync_data_manager.py:29:9: error: Returning Any from function
+declared to return "CurrentAccountSyncData | None"  [no-any-return]
+            return query.first()
+            ^~~~~~~~~~~~~~~~~~~~
+app/services/sync_data_manager.py: note: In member "get_accounts_by_instance" of class "SyncDataManager":
+app/services/sync_data_manager.py:37:9: error: Returning Any from function
+declared to return "list[CurrentAccountSyncData]"  [no-any-return]
+            return query.all()
+            ^~~~~~~~~~~~~~~~~~
+app/services/sync_data_manager.py: note: In member "get_account_changes" of class "SyncDataManager":
+app/services/sync_data_manager.py:42:9: error: Returning Any from function
+declared to return "list[AccountChangeLog]"  [no-any-return]
+            return (
+            ^
+app/services/sync_data_manager.py: note: In member "upsert_account" of class "SyncDataManager":
+app/services/sync_data_manager.py:54:27: error: Missing type parameters for
+generic type "dict"  [type-arg]
+            permissions_data: dict,
+                              ^
+app/services/sync_data_manager.py:56:27: error: Incompatible default for
+argument "session_id" (default has type "None", argument has type "str")
+[assignment]
+            session_id: str = None,
+                              ^~~~
+app/services/sync_data_manager.py:56:27: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+app/services/sync_data_manager.py:56:27: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+app/services/sync_data_manager.py: note: In member "_upsert_mysql_account" of class "SyncDataManager":
+app/services/sync_data_manager.py:72:65: error: Missing type parameters for
+generic type "dict"  [type-arg]
+    ...stance_id: int, username: str, permissions_data: dict, is_superuser: b...
+                                                        ^
+app/services/sync_data_manager.py:72:109: error: Incompatible default for
+argument "session_id" (default has type "None", argument has type "str")
+[assignment]
+    ...tr, permissions_data: dict, is_superuser: bool, session_id: str = None
+                                                                         ^~~~
+app/services/sync_data_manager.py:72:109: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+app/services/sync_data_manager.py:72:109: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+app/services/sync_data_manager.py: note: In member "_upsert_postgresql_account" of class "SyncDataManager":
+app/services/sync_data_manager.py:102:65: error: Missing type parameters for
+generic type "dict"  [type-arg]
+    ...stance_id: int, username: str, permissions_data: dict, is_superuser: b...
+                                                        ^
+app/services/sync_data_manager.py:102:109: error: Incompatible default for
+argument "session_id" (default has type "None", argument has type "str")
+[assignment]
+    ...tr, permissions_data: dict, is_superuser: bool, session_id: str = None
+                                                                         ^~~~
+app/services/sync_data_manager.py:102:109: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+app/services/sync_data_manager.py:102:109: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+app/services/sync_data_manager.py: note: In member "_upsert_sqlserver_account" of class "SyncDataManager":
+app/services/sync_data_manager.py:134:65: error: Missing type parameters for
+generic type "dict"  [type-arg]
+    ...stance_id: int, username: str, permissions_data: dict, is_superuser: b...
+                                                        ^
+app/services/sync_data_manager.py:134:109: error: Incompatible default for
+argument "session_id" (default has type "None", argument has type "str")
+[assignment]
+    ...tr, permissions_data: dict, is_superuser: bool, session_id: str = None
+                                                                         ^~~~
+app/services/sync_data_manager.py:134:109: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+app/services/sync_data_manager.py:134:109: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+app/services/sync_data_manager.py: note: In member "_upsert_oracle_account" of class "SyncDataManager":
+app/services/sync_data_manager.py:166:65: error: Missing type parameters for
+generic type "dict"  [type-arg]
+    ...stance_id: int, username: str, permissions_data: dict, is_superuser: b...
+                                                        ^
+app/services/sync_data_manager.py:166:109: error: Incompatible default for
+argument "session_id" (default has type "None", argument has type "str")
+[assignment]
+    ...tr, permissions_data: dict, is_superuser: bool, session_id: str = None
+                                                                         ^~~~
+app/services/sync_data_manager.py:166:109: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+app/services/sync_data_manager.py:166:109: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+app/services/sync_data_manager.py: note: In member "_detect_mysql_changes" of class "SyncDataManager":
+app/services/sync_data_manager.py:196:86: error: Missing type parameters for
+generic type "dict"  [type-arg]
+    ...(cls, account: CurrentAccountSyncData, new_permissions: dict) -> dict:
+                                                               ^
+app/services/sync_data_manager.py:214:17: error: Dict entry 0 has incompatible
+type "str": "dict[Any, Any]"; expected "str": "list[Any]"  [dict-item]
+                    "added": {
+                    ^
+app/services/sync_data_manager.py:217:17: error: Dict entry 1 has incompatible
+type "str": "dict[Any, Any]"; expected "str": "list[Any]"  [dict-item]
+                    "removed": {
+                    ^
+app/services/sync_data_manager.py: note: In member "_detect_postgresql_changes" of class "SyncDataManager":
+app/services/sync_data_manager.py:227:91: error: Missing type parameters for
+generic type "dict"  [type-arg]
+    ...(cls, account: CurrentAccountSyncData, new_permissions: dict) -> dict:
+                                                               ^
+app/services/sync_data_manager.py:248:17: error: Dict entry 0 has incompatible
+type "str": "dict[Any, Any]"; expected "str": "list[Any]"  [dict-item]
+                    "added": {
+                    ^
+app/services/sync_data_manager.py:251:17: error: Dict entry 1 has incompatible
+type "str": "dict[Any, Any]"; expected "str": "list[Any]"  [dict-item]
+                    "removed": {
+                    ^
+app/services/sync_data_manager.py: note: In member "_detect_sqlserver_changes" of class "SyncDataManager":
+app/services/sync_data_manager.py:261:90: error: Missing type parameters for
+generic type "dict"  [type-arg]
+    ...(cls, account: CurrentAccountSyncData, new_permissions: dict) -> dict:
+                                                               ^
+app/services/sync_data_manager.py:285:17: error: Dict entry 0 has incompatible
+type "str": "dict[Any, Any]"; expected "str": "list[Any]"  [dict-item]
+                    "added": {
+                    ^
+app/services/sync_data_manager.py:288:17: error: Dict entry 1 has incompatible
+type "str": "dict[Any, Any]"; expected "str": "list[Any]"  [dict-item]
+                    "removed": {
+                    ^
+app/services/sync_data_manager.py:300:17: error: Dict entry 0 has incompatible
+type "str": "dict[Any, Any]"; expected "str": "list[Any]"  [dict-item]
+                    "added": {
+                    ^
+app/services/sync_data_manager.py:303:17: error: Dict entry 1 has incompatible
+type "str": "dict[Any, Any]"; expected "str": "list[Any]"  [dict-item]
+                    "removed": {
+                    ^
+app/services/sync_data_manager.py: note: In member "_detect_oracle_changes" of class "SyncDataManager":
+app/services/sync_data_manager.py:313:87: error: Missing type parameters for
+generic type "dict"  [type-arg]
+    ...(cls, account: CurrentAccountSyncData, new_permissions: dict) -> dict:
+                                                               ^
+app/services/sync_data_manager.py: note: In member "_update_mysql_account" of class "SyncDataManager":
+app/services/sync_data_manager.py:344:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def _update_mysql_account(cls, account: CurrentAccountSyncData, pe...
+        ^
+app/services/sync_data_manager.py:344:87: error: Missing type parameters for
+generic type "dict"  [type-arg]
+    ...count: CurrentAccountSyncData, permissions_data: dict, is_superuser: b...
+                                                        ^
+app/services/sync_data_manager.py: note: In member "_update_postgresql_account" of class "SyncDataManager":
+app/services/sync_data_manager.py:356:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def _update_postgresql_account(cls, account: CurrentAccountSyncDat...
+        ^
+app/services/sync_data_manager.py:356:92: error: Missing type parameters for
+generic type "dict"  [type-arg]
+    ...count: CurrentAccountSyncData, permissions_data: dict, is_superuser: b...
+                                                        ^
+app/services/sync_data_manager.py: note: In member "_update_sqlserver_account" of class "SyncDataManager":
+app/services/sync_data_manager.py:370:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def _update_sqlserver_account(cls, account: CurrentAccountSyncData...
+        ^
+app/services/sync_data_manager.py:370:91: error: Missing type parameters for
+generic type "dict"  [type-arg]
+    ...count: CurrentAccountSyncData, permissions_data: dict, is_superuser: b...
+                                                        ^
+app/services/sync_data_manager.py: note: In member "_update_oracle_account" of class "SyncDataManager":
+app/services/sync_data_manager.py:384:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def _update_oracle_account(cls, account: CurrentAccountSyncData, p...
+        ^
+app/services/sync_data_manager.py:384:88: error: Missing type parameters for
+generic type "dict"  [type-arg]
+    ...count: CurrentAccountSyncData, permissions_data: dict, is_superuser: b...
+                                                        ^
+app/services/sync_data_manager.py: note: In member "_log_changes" of class "SyncDataManager":
+app/services/sync_data_manager.py:397:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def _log_changes(cls, instance_id: int, db_type: str, username: st...
+        ^
+app/services/sync_data_manager.py:397:83: error: Missing type parameters for
+generic type "dict"  [type-arg]
+    ...e_id: int, db_type: str, username: str, changes: dict, session_id: str...
+                                                        ^
+app/services/sync_data_manager.py:397:107: error: Incompatible default for
+argument "session_id" (default has type "None", argument has type "str")
+[assignment]
+    ..., db_type: str, username: str, changes: dict, session_id: str = None):
+                                                                       ^~~~
+app/services/sync_data_manager.py:397:107: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+app/services/sync_data_manager.py:397:107: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+app/services/sync_data_manager.py: note: In member "mark_account_deleted" of class "SyncDataManager":
+app/services/sync_data_manager.py:412:5: error: Function is missing a return
+type annotation  [no-untyped-def]
+        def mark_account_deleted(cls, instance_id: int, db_type: str, user...
+        ^
+app/services/sync_data_manager.py:412:100: error: Incompatible default for
+argument "session_id" (default has type "None", argument has type "str")
+[assignment]
+    ...nstance_id: int, db_type: str, username: str, session_id: str = None):
+                                                                       ^~~~
+app/services/sync_data_manager.py:412:100: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+app/services/sync_data_manager.py:412:100: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+app/services/sync_data_manager.py: note: In member "get_accounts_by_db_type" of class "SyncDataManager":
+app/services/sync_data_manager.py:439:9: error: Returning Any from function
+declared to return "list[CurrentAccountSyncData]"  [no-any-return]
+            return query.all()
+            ^~~~~~~~~~~~~~~~~~
+app/services/sync_data_manager.py: note: In member "get_accounts_by_instance_and_db_type" of class "SyncDataManager":
+app/services/sync_data_manager.py:449:9: error: Returning Any from function
+declared to return "list[CurrentAccountSyncData]"  [no-any-return]
+            return query.all()
+            ^~~~~~~~~~~~~~~~~~
 app/services/database_type_service.py: note: In member "get_all_types" of class "DatabaseTypeService":
 app/services/database_type_service.py:21:9: error: Returning Any from function
 declared to return "list[DatabaseTypeConfig]"  [no-any-return]
@@ -3066,6 +3318,97 @@ app/routes/logs.py:403:16: error: Call to untyped function "error_response" in
 typed context  [no-untyped-call]
             return error_response("记录前端日志失败", 500)
                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/routes/instance_accounts.py:6:1: error: Skipping analyzing "flask_login":
+module is installed, but missing library stubs or py.typed marker
+[import-untyped]
+    from flask_login import login_required
+    ^
+app/routes/instance_accounts.py:20:2: error: Untyped decorator makes function
+"get_instance_accounts" untyped  [misc]
+    @login_required
+     ^~~~~~~~~~~~~~
+app/routes/instance_accounts.py:21:2: error: Untyped decorator makes function
+"get_instance_accounts" untyped  [misc]
+    @view_required
+     ^~~~~~~~~~~~~
+app/routes/instance_accounts.py: note: In function "get_instance_accounts":
+app/routes/instance_accounts.py:62:16: error: Incompatible return value type
+(got "tuple[Response, int]", expected "Response")  [return-value]
+            return jsonify({"success": False, "error": f"获取实例账户列表失败: {str(...
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+app/routes/instance_accounts.py: note: At top level:
+app/routes/instance_accounts.py:66:2: error: Untyped decorator makes function
+"get_account_permissions" untyped  [misc]
+    @login_required
+     ^~~~~~~~~~~~~~
+app/routes/instance_accounts.py:67:2: error: Untyped decorator makes function
+"get_account_permissions" untyped  [misc]
+    @view_required
+     ^~~~~~~~~~~~~
+app/routes/instance_accounts.py: note: In function "get_account_permissions":
+app/routes/instance_accounts.py:82:20: error: Incompatible return value type
+(got "tuple[Response, int]", expected "Response")  [return-value]
+                return jsonify({"success": False, "error": "账户不存在"}), 404
+                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/routes/instance_accounts.py:115:16: error: Incompatible return value type
+(got "tuple[Response, int]", expected "Response")  [return-value]
+            return jsonify({"success": False, "error": f"获取账户权限详情失败: {str(...
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+app/routes/instance_accounts.py: note: At top level:
+app/routes/instance_accounts.py:119:2: error: Untyped decorator makes function
+"get_account_history" untyped  [misc]
+    @login_required
+     ^~~~~~~~~~~~~~
+app/routes/instance_accounts.py:120:2: error: Untyped decorator makes function
+"get_account_history" untyped  [misc]
+    @view_required
+     ^~~~~~~~~~~~~
+app/routes/instance_accounts.py: note: In function "get_account_history":
+app/routes/instance_accounts.py:150:16: error: Incompatible return value type
+(got "tuple[Response, int]", expected "Response")  [return-value]
+            return jsonify({"success": False, "error": f"获取账户变更历史失败: {str(...
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+app/routes/instance_accounts.py: note: At top level:
+app/routes/instance_accounts.py:154:2: error: Untyped decorator makes function
+"delete_account" untyped  [misc]
+    @login_required
+     ^~~~~~~~~~~~~~
+app/routes/instance_accounts.py:155:2: error: Untyped decorator makes function
+"delete_account" untyped  [misc]
+    @view_required
+     ^~~~~~~~~~~~~
+app/routes/instance_accounts.py: note: In function "delete_account":
+app/routes/instance_accounts.py:172:20: error: Incompatible return value type
+(got "tuple[Response, int]", expected "Response")  [return-value]
+                return jsonify({"success": False, "error": "账户不存在"}), 404
+                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/routes/instance_accounts.py:175:20: error: Incompatible return value type
+(got "tuple[Response, int]", expected "Response")  [return-value]
+                return jsonify({"success": False, "error": "账户已经被删除"}), 40...
+                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+app/routes/instance_accounts.py:178:78: error: Argument 4 to
+"mark_account_deleted" of "SyncDataManager" has incompatible type "str | None";
+expected "str"  [arg-type]
+    ...nager.mark_account_deleted(instance_id, db_type, username, session_id)
+                                                                  ^~~~~~~~~~
+app/routes/instance_accounts.py:194:16: error: Incompatible return value type
+(got "tuple[Response, int]", expected "Response")  [return-value]
+            return jsonify({"success": False, "error": f"标记账户为已删除失败: {str(...
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
+app/routes/instance_accounts.py: note: At top level:
+app/routes/instance_accounts.py:198:2: error: Untyped decorator makes function
+"get_account_statistics" untyped  [misc]
+    @login_required
+     ^~~~~~~~~~~~~~
+app/routes/instance_accounts.py:199:2: error: Untyped decorator makes function
+"get_account_statistics" untyped  [misc]
+    @view_required
+     ^~~~~~~~~~~~~
+app/routes/instance_accounts.py: note: In function "get_account_statistics":
+app/routes/instance_accounts.py:252:16: error: Incompatible return value type
+(got "tuple[Response, int]", expected "Response")  [return-value]
+            return jsonify({"success": False, "error": f"获取实例账户统计信息失败: {st...
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~...
 app/routes/database_types.py:7:1: error: Skipping analyzing "flask_login":
 module is installed, but missing library stubs or py.typed marker
 [import-untyped]
@@ -4996,4 +5339,4 @@ app/routes/account_sync_optimized.py:405:16: error: Incompatible return value
 type (got "tuple[Response, int]", expected "Response")  [return-value]
             return (
                    ^
-Found 1063 errors in 63 files (checked 74 source files)
+Found 1133 errors in 68 files (checked 79 source files)

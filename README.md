@@ -138,7 +138,7 @@ python app.py
 系统包含完整的权限配置初始化脚本，支持以下数据库类型：
 
 - **MySQL**: 46个权限配置
-- **PostgreSQL**: 26个权限配置  
+- **PostgreSQL**: 26个权限配置
 - **SQL Server**: 56个权限配置
 - **Oracle**: 312个权限配置（基于SYS账户实际权限）
 

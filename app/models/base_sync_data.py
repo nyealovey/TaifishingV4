@@ -9,8 +9,9 @@ from app import db
 
 class BaseSyncData(db.Model):
     """基础同步数据模型（抽象基类）"""
+
     __abstract__ = True
-    
+
     id = db.Column(db.Integer, primary_key=True)
     instance_id = db.Column(db.Integer, db.ForeignKey("instances.id"), nullable=False, index=True)
     db_type = db.Column(db.String(20), nullable=False, index=True)  # 'mysql', 'postgresql', 'sqlserver', 'oracle'
@@ -19,9 +20,9 @@ class BaseSyncData(db.Model):
     status = db.Column(db.String(20), default="success", index=True)
     message = db.Column(db.Text, nullable=True)
     error_message = db.Column(db.Text, nullable=True)
-    
+
     # 关联实例 - 在子类中定义
-    
+
     def to_dict(self) -> dict:
         """转换为字典"""
         return {

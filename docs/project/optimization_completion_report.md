@@ -225,7 +225,7 @@ SyncDataManager.upsert_account(instance_id, db_type, username, permissions_data)
 
 ---
 
-**项目完成时间**: 2025-01-14  
-**开发团队**: AI Assistant  
-**版本**: 4.0.0  
+**项目完成时间**: 2025-01-14
+**开发团队**: AI Assistant
+**版本**: 4.0.0
 **状态**: 生产就绪 ✅

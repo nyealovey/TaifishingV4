@@ -9,8 +9,9 @@ from app import db
 
 class AccountChangeLog(db.Model):
     """账户变更日志表"""
+
     __tablename__ = "account_change_log"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     instance_id = db.Column(db.Integer, db.ForeignKey("instances.id"), nullable=False, index=True)
     db_type = db.Column(db.String(20), nullable=False, index=True)
@@ -20,23 +21,23 @@ class AccountChangeLog(db.Model):
     session_id = db.Column(db.String(36), nullable=True)
     status = db.Column(db.String(20), default="success")
     message = db.Column(db.Text, nullable=True)
-    
+
     # 变更差异
     privilege_diff = db.Column(db.JSON, nullable=True)  # 权限变更差异
     other_diff = db.Column(db.JSON, nullable=True)  # 其他字段变更差异
-    
+
     __table_args__ = (
-        db.Index('idx_instance_dbtype_username_time', 'instance_id', 'db_type', 'username', 'change_time'),
-        db.Index('idx_change_type_time', 'change_type', 'change_time'),
-        db.Index('idx_username_time', 'username', 'change_time'),
+        db.Index("idx_instance_dbtype_username_time", "instance_id", "db_type", "username", "change_time"),
+        db.Index("idx_change_type_time", "change_type", "change_time"),
+        db.Index("idx_username_time", "username", "change_time"),
     )
-    
+
     # 关联实例
     instance = db.relationship("Instance")
-    
+
     def __repr__(self) -> str:
         return f"<AccountChangeLog {self.username}@{self.db_type}:{self.change_type}>"
-    
+
     def to_dict(self) -> dict:
         """转换为字典"""
         return {
