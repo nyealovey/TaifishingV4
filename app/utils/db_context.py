@@ -53,7 +53,9 @@ class DatabaseContextManager:
                     logger.warning(f"关闭数据库连接失败: {e}")
 
     @contextmanager
-    def execute_query(self, instance: Instance, query: str, params: tuple = None) -> Generator[dict]:
+    def execute_query(
+        self, instance: Instance, query: str, params: tuple = None
+    ) -> Generator[dict]:
         """
         执行查询的上下文管理器
 
@@ -141,7 +143,9 @@ def get_db_connection(instance: Instance) -> Generator[Any | None]:
 
 
 @contextmanager
-def execute_db_query(instance: Instance, query: str, params: tuple = None) -> Generator[dict]:
+def execute_db_query(
+    instance: Instance, query: str, params: tuple = None
+) -> Generator[dict]:
     """执行数据库查询的便捷函数"""
     with db_context.execute_query(instance, query, params) as result:
         yield result

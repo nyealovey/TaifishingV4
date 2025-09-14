@@ -22,10 +22,16 @@ system_logger = get_system_logger()
 def index():
     """同步会话管理首页"""
     try:
-        log_info("访问同步会话管理页面", module="sync_sessions", user_id=current_user.id)
+        log_info(
+            "访问同步会话管理页面", module="sync_sessions", user_id=current_user.id
+        )
         return render_template("sync_sessions/index.html")
     except Exception as e:
-        log_error(f"访问同步会话管理页面失败: {str(e)}", module="sync_sessions", user_id=current_user.id)
+        log_error(
+            f"访问同步会话管理页面失败: {str(e)}",
+            module="sync_sessions",
+            user_id=current_user.id,
+        )
         return render_template("sync_sessions/index.html", error="页面加载失败")
 
 
@@ -60,14 +66,27 @@ def api_list_sessions():
             module="sync_sessions",
             user_id=current_user.id,
             session_count=len(sessions_data),
-            filters={"sync_type": sync_type, "sync_category": sync_category, "status": status},
+            filters={
+                "sync_type": sync_type,
+                "sync_category": sync_category,
+                "status": status,
+            },
         )
 
-        return jsonify({"success": True, "data": sessions_data, "total": len(sessions_data)})
+        return jsonify(
+            {"success": True, "data": sessions_data, "total": len(sessions_data)}
+        )
 
     except Exception as e:
-        log_error(f"获取同步会话列表失败: {str(e)}", module="sync_sessions", user_id=current_user.id)
-        return jsonify({"success": False, "message": "获取会话列表失败", "error": str(e)}), 500
+        log_error(
+            f"获取同步会话列表失败: {str(e)}",
+            module="sync_sessions",
+            user_id=current_user.id,
+        )
+        return (
+            jsonify({"success": False, "message": "获取会话列表失败", "error": str(e)}),
+            500,
+        )
 
 
 @sync_sessions_bp.route("/api/sessions/<session_id>")
@@ -102,9 +121,15 @@ def api_get_session_detail(session_id):
 
     except Exception as e:
         log_error(
-            f"获取同步会话详情失败: {str(e)}", module="sync_sessions", user_id=current_user.id, session_id=session_id
+            f"获取同步会话详情失败: {str(e)}",
+            module="sync_sessions",
+            user_id=current_user.id,
+            session_id=session_id,
         )
-        return jsonify({"success": False, "message": "获取会话详情失败", "error": str(e)}), 500
+        return (
+            jsonify({"success": False, "message": "获取会话详情失败", "error": str(e)}),
+            500,
+        )
 
 
 @sync_sessions_bp.route("/api/sessions/<session_id>/cancel", methods=["POST"])
@@ -116,13 +141,29 @@ def api_cancel_session(session_id):
         success = sync_session_service.cancel_session(session_id)
 
         if success:
-            log_info("取消同步会话", module="sync_sessions", user_id=current_user.id, session_id=session_id)
+            log_info(
+                "取消同步会话",
+                module="sync_sessions",
+                user_id=current_user.id,
+                session_id=session_id,
+            )
             return jsonify({"success": True, "message": "会话已取消"})
-        return jsonify({"success": False, "message": "取消会话失败，会话不存在或已结束"}), 400
+        return (
+            jsonify({"success": False, "message": "取消会话失败，会话不存在或已结束"}),
+            400,
+        )
 
     except Exception as e:
-        log_error(f"取消同步会话失败: {str(e)}", module="sync_sessions", user_id=current_user.id, session_id=session_id)
-        return jsonify({"success": False, "message": "取消会话失败", "error": str(e)}), 500
+        log_error(
+            f"取消同步会话失败: {str(e)}",
+            module="sync_sessions",
+            user_id=current_user.id,
+            session_id=session_id,
+        )
+        return (
+            jsonify({"success": False, "message": "取消会话失败", "error": str(e)}),
+            500,
+        )
 
 
 @sync_sessions_bp.route("/api/statistics")
@@ -137,15 +178,45 @@ def api_get_statistics():
 
         # 计算统计信息
         total_sessions = len(scheduled_sessions) + len(manual_sessions)
-        running_sessions = len([s for s in scheduled_sessions + manual_sessions if s.status == "running"])
-        completed_sessions = len([s for s in scheduled_sessions + manual_sessions if s.status == "completed"])
-        failed_sessions = len([s for s in scheduled_sessions + manual_sessions if s.status == "failed"])
+        running_sessions = len(
+            [s for s in scheduled_sessions + manual_sessions if s.status == "running"]
+        )
+        completed_sessions = len(
+            [s for s in scheduled_sessions + manual_sessions if s.status == "completed"]
+        )
+        failed_sessions = len(
+            [s for s in scheduled_sessions + manual_sessions if s.status == "failed"]
+        )
 
         # 按分类统计
-        account_sessions = len([s for s in scheduled_sessions + manual_sessions if s.sync_category == "account"])
-        capacity_sessions = len([s for s in scheduled_sessions + manual_sessions if s.sync_category == "capacity"])
-        config_sessions = len([s for s in scheduled_sessions + manual_sessions if s.sync_category == "config"])
-        other_sessions = len([s for s in scheduled_sessions + manual_sessions if s.sync_category == "other"])
+        account_sessions = len(
+            [
+                s
+                for s in scheduled_sessions + manual_sessions
+                if s.sync_category == "account"
+            ]
+        )
+        capacity_sessions = len(
+            [
+                s
+                for s in scheduled_sessions + manual_sessions
+                if s.sync_category == "capacity"
+            ]
+        )
+        config_sessions = len(
+            [
+                s
+                for s in scheduled_sessions + manual_sessions
+                if s.sync_category == "config"
+            ]
+        )
+        other_sessions = len(
+            [
+                s
+                for s in scheduled_sessions + manual_sessions
+                if s.sync_category == "other"
+            ]
+        )
 
         statistics = {
             "total_sessions": total_sessions,
@@ -162,10 +233,22 @@ def api_get_statistics():
             },
         }
 
-        log_info("获取同步统计信息", module="sync_sessions", user_id=current_user.id, statistics=statistics)
+        log_info(
+            "获取同步统计信息",
+            module="sync_sessions",
+            user_id=current_user.id,
+            statistics=statistics,
+        )
 
         return jsonify({"success": True, "data": statistics})
 
     except Exception as e:
-        log_error(f"获取同步统计信息失败: {str(e)}", module="sync_sessions", user_id=current_user.id)
-        return jsonify({"success": False, "message": "获取统计信息失败", "error": str(e)}), 500
+        log_error(
+            f"获取同步统计信息失败: {str(e)}",
+            module="sync_sessions",
+            user_id=current_user.id,
+        )
+        return (
+            jsonify({"success": False, "message": "获取统计信息失败", "error": str(e)}),
+            500,
+        )

@@ -7,14 +7,14 @@ from typing import Any
 
 from app.models.instance import Instance
 from app.services.connection_factory import ConnectionFactory
-from app.utils.structlog_config import get_db_logger
+from app.utils.structlog_config import get_database_logger
 
 
 class DatabaseService:
     """数据库连接管理服务"""
 
     def __init__(self) -> None:
-        self.db_logger = get_db_logger()
+        self.db_logger = get_database_logger()
         self.connections = {}  # 连接池
 
     def get_connection(self, instance: Instance) -> Any | None:

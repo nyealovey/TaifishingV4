@@ -26,7 +26,9 @@ class TaskScheduler:
     def _setup_scheduler(self):
         """设置调度器"""
         # 任务存储配置
-        jobstores = {"default": SQLAlchemyJobStore(url="sqlite:///userdata/scheduler.db")}
+        jobstores = {
+            "default": SQLAlchemyJobStore(url="sqlite:///userdata/scheduler.db")
+        }
 
         # 执行器配置
         executors = {"default": ThreadPoolExecutor(max_workers=5)}
@@ -40,7 +42,10 @@ class TaskScheduler:
 
         # 创建调度器
         self.scheduler = BackgroundScheduler(
-            jobstores=jobstores, executors=executors, job_defaults=job_defaults, timezone="Asia/Shanghai"
+            jobstores=jobstores,
+            executors=executors,
+            job_defaults=job_defaults,
+            timezone="Asia/Shanghai",
         )
 
         # 添加事件监听器
@@ -132,7 +137,9 @@ def _add_default_jobs():
         return
 
     # 从配置文件读取默认任务
-    config_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config", "scheduler_tasks.yaml")
+    config_file = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "config", "scheduler_tasks.yaml"
+    )
 
     try:
         with open(config_file, encoding="utf-8") as f:
@@ -160,7 +167,14 @@ def _add_default_jobs():
                 continue
 
             # 创建任务
-            scheduler.add_job(func, trigger_type, id=task_id, name=task_name, replace_existing=True, **trigger_params)
+            scheduler.add_job(
+                func,
+                trigger_type,
+                id=task_id,
+                name=task_name,
+                replace_existing=True,
+                **trigger_params,
+            )
 
             logger.info(f"添加默认任务: {task_name} ({task_id})")
 
@@ -182,11 +196,24 @@ def _add_hardcoded_default_jobs():
 
     # 清理旧日志 - 每天凌晨2点执行
     scheduler.add_job(
-        cleanup_old_logs, "cron", hour=2, minute=0, id="cleanup_logs", name="清理旧日志", replace_existing=True
+        cleanup_old_logs,
+        "cron",
+        hour=2,
+        minute=0,
+        id="cleanup_logs",
+        name="清理旧日志",
+        replace_existing=True,
     )
 
     # 账户同步 - 每30分钟执行
-    scheduler.add_job(sync_accounts, "interval", minutes=30, id="sync_accounts", name="账户同步", replace_existing=True)
+    scheduler.add_job(
+        sync_accounts,
+        "interval",
+        minutes=30,
+        id="sync_accounts",
+        name="账户同步",
+        replace_existing=True,
+    )
 
 
 # 装饰器：用于标记任务函数

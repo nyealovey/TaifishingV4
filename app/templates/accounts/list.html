@@ -32,12 +32,12 @@
                 {% elif db_type %}
                 <input type="hidden" name="db_type" value="{{ db_type }}">
                 {% endif %}
-                
+
                 <!-- 第一行：搜索框和按钮 -->
                 <div class="row g-3 mb-3">
                     <div class="col-md-8">
                         <label for="search" class="form-label fw-semibold">搜索</label>
-                        <input type="text" class="form-control form-control-lg" id="search" name="search" 
+                        <input type="text" class="form-control form-control-lg" id="search" name="search"
                                placeholder="搜索用户名、实例名称、IP地址" value="{{ search }}">
                     </div>
                     <div class="col-md-4 d-flex align-items-end">
@@ -45,14 +45,14 @@
                             <button type="submit" class="btn btn-primary btn-lg flex-fill">
                                 <i class="fas fa-search me-2"></i>搜索
                             </button>
-                            <a href="{{ url_for('account_list.list_accounts', db_type=current_db_type) if current_db_type else url_for('account_list.list_accounts') }}" 
+                            <a href="{{ url_for('account_list.list_accounts', db_type=current_db_type) if current_db_type else url_for('account_list.list_accounts') }}"
                                class="btn btn-outline-secondary btn-lg">
                                 <i class="fas fa-times me-2"></i>清除
                             </a>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- 第二行：筛选条件 -->
                 <div class="row g-3">
                     <div class="col-md-2">
@@ -68,7 +68,7 @@
                         <select class="form-select" id="environment" name="environment">
                             <option value="">全部环境</option>
                             {% for env_option in filter_options.environments %}
-                            <option value="{{ env_option.value }}" 
+                            <option value="{{ env_option.value }}"
                                     {% if environment == env_option.value %}selected{% endif %}>
                                 {{ env_option.label }}
                             </option>
@@ -80,7 +80,7 @@
                         <select class="form-select" id="classification" name="classification">
                             <option value="">全部分类</option>
                             {% for classification_option in filter_options.classifications %}
-                            <option value="{{ classification_option.value }}" 
+                            <option value="{{ classification_option.value }}"
                                     {% if classification == classification_option.value %}selected{% endif %}
                                     {% if classification_option.type == 'special' %}class="text-primary fw-semibold"{% endif %}
                                     {% if classification_option.get('disabled') %}disabled{% endif %}>
@@ -94,7 +94,7 @@
                         <select class="form-select" id="db_type" name="db_type">
                             <option value="">全部类型</option>
                             {% for db_type_option in filter_options.db_types %}
-                            <option value="{{ db_type_option.value }}" 
+                            <option value="{{ db_type_option.value }}"
                                     {% if db_type == db_type_option.value %}selected{% endif %}>
                                 {{ db_type_option.label }}
                             </option>
@@ -111,12 +111,12 @@
     <div class="row mb-3">
         <div class="col-12">
             <div class="btn-group" role="group">
-                <a href="{{ url_for('account_list.list_accounts') }}" 
+                <a href="{{ url_for('account_list.list_accounts') }}"
                    class="btn {% if not current_db_type %}btn-primary{% else %}btn-outline-primary border-2 fw-bold{% endif %}">
                     <i class="fas fa-database me-1"></i>全部
                 </a>
                 {% for db_type in filter_options.db_types %}
-                <a href="{{ url_for('account_list.list_accounts', db_type=db_type.value) }}" 
+                <a href="{{ url_for('account_list.list_accounts', db_type=db_type.value) }}"
                    class="btn {% if current_db_type == db_type.value %}btn-primary{% else %}btn-outline-primary border-2 fw-bold{% endif %}">
                     <i class="fas fa-{{ 'mysql' if db_type.value == 'mysql' else 'database' if db_type.value == 'postgresql' else 'server' if db_type.value == 'sqlserver' else 'database' }} me-1"></i>
                     {{ db_type.label }}
@@ -191,14 +191,14 @@
                         <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-database text-info me-1" style="font-size: 0.8rem;"></i>
-                                <span style="font-size: 0.8rem;">{{ account.instance.name }}</span>
+                                <span style="font-size: 0.8rem;">{{ account.instance.name if account.instance else '未知实例' }}</span>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
+                            <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host if account.instance else '未知主机' }}</span>
                         </td>
                         <td>
-                            {{ environment_badge(account.instance.environment, 'small') }}
+                            {{ environment_badge(account.instance.environment, 'small') if account.instance else '' }}
                         </td>
                         <td>
                             {% if classifications.get(account.id) %}
@@ -220,8 +220,8 @@
                         </td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限" 
-                                   class="btn btn-outline-primary btn-sm" 
+                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限"
+                                   class="btn btn-outline-primary btn-sm"
                                    style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s ease;">
                                     <i class="fas fa-eye me-1"></i>权限
                                 </a>
@@ -231,20 +231,20 @@
                         <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-user text-primary me-1" style="font-size: 0.8rem;"></i>
-                                <strong style="font-size: 0.85rem;">{{ account.username }}@{{ account.host or '%' }}</strong>
+                                <strong style="font-size: 0.85rem;">{{ account.username }}@{{ account.instance.host or '%' }}</strong>
                             </div>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-database text-info me-1" style="font-size: 0.8rem;"></i>
-                                <span style="font-size: 0.8rem;">{{ account.instance.name }}</span>
+                                <span style="font-size: 0.8rem;">{{ account.instance.name if account.instance else '未知实例' }}</span>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
+                            <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host if account.instance else '未知主机' }}</span>
                         </td>
                         <td>
-                            {{ environment_badge(account.instance.environment, 'small') }}
+                            {{ environment_badge(account.instance.environment, 'small') if account.instance else '' }}
                         </td>
                         <td>
                             {% if classifications.get(account.id) %}
@@ -266,8 +266,8 @@
                         </td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限" 
-                                   class="btn btn-outline-primary btn-sm" 
+                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限"
+                                   class="btn btn-outline-primary btn-sm"
                                    style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s ease;">
                                     <i class="fas fa-eye me-1"></i>权限
                                 </a>
@@ -283,14 +283,14 @@
                         <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-database text-info me-1" style="font-size: 0.8rem;"></i>
-                                <span style="font-size: 0.8rem;">{{ account.instance.name }}</span>
+                                <span style="font-size: 0.8rem;">{{ account.instance.name if account.instance else '未知实例' }}</span>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
+                            <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host if account.instance else '未知主机' }}</span>
                         </td>
                         <td>
-                            {{ environment_badge(account.instance.environment, 'small') }}
+                            {{ environment_badge(account.instance.environment, 'small') if account.instance else '' }}
                         </td>
                         <td>
                             {% if classifications.get(account.id) %}
@@ -312,8 +312,8 @@
                         </td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限" 
-                                   class="btn btn-outline-primary btn-sm" 
+                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限"
+                                   class="btn btn-outline-primary btn-sm"
                                    style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s ease;">
                                     <i class="fas fa-eye me-1"></i>权限
                                 </a>
@@ -329,14 +329,14 @@
                         <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-database text-info me-1" style="font-size: 0.8rem;"></i>
-                                <span style="font-size: 0.8rem;">{{ account.instance.name }}</span>
+                                <span style="font-size: 0.8rem;">{{ account.instance.name if account.instance else '未知实例' }}</span>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
+                            <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host if account.instance else '未知主机' }}</span>
                         </td>
                         <td>
-                            {{ environment_badge(account.instance.environment, 'small') }}
+                            {{ environment_badge(account.instance.environment, 'small') if account.instance else '' }}
                         </td>
                         <td>
                             {% if classifications.get(account.id) %}
@@ -358,8 +358,8 @@
                         </td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限" 
-                                   class="btn btn-outline-primary btn-sm" 
+                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限"
+                                   class="btn btn-outline-primary btn-sm"
                                    style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s ease;">
                                     <i class="fas fa-eye me-1"></i>权限
                                 </a>
@@ -372,25 +372,25 @@
                                 {% if account.instance.db_type == 'sqlserver' or account.instance.db_type == 'oracle' or account.instance.db_type == 'postgresql' %}
                                 <strong style="font-size: 0.85rem;">{{ account.username }}</strong>
                                 {% else %}
-                                <strong style="font-size: 0.85rem;">{{ account.username }}@{{ account.host or '%' }}</strong>
+                                <strong style="font-size: 0.85rem;">{{ account.username }}@{{ account.instance.host or '%' }}</strong>
                                 {% endif %}
                             </div>
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-database text-info me-1" style="font-size: 0.8rem;"></i>
-                                <span style="font-size: 0.8rem;">{{ account.instance.name }}</span>
+                                <span style="font-size: 0.8rem;">{{ account.instance.name if account.instance else '未知实例' }}</span>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host }}</span>
+                            <span class="badge bg-primary" style="font-size: 0.7rem;">{{ account.instance.host if account.instance else '未知主机' }}</span>
                         </td>
                         <td>
-                            {{ environment_badge(account.instance.environment, 'small') }}
+                            {{ environment_badge(account.instance.environment, 'small') if account.instance else '' }}
                         </td>
                         <td>
-                            <span class="badge bg-{{ 'primary' if account.instance.db_type == 'postgresql' else 'success' if account.instance.db_type == 'mysql' else 'warning' if account.instance.db_type == 'sqlserver' else 'info' if account.instance.db_type == 'oracle' else 'secondary' }}" style="font-size: 0.7rem;">
-                                {{ account.instance.db_type.upper() }}
+                                <span class="badge bg-{{ 'primary' if account.instance and account.instance.db_type == 'postgresql' else 'success' if account.instance and account.instance.db_type == 'mysql' else 'warning' if account.instance and account.instance.db_type == 'sqlserver' else 'info' if account.instance and account.instance.db_type == 'oracle' else 'secondary' }}" style="font-size: 0.7rem;">
+                                {{ account.instance.db_type.upper() if account.instance else 'UNKNOWN' }}
                             </span>
                         </td>
                         <td>
@@ -417,8 +417,8 @@
                         </td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限" 
-                                   class="btn btn-outline-primary btn-sm" 
+                                <a href="javascript:void(0)" onclick="viewAccountPermissions({{ account.id }})" title="查看权限"
+                                   class="btn btn-outline-primary btn-sm"
                                    style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.2s ease;">
                                     <i class="fas fa-eye me-1"></i>权限
                                 </a>
@@ -430,7 +430,7 @@
                 </tbody>
             </table>
         </div>
-        
+
         <!-- 分页 -->
         {% if accounts.pages > 1 %}
         <nav aria-label="账户分页">
@@ -448,7 +448,7 @@
                     {% endif %}
                 </li>
                 {% endif %}
-                
+
                 {% for page_num in accounts.iter_pages() %}
                     {% if page_num %}
                         {% if page_num != accounts.page %}
@@ -474,7 +474,7 @@
                     </li>
                     {% endif %}
                 {% endfor %}
-                
+
                 {% if accounts.has_next %}
                 <li class="page-item">
                     {% if current_db_type %}
@@ -491,7 +491,7 @@
             </ul>
         </nav>
         {% endif %}
-        
+
         {% else %}
         <div class="text-center py-5">
             <i class="fas fa-users fa-3x text-muted mb-3"></i>
@@ -541,15 +541,15 @@
 function syncAllAccounts() {
     const btn = event.target;
     const originalText = btn.innerHTML;
-    
+
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>同步中...';
     btn.disabled = true;
-    
+
     fetch('/account-sync/sync-all', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
                          document.querySelector('input[name="csrf_token"]')?.value
         }
     })
@@ -598,9 +598,9 @@ function showAlert(type, message) {
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
+
     document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.container').firstChild);
-    
+
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);

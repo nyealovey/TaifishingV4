@@ -7,12 +7,12 @@ from datetime import datetime
 from typing import Any
 
 from app import db
-from app.models.account import Account
 from app.models.account_classification import (
     AccountClassification,
     AccountClassificationAssignment,
     ClassificationRule,
 )
+from app.models.current_account_sync_data import CurrentAccountSyncData
 from app.models.instance import Instance
 from app.services.classification_batch_service import ClassificationBatchService
 from app.utils.structlog_config import log_error, log_info, log_warning
@@ -24,6 +24,23 @@ class AccountClassificationService:
     def __init__(self) -> None:
         """初始化账户分类服务"""
         # 使用统一日志系统，不需要单独的logger
+
+    def _get_account_permissions(self, account: CurrentAccountSyncData) -> dict:
+        """获取账户权限数据，使用新的优化同步模型"""
+        try:
+            # 从CurrentAccountSyncData获取权限
+            sync_data = CurrentAccountSyncData.query.filter_by(
+                instance_id=account.instance_id,
+                username=account.username,
+                db_type=account.instance.db_type,
+            ).first()
+
+            if sync_data and sync_data.sync_data:
+                return json.loads(sync_data.sync_data)
+
+            return {}
+        except (json.JSONDecodeError, TypeError, AttributeError):
+            return {}
 
     def create_classification(
         self,
@@ -115,7 +132,9 @@ class AccountClassificationService:
                 return {"success": False, "error": "系统分类不能删除"}
 
             # 检查是否有关联的账户分配
-            assignments_count = classification.account_assignments.filter_by(is_active=True).count()
+            assignments_count = classification.account_assignments.filter_by(
+                is_active=True
+            ).count()
             if assignments_count > 0:
                 return {
                     "success": False,
@@ -153,7 +172,12 @@ class AccountClassificationService:
         """创建分类规则"""
         try:
             # 验证参数
-            if not classification_id or not db_type or not rule_name or not rule_expression:
+            if (
+                not classification_id
+                or not db_type
+                or not rule_name
+                or not rule_expression
+            ):
                 return {"success": False, "error": "缺少必要参数"}
 
             classification = AccountClassification.query.get(classification_id)
@@ -217,7 +241,10 @@ class AccountClassificationService:
             db.session.commit()
 
             log_info(
-                "更新分类规则", module="account_classification", rule_id=rule_id, updated_fields=list(kwargs.keys())
+                "更新分类规则",
+                module="account_classification",
+                rule_id=rule_id,
+                updated_fields=list(kwargs.keys()),
             )
 
             return {
@@ -242,7 +269,12 @@ class AccountClassificationService:
             db.session.delete(rule)
             db.session.commit()
 
-            log_info("删除分类规则", module="account_classification", rule_id=rule_id, rule_name=rule_name)
+            log_info(
+                "删除分类规则",
+                module="account_classification",
+                rule_id=rule_id,
+                rule_name=rule_name,
+            )
 
             return {"success": True, "message": f'规则 "{rule_name}" 删除成功'}
 
@@ -251,14 +283,18 @@ class AccountClassificationService:
             log_error(f"删除分类规则失败: {e}", module="account_classification")
             return {"success": False, "error": f"删除分类规则失败: {str(e)}"}
 
-    def get_classifications(self, include_inactive: bool = False) -> list[dict[str, Any]]:
+    def get_classifications(
+        self, include_inactive: bool = False
+    ) -> list[dict[str, Any]]:
         """获取所有账户分类"""
         try:
             query = AccountClassification.query
             if not include_inactive:
                 query = query.filter_by(is_active=True)
 
-            classifications = query.order_by(AccountClassification.priority.desc(), AccountClassification.name).all()
+            classifications = query.order_by(
+                AccountClassification.priority.desc(), AccountClassification.name
+            ).all()
 
             return [classification.to_dict() for classification in classifications]
 
@@ -266,7 +302,9 @@ class AccountClassificationService:
             log_error(f"获取账户分类失败: {e}", module="account_classification")
             return []
 
-    def get_classification_rules(self, classification_id: int = None, db_type: str = None) -> list[dict[str, Any]]:
+    def get_classification_rules(
+        self, classification_id: int = None, db_type: str = None
+    ) -> list[dict[str, Any]]:
         """获取分类规则"""
         try:
             query = ClassificationRule.query.filter_by(is_active=True)
@@ -316,7 +354,7 @@ class AccountClassificationService:
     ) -> dict[str, Any]:
         """为账户分配分类"""
         try:
-            account = Account.query.get(account_id)
+            account = CurrentAccountSyncData.query.get(account_id)
             if not account:
                 return {"success": False, "error": "账户不存在"}
 
@@ -379,7 +417,10 @@ class AccountClassificationService:
             return {"success": False, "error": f"分配账户分类失败: {str(e)}"}
 
     def auto_classify_accounts(
-        self, instance_id: int = None, batch_type: str = "manual", created_by: int = None
+        self,
+        instance_id: int = None,
+        batch_type: str = "manual",
+        created_by: int = None,
     ) -> dict[str, Any]:
         """自动分类账户"""
         batch_id = None
@@ -391,9 +432,10 @@ class AccountClassificationService:
                 return {"success": False, "error": "没有可用的分类规则"}
 
             # 获取需要分类的账户（只包括活跃实例的账户）
-            query = Account.query.join(Instance).filter(
+            query = CurrentAccountSyncData.query.join(Instance).filter(
                 Instance.is_active == True,
                 Instance.deleted_at.is_(None),  # 排除已删除的实例
+                CurrentAccountSyncData.is_deleted == False,
             )
             if instance_id:
                 query = query.filter_by(instance_id=instance_id)
@@ -402,7 +444,10 @@ class AccountClassificationService:
 
             # 创建批次记录
             batch_id = ClassificationBatchService.create_batch(
-                batch_type=batch_type, created_by=created_by, total_rules=len(rules), active_rules=len(rules)
+                batch_type=batch_type,
+                created_by=created_by,
+                total_rules=len(rules),
+                active_rules=len(rules),
             )
 
             classified_accounts = 0  # 实际匹配的账户数（去重）
@@ -413,22 +458,33 @@ class AccountClassificationService:
             for account in accounts:
                 try:
                     # 根据账户的数据库类型获取对应的规则，按优先级排序
-                    account_rules = [rule for rule in rules if rule.db_type == account.instance.db_type]
+                    account_rules = [
+                        rule
+                        for rule in rules
+                        if rule.db_type == account.instance.db_type
+                    ]
 
                     if not account_rules:
                         continue
 
                     # 按分类优先级排序规则（优先级高的先匹配）
                     account_rules.sort(
-                        key=lambda r: (r.classification.priority if r.classification else 0),
+                        key=lambda r: (
+                            r.classification.priority if r.classification else 0
+                        ),
                         reverse=True,
                     )
 
                     # 获取当前账户的分类分配
-                    current_assignments = AccountClassificationAssignment.query.filter_by(
-                        account_id=account.id, is_active=True
-                    ).all()
-                    current_classification_ids = {assignment.classification_id for assignment in current_assignments}
+                    current_assignments = (
+                        AccountClassificationAssignment.query.filter_by(
+                            account_id=account.id, is_active=True
+                        ).all()
+                    )
+                    current_classification_ids = {
+                        assignment.classification_id
+                        for assignment in current_assignments
+                    }
 
                     # 应用规则进行自动分类，收集新的分类
                     new_classification_ids = set()
@@ -488,9 +544,11 @@ class AccountClassificationService:
 
                     # 无论分类是否有变化，都创建新的批次记录以保持批次完整性
                     # 先清除该账户的所有现有批次记录，避免重复
-                    existing_batch_assignments = AccountClassificationAssignment.query.filter_by(
-                        account_id=account.id, batch_id=batch_id
-                    ).all()
+                    existing_batch_assignments = (
+                        AccountClassificationAssignment.query.filter_by(
+                            account_id=account.id, batch_id=batch_id
+                        ).all()
+                    )
                     for assignment in existing_batch_assignments:
                         db.session.delete(assignment)
 
@@ -567,16 +625,31 @@ class AccountClassificationService:
         except Exception as e:
             # 如果批次已创建，标记为失败
             if batch_id:
-                ClassificationBatchService.complete_batch(batch_id=batch_id, status="failed", error_message=str(e))
+                ClassificationBatchService.complete_batch(
+                    batch_id=batch_id, status="failed", error_message=str(e)
+                )
 
-            log_error(f"自动分类账户失败: {e}", module="account_classification", batch_id=batch_id, error=str(e))
-            return {"success": False, "error": f"自动分类账户失败: {str(e)}", "batch_id": batch_id}
+            log_error(
+                f"自动分类账户失败: {e}",
+                module="account_classification",
+                batch_id=batch_id,
+                error=str(e),
+            )
+            return {
+                "success": False,
+                "error": f"自动分类账户失败: {str(e)}",
+                "batch_id": batch_id,
+            }
 
-    def evaluate_rule(self, rule: ClassificationRule, account: Account) -> bool:
+    def evaluate_rule(
+        self, rule: ClassificationRule, account: CurrentAccountSyncData
+    ) -> bool:
         """评估规则是否匹配账户 - 公共方法"""
         return self._evaluate_rule(account, rule)
 
-    def _evaluate_rule(self, account: Account, rule: ClassificationRule) -> bool:
+    def _evaluate_rule(
+        self, account: CurrentAccountSyncData, rule: ClassificationRule
+    ) -> bool:
         """评估规则是否匹配账户"""
         try:
             # 首先检查账户的数据库类型是否与规则的数据库类型匹配
@@ -597,24 +670,29 @@ class AccountClassificationService:
                 return self._evaluate_postgresql_rule(account, rule_expression)
             if rule_expression.get("type") == "oracle_permissions":
                 return self._evaluate_oracle_rule(account, rule_expression)
-            log_warning(f"不支持的规则类型: {rule_expression.get('type')}", module="account_classification")
+            log_warning(
+                f"不支持的规则类型: {rule_expression.get('type')}",
+                module="account_classification",
+            )
             return False
 
         except Exception as e:
             log_error(f"评估规则失败: {e}", module="account_classification")
             return False
 
-    def _evaluate_legacy_rule(self, account: Account, rule: ClassificationRule) -> bool:
+    def _evaluate_legacy_rule(
+        self, account: CurrentAccountSyncData, rule: ClassificationRule
+    ) -> bool:
         """评估旧格式规则（字符串格式）"""
         try:
-            import json
-
             # 从本地数据库获取权限信息
-            if not account.permissions:
-                log_info(f"账户 {account.username} 没有权限信息", module="account_classification")
+            permissions = self._get_account_permissions(account)
+            if not permissions:
+                log_info(
+                    f"账户 {account.username} 没有权限信息",
+                    module="account_classification",
+                )
                 return False
-
-            permissions = json.loads(account.permissions)
             rule_expression = rule.rule_expression  # 直接使用字符串格式
 
             # 根据数据库类型和规则表达式进行匹配
@@ -643,7 +721,10 @@ class AccountClassificationService:
                     # 检查服务器权限
                     perm_name = rule_expression.split(".", 1)[1]
                     server_permissions = permissions.get("server_permissions", [])
-                    if isinstance(server_permissions, list) and perm_name in server_permissions:
+                    if (
+                        isinstance(server_permissions, list)
+                        and perm_name in server_permissions
+                    ):
                         log_info(
                             f"账户 {account.username} 匹配SQL Server规则: {rule_expression}",
                             module="account_classification",
@@ -671,7 +752,10 @@ class AccountClassificationService:
                 if rule_expression == "role_attributes.CREATEROLE":
                     # 检查是否有CREATEROLE属性
                     role_attributes = permissions.get("role_attributes", [])
-                    if isinstance(role_attributes, list) and "CREATEROLE" in role_attributes:
+                    if (
+                        isinstance(role_attributes, list)
+                        and "CREATEROLE" in role_attributes
+                    ):
                         log_info(
                             f"账户 {account.username} 匹配PostgreSQL规则: {rule_expression}",
                             module="account_classification",
@@ -682,36 +766,43 @@ class AccountClassificationService:
                 if rule_expression == "system_privileges.GRANT ANY PRIVILEGE":
                     # 检查是否有GRANT ANY PRIVILEGE权限
                     system_privileges = permissions.get("system_privileges", [])
-                    if isinstance(system_privileges, list) and "GRANT ANY PRIVILEGE" in system_privileges:
+                    if (
+                        isinstance(system_privileges, list)
+                        and "GRANT ANY PRIVILEGE" in system_privileges
+                    ):
                         log_info(
                             f"账户 {account.username} 匹配Oracle规则: {rule_expression}",
                             module="account_classification",
                         )
                         return True
 
-            log_info(f"账户 {account.username} 不匹配规则: {rule_expression}", module="account_classification")
+            log_info(
+                f"账户 {account.username} 不匹配规则: {rule_expression}",
+                module="account_classification",
+            )
             return False
 
         except Exception as e:
             log_error(f"评估旧格式规则失败: {e}", module="account_classification")
             return False
 
-    def _evaluate_mysql_rule(self, account: Account, rule_expression: dict) -> bool:
+    def _evaluate_mysql_rule(
+        self, account: CurrentAccountSyncData, rule_expression: dict
+    ) -> bool:
         """评估MySQL规则"""
         try:
-            import json
-
             # 从本地数据库获取权限信息
-            if not account.permissions:
+            permissions = self._get_account_permissions(account)
+            if not permissions:
                 return False
-
-            permissions = json.loads(account.permissions)
 
             # 检查全局权限
             required_global = rule_expression.get("global_privileges", [])
             if required_global:
                 actual_global = [
-                    p["privilege"] for p in permissions.get("global_privileges", []) if p.get("granted", False)
+                    p["privilege"]
+                    for p in permissions.get("global_privileges", [])
+                    if p.get("granted", False)
                 ]
                 if not all(perm in actual_global for perm in required_global):
                     return False
@@ -728,23 +819,25 @@ class AccountClassificationService:
                     return False
 
             # 只有匹配成功时才记录日志
-            log_info(f"账户 {account.username} 满足MySQL规则要求", module="account_classification")
+            log_info(
+                f"账户 {account.username} 满足MySQL规则要求",
+                module="account_classification",
+            )
             return True
 
         except Exception as e:
             log_error(f"评估MySQL规则失败: {e}", module="account_classification")
             return False
 
-    def _evaluate_sqlserver_rule(self, account: Account, rule_expression: dict) -> bool:
+    def _evaluate_sqlserver_rule(
+        self, account: CurrentAccountSyncData, rule_expression: dict
+    ) -> bool:
         """评估SQL Server规则"""
         try:
-            import json
-
             # 从本地数据库获取权限信息
-            if not account.permissions:
+            permissions = self._get_account_permissions(account)
+            if not permissions:
                 return False
-
-            permissions = json.loads(account.permissions)
             operator = rule_expression.get("operator", "OR")  # 默认为OR逻辑
 
             # 收集所有匹配结果
@@ -766,7 +859,9 @@ class AccountClassificationService:
                         if isinstance(p, dict) and p.get("granted", False)
                     ]
 
-                server_perms_match = all(perm in actual_server_perms for perm in required_server_perms)
+                server_perms_match = all(
+                    perm in actual_server_perms for perm in required_server_perms
+                )
                 match_results.append(server_perms_match)
 
                 if server_perms_match:
@@ -785,9 +880,14 @@ class AccountClassificationService:
                     actual_server_roles = server_roles_data
                 else:
                     # 对象数组格式
-                    actual_server_roles = [r["role"] if isinstance(r, dict) else r for r in server_roles_data]
+                    actual_server_roles = [
+                        r["role"] if isinstance(r, dict) else r
+                        for r in server_roles_data
+                    ]
 
-                server_roles_match = all(role in actual_server_roles for role in required_server_roles)
+                server_roles_match = all(
+                    role in actual_server_roles for role in required_server_roles
+                )
                 match_results.append(server_roles_match)
 
                 if server_roles_match:
@@ -841,7 +941,9 @@ class AccountClassificationService:
                         if isinstance(db_perm, dict):
                             all_db_permissions.update(db_perm.get("privileges", []))
 
-                db_privs_match = all(perm in all_db_permissions for perm in required_db_privs)
+                db_privs_match = all(
+                    perm in all_db_permissions for perm in required_db_privs
+                )
                 match_results.append(db_privs_match)
 
                 if db_privs_match:
@@ -853,7 +955,10 @@ class AccountClassificationService:
             # 根据操作符决定匹配逻辑
             if not match_results:
                 # 如果没有任何要求，默认匹配
-                log_info(f"账户 {account.username} 匹配SQL Server规则（无特定要求）", module="account_classification")
+                log_info(
+                    f"账户 {account.username} 匹配SQL Server规则（无特定要求）",
+                    module="account_classification",
+                )
                 return True
 
             if operator.upper() == "AND":
@@ -865,7 +970,10 @@ class AccountClassificationService:
 
             # 只有匹配成功时才记录日志
             if result:
-                log_info(f"账户 {account.username} 满足SQL Server规则要求", module="account_classification")
+                log_info(
+                    f"账户 {account.username} 满足SQL Server规则要求",
+                    module="account_classification",
+                )
 
             return result
 
@@ -881,7 +989,9 @@ class AccountClassificationService:
             )
 
             # 删除该账户的所有活跃分类分配
-            assignments = AccountClassificationAssignment.query.filter_by(account_id=account_id, is_active=True).all()
+            assignments = AccountClassificationAssignment.query.filter_by(
+                account_id=account_id, is_active=True
+            ).all()
 
             for assignment in assignments:
                 assignment.is_active = False
@@ -895,7 +1005,9 @@ class AccountClassificationService:
             db.session.rollback()
             return False
 
-    def get_account_classifications(self, account_id: int = None) -> list[dict[str, Any]]:
+    def get_account_classifications(
+        self, account_id: int = None
+    ) -> list[dict[str, Any]]:
         """获取账户分类分配"""
         try:
             query = AccountClassificationAssignment.query.filter_by(is_active=True)
@@ -940,10 +1052,10 @@ class AccountClassificationService:
     def get_rule_matched_accounts_count(self, rule_id: int) -> int:
         """获取规则匹配的账户数量"""
         try:
-            from app.models.account import Account
             from app.models.account_classification import (
                 ClassificationRule,
             )
+            from app.models.current_account_sync_data import CurrentAccountSyncData
 
             # 获取规则
             rule = ClassificationRule.query.get(rule_id)
@@ -958,9 +1070,10 @@ class AccountClassificationService:
             # 重新运行规则评估，统计真正匹配该规则的账户数量（只包括活跃实例的账户）
             matched_count = 0
             accounts = (
-                Account.query.join(Instance)
+                CurrentAccountSyncData.query.join(Instance)
                 .filter(
                     Instance.is_active == True,
+                    CurrentAccountSyncData.is_deleted == False,
                     Instance.deleted_at.is_(None),  # 排除已删除的实例
                 )
                 .all()
@@ -976,16 +1089,15 @@ class AccountClassificationService:
             log_error(f"获取规则匹配账户数量失败: {e}", module="account_classification")
             return 0
 
-    def _evaluate_postgresql_rule(self, account: Account, rule_expression: dict) -> bool:
+    def _evaluate_postgresql_rule(
+        self, account: CurrentAccountSyncData, rule_expression: dict
+    ) -> bool:
         """评估PostgreSQL规则"""
         try:
-            import json
-
             # 从本地数据库获取权限信息
-            if not account.permissions:
+            permissions = self._get_account_permissions(account)
+            if not permissions:
                 return False
-
-            permissions = json.loads(account.permissions)
 
             # 检查角色属性权限
             required_role_attrs = rule_expression.get("role_attributes", [])
@@ -1006,23 +1118,25 @@ class AccountClassificationService:
                     return False
 
             # 只有匹配成功时才记录日志
-            log_info(f"账户 {account.username} 匹配PostgreSQL规则", module="account_classification")
+            log_info(
+                f"账户 {account.username} 匹配PostgreSQL规则",
+                module="account_classification",
+            )
             return True
 
         except Exception as e:
             log_error(f"评估PostgreSQL规则失败: {e}", module="account_classification")
             return False
 
-    def _evaluate_oracle_rule(self, account: Account, rule_expression: dict) -> bool:
+    def _evaluate_oracle_rule(
+        self, account: CurrentAccountSyncData, rule_expression: dict
+    ) -> bool:
         """评估Oracle规则"""
         try:
-            import json
-
             # 从本地数据库获取权限信息
-            if not account.permissions:
+            permissions = self._get_account_permissions(account)
+            if not permissions:
                 return False
-
-            permissions = json.loads(account.permissions)
 
             # 检查角色
             required_roles = rule_expression.get("roles", [])
@@ -1065,11 +1179,17 @@ class AccountClassificationService:
                     required_tablespace_quotas,
                 ]
             ):
-                log_info(f"账户 {account.username} 匹配Oracle规则（无特定要求）", module="account_classification")
+                log_info(
+                    f"账户 {account.username} 匹配Oracle规则（无特定要求）",
+                    module="account_classification",
+                )
                 return True
 
             # 只有匹配成功时才记录日志
-            log_info(f"账户 {account.username} 匹配Oracle规则", module="account_classification")
+            log_info(
+                f"账户 {account.username} 匹配Oracle规则",
+                module="account_classification",
+            )
             return True
 
         except Exception as e:

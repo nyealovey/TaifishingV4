@@ -1,505 +1,520 @@
 {% extends "base.html" %}
+{% from 'macros/environment_macro.html' import environment_badge %}
 
-{% block title %}实例详情 - {{ instance.name }}{% endblock %}
-
-{% block extra_css %}
-<style>
-    .instance-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 2rem 0;
-        margin-bottom: 2rem;
-    }
-    .instance-info-card {
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-    }
-    .status-badge {
-        font-size: 0.9rem;
-        padding: 0.5rem 1rem;
-    }
-    .connection-test-result {
-        margin-top: 1rem;
-        padding: 1rem;
-        border-radius: 5px;
-    }
-    .connection-success {
-        background-color: #d4edda;
-        border: 1px solid #c3e6cb;
-        color: #155724;
-    }
-    .connection-error {
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        color: #721c24;
-    }
-    .account-table th {
-        background-color: #f8f9fa;
-        font-weight: 600;
-    }
-    .btn-group .btn {
-        margin-right: 0.25rem;
-    }
-    .btn-group .btn:last-child {
-        margin-right: 0;
-    }
-</style>
-{% endblock %}
+{% block title %}{{ instance.name }} - 实例详情{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- 实例头部信息 -->
-    <div class="instance-header">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h1 class="mb-2">
-                        <i class="fas fa-database me-3"></i>{{ instance.name }}
-                    </h1>
-                    <p class="mb-0 fs-5">
-                        <span class="badge bg-light text-dark me-2">{{ instance.db_type.upper() }}</span>
-                        {{ instance.host }}:{{ instance.port }}
-                    </p>
+<!-- CSRF Token for JavaScript -->
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+<div class="mb-4">
+    <h2>
+        <i class="fas fa-database me-2"></i>{{ instance.name }}
+        <span class="badge bg-secondary ms-2 me-2">
+            <i class="fas fa-server me-1"></i>{{ instance.host }}
+        </span>
+        <span class="badge bg-{{ 'primary' if instance.db_type == 'postgresql' else 'success' if instance.db_type == 'mysql' else 'warning' if instance.db_type == 'sqlserver' else 'info' }}">
+            {{ instance.db_type.upper() }}
+        </span>
+    </h2>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- 基本信息 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>基本信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">实例名称</label>
+                            <p class="form-control-plaintext">{{ instance.name }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">数据库类型</label>
+                            <p class="form-control-plaintext">
+                                <span class="badge bg-{{ 'primary' if instance.db_type == 'postgresql' else 'success' if instance.db_type == 'mysql' else 'warning' if instance.db_type == 'sqlserver' else 'info' }}">
+                                    {{ instance.db_type.upper() }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-4 text-end">
-                    <button class="btn btn-light btn-lg" onclick="testConnection()">
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">主机地址</label>
+                            <p class="form-control-plaintext">{{ instance.host }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">端口号</label>
+                            <p class="form-control-plaintext">{{ instance.port }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">数据库版本</label>
+                            <p class="form-control-plaintext">
+                                {% if instance.database_version %}
+                                    <span class="badge bg-info">{{ instance.database_version }}</span>
+                                {% else %}
+                                    <span class="text-muted">未检测</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if instance.description %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">描述</label>
+                    <p class="form-control-plaintext">{{ instance.description }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 连接信息 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plug me-2"></i>连接信息
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">最后连接时间</label>
+                            <p class="form-control-plaintext">
+                                {% if instance.last_connected %}
+                                {{ instance.last_connected | china_datetime }}
+                                {% else %}
+                                <span class="text-muted">从未连接</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">连接状态</label>
+                            <p class="form-control-plaintext">
+                                <span id="connectionStatus" class="badge bg-secondary">未知</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">创建时间</label>
+                            <p class="form-control-plaintext">
+                                {{ instance.created_at | china_datetime }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">更新时间</label>
+                            <p class="form-control-plaintext">
+                                {{ instance.updated_at | china_datetime if instance.updated_at else '从未更新' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-lg-4">
+        <!-- 快速操作 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>快速操作
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-success" onclick="testConnection()">
                         <i class="fas fa-plug me-2"></i>测试连接
                     </button>
+                    <button type="button" class="btn btn-outline-info" onclick="syncAccounts()">
+                        <i class="fas fa-sync me-2"></i>同步账户
+                    </button>
+                    <a href="{{ url_for('instances.edit', instance_id=instance.id) }}" class="btn btn-outline-warning">
+                        <i class="fas fa-edit me-2"></i>编辑实例
+                    </a>
+                    <a href="{{ url_for('instances.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>返回列表
+                    </a>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 连接测试结果 -->
-    <div class="container">
-        <div id="testResult" class="connection-test-result" style="display: none;"></div>
-    </div>
-
-    <!-- 实例信息卡片 -->
-    <div class="container">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="instance-info-card">
-                    <h5 class="card-title">
-                        <i class="fas fa-info-circle me-2"></i>连接信息
-                        <button class="btn btn-sm btn-outline-secondary float-end" type="button" data-bs-toggle="collapse" data-bs-target="#connectionInfo">
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                    </h5>
-                    <div class="collapse show" id="connectionInfo">
-                        <div class="row">
-                            <div class="col-6">
-                                <small class="text-muted">最后连接时间</small>
-                                <div class="fw-bold">{{ instance.last_connected_at | china_datetime if instance.last_connected_at else '未知' }}</div>
-                            </div>
-                            <div class="col-6">
-                                <small class="text-muted">创建时间</small>
-                                <div class="fw-bold">{{ instance.created_at | china_datetime }}</div>
-                            </div>
-                        </div>
-                        <div class="row mt-2">
-                            <div class="col-6">
-                                <small class="text-muted">更新时间</small>
-                                <div class="fw-bold">{{ instance.updated_at | china_datetime }}</div>
-                            </div>
-                            <div class="col-6">
-                                <small class="text-muted">状态</small>
-                                <div>
-                                    {% if instance.is_active %}
-                                        <span class="badge bg-success status-badge">正常</span>
-                                    {% else %}
-                                        <span class="badge bg-danger status-badge">禁用</span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <!-- 统计信息 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>统计信息
+                </h6>
             </div>
-            <div class="col-md-6">
-                <div class="instance-info-card">
-                    <h5 class="card-title">
-                        <i class="fas fa-server me-2"></i>数据库信息
-                    </h5>
-                    <div class="row">
-                        <div class="col-6">
-                            <small class="text-muted">数据库名称</small>
-                            <div class="fw-bold">{{ instance.database_name or '默认' }}</div>
-                        </div>
-                        <div class="col-6">
-                            <small class="text-muted">字符集</small>
-                            <div class="fw-bold">{{ instance.charset or '默认' }}</div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary mb-1">{{ accounts|length }}</h4>
+                            <small class="text-muted">账户数量</small>
                         </div>
                     </div>
-                    <div class="row mt-2">
-                        <div class="col-6">
-                            <small class="text-muted">连接超时</small>
-                            <div class="fw-bold">{{ instance.connection_timeout or 30 }}秒</div>
-                        </div>
-                        <div class="col-6">
-                            <small class="text-muted">最大连接数</small>
-                            <div class="fw-bold">{{ instance.max_connections or '无限制' }}</div>
-                        </div>
+                    <div class="col-6">
+                        <h4 class="text-success mb-1">{{ instance.sync_count or 0 }}</h4>
+                        <small class="text-muted">同步次数</small>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 连接测试结果卡片 -->
-    <div class="container">
-        <div class="row">
-            <div class="col-12">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-plug me-2"></i>连接测试
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="testResultContent"></div>
-                    </div>
-                </div>
+        <!-- 连接测试结果 -->
+        <div class="card" id="testResult" style="display: none;">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-plug me-2"></i>连接测试结果
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="testResultContent"></div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- 数据库账户信息 - 横跨整个宽度 -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-users me-2"></i>数据库账户信息
-                    </h5>
-                </div>
-                <div class="card-body">
-                    {% if instance.accounts.count() > 0 %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    {% if instance.db_type == 'mysql' %}
-                                    <th>名称</th>
-                                    <th>插件</th>
-                                    <th>密码最后修改</th>
-                                    <th>最后同步时间</th>
-                                    <th>锁定状态</th>
-                                    <th>操作</th>
-                                    {% elif instance.db_type == 'sqlserver' %}
-                                    <th>登录名</th>
-                                    <th>类型</th>
-                                    <th>创建时间</th>
-                                    <th>最后修改</th>
-                                    <th>最后同步时间</th>
-                                    <th>状态</th>
-                                    <th>操作</th>
-                                    {% elif instance.db_type == 'postgresql' %}
-                                    <th>角色名</th>
-                                    <th>最后同步时间</th>
-                                    <th>状态</th>
-                                    <th>操作</th>
-                                    {% elif instance.db_type == 'oracle' %}
-                                    <th>Oracle ID</th>
-                                    <th>用户名</th>
-                                    <th>认证类型</th>
-                                    <th>最后同步时间</th>
-                                    <th>状态</th>
-                                    <th>锁定日期</th>
-                                    <th>过期日期</th>
-                                    <th>默认表空间</th>
-                                    <th>创建时间</th>
-                                    <th>操作</th>
+<!-- 数据库账户信息 - 横跨整个宽度 -->
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users me-2"></i>数据库账户信息
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if accounts|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                {% if instance.db_type == 'mysql' %}
+                                <th>名称</th>
+                                <th>插件</th>
+                                <th>密码最后修改</th>
+                                <th>锁定状态</th>
+                                <th>操作</th>
+                                {% elif instance.db_type == 'sqlserver' %}
+                                <th>登录名</th>
+                                <th>类型</th>
+                                <th>创建时间</th>
+                                <th>最后修改</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                                {% elif instance.db_type == 'postgresql' %}
+                                <th>角色名</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                                {% elif instance.db_type == 'oracle' %}
+                                <th>Oracle ID</th>
+                                <th>用户名</th>
+                                <th>认证类型</th>
+                                <th>状态</th>
+                                <th>锁定日期</th>
+                                <th>过期日期</th>
+                                <th>默认表空间</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                                {% else %}
+                                <th>名称</th>
+                                <th>用户</th>
+                                <th>主机</th>
+                                <th>插件</th>
+                                <th>密码最后修改</th>
+                                <th>锁定状态</th>
+                                <th>操作</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for account in accounts %}
+                            <tr>
+                                {% if instance.db_type == 'mysql' %}
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-user text-primary me-2"></i>
+                                        <strong>{{ account.username }}@{{ account.host or '%' }}</strong>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if account.plugin %}
+                                        <span class="badge bg-secondary">{{ account.plugin }}</span>
                                     {% else %}
-                                    <th>名称</th>
-                                    <th>用户</th>
-                                    <th>主机</th>
-                                    <th>插件</th>
-                                    <th>密码最后修改</th>
-                                    <th>最后同步时间</th>
-                                    <th>锁定状态</th>
-                                    <th>操作</th>
+                                        <span class="text-muted">未知</span>
                                     {% endif %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for account in instance.accounts %}
-                                <tr>
-                                    {% if instance.db_type == 'mysql' %}
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-user text-primary me-2"></i>
-                                            <strong>{{ account.username }}@{{ account.host or '%' }}</strong>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        {% if account.plugin %}
-                                            <span class="badge bg-secondary">{{ account.plugin }}</span>
-                                        {% else %}
-                                            <span class="text-muted">未知</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.password_last_changed %}
-                                            <small class="text-muted">{{ account.password_last_changed | china_datetime }}</small>
-                                        {% else %}
-                                            <small class="text-muted">未知</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.last_sync_time %}
-                                            <small class="text-muted">{{ account.last_sync_time | china_datetime }}</small>
-                                        {% else %}
-                                            <small class="text-muted">未同步</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.is_locked %}
-                                            <span class="badge bg-danger">已锁定</span>
-                                        {% else %}
-                                            <span class="badge bg-success">正常</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
-                                                <i class="fas fa-eye me-1"></i>查看权限
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-info" onclick="viewAccountChangeHistory({{ account.id }})">
-                                                <i class="fas fa-history me-1"></i>查看变更记录
-                                            </button>
-                                        </div>
-                                    </td>
-                                    {% elif instance.db_type == 'sqlserver' %}
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-user text-primary me-2"></i>
-                                            <strong>{{ account.username }}</strong>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info">{{ account.account_type or '未知' }}</span>
-                                    </td>
-                                    <td>
-                                        {% if account.account_created_at %}
-                                            <small class="text-muted">{{ account.account_created_at | china_datetime }}</small>
-                                        {% else %}
-                                            <small class="text-muted">未知</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.password_last_changed %}
-                                            <small class="text-muted">{{ account.password_last_changed | china_datetime }}</small>
-                                        {% else %}
-                                            <small class="text-muted">未知</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.last_sync_time %}
-                                            <small class="text-muted">{{ account.last_sync_time | china_datetime }}</small>
-                                        {% else %}
-                                            <small class="text-muted">未同步</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.is_locked %}
-                                            <span class="badge bg-danger">已禁用</span>
-                                        {% else %}
-                                            <span class="badge bg-success">正常</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
-                                                <i class="fas fa-eye me-1"></i>查看权限
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-info" onclick="viewAccountChangeHistory({{ account.id }})">
-                                                <i class="fas fa-history me-1"></i>查看变更记录
-                                            </button>
-                                        </div>
-                                    </td>
-                                    {% elif instance.db_type == 'postgresql' %}
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-user text-primary me-2"></i>
-                                            <strong>{{ account.username }}</strong>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        {% if account.last_sync_time %}
-                                            <small class="text-muted">{{ account.last_sync_time | china_datetime }}</small>
-                                        {% else %}
-                                            <small class="text-muted">未同步</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.is_locked %}
-                                            <span class="badge bg-danger">已锁定</span>
-                                        {% else %}
-                                            <span class="badge bg-success">正常</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
-                                                <i class="fas fa-eye me-1"></i>查看权限
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-info" onclick="viewAccountChangeHistory({{ account.id }})">
-                                                <i class="fas fa-history me-1"></i>查看变更记录
-                                            </button>
-                                        </div>
-                                    </td>
-                                    {% elif instance.db_type == 'oracle' %}
-                                    <td>
-                                        {% if account.user_id is not none %}
-                                            <span class="badge bg-info">{{ account.user_id }}</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">N/A</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-user text-primary me-2"></i>
-                                            <strong>{{ account.username }}</strong>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        {% if account.account_type %}
-                                            <span class="badge bg-warning">{{ account.account_type }}</span>
-                                        {% else %}
-                                            <span class="text-muted">未知</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.last_sync_time %}
-                                            <small class="text-muted">{{ account.last_sync_time | china_datetime }}</small>
-                                        {% else %}
-                                            <small class="text-muted">未同步</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.is_locked %}
-                                            <span class="badge bg-danger">
-                                                <i class="fas fa-lock me-1"></i>锁定
-                                            </span>
-                                        {% elif account.is_active %}
-                                            <span class="badge bg-success">
-                                                <i class="fas fa-check-circle me-1"></i>正常
-                                            </span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">
-                                                <i class="fas fa-times-circle me-1"></i>禁用
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.lock_date %}
-                                            <small class="text-muted">
-                                                <i class="fas fa-calendar-times me-1"></i>
-                                                {{ account.lock_date.strftime('%Y-%m-%d %H:%M') }}
-                                            </small>
-                                        {% else %}
-                                            <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.expiry_date %}
-                                            <small class="text-muted">
-                                                <i class="fas fa-calendar-check me-1"></i>
-                                                {{ account.expiry_date.strftime('%Y-%m-%d %H:%M') }}
-                                            </small>
-                                        {% else %}
-                                            <span class="text-muted">永不过期</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.default_tablespace %}
-                                            <span class="badge bg-light text-dark">{{ account.default_tablespace }}</span>
-                                        {% else %}
-                                            <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.created_at %}
-                                            <small class="text-muted">{{ account.created_at | china_datetime }}</small>
-                                        {% else %}
-                                            <small class="text-muted">未知</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
-                                                <i class="fas fa-eye me-1"></i>查看权限
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-info" onclick="viewAccountChangeHistory({{ account.id }})">
-                                                <i class="fas fa-history me-1"></i>查看变更记录
-                                            </button>
-                                        </div>
-                                    </td>
+                                </td>
+                                <td>
+                                    {% if account.password_last_changed %}
+                                        <small class="text-muted">{{ account.password_last_changed | china_datetime }}</small>
                                     {% else %}
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-user text-primary me-2"></i>
-                                            <strong>{{ account.username }}</strong>
-                                        </div>
-                                    </td>
-                                    <td>{{ account.user or 'N/A' }}</td>
-                                    <td>{{ account.host or '%' }}</td>
-                                    <td>
-                                        {% if account.plugin %}
-                                            <span class="badge bg-secondary">{{ account.plugin }}</span>
-                                        {% else %}
-                                            <span class="text-muted">未知</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.password_last_changed %}
-                                            <small class="text-muted">{{ account.password_last_changed | china_datetime }}</small>
-                                        {% else %}
-                                            <small class="text-muted">未知</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.last_sync_time %}
-                                            <small class="text-muted">{{ account.last_sync_time | china_datetime }}</small>
-                                        {% else %}
-                                            <small class="text-muted">未同步</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if account.is_locked %}
-                                            <span class="badge bg-danger">已锁定</span>
-                                        {% else %}
-                                            <span class="badge bg-success">正常</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
-                                                <i class="fas fa-eye me-1"></i>查看权限
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-info" onclick="viewAccountChangeHistory({{ account.id }})">
-                                                <i class="fas fa-history me-1"></i>查看变更记录
-                                            </button>
-                                        </div>
-                                    </td>
+                                        <small class="text-muted">未知</small>
                                     {% endif %}
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">暂无账户信息</h5>
-                        <p class="text-muted">该实例还没有同步任何账户信息</p>
-                    </div>
-                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.is_locked %}
+                                        <span class="badge bg-danger">已锁定</span>
+                                    {% else %}
+                                        <span class="badge bg-success">正常</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
+                                            <i class="fas fa-eye me-1"></i>查看权限
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewAccountChangeHistory({{ account.id }})">
+                                            <i class="fas fa-history me-1"></i>查看变更记录
+                                        </button>
+                                    </div>
+                                </td>
+                                {% elif instance.db_type == 'sqlserver' %}
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-user text-primary me-2"></i>
+                                        <strong>{{ account.username }}</strong>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ account.account_type or '未知' }}</span>
+                                </td>
+                                <td>
+                                    {% if account.account_created_at %}
+                                        <small class="text-muted">{{ account.account_created_at | china_datetime }}</small>
+                                    {% else %}
+                                        <small class="text-muted">未知</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.password_last_changed %}
+                                        <small class="text-muted">{{ account.password_last_changed | china_datetime }}</small>
+                                    {% else %}
+                                        <small class="text-muted">未知</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.is_locked %}
+                                        <span class="badge bg-danger">已禁用</span>
+                                    {% else %}
+                                        <span class="badge bg-success">正常</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
+                                            <i class="fas fa-eye me-1"></i>查看权限
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewAccountChangeHistory({{ account.id }})">
+                                            <i class="fas fa-history me-1"></i>查看变更记录
+                                        </button>
+                                    </div>
+                                </td>
+                                {% elif instance.db_type == 'postgresql' %}
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-user text-primary me-2"></i>
+                                        <strong>{{ account.username }}</strong>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if account.is_locked %}
+                                        <span class="badge bg-danger">已锁定</span>
+                                    {% else %}
+                                        <span class="badge bg-success">正常</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
+                                            <i class="fas fa-eye me-1"></i>查看权限
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewAccountChangeHistory({{ account.id }})">
+                                            <i class="fas fa-history me-1"></i>查看变更记录
+                                        </button>
+                                    </div>
+                                </td>
+                                {% elif instance.db_type == 'oracle' %}
+                                <td>
+                                    {% if account.user_id is not none %}
+                                        <span class="badge bg-info">{{ account.user_id }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-user text-primary me-2"></i>
+                                        <strong>{{ account.username }}</strong>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if account.account_type %}
+                                        <span class="badge bg-warning">{{ account.account_type }}</span>
+                                    {% else %}
+                                        <span class="text-muted">未知</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.is_locked %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-lock me-1"></i>锁定
+                                        </span>
+                                    {% elif account.is_active %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle me-1"></i>正常
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-times-circle me-1"></i>禁用
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.lock_date %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-times me-1"></i>
+                                            {{ account.lock_date.strftime('%Y-%m-%d %H:%M') }}
+                                        </small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.expiry_date %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-alt me-1"></i>
+                                            {{ account.expiry_date.strftime('%Y-%m-%d %H:%M') }}
+                                        </small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.default_tablespace %}
+                                        <span class="badge bg-light text-dark">{{ account.default_tablespace }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.created_at %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            {{ account.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                        </small>
+                                    {% else %}
+                                        <span class="text-muted">未知</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
+                                            <i class="fas fa-eye me-1"></i>查看权限
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewAccountChangeHistory({{ account.id }})">
+                                            <i class="fas fa-history me-1"></i>查看变更记录
+                                        </button>
+                                    </div>
+                                </td>
+                                {% else %}
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-user text-primary me-2"></i>
+                                        {% if instance.db_type == 'sqlserver' or instance.db_type == 'postgresql' %}
+                                        <strong>{{ account.username }}</strong>
+                                        {% else %}
+                                        <strong>{{ account.username }}@{{ account.host or '%' }}</strong>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if instance.db_type == 'sqlserver' or instance.db_type == 'postgresql' %}
+                                    <span class="text-muted">-</span>
+                                    {% else %}
+                                    <span class="fw-bold">{{ account.username }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if instance.db_type == 'sqlserver' or instance.db_type == 'postgresql' %}
+                                    <span class="text-muted">-</span>
+                                    {% else %}
+                                    <span class="badge bg-info">{{ account.host or '%' }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.plugin %}
+                                        <span class="badge bg-secondary">{{ account.plugin }}</span>
+                                    {% else %}
+                                        <span class="text-muted">未知</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.password_last_changed %}
+                                        <small class="text-muted">{{ account.password_last_changed | china_datetime }}</small>
+                                    {% else %}
+                                        <small class="text-muted">未知</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if account.is_locked %}
+                                        <span class="badge bg-danger">已锁定</span>
+                                    {% else %}
+                                        <span class="badge bg-success">正常</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewInstanceAccountPermissions({{ account.id }})">
+                                            <i class="fas fa-eye me-1"></i>查看权限
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewAccountChangeHistory({{ account.id }})">
+                                            <i class="fas fa-history me-1"></i>查看变更记录
+                                        </button>
+                                    </div>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">暂无数据库账户信息</p>
+                    <p class="text-muted">点击"同步账户"按钮获取账户信息</p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -510,10 +525,10 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">权限详情</h5>
+                <h5 class="modal-title" id="permissionsModalTitle">权限详情</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" id="permissionsModalBody">
                 <div id="permissionsContent"></div>
             </div>
         </div>
@@ -536,33 +551,194 @@
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    .timeline-marker {
+        position: absolute;
+        left: -35px;
+        top: 5px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+    .timeline-content {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        border-left: 3px solid #007bff;
+    }
+</style>
+{% endblock %}
+
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/common/permission-viewer.js') }}"></script>
+<script src="{{ url_for('static', filename='js/common/permission-modal.js') }}"></script>
 <script>
-// 页面加载完成
+// 页面加载完成，不自动测试连接
 document.addEventListener('DOMContentLoaded', function() {
-    // 页面加载完成
+    // 页面加载完成，等待用户手动测试连接
 });
 
 function testConnection() {
-    const testResult = document.getElementById('testResult');
-    const testResultContent = document.getElementById('testResultContent');
-    
-    // 显示加载状态
-    testResult.style.display = 'block';
-    testResult.className = 'connection-test-result';
-    testResultContent.innerHTML = `
-        <div class="text-center">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">测试中...</span>
-            </div>
-            <p class="mt-2">正在测试数据库连接...</p>
-        </div>
-    `;
+    const testBtn = event ? event.target : document.querySelector('button[onclick="testConnection()"]');
+    const originalText = testBtn.innerHTML;
+
+    // 记录操作开始日志
+    logUserAction('开始测试连接', {
+        operation: 'test_connection',
+        instance_id: {{ instance.id }},
+        instance_name: '{{ instance.name }}'
+    });
+
+    testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>测试中...';
+    testBtn.disabled = true;
 
     // 获取CSRF token
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
 
     fetch(`/instances/api/instances/{{ instance.id }}/test`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                throw new Error('认证失败，请重新登录');
+            } else if (response.status === 404) {
+                throw new Error('API接口不存在');
+            } else {
+                throw new Error(`HTTP错误: ${response.status}`);
+            }
+        }
+        return response.json();
+    })
+    .then(data => {
+        const statusBadge = document.getElementById('connectionStatus');
+        const resultDiv = document.getElementById('testResult');
+        const contentDiv = document.getElementById('testResultContent');
+
+        if (data.success) {
+            // 记录成功日志
+            logUserAction('测试连接成功', {
+                operation: 'test_connection',
+                instance_id: {{ instance.id }},
+                instance_name: '{{ instance.name }}',
+                result: 'success',
+                message: data.message || '数据库连接正常'
+            });
+
+            statusBadge.textContent = '正常';
+            statusBadge.className = 'badge bg-success';
+
+            contentDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>连接成功！</strong><br>
+                    ${data.message || '数据库连接正常'}
+                </div>
+            `;
+        } else if (data.error) {
+            // 记录失败日志
+            logError('测试连接失败', {
+                operation: 'test_connection',
+                instance_id: {{ instance.id }},
+                instance_name: '{{ instance.name }}',
+                result: 'failed',
+                error: data.error
+            });
+
+            statusBadge.textContent = '失败';
+            statusBadge.className = 'badge bg-danger';
+
+            // 构建详细的错误信息
+            let errorHtml = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>连接失败！</strong><br>
+                    <strong>错误类型：</strong>${data.error}<br>
+            `;
+
+            // 添加详细信息
+            if (data.details) {
+                errorHtml += `<strong>详细信息：</strong>${data.details}<br>`;
+            }
+
+            // 添加解决方案
+            if (data.solution) {
+                errorHtml += `<strong>解决方案：</strong>${data.solution}<br>`;
+            }
+
+            // 添加错误类型
+            if (data.error_type) {
+                errorHtml += `<small class="text-muted">错误类型: ${data.error_type}</small>`;
+            }
+
+            errorHtml += `</div>`;
+
+            contentDiv.innerHTML = errorHtml;
+        }
+
+        resultDiv.style.display = 'block';
+    })
+    .catch(error => {
+        const statusBadge = document.getElementById('connectionStatus');
+        statusBadge.textContent = '错误';
+        statusBadge.className = 'badge bg-danger';
+
+        document.getElementById('testResultContent').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>测试失败！</strong><br>
+                <strong>错误信息：</strong>${error.message}<br>
+                <small class="text-muted">请检查网络连接或重新登录</small>
+            </div>
+        `;
+        document.getElementById('testResult').style.display = 'block';
+    })
+    .catch(error => {
+        // 记录异常日志
+        logErrorWithContext(error, '测试连接异常', {
+            operation: 'test_connection',
+            instance_id: {{ instance.id }},
+            instance_name: '{{ instance.name }}',
+            result: 'exception'
+        });
+    })
+    .finally(() => {
+        testBtn.innerHTML = originalText;
+        testBtn.disabled = false;
+    });
+}
+
+function syncAccounts() {
+    const syncBtn = event ? event.target : document.querySelector('button[onclick="syncAccounts()"]');
+    const originalText = syncBtn.innerHTML;
+
+    // 记录操作开始日志
+    logUserAction('开始同步账户', {
+        operation: 'sync_accounts',
+        instance_id: {{ instance.id }},
+        instance_name: '{{ instance.name }}'
+    });
+
+    syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>同步中...';
+    syncBtn.disabled = true;
+
+    // 获取CSRF token
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+    fetch(`/instances/{{ instance.id }}/sync`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -571,201 +747,110 @@ function testConnection() {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            testResult.className = 'connection-test-result connection-success';
-            testResultContent.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-check-circle fa-2x me-3"></i>
-                    <div>
-                        <h6 class="mb-1">连接成功</h6>
-                        <p class="mb-0">${data.message}</p>
-                    </div>
-                </div>
-            `;
-        } else {
-            testResult.className = 'connection-test-result connection-error';
-            testResultContent.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-times-circle fa-2x me-3"></i>
-                    <div>
-                        <h6 class="mb-1">连接失败</h6>
-                        <p class="mb-0">${data.error}</p>
-                    </div>
-                </div>
-            `;
-        }
-    })
-    .catch(error => {
-        testResult.className = 'connection-test-result connection-error';
-        testResultContent.innerHTML = `
-            <div class="d-flex align-items-center">
-                <i class="fas fa-times-circle fa-2x me-3"></i>
-                <div>
-                    <h6 class="mb-1">连接失败</h6>
-                    <p class="mb-0">网络错误: ${error.message}</p>
-                </div>
-            </div>
-        `;
-    });
-}
-
-function viewInstanceAccountPermissions(accountId) {
-    const loadingDiv = document.getElementById('permissionsModal').querySelector('.modal-body');
-    loadingDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p class="mt-2">加载中...</p></div>';
-
-    // 显示模态框
-    new bootstrap.Modal(document.getElementById('permissionsModal')).show();
-
-    // 获取CSRF token
-    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-
-    fetch(`/instances/api/instances/{{ instance.id }}/accounts/${accountId}/permissions`, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            displayPermissions(data.data);
-        } else {
-            loadingDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
-        }
-    })
-    .catch(error => {
-        loadingDiv.innerHTML = `<div class="alert alert-danger">加载权限信息失败: ${error.message}</div>`;
-    });
-}
-
-function displayPermissions(permissions) {
-    const content = document.getElementById('permissionsContent');
-    
-    if (!permissions || Object.keys(permissions).length === 0) {
-        content.innerHTML = '<div class="alert alert-info">该账户暂无权限信息</div>';
-        return;
-    }
-
-    let html = '<div class="permissions-container">';
-    
-    // 遍历权限对象
-    for (const [category, perms] of Object.entries(permissions)) {
-        html += `
-            <div class="permission-category mb-4">
-                <h6 class="text-primary mb-3">
-                    <i class="fas fa-shield-alt me-2"></i>${category}
-                </h6>
-                <div class="row">
-        `;
-        
-        if (Array.isArray(perms)) {
-            perms.forEach(perm => {
-                html += `
-                    <div class="col-md-6 mb-2">
-                        <span class="badge bg-success me-2">${perm}</span>
-                    </div>
-                `;
+        if (data.message) {
+            // 记录成功日志
+            logUserAction('同步账户成功', {
+                operation: 'sync_accounts',
+                instance_id: {{ instance.id }},
+                instance_name: '{{ instance.name }}',
+                result: 'success',
+                message: data.message
             });
-        } else if (typeof perms === 'object') {
-            for (const [key, value] of Object.entries(perms)) {
-                html += `
-                    <div class="col-md-6 mb-2">
-                        <strong>${key}:</strong> 
-                        <span class="text-muted">${Array.isArray(value) ? value.join(', ') : value}</span>
-                    </div>
-                `;
-            }
-        } else {
-            html += `
-                <div class="col-12 mb-2">
-                    <span class="badge bg-info">${perms}</span>
-                </div>
-            `;
+            showAlert('success', data.message);
+        } else if (data.error) {
+            // 记录失败日志
+            logError('同步账户失败', {
+                operation: 'sync_accounts',
+                instance_id: {{ instance.id }},
+                instance_name: '{{ instance.name }}',
+                result: 'failed',
+                error: data.error
+            });
+            showAlert('danger', data.error);
         }
-        
-        html += '</div></div>';
-    }
-    
-    html += '</div>';
-    content.innerHTML = html;
-}
-
-function displayHistory(history) {
-    const content = document.getElementById('historyContent');
-    
-    if (!history || history.length === 0) {
-        content.innerHTML = '<div class="alert alert-info">该账户暂无变更历史</div>';
-        return;
-    }
-
-    let html = '<div class="history-container">';
-    
-    history.forEach(entry => {
-        const changeType = entry.change_type || '未知';
-        const changeTime = entry.change_time ? new Date(entry.change_time).toLocaleString() : '未知';
-        const message = entry.message || '无描述';
-        
-        let badgeClass = 'bg-secondary';
-        if (changeType.includes('添加')) badgeClass = 'bg-success';
-        else if (changeType.includes('修改')) badgeClass = 'bg-warning';
-        else if (changeType.includes('删除')) badgeClass = 'bg-danger';
-        
-        html += `
-            <div class="history-entry mb-3 p-3 border rounded">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <span class="badge ${badgeClass} me-2">${changeType}</span>
-                        <span class="text-muted">${changeTime}</span>
-                    </div>
-                </div>
-                <div class="mt-2">
-                    <p class="mb-1">${message}</p>
-                </div>
-            </div>
-        `;
+    })
+    .catch(error => {
+        // 记录异常日志
+        logErrorWithContext(error, '同步账户异常', {
+            operation: 'sync_accounts',
+            instance_id: {{ instance.id }},
+            instance_name: '{{ instance.name }}',
+            result: 'exception'
+        });
+        showAlert('danger', '同步失败');
+    })
+    .finally(() => {
+        syncBtn.innerHTML = originalText;
+        syncBtn.disabled = false;
     });
-    
-    html += '</div>';
-    content.innerHTML = html;
 }
 
-// 查看账户变更记录
+// 使用共享的权限查看功能，但需要指定正确的API URL
+// 注意：这里不能重新定义 viewAccountPermissions 函数，会造成无限递归
+// 创建一个包装函数来调用全局的 viewAccountPermissions 函数
+function viewInstanceAccountPermissions(accountId) {
+    // 调用全局的 viewAccountPermissions 函数，指定instances页面的API URL
+    window.viewAccountPermissions(accountId, {
+        apiUrl: `/instances/{{ instance.id }}/accounts/${accountId}/permissions`
+    });
+}
+
 function viewAccountChangeHistory(accountId) {
-    const loadingDiv = document.getElementById('historyModal').querySelector('.modal-body');
-    loadingDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p class="mt-2">加载中...</p></div>';
-
-    // 显示模态框
-    new bootstrap.Modal(document.getElementById('historyModal')).show();
-
-    // 获取CSRF token
+    // 查看变更历史
     const csrfToken = document.querySelector('input[name="csrf_token"]').value;
 
-    fetch(`/instance_accounts/{{ instance.id }}/accounts/${accountId}/history`, {
+    fetch(`/instances/api/instances/{{ instance.id }}/accounts/${accountId}/change-history`, {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
         }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            displayHistory(data.data);
+            // 显示变更历史模态框
+            const modal = new bootstrap.Modal(document.getElementById('historyModal'));
+            const historyContent = document.getElementById('historyContent');
+
+            if (data.history && data.history.length > 0) {
+                let html = '<div class="timeline">';
+                data.history.forEach(change => {
+                    html += `
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">${change.change_type || '变更'}</h6>
+                                <p class="text-muted mb-1">${change.message || '无描述'}</p>
+                                <small class="text-muted">${change.change_time || '未知时间'}</small>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                historyContent.innerHTML = html;
+            } else {
+                historyContent.innerHTML = '<p class="text-muted">暂无变更记录</p>';
+            }
+
+            modal.show();
         } else {
-            loadingDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+            alert('获取变更历史失败: ' + data.error);
         }
     })
     .catch(error => {
-        loadingDiv.innerHTML = `<div class="alert alert-danger">加载历史信息失败: ${error.message}</div>`;
+        console.error('获取变更历史失败:', error);
+        alert('获取变更历史失败: ' + error.message);
     });
 }
+
+// showPermissionsModal 函数现在由 permission-modal.js 提供
 
 function showAlert(type, message) {
     const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
     alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;

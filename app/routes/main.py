@@ -73,7 +73,11 @@ def api_health() -> "Response":
         redis_status = "error"
 
     # 整体状态
-    overall_status = "healthy" if db_status == "connected" and redis_status == "connected" else "unhealthy"
+    overall_status = (
+        "healthy"
+        if db_status == "connected" and redis_status == "connected"
+        else "unhealthy"
+    )
 
     result = {
         "status": overall_status,
@@ -87,7 +91,12 @@ def api_health() -> "Response":
     import time
 
     duration = (time.time() - start_time) * 1000
-    log_info("健康检查API调用", module="main", ip_address=request.remote_addr, duration_ms=duration)
+    log_info(
+        "健康检查API调用",
+        module="main",
+        ip_address=request.remote_addr,
+        duration_ms=duration,
+    )
 
     return jsonify(result)
 

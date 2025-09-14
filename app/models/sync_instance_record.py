@@ -13,11 +13,26 @@ class SyncInstanceRecord(db.Model):
     __tablename__ = "sync_instance_records"
 
     id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.String(36), db.ForeignKey("sync_sessions.session_id"), nullable=False, index=True)
-    instance_id = db.Column(db.Integer, db.ForeignKey("instances.id"), nullable=False, index=True)
+    session_id = db.Column(
+        db.String(36),
+        db.ForeignKey("sync_sessions.session_id"),
+        nullable=False,
+        index=True,
+    )
+    instance_id = db.Column(
+        db.Integer, db.ForeignKey("instances.id"), nullable=False, index=True
+    )
     instance_name = db.Column(db.String(255))
-    sync_category = db.Column(db.Enum("account", "capacity", "config", "other"), nullable=False, default="account")
-    status = db.Column(db.Enum("pending", "running", "completed", "failed"), nullable=False, default="pending")
+    sync_category = db.Column(
+        db.Enum("account", "capacity", "config", "other"),
+        nullable=False,
+        default="account",
+    )
+    status = db.Column(
+        db.Enum("pending", "running", "completed", "failed"),
+        nullable=False,
+        default="pending",
+    )
     started_at = db.Column(db.DateTime)
     completed_at = db.Column(db.DateTime)
 
@@ -32,7 +47,13 @@ class SyncInstanceRecord(db.Model):
     sync_details = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def __init__(self, session_id: str, instance_id: int, instance_name: str = None, sync_category: str = "account"):
+    def __init__(
+        self,
+        session_id: str,
+        instance_id: int,
+        instance_name: str = None,
+        sync_category: str = "account",
+    ):
         """
         初始化同步实例记录
 
@@ -58,7 +79,9 @@ class SyncInstanceRecord(db.Model):
             "sync_category": self.sync_category,
             "status": self.status,
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": (
+                self.completed_at.isoformat() if self.completed_at else None
+            ),
             "accounts_synced": self.accounts_synced,
             "accounts_created": self.accounts_created,
             "accounts_updated": self.accounts_updated,

@@ -4,7 +4,7 @@
 
 from app import db  # noqa: F401
 
-from .account import Account
+# Account模型已废弃，使用CurrentAccountSyncData
 from .account_change import AccountChange
 from .account_classification import (
     AccountClassification,
@@ -16,7 +16,8 @@ from .credential import Credential
 from .instance import Instance
 from .log import Log
 from .permission_config import PermissionConfig
-from .sync_data import SyncData
+
+# 移除SyncData导入，使用新的优化同步模型
 from .sync_instance_record import SyncInstanceRecord
 from .sync_session import SyncSession
 from .task import Task
@@ -29,10 +30,10 @@ __all__ = [
     "User",
     "Instance",
     "Credential",
-    "Account",
+    # "Account",  # 已废弃，使用CurrentAccountSyncData
     "Task",
     "Log",
-    "SyncData",
+    # 移除SyncData导出
     "SyncSession",
     "SyncInstanceRecord",
     "AccountChange",

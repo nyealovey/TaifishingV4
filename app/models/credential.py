@@ -25,7 +25,9 @@ class Credential(db.Model):
     category_id = db.Column(db.Integer, nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     def __init__(
@@ -164,7 +166,11 @@ class Credential(db.Model):
 
         system_logger = get_system_logger()
         system_logger.info(
-            "凭据删除", module="model", operation="credential_delete", credential_id=self.id, name=self.name
+            "凭据删除",
+            module="model",
+            operation="credential_delete",
+            credential_id=self.id,
+            name=self.name,
         )
 
     def restore(self) -> None:
@@ -175,7 +181,11 @@ class Credential(db.Model):
 
         system_logger = get_system_logger()
         system_logger.info(
-            "凭据恢复", module="model", operation="credential_restore", credential_id=self.id, name=self.name
+            "凭据恢复",
+            module="model",
+            operation="credential_restore",
+            credential_id=self.id,
+            name=self.name,
         )
 
     @staticmethod
@@ -186,7 +196,9 @@ class Credential(db.Model):
     @staticmethod
     def get_by_type(credential_type: str) -> list:
         """根据类型获取凭据"""
-        return Credential.query.filter_by(credential_type=credential_type, deleted_at=None).all()
+        return Credential.query.filter_by(
+            credential_type=credential_type, deleted_at=None
+        ).all()
 
     @staticmethod
     def get_by_db_type(db_type: str) -> list:

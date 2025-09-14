@@ -6,12 +6,21 @@ from collections import defaultdict
 from collections.abc import Generator
 from typing import Any
 
-from flask import Blueprint, Response, flash, jsonify, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    Response,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask_login import current_user, login_required
 
 from app import db
 from app.models.instance import Instance
-from app.models.sync_data import SyncData
+from app.models.sync_session import SyncSession
 from app.services.account_sync_service import account_sync_service
 from app.utils.decorators import view_required
 from app.utils.structlog_config import get_api_logger, log_error, log_info, log_warning
@@ -32,33 +41,29 @@ def sync_records() -> str | Response:
     status = request.args.get("status", "all")
     instance_id = request.args.get("instance_id", type=int)
 
-    # 构建查询
-    query = SyncData.query
+    # 构建查询 - 使用新的同步会话模型
+    query = SyncSession.query.filter_by(sync_category="account")
 
     # 同步类型过滤
     if sync_type and sync_type != "all":
-        query = query.filter(SyncData.sync_type == sync_type)
+        query = query.filter(SyncSession.sync_type == sync_type)
 
     # 状态过滤
     if status and status != "all":
-        query = query.filter(SyncData.status == status)
-
-    # 实例过滤
-    if instance_id:
-        query = query.filter(SyncData.instance_id == instance_id)
+        query = query.filter(SyncSession.status == status)
 
     # 排序
-    query = query.order_by(SyncData.sync_time.desc())
+    query = query.order_by(SyncSession.created_at.desc())
 
     # 分页
-    query.paginate(page=page, per_page=per_page, error_out=False)
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
 
     # 获取实例列表用于过滤
     instances = Instance.query.filter_by(is_active=True).all()
 
     # 聚合显示逻辑 - 当同步类型是手动批量或定时任务时，需要聚合显示
     # 获取所有记录进行聚合处理，然后手动分页
-    all_records = query.order_by(SyncData.sync_time.desc()).all()
+    all_records = query.order_by(SyncSession.created_at.desc()).all()
 
     # 分离需要聚合的记录和单独显示的记录
     # task类型的记录已经是聚合记录，不需要再次聚合
@@ -110,7 +115,10 @@ def sync_records() -> str | Response:
             if record.sync_type not in grouped[time_key]["sync_types"]:
                 grouped[time_key]["sync_types"].append(record.sync_type)
 
-            if not grouped[time_key]["created_at"] or record.sync_time > grouped[time_key]["created_at"]:
+            if (
+                not grouped[time_key]["created_at"]
+                or record.sync_time > grouped[time_key]["created_at"]
+            ):
                 grouped[time_key]["created_at"] = record.sync_time
 
         # 始终添加记录到sync_records，用于详情显示
@@ -118,7 +126,9 @@ def sync_records() -> str | Response:
 
     # 转换为聚合记录列表
     aggregated_records = []
-    for time_key, data in sorted(grouped.items(), key=lambda x: x[1]["created_at"], reverse=True):
+    for time_key, data in sorted(
+        grouped.items(), key=lambda x: x[1]["created_at"], reverse=True
+    ):
         # 使用最新记录的时间作为显示时间
         latest_time = max(record.sync_time for record in data["sync_records"])
 
@@ -131,7 +141,9 @@ def sync_records() -> str | Response:
 
         # 创建聚合记录对象
         class AggregatedRecord:
-            def __init__(self, data: dict[str, Any], latest_time: Any, sync_type_display: str) -> None:
+            def __init__(
+                self, data: dict[str, Any], latest_time: Any, sync_type_display: str
+            ) -> None:
                 self.sync_time = latest_time
                 self.sync_type = sync_type_display
                 self.status = "success" if data["failed_count"] == 0 else "failed"
@@ -152,7 +164,9 @@ def sync_records() -> str | Response:
                 """获取记录ID列表"""
                 return [record.id for record in self.sync_records]
 
-        aggregated_records.append(AggregatedRecord(data, latest_time, sync_type_display))
+        aggregated_records.append(
+            AggregatedRecord(data, latest_time, sync_type_display)
+        )
 
     # 处理手动记录，直接显示原始值
     for record in manual_records:
@@ -175,7 +189,9 @@ def sync_records() -> str | Response:
 
     # 创建分页对象
     class Pagination:
-        def __init__(self, items: list[Any], page: int, per_page: int, total: int) -> None:
+        def __init__(
+            self, items: list[Any], page: int, per_page: int, total: int
+        ) -> None:
             self.items = items
             self.page = page
             self.per_page = per_page
@@ -187,19 +203,28 @@ def sync_records() -> str | Response:
             self.next_num = page + 1 if page < self.pages else None
 
         def iter_pages(
-            self, left_edge: int = 2, right_edge: int = 2, left_current: int = 2, right_current: int = 3
+            self,
+            left_edge: int = 2,
+            right_edge: int = 2,
+            left_current: int = 2,
+            right_current: int = 3,
         ) -> Generator[int | None]:
             """生成分页页码迭代器，与Flask-SQLAlchemy的Pagination兼容"""
             last = self.pages
             for num in range(1, last + 1):
                 if (
                     num <= left_edge
-                    or (num > self.page - left_current - 1 and num < self.page + right_current)
+                    or (
+                        num > self.page - left_current - 1
+                        and num < self.page + right_current
+                    )
                     or num > last - right_edge
                 ):
                     yield num
 
-    sync_records = Pagination(paginated_records, page, per_page, len(all_display_records))
+    sync_records = Pagination(
+        paginated_records, page, per_page, len(all_display_records)
+    )
 
     if request.is_json:
         return jsonify(
@@ -209,13 +234,21 @@ def sync_records() -> str | Response:
                         record.to_dict()
                         if hasattr(record, "to_dict")
                         else {
-                            "id": getattr(record, "id", f"batch_{hash(str(record.sync_time))}"),
-                            "sync_time": record.sync_time.isoformat() if record.sync_time else None,
+                            "id": getattr(
+                                record, "id", f"batch_{hash(str(record.sync_time))}"
+                            ),
+                            "sync_time": (
+                                record.sync_time.isoformat()
+                                if record.sync_time
+                                else None
+                            ),
                             "sync_type": record.sync_type,
                             "status": record.status,
                             "message": record.message,
                             "synced_count": record.synced_count,
-                            "instance_name": getattr(record, "instance_name", "批量同步"),
+                            "instance_name": getattr(
+                                record, "instance_name", "批量同步"
+                            ),
                             "is_aggregated": getattr(record, "is_aggregated", False),
                             "record_ids": getattr(record, "sync_records", []),
                         }
@@ -258,12 +291,18 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
         instances = Instance.query.filter_by(is_active=True).all()
 
         if not instances:
-            log_warning("没有找到活跃的数据库实例", module="account_sync", user_id=current_user.id)
+            log_warning(
+                "没有找到活跃的数据库实例",
+                module="account_sync",
+                user_id=current_user.id,
+            )
             return jsonify({"success": False, "error": "没有找到活跃的数据库实例"}), 400
 
         # 创建同步会话
         session = sync_session_service.create_session(
-            sync_type="manual_batch", sync_category="account", created_by=current_user.id
+            sync_type="manual_batch",
+            sync_category="account",
+            created_by=current_user.id,
         )
 
         log_info(
@@ -276,7 +315,9 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
 
         # 添加实例记录
         instance_ids = [inst.id for inst in instances]
-        records = sync_session_service.add_instance_records(session.session_id, instance_ids)
+        records = sync_session_service.add_instance_records(
+            session.session_id, instance_ids
+        )
 
         success_count = 0
         failed_count = 0
@@ -300,7 +341,9 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
                 )
 
                 # 使用统一的账户同步服务
-                result = account_sync_service.sync_accounts(instance, sync_type="batch", session_id=session.session_id)
+                result = account_sync_service.sync_accounts(
+                    instance, sync_type="batch", session_id=session.session_id
+                )
 
                 if result["success"]:
                     success_count += 1
@@ -323,25 +366,15 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
                         synced_count=result.get("synced_count", 0),
                     )
 
-                    # 记录同步成功（保持向后兼容）
-                    sync_record = SyncData(  # type: ignore
-                        instance_id=instance.id,
-                        sync_type="batch",
-                        status="success",
-                        message=result.get("message", "同步成功"),
-                        synced_count=result.get("synced_count", 0),
-                        added_count=result.get("added_count", 0),
-                        removed_count=result.get("removed_count", 0),
-                        modified_count=result.get("modified_count", 0),
-                        data={"session_id": session.session_id},
-                    )
-                    db.session.add(sync_record)
+                    # 同步会话记录已通过sync_session_service管理，无需额外创建记录
                 else:
                     failed_count += 1
 
                     # 标记实例同步失败
                     sync_session_service.fail_instance_sync(
-                        record.id, error_message=result.get("error", "同步失败"), sync_details=result.get("details", {})
+                        record.id,
+                        error_message=result.get("error", "同步失败"),
+                        sync_details=result.get("details", {}),
                     )
 
                     log_error(
@@ -352,22 +385,15 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
                         error=result.get("error", "同步失败"),
                     )
 
-                    # 记录同步失败（保持向后兼容）
-                    sync_record = SyncData(  # type: ignore
-                        instance_id=instance.id,
-                        sync_type="batch",
-                        status="failed",
-                        message=result.get("error", "同步失败"),
-                        synced_count=0,
-                        data={"session_id": session.session_id},
-                    )
-                    db.session.add(sync_record)
+                    # 同步会话记录已通过sync_session_service管理，无需额外创建记录
 
                 results.append(
                     {
                         "instance_name": instance.name,
                         "success": result["success"],
-                        "message": result.get("message", result.get("error", "未知错误")),
+                        "message": result.get(
+                            "message", result.get("error", "未知错误")
+                        ),
                         "synced_count": result.get("synced_count", 0),
                     }
                 )
@@ -378,7 +404,9 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
                 # 标记实例同步失败
                 if record:
                     sync_session_service.fail_instance_sync(
-                        record.id, error_message=str(e), sync_details={"exception": str(e)}
+                        record.id,
+                        error_message=str(e),
+                        sync_details={"exception": str(e)},
                     )
 
                 log_error(
@@ -389,16 +417,7 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
                     error=str(e),
                 )
 
-                # 记录同步失败（保持向后兼容）
-                sync_record = SyncData(  # type: ignore
-                    instance_id=instance.id,
-                    sync_type="batch",
-                    status="failed",
-                    message=f"同步失败: {str(e)}",
-                    synced_count=0,
-                    data={"session_id": session.session_id},
-                )
-                db.session.add(sync_record)
+                # 同步会话记录已通过sync_session_service管理，无需额外创建记录
 
                 results.append(
                     {
@@ -481,8 +500,8 @@ def sync_details_batch() -> str | Response | tuple[Response, int]:
         if not record_ids:
             return jsonify({"success": False, "error": "没有提供记录ID"}), 400
 
-        # 获取同步记录
-        records = SyncData.query.filter(SyncData.id.in_(record_ids)).all()
+        # 获取同步记录 - 使用新的同步会话模型
+        records = SyncSession.query.filter(SyncSession.id.in_(record_ids)).all()
 
         if not records:
             return jsonify({"success": False, "error": "没有找到同步记录"}), 404
@@ -500,7 +519,9 @@ def sync_details_batch() -> str | Response | tuple[Response, int]:
                         instance_records[instance_name] = {
                             "id": record.id,
                             "instance_name": instance_name,
-                            "status": "success" if result.get("success", False) else "failed",
+                            "status": (
+                                "success" if result.get("success", False) else "failed"
+                            ),
                             "message": result.get("message", ""),
                             "synced_count": result.get("synced_count", 0),
                             "sync_time": record.sync_time,
@@ -551,27 +572,38 @@ def sync_details_batch() -> str | Response | tuple[Response, int]:
 def sync_details(sync_id: int) -> str | Response | tuple[Response, int]:
     """同步详情页面"""
     try:
-        record = SyncData.query.get_or_404(sync_id)
-        instance = Instance.query.get(record.instance_id)
+        record = SyncSession.query.get_or_404(sync_id)
+        # 获取会话关联的实例记录
+        instance_records = record.instance_records.all()
+        instances = [
+            Instance.query.get(ir.instance_id)
+            for ir in instance_records
+            if ir.instance_id
+        ]
 
         if request.is_json:
             return jsonify(
                 {
                     "success": True,
                     "record": record.to_dict(),
-                    "instance": instance.to_dict() if instance else None,
+                    "instances": [inst.to_dict() for inst in instances if inst],
+                    "instance_records": [ir.to_dict() for ir in instance_records],
                 }
             )
 
         return render_template(
             "accounts/sync_details.html",
             record=record,
-            instance=instance,
+            instances=instances,
+            instance_records=instance_records,
         )
 
     except Exception as e:
         if request.is_json:
-            return jsonify({"success": False, "error": f"获取同步详情失败: {str(e)}"}), 500
+            return (
+                jsonify({"success": False, "error": f"获取同步详情失败: {str(e)}"}),
+                500,
+            )
 
         flash(f"获取同步详情失败: {str(e)}", "error")
         return redirect(url_for("account_sync.sync_records"))

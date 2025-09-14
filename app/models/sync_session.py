@@ -16,8 +16,16 @@ class SyncSession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     session_id = db.Column(db.String(36), unique=True, nullable=False, index=True)
     sync_type = db.Column(db.Enum("scheduled", "manual_batch"), nullable=False)
-    sync_category = db.Column(db.Enum("account", "capacity", "config", "other"), nullable=False, default="account")
-    status = db.Column(db.Enum("running", "completed", "failed", "cancelled"), nullable=False, default="running")
+    sync_category = db.Column(
+        db.Enum("account", "capacity", "config", "other"),
+        nullable=False,
+        default="account",
+    )
+    status = db.Column(
+        db.Enum("running", "completed", "failed", "cancelled"),
+        nullable=False,
+        default="running",
+    )
     started_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
     total_instances = db.Column(db.Integer, default=0)
@@ -25,14 +33,21 @@ class SyncSession(db.Model):
     failed_instances = db.Column(db.Integer, default=0)
     created_by = db.Column(db.Integer)  # 用户ID（手动同步时）
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # 关系
     instance_records = db.relationship(
-        "SyncInstanceRecord", backref="session", lazy="dynamic", cascade="all, delete-orphan"
+        "SyncInstanceRecord",
+        backref="session",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
     )
 
-    def __init__(self, sync_type: str, sync_category: str = "account", created_by: int = None):
+    def __init__(
+        self, sync_type: str, sync_category: str = "account", created_by: int = None
+    ):
         """
         初始化同步会话
 
@@ -57,7 +72,9 @@ class SyncSession(db.Model):
             "sync_category": self.sync_category,
             "status": self.status,
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": (
+                self.completed_at.isoformat() if self.completed_at else None
+            ),
             "total_instances": self.total_instances,
             "successful_instances": self.successful_instances,
             "failed_instances": self.failed_instances,
@@ -95,7 +112,10 @@ class SyncSession(db.Model):
     def get_sessions_by_type(sync_type: str, limit: int = 50):
         """根据类型获取会话列表"""
         return (
-            SyncSession.query.filter_by(sync_type=sync_type).order_by(SyncSession.created_at.desc()).limit(limit).all()
+            SyncSession.query.filter_by(sync_type=sync_type)
+            .order_by(SyncSession.created_at.desc())
+            .limit(limit)
+            .all()
         )
 
     @staticmethod
@@ -109,4 +129,6 @@ class SyncSession(db.Model):
         )
 
     def __repr__(self):
-        return f"<SyncSession {self.session_id} ({self.sync_type}-{self.sync_category})>"
+        return (
+            f"<SyncSession {self.session_id} ({self.sync_type}-{self.sync_category})>"
+        )

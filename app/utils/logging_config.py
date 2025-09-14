@@ -59,7 +59,9 @@ class LogConfig:
         "<level>{message}</level>"
     )
 
-    file_format: str = "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} | {message}"
+    file_format: str = (
+        "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} | {message}"
+    )
 
     # 各类型日志配置
     log_types: dict[LogType, dict[str, Any]] = None
@@ -67,12 +69,42 @@ class LogConfig:
     def __post_init__(self):
         if self.log_types is None:
             self.log_types = {
-                LogType.APP: {"rotation": "10 MB", "retention": "30 days", "level": "INFO", "enqueue": True},
-                LogType.ERROR: {"rotation": "5 MB", "retention": "60 days", "level": "ERROR", "enqueue": True},
-                LogType.ACCESS: {"rotation": "50 MB", "retention": "7 days", "level": "INFO", "enqueue": True},
-                LogType.SECURITY: {"rotation": "5 MB", "retention": "90 days", "level": "INFO", "enqueue": True},
-                LogType.DATABASE: {"rotation": "20 MB", "retention": "14 days", "level": "INFO", "enqueue": True},
-                LogType.TASK: {"rotation": "10 MB", "retention": "30 days", "level": "INFO", "enqueue": True},
+                LogType.APP: {
+                    "rotation": "10 MB",
+                    "retention": "30 days",
+                    "level": "INFO",
+                    "enqueue": True,
+                },
+                LogType.ERROR: {
+                    "rotation": "5 MB",
+                    "retention": "60 days",
+                    "level": "ERROR",
+                    "enqueue": True,
+                },
+                LogType.ACCESS: {
+                    "rotation": "50 MB",
+                    "retention": "7 days",
+                    "level": "INFO",
+                    "enqueue": True,
+                },
+                LogType.SECURITY: {
+                    "rotation": "5 MB",
+                    "retention": "90 days",
+                    "level": "INFO",
+                    "enqueue": True,
+                },
+                LogType.DATABASE: {
+                    "rotation": "20 MB",
+                    "retention": "14 days",
+                    "level": "INFO",
+                    "enqueue": True,
+                },
+                LogType.TASK: {
+                    "rotation": "10 MB",
+                    "retention": "30 days",
+                    "level": "INFO",
+                    "enqueue": True,
+                },
                 LogType.STRUCTURED: {
                     "rotation": "10 MB",
                     "retention": "7 days",

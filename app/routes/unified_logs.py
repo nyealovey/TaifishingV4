@@ -28,7 +28,9 @@ def logs_dashboard():
     try:
         return render_template("logs/dashboard.html")
     except Exception as e:
-        log_error("Failed to render logs dashboard", module="unified_logs", error=str(e))
+        log_error(
+            "Failed to render logs dashboard", module="unified_logs", error=str(e)
+        )
         return error_response("Failed to load logs dashboard", 500)
 
 
@@ -86,7 +88,8 @@ def search_logs():
         # 关键词搜索
         if search_term:
             search_filter = or_(
-                UnifiedLog.message.like(f"%{search_term}%"), UnifiedLog.context.like(f"%{search_term}%")
+                UnifiedLog.message.like(f"%{search_term}%"),
+                UnifiedLog.context.like(f"%{search_term}%"),
             )
             query = query.filter(search_filter)
 
@@ -125,7 +128,13 @@ def search_logs():
             },
         }
 
-        log_info("Logs search completed", module="unified_logs", total=len(logs), page=page, search_term=search_term)
+        log_info(
+            "Logs search completed",
+            module="unified_logs",
+            total=len(logs),
+            page=page,
+            search_term=search_term,
+        )
 
         return success_response(response_data)
 
@@ -143,7 +152,12 @@ def get_log_statistics():
 
         stats = UnifiedLog.get_log_statistics(hours=hours)
 
-        log_info("Log statistics retrieved", module="unified_logs", hours=hours, total_logs=stats["total_logs"])
+        log_info(
+            "Log statistics retrieved",
+            module="unified_logs",
+            hours=hours,
+            total_logs=stats["total_logs"],
+        )
 
         return success_response(stats)
 
@@ -164,7 +178,9 @@ def get_error_logs():
 
         logs = [log.to_dict() for log in error_logs]
 
-        log_info("Error logs retrieved", module="unified_logs", count=len(logs), hours=hours)
+        log_info(
+            "Error logs retrieved", module="unified_logs", count=len(logs), hours=hours
+        )
 
         return success_response({"logs": logs})
 
@@ -181,7 +197,11 @@ def get_log_modules():
         from sqlalchemy import distinct
 
         # 获取所有模块
-        modules = db.session.query(distinct(UnifiedLog.module).label("module")).order_by(UnifiedLog.module).all()
+        modules = (
+            db.session.query(distinct(UnifiedLog.module).label("module"))
+            .order_by(UnifiedLog.module)
+            .all()
+        )
 
         module_list = [module.module for module in modules]
 
@@ -247,7 +267,17 @@ def export_logs():
             writer = csv.writer(output)
 
             # 写入表头
-            writer.writerow(["ID", "Timestamp", "Level", "Module", "Message", "Traceback", "Context"])
+            writer.writerow(
+                [
+                    "ID",
+                    "Timestamp",
+                    "Level",
+                    "Module",
+                    "Message",
+                    "Traceback",
+                    "Context",
+                ]
+            )
 
             # 写入数据
             for log in logs:
@@ -266,7 +296,9 @@ def export_logs():
             from flask import Response
 
             return Response(
-                output.getvalue(), mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=logs.csv"}
+                output.getvalue(),
+                mimetype="text/csv",
+                headers={"Content-Disposition": "attachment; filename=logs.csv"},
             )
 
         return error_response("Unsupported export format", 400)
@@ -282,14 +314,21 @@ def cleanup_logs():
     """清理旧日志API"""
     try:
         # 检查权限（仅管理员）
-        if not current_user.is_authenticated or not getattr(current_user, "is_admin", False):
+        if not current_user.is_authenticated or not getattr(
+            current_user, "is_admin", False
+        ):
             return error_response("Permission denied", 403)
 
         days = int(request.json.get("days", 90))
 
         deleted_count = UnifiedLog.cleanup_old_logs(days=days)
 
-        log_info("Logs cleanup completed", module="unified_logs", deleted_count=deleted_count, days=days)
+        log_info(
+            "Logs cleanup completed",
+            module="unified_logs",
+            deleted_count=deleted_count,
+            days=days,
+        )
 
         return success_response(
             {

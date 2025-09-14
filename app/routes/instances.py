@@ -4,15 +4,30 @@
 
 from typing import Any
 
-from flask import Blueprint, Response, flash, jsonify, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    Response,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask_login import current_user, login_required
 
 from app import db
-from app.models.account import Account
+
+# Account模型已废弃，使用CurrentAccountSyncData
 from app.models.credential import Credential
 from app.models.instance import Instance
 from app.services.database_service import DatabaseService
-from app.utils.decorators import create_required, delete_required, update_required, view_required
+from app.utils.decorators import (
+    create_required,
+    delete_required,
+    update_required,
+    view_required,
+)
 from app.utils.security import (
     sanitize_form_data,
     validate_db_type,
@@ -180,7 +195,11 @@ def create() -> str | Response | tuple[Response, int]:
                 host=data.get("host").strip(),
                 port=int(data.get("port")),
                 database_name=data.get("database_name", "").strip() or None,
-                credential_id=(int(data.get("credential_id")) if data.get("credential_id") else None),
+                credential_id=(
+                    int(data.get("credential_id"))
+                    if data.get("credential_id")
+                    else None
+                ),
                 description=data.get("description", "").strip(),
                 environment=data.get("environment", "production"),
             )
@@ -203,7 +222,9 @@ def create() -> str | Response | tuple[Response, int]:
 
             if request.is_json:
                 return (
-                    jsonify({"message": "实例创建成功", "instance": instance.to_dict()}),
+                    jsonify(
+                        {"message": "实例创建成功", "instance": instance.to_dict()}
+                    ),
                     201,
                 )
 
@@ -245,7 +266,9 @@ def create() -> str | Response | tuple[Response, int]:
             }
         )
 
-    return render_template("instances/create.html", credentials=credentials, database_types=database_types)
+    return render_template(
+        "instances/create.html", credentials=credentials, database_types=database_types
+    )
 
 
 @instances_bp.route("/test-connection", methods=["POST"])
@@ -255,12 +278,18 @@ def test_instance_connection() -> str | Response | tuple[Response, int]:
     """测试数据库连接"""
     try:
         # 添加调试日志
-        log_info(f"收到测试连接请求，Content-Type: {request.content_type}", module="instances")
+        log_info(
+            f"收到测试连接请求，Content-Type: {request.content_type}",
+            module="instances",
+        )
         log_info(f"请求数据: {request.get_data()}", module="instances")
 
         # 检查Content-Type
         if not request.is_json:
-            log_warning(f"请求不是JSON格式，Content-Type: {request.content_type}", module="instances")
+            log_warning(
+                f"请求不是JSON格式，Content-Type: {request.content_type}",
+                module="instances",
+            )
             return (
                 jsonify(
                     {
@@ -308,7 +337,9 @@ def test_instance_connection() -> str | Response | tuple[Response, int]:
 
         # 验证凭据ID
         try:
-            credential_id = int(data.get("credential_id")) if data.get("credential_id") else None
+            credential_id = (
+                int(data.get("credential_id")) if data.get("credential_id") else None
+            )
             if credential_id and credential_id <= 0:
                 return (
                     jsonify({"success": False, "error": "凭据ID必须是有效的正整数"}),
@@ -364,10 +395,41 @@ def detail(instance_id: int) -> str | Response | tuple[Response, int]:
     """实例详情"""
     instance = Instance.query.get_or_404(instance_id)
 
-    if request.is_json:
-        return jsonify(instance.to_dict())
+    # 获取账户数据 - 使用新的优化同步模型
+    from app.services.sync_data_manager import SyncDataManager
 
-    return render_template("instances/detail.html", instance=instance)
+    sync_accounts = SyncDataManager.get_accounts_by_instance(
+        instance_id, include_deleted=False
+    )
+
+    # 转换数据格式以适配模板
+    accounts = []
+    for sync_account in sync_accounts:
+        # 从type_specific字段获取额外信息
+        type_specific = sync_account.type_specific or {}
+
+        account_data = {
+            "id": sync_account.id,
+            "username": sync_account.username,
+            "host": type_specific.get("host", "%"),
+            "plugin": type_specific.get("plugin", ""),
+            "account_type": sync_account.db_type,
+            "password_last_changed": type_specific.get("password_last_changed"),
+            "is_locked": type_specific.get("is_locked", False),
+            "is_active": not sync_account.is_deleted,
+            "account_created_at": type_specific.get("account_created_at"),
+            "last_sync_time": sync_account.last_sync_time,
+            "is_superuser": sync_account.is_superuser,
+            "last_change_type": sync_account.last_change_type,
+        }
+        accounts.append(account_data)
+
+    if request.is_json:
+        return jsonify({"instance": instance.to_dict(), "accounts": accounts})
+
+    return render_template(
+        "instances/detail.html", instance=instance, accounts=accounts
+    )
 
 
 @instances_bp.route("/statistics")
@@ -460,7 +522,9 @@ def edit(instance_id: int) -> str | Response | tuple[Response, int]:
                 return render_template("instances/edit.html", instance=instance)
 
         # 验证实例名称唯一性（排除当前实例）
-        existing_instance = Instance.query.filter(Instance.name == data.get("name"), Instance.id != instance_id).first()
+        existing_instance = Instance.query.filter(
+            Instance.name == data.get("name"), Instance.id != instance_id
+        ).first()
         if existing_instance:
             error_msg = "实例名称已存在"
             if request.is_json:
@@ -478,7 +542,9 @@ def edit(instance_id: int) -> str | Response | tuple[Response, int]:
             if instance.database_name:
                 instance.database_name = instance.database_name.strip() or None
             instance.environment = data.get("environment", instance.environment)
-            instance.credential_id = int(data.get("credential_id")) if data.get("credential_id") else None
+            instance.credential_id = (
+                int(data.get("credential_id")) if data.get("credential_id") else None
+            )
             instance.description = data.get("description", instance.description)
             if data.get("description"):
                 instance.description = data.get("description").strip()
@@ -513,7 +579,9 @@ def edit(instance_id: int) -> str | Response | tuple[Response, int]:
             )
 
             if request.is_json:
-                return jsonify({"message": "实例更新成功", "instance": instance.to_dict()})
+                return jsonify(
+                    {"message": "实例更新成功", "instance": instance.to_dict()}
+                )
 
             flash("实例更新成功！", "success")
             return redirect(url_for("instances.detail", instance_id=instance_id))
@@ -555,7 +623,10 @@ def edit(instance_id: int) -> str | Response | tuple[Response, int]:
         )
 
     return render_template(
-        "instances/edit.html", instance=instance, credentials=credentials, database_types=database_types
+        "instances/edit.html",
+        instance=instance,
+        credentials=credentials,
+        database_types=database_types,
     )
 
 
@@ -784,7 +855,9 @@ def _process_instances_data(
                 continue
 
             # 检查实例名称是否已存在
-            existing_instance = Instance.query.filter_by(name=instance_data["name"]).first()
+            existing_instance = Instance.query.filter_by(
+                name=instance_data["name"]
+            ).first()
             if existing_instance:
                 errors.append(f"第 {i + 1} 个实例名称已存在: {instance_data['name']}")
                 continue
@@ -802,7 +875,9 @@ def _process_instances_data(
                 try:
                     credential_id = int(instance_data["credential_id"])
                 except (ValueError, TypeError):
-                    errors.append(f"第 {i + 1} 个实例凭据ID无效: {instance_data['credential_id']}")
+                    errors.append(
+                        f"第 {i + 1} 个实例凭据ID无效: {instance_data['credential_id']}"
+                    )
                     continue
 
             # 创建实例
@@ -933,9 +1008,21 @@ def export_instances() -> Response:
                 instance.description or "",
                 instance.credential_id or "",
                 instance.sync_count or 0,
-                instance.last_connected.strftime("%Y-%m-%d %H:%M:%S") if instance.last_connected else "",
-                instance.created_at.strftime("%Y-%m-%d %H:%M:%S") if instance.created_at else "",
-                instance.updated_at.strftime("%Y-%m-%d %H:%M:%S") if instance.updated_at else "",
+                (
+                    instance.last_connected.strftime("%Y-%m-%d %H:%M:%S")
+                    if instance.last_connected
+                    else ""
+                ),
+                (
+                    instance.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                    if instance.created_at
+                    else ""
+                ),
+                (
+                    instance.updated_at.strftime("%Y-%m-%d %H:%M:%S")
+                    if instance.updated_at
+                    else ""
+                ),
             ]
         )
 
@@ -1201,12 +1288,18 @@ def api_test_instance_connection() -> Response | tuple[Response, int]:
         data = request.get_json()
 
         # 添加调试日志
-        log_info(f"收到API测试连接请求，Content-Type: {request.content_type}", module="instances")
+        log_info(
+            f"收到API测试连接请求，Content-Type: {request.content_type}",
+            module="instances",
+        )
         log_info(f"请求数据: {request.get_data()}", module="instances")
 
         # 检查Content-Type
         if not request.is_json:
-            log_warning(f"请求不是JSON格式，Content-Type: {request.content_type}", module="instances")
+            log_warning(
+                f"请求不是JSON格式，Content-Type: {request.content_type}",
+                module="instances",
+            )
             return (
                 jsonify(
                     {
@@ -1252,7 +1345,9 @@ def api_test_instance_connection() -> Response | tuple[Response, int]:
 
         # 验证凭据ID
         try:
-            credential_id = int(data.get("credential_id")) if data.get("credential_id") else None
+            credential_id = (
+                int(data.get("credential_id")) if data.get("credential_id") else None
+            )
             if credential_id and credential_id <= 0:
                 return (
                     jsonify({"success": False, "error": "凭据ID必须是有效的正整数"}),
@@ -1309,7 +1404,9 @@ def get_instance_statistics() -> dict[str, Any]:
 
         # 数据库类型统计
         db_type_stats = (
-            db.session.query(Instance.db_type, db.func.count(Instance.id).label("count"))
+            db.session.query(
+                Instance.db_type, db.func.count(Instance.id).label("count")
+            )
             .group_by(Instance.db_type)
             .all()
         )
@@ -1345,7 +1442,11 @@ def get_instance_statistics() -> dict[str, Any]:
         ]
 
         # 最近连接的实例（按最后连接时间排序）
-        recent_connections = Instance.query.order_by(Instance.last_connected.desc().nullslast()).limit(10).all()
+        recent_connections = (
+            Instance.query.order_by(Instance.last_connected.desc().nullslast())
+            .limit(10)
+            .all()
+        )
 
         # 数据库类型数量
         db_types_count = len(db_type_stats)
@@ -1355,8 +1456,12 @@ def get_instance_statistics() -> dict[str, Any]:
             "active_instances": active_instances,
             "inactive_instances": inactive_instances,
             "db_types_count": db_types_count,
-            "db_type_stats": [{"db_type": stat.db_type, "count": stat.count} for stat in db_type_stats],
-            "port_stats": [{"port": stat.port, "count": stat.count} for stat in port_stats],
+            "db_type_stats": [
+                {"db_type": stat.db_type, "count": stat.count} for stat in db_type_stats
+            ],
+            "port_stats": [
+                {"port": stat.port, "count": stat.count} for stat in port_stats
+            ],
             "version_stats": version_stats,
             "recent_connections": recent_connections,
         }
@@ -1390,81 +1495,74 @@ def get_default_version(db_type: str) -> str:
 @instances_bp.route("/<int:instance_id>/accounts/<int:account_id>/permissions")
 @login_required
 @view_required
-def get_account_permissions(instance_id: int, account_id: int) -> dict[str, Any] | Response | tuple[Response, int]:
+def get_account_permissions(
+    instance_id: int, account_id: int
+) -> dict[str, Any] | Response | tuple[Response, int]:
     """获取账户权限详情"""
     instance = Instance.query.get_or_404(instance_id)
-    account = Account.query.filter_by(id=account_id, instance_id=instance_id).first_or_404()
+
+    # 使用CurrentAccountSyncData模型
+    from app.models.current_account_sync_data import CurrentAccountSyncData
+
+    account = CurrentAccountSyncData.query.filter_by(
+        id=account_id, instance_id=instance_id
+    ).first_or_404()
 
     try:
-        # 首先尝试从优化同步数据表获取权限信息
-        from app.models.current_account_sync_data import CurrentAccountSyncData
-        
-        sync_data = CurrentAccountSyncData.query.filter_by(
-            instance_id=instance_id,
-            username=account.username,
-            db_type=instance.db_type
-        ).first()
-        
-        permissions = None
-        if sync_data:
-            # 从优化同步数据构建权限信息
-            permissions = {
-                "数据库类型": instance.db_type.upper(),
-                "用户名": sync_data.username,
-                "超级用户": "是" if sync_data.is_superuser else "否",
-                "最后同步时间": sync_data.last_sync_time.strftime('%Y-%m-%d %H:%M:%S') if sync_data.last_sync_time else "未知"
-            }
-            
-            # 根据数据库类型添加具体权限
-            if instance.db_type == 'mysql':
-                if sync_data.global_privileges:
-                    permissions["全局权限"] = sync_data.global_privileges
-                if sync_data.database_privileges:
-                    permissions["数据库权限"] = sync_data.database_privileges
-                    
-            elif instance.db_type == 'postgresql':
-                if sync_data.predefined_roles:
-                    permissions["预定义角色"] = sync_data.predefined_roles
-                if sync_data.role_attributes:
-                    permissions["角色属性"] = sync_data.role_attributes
-                if sync_data.database_privileges_pg:
-                    permissions["数据库权限"] = sync_data.database_privileges_pg
-                    
-            elif instance.db_type == 'sqlserver':
-                if sync_data.server_roles:
-                    permissions["服务器角色"] = sync_data.server_roles
-                if sync_data.server_permissions:
-                    permissions["服务器权限"] = sync_data.server_permissions
-                if sync_data.database_roles:
-                    permissions["数据库角色"] = sync_data.database_roles
-                if sync_data.database_permissions:
-                    permissions["数据库权限"] = sync_data.database_permissions
-                    
-            elif instance.db_type == 'oracle':
-                if sync_data.oracle_roles:
-                    permissions["Oracle角色"] = sync_data.oracle_roles
-                if sync_data.system_privileges:
-                    permissions["系统权限"] = sync_data.system_privileges
-                if sync_data.tablespace_privileges_oracle:
-                    permissions["表空间权限"] = sync_data.tablespace_privileges_oracle
-        else:
-            # 回退到原始权限数据
-            if account.permissions:
-                import json
-                try:
-                    permissions = json.loads(account.permissions)
-                except json.JSONDecodeError:
-                    permissions = {"error": "权限数据格式错误"}
-            else:
-                permissions = {"error": "无权限信息"}
+        # 直接从CurrentAccountSyncData构建权限信息
+        permissions = {
+            "数据库类型": instance.db_type.upper(),
+            "用户名": account.username,
+            "超级用户": "是" if account.is_superuser else "否",
+            "最后同步时间": (
+                account.last_sync_time.strftime("%Y-%m-%d %H:%M:%S")
+                if account.last_sync_time
+                else "未知"
+            ),
+        }
+
+        # 根据数据库类型添加具体权限
+        if instance.db_type == "mysql":
+            if account.global_privileges:
+                permissions["global_privileges"] = account.global_privileges
+            if account.database_privileges:
+                permissions["database_privileges"] = account.database_privileges
+
+        elif instance.db_type == "postgresql":
+            if account.predefined_roles:
+                permissions["predefined_roles"] = account.predefined_roles
+            if account.role_attributes:
+                permissions["role_attributes"] = account.role_attributes
+            if account.database_privileges_pg:
+                permissions["database_privileges_pg"] = account.database_privileges_pg
+
+        elif instance.db_type == "sqlserver":
+            if account.server_roles:
+                permissions["server_roles"] = account.server_roles
+            if account.server_permissions:
+                permissions["server_permissions"] = account.server_permissions
+            if account.database_roles:
+                permissions["database_roles"] = account.database_roles
+            if account.database_permissions:
+                permissions["database_permissions"] = account.database_permissions
+
+        elif instance.db_type == "oracle":
+            if account.oracle_roles:
+                permissions["oracle_roles"] = account.oracle_roles
+            if account.system_privileges:
+                permissions["system_privileges"] = account.system_privileges
+            if account.tablespace_privileges_oracle:
+                permissions["tablespace_privileges_oracle"] = (
+                    account.tablespace_privileges_oracle
+                )
 
         response = {
             "success": True,
             "account": {
                 "id": account.id,
                 "username": account.username,
-                "host": account.host,
-                "plugin": account.plugin,
+                "host": getattr(account, "host", None),
+                "plugin": getattr(account, "plugin", None),
                 "db_type": instance.db_type,
             },
             "permissions": permissions,
@@ -1475,3 +1573,70 @@ def get_account_permissions(instance_id: int, account_id: int) -> dict[str, Any]
     except Exception as e:
         log_error(f"获取账户权限失败: {e}", module="instances")
         return jsonify({"success": False, "error": f"获取权限失败: {str(e)}"}), 500
+
+
+@instances_bp.route(
+    "/api/instances/<int:instance_id>/accounts/<int:account_id>/change-history"
+)
+@login_required
+@view_required
+def get_account_change_history(instance_id: int, account_id: int) -> Response:
+    """获取账户变更历史"""
+    instance = Instance.query.get_or_404(instance_id)
+
+    # 使用CurrentAccountSyncData模型
+    from app.models.current_account_sync_data import CurrentAccountSyncData
+
+    account = CurrentAccountSyncData.query.filter_by(
+        id=account_id, instance_id=instance_id
+    ).first_or_404()
+
+    try:
+        from app.models.account_change_log import AccountChangeLog
+
+        # 获取变更历史
+        change_logs = (
+            AccountChangeLog.query.filter_by(
+                instance_id=instance_id,
+                username=account.username,
+                db_type=instance.db_type,
+            )
+            .order_by(AccountChangeLog.change_time.desc())
+            .limit(50)
+            .all()
+        )
+
+        history = []
+        for log in change_logs:
+            history.append(
+                {
+                    "id": log.id,
+                    "change_type": log.change_type,
+                    "change_time": (
+                        log.change_time.strftime("%Y-%m-%d %H:%M:%S")
+                        if log.change_time
+                        else "未知"
+                    ),
+                    "status": log.status,
+                    "message": log.message,
+                    "privilege_diff": log.privilege_diff,
+                    "other_diff": log.other_diff,
+                    "session_id": log.session_id,
+                }
+            )
+
+        return jsonify(
+            {
+                "success": True,
+                "account": {
+                    "id": account.id,
+                    "username": account.username,
+                    "db_type": instance.db_type,
+                },
+                "history": history,
+            }
+        )
+
+    except Exception as e:
+        log_error(f"获取账户变更历史失败: {e}", module="instances")
+        return jsonify({"success": False, "error": f"获取变更历史失败: {str(e)}"}), 500

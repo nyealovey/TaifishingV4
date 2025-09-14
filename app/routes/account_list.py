@@ -7,10 +7,8 @@ from datetime import datetime
 from flask import Blueprint, jsonify, render_template, request
 from flask_login import current_user, login_required
 
-from app import db
-from app.models.account import Account
+from app.models.current_account_sync_data import CurrentAccountSyncData
 from app.models.instance import Instance
-from app.models.sync_data import SyncData
 from app.services.database_service import DatabaseService
 from app.utils.decorators import update_required, view_required
 from app.utils.structlog_config import log_error
@@ -37,30 +35,32 @@ def list_accounts(db_type: str | None = None) -> str:
     classification = request.args.get("classification", "").strip()
 
     # 构建查询
-    query = Account.query
+    query = CurrentAccountSyncData.query.filter_by(is_deleted=False)
 
     # 数据库类型过滤
     if db_type and db_type != "all":
-        query = query.join(Instance).filter(Instance.db_type == db_type)
+        query = query.filter(CurrentAccountSyncData.db_type == db_type)
 
     # 实例过滤
     if instance_id:
-        query = query.filter(Account.instance_id == instance_id)
+        query = query.filter(CurrentAccountSyncData.instance_id == instance_id)
 
     # 搜索过滤
     if search:
-        query = query.filter(Account.username.contains(search))
+        query = query.filter(CurrentAccountSyncData.username.contains(search))
 
     # 锁定状态过滤
     if is_locked is not None:
-        query = query.filter(Account.is_locked == (is_locked == "true"))
+        query = query.filter(CurrentAccountSyncData.is_locked == (is_locked == "true"))
 
     # 超级用户过滤
     if is_superuser is not None:
-        query = query.filter(Account.is_superuser == (is_superuser == "true"))
+        query = query.filter(
+            CurrentAccountSyncData.is_superuser == (is_superuser == "true")
+        )
 
     # 排序
-    query = query.order_by(Account.username.asc())
+    query = query.order_by(CurrentAccountSyncData.username.asc())
 
     # 分页
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
@@ -70,11 +70,19 @@ def list_accounts(db_type: str | None = None) -> str:
 
     # 获取统计信息
     stats = {
-        "total": Account.query.count(),
-        "mysql": Account.query.join(Instance).filter(Instance.db_type == "mysql").count(),
-        "postgresql": Account.query.join(Instance).filter(Instance.db_type == "postgresql").count(),
-        "oracle": Account.query.join(Instance).filter(Instance.db_type == "oracle").count(),
-        "sqlserver": Account.query.join(Instance).filter(Instance.db_type == "sqlserver").count(),
+        "total": CurrentAccountSyncData.query.filter_by(is_deleted=False).count(),
+        "mysql": CurrentAccountSyncData.query.filter_by(
+            db_type="mysql", is_deleted=False
+        ).count(),
+        "postgresql": CurrentAccountSyncData.query.filter_by(
+            db_type="postgresql", is_deleted=False
+        ).count(),
+        "oracle": CurrentAccountSyncData.query.filter_by(
+            db_type="oracle", is_deleted=False
+        ).count(),
+        "sqlserver": CurrentAccountSyncData.query.filter_by(
+            db_type="sqlserver", is_deleted=False
+        ).count(),
     }
 
     # 构建过滤选项
@@ -175,30 +183,32 @@ def export_accounts() -> "Response":
     request.args.get("classification", "").strip()
 
     # 构建查询（与list_accounts方法保持一致）
-    query = Account.query
+    query = CurrentAccountSyncData.query.filter_by(is_deleted=False)
 
     # 数据库类型过滤
     if db_type and db_type != "all":
-        query = query.join(Instance).filter(Instance.db_type == db_type)
+        query = query.filter(CurrentAccountSyncData.db_type == db_type)
 
     # 实例过滤
     if instance_id:
-        query = query.filter(Account.instance_id == instance_id)
+        query = query.filter(CurrentAccountSyncData.instance_id == instance_id)
 
     # 搜索过滤
     if search:
-        query = query.filter(Account.username.contains(search))
+        query = query.filter(CurrentAccountSyncData.username.contains(search))
 
     # 锁定状态过滤
     if is_locked is not None:
-        query = query.filter(Account.is_locked == (is_locked == "true"))
+        query = query.filter(CurrentAccountSyncData.is_locked == (is_locked == "true"))
 
     # 超级用户过滤
     if is_superuser is not None:
-        query = query.filter(Account.is_superuser == (is_superuser == "true"))
+        query = query.filter(
+            CurrentAccountSyncData.is_superuser == (is_superuser == "true")
+        )
 
     # 排序
-    query = query.order_by(Account.username.asc())
+    query = query.order_by(CurrentAccountSyncData.username.asc())
 
     # 获取所有账户数据
     accounts = query.all()
@@ -216,23 +226,31 @@ def export_accounts() -> "Response":
         for assignment in assignments:
             if assignment.account_id not in classifications:
                 classifications[assignment.account_id] = []
-            classifications[assignment.account_id].append(assignment.classification.name)
+            classifications[assignment.account_id].append(
+                assignment.classification.name
+            )
 
     # 创建CSV内容
     output = io.StringIO()
     writer = csv.writer(output)
 
     # 写入表头（与页面显示格式一致）
-    writer.writerow(["名称", "实例名称", "IP地址", "环境", "数据库类型", "分类", "锁定状态"])
+    writer.writerow(
+        ["名称", "实例名称", "IP地址", "环境", "数据库类型", "分类", "锁定状态"]
+    )
 
     # 写入账户数据
     for account in accounts:
         # 获取实例信息
-        instance = Instance.query.get(account.instance_id) if account.instance_id else None
+        instance = (
+            Instance.query.get(account.instance_id) if account.instance_id else None
+        )
 
         # 获取分类信息
         account_classifications = classifications.get(account.id, [])
-        classification_str = ", ".join(account_classifications) if account_classifications else "未分类"
+        classification_str = (
+            ", ".join(account_classifications) if account_classifications else "未分类"
+        )
 
         # 格式化用户名（与页面显示一致）
         if instance and instance.db_type in ["sqlserver", "oracle", "postgresql"]:
@@ -300,20 +318,7 @@ def sync_accounts(instance_id: int) -> "Response":
         result = db_service.sync_accounts(instance)
 
         if result["success"]:
-            # 记录同步成功
-            sync_record = SyncData(
-                instance_id=instance_id,
-                sync_type="manual",
-                status="success",
-                message=result.get("message", "同步成功"),
-                synced_count=result.get("synced_count", 0),
-                added_count=result.get("added_count", 0),
-                removed_count=result.get("removed_count", 0),
-                modified_count=result.get("modified_count", 0),
-            )
-            db.session.add(sync_record)
-            db.session.commit()
-
+            # 同步会话记录已通过sync_session_service管理，无需额外创建记录
             return jsonify(
                 {
                     "success": True,
@@ -321,16 +326,7 @@ def sync_accounts(instance_id: int) -> "Response":
                     "synced_count": result.get("synced_count", 0),
                 }
             )
-        # 记录同步失败
-        sync_record = SyncData(
-            instance_id=instance_id,
-            sync_type="manual",
-            status="failed",
-            message=result.get("error", "同步失败"),
-            synced_count=0,
-        )
-        db.session.add(sync_record)
-        db.session.commit()
+        # 同步会话记录已通过sync_session_service管理，无需额外创建记录
 
         return (
             jsonify(
@@ -352,16 +348,7 @@ def sync_accounts(instance_id: int) -> "Response":
             error=str(e),
         )
 
-        # 记录同步失败
-        sync_record = SyncData(
-            instance_id=instance_id,
-            sync_type="manual",
-            status="failed",
-            message=f"同步失败: {str(e)}",
-            synced_count=0,
-        )
-        db.session.add(sync_record)
-        db.session.commit()
+        # 同步会话记录已通过sync_session_service管理，无需额外创建记录
 
         return (
             jsonify(
@@ -380,31 +367,117 @@ def sync_accounts(instance_id: int) -> "Response":
 def get_account_permissions(account_id: int) -> "Response":
     """获取账户权限详情"""
     try:
-        account = Account.query.get_or_404(account_id)
+        account = CurrentAccountSyncData.query.get_or_404(account_id)
+        instance = account.instance
 
-        if not account.permissions:
-            return jsonify({"success": False, "error": "该账户没有权限信息"}), 404
+        # 构建权限信息
+        permissions = {
+            "db_type": instance.db_type.upper(),
+            "username": account.username,
+            "is_superuser": account.is_superuser,
+            "last_sync_time": (
+                account.last_sync_time.strftime("%Y-%m-%d %H:%M:%S")
+                if account.last_sync_time
+                else "未知"
+            ),
+        }
 
-        import json
+        if instance.db_type == "mysql":
+            permissions["global_privileges"] = account.global_privileges or []
+            permissions["database_privileges"] = account.database_privileges or {}
 
-        permissions = json.loads(account.permissions)
+        elif instance.db_type == "postgresql":
+            permissions["predefined_roles"] = account.predefined_roles or []
+            permissions["role_attributes"] = account.role_attributes or {}
+            permissions["database_privileges_pg"] = account.database_privileges_pg or {}
+            permissions["tablespace_privileges"] = account.tablespace_privileges or {}
+
+        elif instance.db_type == "sqlserver":
+            permissions["server_roles"] = account.server_roles or []
+            permissions["server_permissions"] = account.server_permissions or []
+            permissions["database_roles"] = account.database_roles or {}
+            permissions["database_permissions"] = account.database_permissions or {}
+
+        elif instance.db_type == "oracle":
+            permissions["oracle_roles"] = account.oracle_roles or []
+            permissions["system_privileges"] = account.system_privileges or []
+            permissions["tablespace_privileges_oracle"] = (
+                account.tablespace_privileges_oracle or {}
+            )
 
         return jsonify(
             {
                 "success": True,
-                "permissions": {"permissions": permissions},  # 嵌套结构，与instances.py保持一致
+                "permissions": permissions,
                 "account": {
                     "id": account.id,
                     "username": account.username,
-                    "host": account.host,
-                    "plugin": account.plugin,
-                    "db_type": account.instance.db_type if account.instance else "",
+                    "instance_name": instance.name if instance else "未知实例",
+                    "db_type": instance.db_type if instance else "",
                 },
             }
         )
 
     except Exception as e:
         return jsonify({"success": False, "error": f"获取权限失败: {str(e)}"}), 500
+
+
+@account_list_bp.route("/<int:account_id>/change-history")
+@login_required
+@view_required
+def get_account_change_history(account_id: int) -> "Response":
+    """获取账户变更历史"""
+    try:
+        account = CurrentAccountSyncData.query.get_or_404(account_id)
+        instance = account.instance
+
+        from app.models.account_change_log import AccountChangeLog
+
+        # 获取变更历史
+        change_logs = (
+            AccountChangeLog.query.filter_by(
+                instance_id=account.instance_id,
+                username=account.username,
+                db_type=instance.db_type,
+            )
+            .order_by(AccountChangeLog.change_time.desc())
+            .limit(50)
+            .all()
+        )
+
+        history = []
+        for log in change_logs:
+            history.append(
+                {
+                    "id": log.id,
+                    "change_type": log.change_type,
+                    "change_time": (
+                        log.change_time.strftime("%Y-%m-%d %H:%M:%S")
+                        if log.change_time
+                        else "未知"
+                    ),
+                    "status": log.status,
+                    "message": log.message,
+                    "privilege_diff": log.privilege_diff,
+                    "other_diff": log.other_diff,
+                    "session_id": log.session_id,
+                }
+            )
+
+        return jsonify(
+            {
+                "success": True,
+                "account": {
+                    "id": account.id,
+                    "username": account.username,
+                    "db_type": instance.db_type if instance else "",
+                },
+                "history": history,
+            }
+        )
+
+    except Exception as e:
+        return jsonify({"success": False, "error": f"获取变更历史失败: {str(e)}"}), 500
 
 
 @account_list_bp.route("/api/sync/<int:instance_id>")

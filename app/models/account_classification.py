@@ -14,15 +14,21 @@ class AccountClassification(db.Model):
     __tablename__ = "account_classifications"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False, unique=True)  # 特权账户、高风险账户等
+    name = db.Column(
+        db.String(100), nullable=False, unique=True
+    )  # 特权账户、高风险账户等
     description = db.Column(db.Text, nullable=True)  # 分类描述
-    risk_level = db.Column(db.String(20), nullable=False, default="medium")  # low, medium, high, critical
+    risk_level = db.Column(
+        db.String(20), nullable=False, default="medium"
+    )  # low, medium, high, critical
     color = db.Column(db.String(20), nullable=True)  # 显示颜色
     priority = db.Column(db.Integer, default=0)  # 优先级，数字越大优先级越高
     is_system = db.Column(db.Boolean, default=False, nullable=False)  # 是否为系统分类
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # 关联关系
     rules = db.relationship(
@@ -55,7 +61,9 @@ class AccountClassification(db.Model):
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "rules_count": self.rules.count(),
-            "assignments_count": self.account_assignments.filter_by(is_active=True).count(),
+            "assignments_count": self.account_assignments.filter_by(
+                is_active=True
+            ).count(),
         }
 
 
@@ -65,13 +73,19 @@ class ClassificationRule(db.Model):
     __tablename__ = "classification_rules"
 
     id = db.Column(db.Integer, primary_key=True)
-    classification_id = db.Column(db.Integer, db.ForeignKey("account_classifications.id"), nullable=False)
-    db_type = db.Column(db.String(20), nullable=False)  # mysql, postgresql, sqlserver, oracle
+    classification_id = db.Column(
+        db.Integer, db.ForeignKey("account_classifications.id"), nullable=False
+    )
+    db_type = db.Column(
+        db.String(20), nullable=False
+    )  # mysql, postgresql, sqlserver, oracle
     rule_name = db.Column(db.String(100), nullable=False)  # 规则名称
     rule_expression = db.Column(db.Text, nullable=False)  # 规则表达式（JSON格式）
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     def __repr__(self) -> str:
         return f"<ClassificationRule {self.rule_name} for {self.db_type}>"
@@ -108,19 +122,32 @@ class AccountClassificationAssignment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     account_id = db.Column(db.Integer, db.ForeignKey("accounts.id"), nullable=False)
-    classification_id = db.Column(db.Integer, db.ForeignKey("account_classifications.id"), nullable=False)
-    assigned_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)  # 分配人
-    assignment_type = db.Column(db.String(20), nullable=False, default="auto")  # auto, manual
+    classification_id = db.Column(
+        db.Integer, db.ForeignKey("account_classifications.id"), nullable=False
+    )
+    assigned_by = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=True
+    )  # 分配人
+    assignment_type = db.Column(
+        db.String(20), nullable=False, default="auto"
+    )  # auto, manual
     confidence_score = db.Column(db.Float, nullable=True)  # 自动分配的置信度分数
     notes = db.Column(db.Text, nullable=True)  # 备注
     batch_id = db.Column(db.String(36), nullable=True)  # 批次ID
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # 唯一约束：一个账户在同一个批次中只能有一个分类分配
     __table_args__ = (
-        db.UniqueConstraint("account_id", "classification_id", "batch_id", name="unique_account_classification_batch"),
+        db.UniqueConstraint(
+            "account_id",
+            "classification_id",
+            "batch_id",
+            name="unique_account_classification_batch",
+        ),
     )
 
     def __repr__(self) -> str:
@@ -140,5 +167,7 @@ class AccountClassificationAssignment(db.Model):
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "account_username": self.account.username if self.account else None,
-            "classification_name": (self.classification.name if self.classification else None),
+            "classification_name": (
+                self.classification.name if self.classification else None
+            ),
         }

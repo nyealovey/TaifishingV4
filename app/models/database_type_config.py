@@ -16,7 +16,9 @@ class DatabaseTypeConfig(db.Model):
     __tablename__ = "database_type_configs"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False, comment="数据库类型名称")
+    name = db.Column(
+        db.String(50), unique=True, nullable=False, comment="数据库类型名称"
+    )
     display_name = db.Column(db.String(100), nullable=False, comment="显示名称")
     driver = db.Column(db.String(50), nullable=False, comment="驱动名称")
     default_port = db.Column(db.Integer, nullable=False, comment="默认端口")
@@ -30,7 +32,12 @@ class DatabaseTypeConfig(db.Model):
     is_system = db.Column(db.Boolean, default=False, comment="是否系统内置")
     sort_order = db.Column(db.Integer, default=0, comment="排序顺序")
     created_at = db.Column(db.DateTime, default=datetime.utcnow, comment="创建时间")
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, comment="更新时间")
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        comment="更新时间",
+    )
 
     def __repr__(self) -> str:
         return f"<DatabaseTypeConfig {self.name}>"
@@ -74,7 +81,9 @@ class DatabaseTypeConfig(db.Model):
     @classmethod
     def get_active_types(cls) -> list["DatabaseTypeConfig"]:
         """获取启用的数据库类型"""
-        return cls.query.filter_by(is_active=True).order_by(cls.sort_order, cls.name).all()
+        return (
+            cls.query.filter_by(is_active=True).order_by(cls.sort_order, cls.name).all()
+        )
 
     @classmethod
     def get_by_name(cls, name: str) -> "DatabaseTypeConfig":

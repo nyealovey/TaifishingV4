@@ -5,7 +5,16 @@
 
 import time
 
-from flask import Blueprint, Response, flash, jsonify, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    Response,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask_login import current_user, login_required
 
 from app.models.instance import Instance
@@ -16,7 +25,9 @@ from app.utils.auth import view_required
 from app.utils.structlog_config import get_api_logger, log_error, log_info, log_warning
 
 # 创建蓝图
-account_sync_optimized_bp = Blueprint("account_sync_optimized", __name__, url_prefix="/account-sync-optimized")
+account_sync_optimized_bp = Blueprint(
+    "account_sync_optimized", __name__, url_prefix="/account-sync-optimized"
+)
 
 
 @account_sync_optimized_bp.route("/")
@@ -26,7 +37,9 @@ def sync_records() -> str | Response:
     """同步记录页面（优化版）"""
     try:
         # 获取同步记录
-        sync_records = SyncData.query.order_by(SyncData.sync_time.desc()).limit(50).all()
+        sync_records = (
+            SyncData.query.order_by(SyncData.sync_time.desc()).limit(50).all()
+        )
 
         # 获取实例信息
         instances = Instance.query.filter_by(is_active=True).all()
@@ -47,18 +60,28 @@ def sync_records() -> str | Response:
 def sync_all_accounts_optimized() -> str | Response | tuple[Response, int]:
     """同步所有实例的账户（优化版 - 解决锁定问题）"""
     try:
-        log_info("开始优化版批量同步", module="account_sync_optimized", user_id=current_user.id)
+        log_info(
+            "开始优化版批量同步",
+            module="account_sync_optimized",
+            user_id=current_user.id,
+        )
 
         # 获取所有活跃实例
         instances = Instance.query.filter_by(is_active=True).all()
 
         if not instances:
-            log_warning("没有找到活跃的数据库实例", module="account_sync_optimized", user_id=current_user.id)
+            log_warning(
+                "没有找到活跃的数据库实例",
+                module="account_sync_optimized",
+                user_id=current_user.id,
+            )
             return jsonify({"success": False, "error": "没有找到活跃的数据库实例"}), 400
 
         # 创建同步会话
         session = optimized_sync_session_service.create_session(
-            sync_type="manual_batch", sync_category="account", created_by=current_user.id
+            sync_type="manual_batch",
+            sync_category="account",
+            created_by=current_user.id,
         )
 
         log_info(
@@ -71,7 +94,9 @@ def sync_all_accounts_optimized() -> str | Response | tuple[Response, int]:
 
         # 分批添加实例记录，避免长时间锁定
         instance_ids = [inst.id for inst in instances]
-        records = optimized_sync_session_service.add_instance_records_batch(session.session_id, instance_ids)
+        records = optimized_sync_session_service.add_instance_records_batch(
+            session.session_id, instance_ids
+        )
 
         success_count = 0
         failed_count = 0
@@ -81,7 +106,9 @@ def sync_all_accounts_optimized() -> str | Response | tuple[Response, int]:
         for i, instance in enumerate(instances):
             try:
                 # 找到对应的记录
-                record = next((r for r in records if r.instance_id == instance.id), None)
+                record = next(
+                    (r for r in records if r.instance_id == instance.id), None
+                )
                 if not record:
                     log_warning(
                         "未找到实例记录",
@@ -92,7 +119,9 @@ def sync_all_accounts_optimized() -> str | Response | tuple[Response, int]:
                     continue
 
                 # 开始实例同步（带锁控制）
-                if not optimized_sync_session_service.start_instance_sync_with_lock(record.id):
+                if not optimized_sync_session_service.start_instance_sync_with_lock(
+                    record.id
+                ):
                     log_warning(
                         "无法开始实例同步（可能被锁定）",
                         module="account_sync_optimized",
@@ -120,7 +149,9 @@ def sync_all_accounts_optimized() -> str | Response | tuple[Response, int]:
                 )
 
                 # 执行账户同步
-                result = account_sync_service.sync_accounts(instance, sync_type="batch", session_id=session.session_id)
+                result = account_sync_service.sync_accounts(
+                    instance, sync_type="batch", session_id=session.session_id
+                )
 
                 if result.get("success"):
                     success_count += 1
@@ -336,8 +367,12 @@ def sync_details_batch_optimized() -> str | Response | tuple[Response, int]:
                     "instance_id": record.instance_id,
                     "instance_name": record.instance_name,
                     "status": record.status,
-                    "started_at": record.started_at.isoformat() if record.started_at else None,
-                    "completed_at": record.completed_at.isoformat() if record.completed_at else None,
+                    "started_at": (
+                        record.started_at.isoformat() if record.started_at else None
+                    ),
+                    "completed_at": (
+                        record.completed_at.isoformat() if record.completed_at else None
+                    ),
                     "accounts_synced": record.accounts_synced,
                     "accounts_created": record.accounts_created,
                     "accounts_updated": record.accounts_updated,

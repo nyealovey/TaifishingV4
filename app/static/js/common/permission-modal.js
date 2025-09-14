@@ -12,34 +12,34 @@ function showPermissionsModal(permissions, account) {
     console.log('showPermissionsModal 被调用');
     console.log('权限数据:', permissions);
     console.log('账户数据:', account);
-    
+
     try {
         // 获取数据库类型
         const dbType = account.db_type;
         console.log('数据库类型:', dbType);
-        
+
         // 检查权限对象的所有属性
         console.log('权限对象检查 - 所有属性:', Object.keys(permissions));
-        
+
         // 创建或获取模态框
         let modal = document.getElementById('permissionsModal');
         if (!modal) {
             modal = createPermissionsModal();
             document.body.appendChild(modal);
         }
-        
+
         // 更新模态框标题
         const titleElement = document.getElementById('permissionsModalTitle');
         if (titleElement) {
             titleElement.textContent = `账户权限详情 - ${account.username}`;
         }
-        
+
         // 渲染权限内容
         const bodyElement = document.getElementById('permissionsModalBody');
         if (bodyElement) {
             bodyElement.innerHTML = renderPermissionsByType(permissions, dbType);
         }
-        
+
         // 显示模态框
         const bsModal = new bootstrap.Modal(modal);
         bsModal.show();
@@ -79,7 +79,7 @@ function createPermissionsModal() {
             </div>
         </div>
     `;
-    
+
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = modalHtml;
     return tempDiv.firstElementChild;
@@ -116,21 +116,38 @@ function renderMySQLPermissions(permissions) {
     if (!permissions || typeof permissions !== 'object') {
         return '<p class="text-muted">无权限信息</p>';
     }
-    
-    return `
-        <div class="mb-3">
-            <h6><i class="fas fa-shield-alt text-primary me-2"></i>全局权限</h6>
-            ${permissions.global_privileges && Array.isArray(permissions.global_privileges) && permissions.global_privileges.length > 0 ? `
+
+     // 处理全局权限 - 将字符串数组转换为权限列表
+    let globalPrivilegesHtml = '<p class="text-muted">无全局权限</p>';
+    if (permissions.global_privileges && Array.isArray(permissions.global_privileges) && permissions.global_privileges.length > 0) {
+        const allPrivileges = [];
+        permissions.global_privileges.forEach(permString => {
+            if (typeof permString === 'string') {
+                // 分割权限字符串并添加到列表中
+                const privileges = permString.split(',').map(p => p.trim()).filter(p => p);
+                allPrivileges.push(...privileges);
+            }
+        });
+
+        if (allPrivileges.length > 0) {
+            globalPrivilegesHtml = `
                 <div class="row">
-                    ${permissions.global_privileges.map(perm => `
+                    ${allPrivileges.map(perm => `
                         <div class="col-md-6 mb-2">
                             <span class="badge bg-primary me-2">
-                                <i class="fas fa-shield-alt me-1"></i>${perm.privilege || perm}
+                                <i class="fas fa-shield-alt me-1"></i>${perm}
                             </span>
                         </div>
                     `).join('')}
                 </div>
-            ` : '<p class="text-muted">无全局权限</p>'}
+            `;
+        }
+    }
+
+    return `
+        <div class="mb-3">
+            <h6><i class="fas fa-shield-alt text-primary me-2"></i>全局权限</h6>
+            ${globalPrivilegesHtml}
         </div>
         <div class="mb-3">
             <h6><i class="fas fa-database text-success me-2"></i>数据库权限</h6>
@@ -201,11 +218,29 @@ function renderPostgreSQLPermissions(permissions) {
     if (!permissions || typeof permissions !== 'object') {
         return '<p class="text-muted">无权限信息</p>';
     }
-    
-    return `
-        <div class="mb-3">
-            <h6><i class="fas fa-user-shield text-primary me-2"></i>角色属性</h6>
-            ${permissions.role_attributes && Array.isArray(permissions.role_attributes) && permissions.role_attributes.length > 0 ? `
+
+    // 处理预定义角色
+    let predefinedRolesHtml = '<p class="text-muted">无预定义角色</p>';
+    if (permissions.predefined_roles && Array.isArray(permissions.predefined_roles) && permissions.predefined_roles.length > 0) {
+        predefinedRolesHtml = `
+            <div class="row">
+                ${permissions.predefined_roles.map(role => `
+                    <div class="col-md-6 mb-2">
+                        <span class="badge bg-warning me-2">
+                            <i class="fas fa-user-tag me-1"></i>${role}
+                        </span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // 处理角色属性
+    let roleAttributesHtml = '<p class="text-muted">无角色属性</p>';
+    if (permissions.role_attributes) {
+        if (Array.isArray(permissions.role_attributes)) {
+            // 数组格式
+            roleAttributesHtml = `
                 <div class="row">
                     ${permissions.role_attributes.map(attr => `
                         <div class="col-md-6 mb-2">
@@ -215,48 +250,91 @@ function renderPostgreSQLPermissions(permissions) {
                         </div>
                     `).join('')}
                 </div>
-            ` : '<p class="text-muted">无角色属性</p>'}
+            `;
+        } else if (typeof permissions.role_attributes === 'object') {
+            // 对象格式 - 只显示true值的属性
+            const attributes = Object.entries(permissions.role_attributes)
+                .filter(([key, value]) => value === true);
+            if (attributes.length > 0) {
+                roleAttributesHtml = `
+                    <div class="row">
+                        ${attributes.map(([key, value]) => `
+                            <div class="col-md-6 mb-2">
+                                <span class="badge bg-primary me-2">
+                                    <i class="fas fa-user-cog me-1"></i>${key}
+                                </span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                roleAttributesHtml = '<p class="text-muted">无角色属性</p>';
+            }
+        }
+    }
+
+    // 处理数据库权限
+    let databasePrivilegesHtml = '<p class="text-muted">无数据库权限</p>';
+    const dbPrivs = permissions.database_privileges_pg || permissions.database_privileges;
+    if (dbPrivs && typeof dbPrivs === 'object' && Object.keys(dbPrivs).length > 0) {
+        databasePrivilegesHtml = `
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>数据库</th>
+                            <th>权限</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.entries(dbPrivs).map(([db, privs]) => `
+                            <tr>
+                                <td>${db}</td>
+                                <td>
+                                    ${Array.isArray(privs) ? privs.map(priv => `
+                                        <span class="badge bg-success me-1">${priv}</span>
+                                    `).join('') : '<span class="text-muted">无权限</span>'}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    // 处理表空间权限
+    let tablespacePrivilegesHtml = '<p class="text-muted">无表空间权限</p>';
+    if (permissions.tablespace_privileges && Array.isArray(permissions.tablespace_privileges) && permissions.tablespace_privileges.length > 0) {
+        tablespacePrivilegesHtml = `
+            <div class="row">
+                ${permissions.tablespace_privileges.map(priv => `
+                    <div class="col-md-6 mb-2">
+                        <span class="badge bg-info me-2">
+                            <i class="fas fa-hdd me-1"></i>${priv}
+                        </span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    return `
+        <div class="mb-3">
+            <h6><i class="fas fa-user-tag text-warning me-2"></i>预定义角色</h6>
+            ${predefinedRolesHtml}
+        </div>
+        <div class="mb-3">
+            <h6><i class="fas fa-user-shield text-primary me-2"></i>角色属性</h6>
+            ${roleAttributesHtml}
         </div>
         <div class="mb-3">
             <h6><i class="fas fa-database text-success me-2"></i>数据库权限</h6>
-            ${permissions.database_privileges && Array.isArray(permissions.database_privileges) && permissions.database_privileges.length > 0 ? `
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>数据库</th>
-                                <th>权限</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${permissions.database_privileges.map(db => `
-                                <tr>
-                                    <td>${db.database}</td>
-                                    <td>
-                                        ${Array.isArray(db.privileges) ? db.privileges.map(priv => `
-                                            <span class="badge bg-success me-1">${priv}</span>
-                                        `).join('') : '<span class="text-muted">无权限</span>'}
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            ` : '<p class="text-muted">无数据库权限</p>'}
+            ${databasePrivilegesHtml}
         </div>
         <div class="mb-3">
             <h6><i class="fas fa-hdd text-info me-2"></i>表空间权限</h6>
-            ${permissions.tablespace_privileges && Array.isArray(permissions.tablespace_privileges) && permissions.tablespace_privileges.length > 0 ? `
-                <div class="row">
-                    ${permissions.tablespace_privileges.map(priv => `
-                        <div class="col-md-6 mb-2">
-                            <span class="badge bg-info me-2">
-                                <i class="fas fa-hdd me-1"></i>${priv}
-                            </span>
-                        </div>
-                    `).join('')}
-                </div>
-            ` : '<p class="text-muted">无表空间权限</p>'}
+            ${tablespacePrivilegesHtml}
         </div>
     `;
 }
@@ -271,7 +349,7 @@ function renderOraclePermissions(permissions) {
     if (!permissions || typeof permissions !== 'object') {
         return '<p class="text-muted">无权限信息</p>';
     }
-    
+
     return `
         <div class="mb-3">
             <h6><i class="fas fa-crown text-primary me-2"></i>角色</h6>
@@ -342,7 +420,7 @@ function renderSQLServerPermissions(permissions) {
     if (!permissions || typeof permissions !== 'object') {
         return '<p class="text-muted">无权限信息</p>';
     }
-    
+
     return `
         <div class="mb-3">
             <h6><i class="fas fa-crown text-primary me-2"></i>服务器角色</h6>
@@ -440,7 +518,7 @@ function renderDefaultPermissions(permissions, dbType) {
     if (!permissions || typeof permissions !== 'object') {
         return '<p class="text-muted">无权限信息</p>';
     }
-    
+
     return `
         <div class="alert alert-warning">
             <i class="fas fa-exclamation-triangle me-2"></i>

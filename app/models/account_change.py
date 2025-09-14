@@ -13,17 +13,23 @@ class AccountChange(db.Model):
     __tablename__ = "account_changes"
 
     id = db.Column(db.Integer, primary_key=True)
-    sync_data_id = db.Column(db.Integer, db.ForeignKey("sync_data.id"), nullable=False)
+    sync_data_id = db.Column(
+        db.Integer, nullable=True
+    )  # 移除外键约束，因为sync_data表已删除
     instance_id = db.Column(db.Integer, db.ForeignKey("instances.id"), nullable=False)
-    change_type = db.Column(db.String(20), nullable=False)  # 'added', 'removed', 'modified'
+    change_type = db.Column(
+        db.String(20), nullable=False
+    )  # 'added', 'removed', 'modified'
     account_data = db.Column(db.JSON, nullable=False)  # 账户的完整信息
     change_time = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
     # 关联关系
-    sync_data = db.relationship("SyncData", backref="account_changes")
+    # sync_data关系已移除，因为SyncData表已删除
     instance = db.relationship("Instance", backref="account_changes")
 
-    def __init__(self, sync_data_id: int, instance_id: int, change_type: str, account_data: dict) -> None:
+    def __init__(
+        self, sync_data_id: int, instance_id: int, change_type: str, account_data: dict
+    ) -> None:
         """
         初始化账户变化记录
 

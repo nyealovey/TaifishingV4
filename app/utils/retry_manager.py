@@ -66,14 +66,18 @@ class RetryManager:
 
         for attempt in range(1, self.max_attempts + 1):
             try:
-                self.system_logger.debug(f"执行函数 {func.__name__}, 尝试 {attempt}/{self.max_attempts}")
+                self.system_logger.debug(
+                    f"执行函数 {func.__name__}, 尝试 {attempt}/{self.max_attempts}"
+                )
                 result = func(*args, **kwargs)
                 self.system_logger.debug(f"函数 {func.__name__} 执行成功")
                 return result
 
             except Exception as e:
                 last_exception = e
-                self.system_logger.warning(f"函数 {func.__name__} 执行失败 (尝试 {attempt}/{self.max_attempts}): {e}")
+                self.system_logger.warning(
+                    f"函数 {func.__name__} 执行失败 (尝试 {attempt}/{self.max_attempts}): {e}"
+                )
 
                 if attempt < self.max_attempts:
                     delay = self.calculate_delay(attempt)
@@ -115,25 +119,33 @@ def retry(
 
             for attempt in range(1, max_attempts + 1):
                 try:
-                    self.system_logger.debug(f"执行函数 {func.__name__}, 尝试 {attempt}/{max_attempts}")
+                    self.system_logger.debug(
+                        f"执行函数 {func.__name__}, 尝试 {attempt}/{max_attempts}"
+                    )
                     result = func(*args, **kwargs)
                     self.system_logger.debug(f"函数 {func.__name__} 执行成功")
                     return result
 
                 except exceptions as e:  # type: ignore[misc]
                     last_exception = e
-                    self.system_logger.warning(f"函数 {func.__name__} 执行失败 (尝试 {attempt}/{max_attempts}): {e}")
+                    self.system_logger.warning(
+                        f"函数 {func.__name__} 执行失败 (尝试 {attempt}/{max_attempts}): {e}"
+                    )
 
                     if attempt < max_attempts:
                         delay = retry_manager.calculate_delay(attempt)
                         self.system_logger.debug(f"等待 {delay} 秒后重试...")
                         time.sleep(delay)
                     else:
-                        self.system_logger.error(f"函数 {func.__name__} 重试次数已达上限")
+                        self.system_logger.error(
+                            f"函数 {func.__name__} 重试次数已达上限"
+                        )
 
                 except Exception as e:
                     # 不在重试范围内的异常，直接抛出
-                    self.system_logger.error(f"函数 {func.__name__} 发生不可重试的异常: {e}")
+                    self.system_logger.error(
+                        f"函数 {func.__name__} 发生不可重试的异常: {e}"
+                    )
                     raise
 
             # 所有重试都失败了
@@ -168,14 +180,20 @@ class RetryConfigs:
     )
 
     # 文件操作重试
-    FILE = RetryManager(max_attempts=3, base_delay=0.5, max_delay=5.0, strategy=RetryStrategy.LINEAR)
+    FILE = RetryManager(
+        max_attempts=3, base_delay=0.5, max_delay=5.0, strategy=RetryStrategy.LINEAR
+    )
 
     # 任务执行重试
-    TASK = RetryManager(max_attempts=2, base_delay=5.0, max_delay=30.0, strategy=RetryStrategy.FIXED)
+    TASK = RetryManager(
+        max_attempts=2, base_delay=5.0, max_delay=30.0, strategy=RetryStrategy.FIXED
+    )
 
 
 # 便捷装饰器
-def retry_database(max_attempts: int = 3) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def retry_database(
+    max_attempts: int = 3,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """数据库操作重试装饰器"""
     return retry(
         max_attempts=max_attempts,
@@ -186,7 +204,9 @@ def retry_database(max_attempts: int = 3) -> Callable[[Callable[..., Any]], Call
     )
 
 
-def retry_network(max_attempts: int = 5) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def retry_network(
+    max_attempts: int = 5,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """网络请求重试装饰器"""
     return retry(
         max_attempts=max_attempts,
@@ -197,7 +217,9 @@ def retry_network(max_attempts: int = 5) -> Callable[[Callable[..., Any]], Calla
     )
 
 
-def retry_file(max_attempts: int = 3) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def retry_file(
+    max_attempts: int = 3,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """文件操作重试装饰器"""
     return retry(
         max_attempts=max_attempts,
@@ -208,7 +230,9 @@ def retry_file(max_attempts: int = 3) -> Callable[[Callable[..., Any]], Callable
     )
 
 
-def retry_task(max_attempts: int = 2) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def retry_task(
+    max_attempts: int = 2,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """任务执行重试装饰器"""
     return retry(
         max_attempts=max_attempts,
@@ -220,7 +244,9 @@ def retry_task(max_attempts: int = 2) -> Callable[[Callable[..., Any]], Callable
 
 
 # 智能重试：根据异常类型选择重试策略
-def smart_retry(max_attempts: int = 3) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def smart_retry(
+    max_attempts: int = 3,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """智能重试装饰器"""
 
     def retry_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -272,7 +298,9 @@ class RetryStats:
     def __init__(self) -> None:
         self.stats: dict[str, dict[str, Any]] = {}
 
-    def record_retry(self, func_name: str, attempt: int, success: bool, error: str | None = None) -> None:
+    def record_retry(
+        self, func_name: str, attempt: int, success: bool, error: str | None = None
+    ) -> None:
         """记录重试统计"""
         if func_name not in self.stats:
             self.stats[func_name] = {
@@ -295,7 +323,9 @@ class RetryStats:
             if error:
                 stats["errors"].append(error)
 
-    def get_stats(self, func_name: str | None = None) -> dict[str, Any] | dict[str, dict[str, Any]]:
+    def get_stats(
+        self, func_name: str | None = None
+    ) -> dict[str, Any] | dict[str, dict[str, Any]]:
         """获取重试统计"""
         if func_name:
             return self.stats.get(func_name, {})

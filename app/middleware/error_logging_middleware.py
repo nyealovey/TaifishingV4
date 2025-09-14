@@ -25,7 +25,11 @@ def determine_log_source() -> str:
     """确定日志来源"""
     try:
         # 检查是否有用户认证
-        if current_user and hasattr(current_user, "id") and current_user.is_authenticated:
+        if (
+            current_user
+            and hasattr(current_user, "id")
+            and current_user.is_authenticated
+        ):
             # 有用户认证的请求
             if request.path.startswith("/api/"):
                 return "api_call"  # API调用
@@ -80,20 +84,30 @@ def register_error_logging_middleware(app: Flask) -> None:
     @app.errorhandler(400)
     def handle_bad_request(error: Exception) -> None:
         """处理400错误"""
-        log_warning("客户端请求错误", module="error_handler", exception=error, status_code=400)
+        log_warning(
+            "客户端请求错误", module="error_handler", exception=error, status_code=400
+        )
         return {"error": "请求参数错误", "message": str(error), "status_code": 400}, 400
 
     @app.errorhandler(401)
     def handle_unauthorized(error: Exception) -> None:
         """处理401错误"""
-        log_warning("未授权访问", module="error_handler", exception=error, status_code=401)
+        log_warning(
+            "未授权访问", module="error_handler", exception=error, status_code=401
+        )
         return {"error": "未授权访问", "message": "请先登录", "status_code": 401}, 401
 
     @app.errorhandler(403)
     def handle_forbidden(error: Exception) -> None:
         """处理403错误"""
-        log_warning("禁止访问", module="error_handler", exception=error, status_code=403)
-        return {"error": "禁止访问", "message": "您没有权限访问此资源", "status_code": 403}, 403
+        log_warning(
+            "禁止访问", module="error_handler", exception=error, status_code=403
+        )
+        return {
+            "error": "禁止访问",
+            "message": "您没有权限访问此资源",
+            "status_code": 403,
+        }, 403
 
     @app.errorhandler(404)
     def handle_not_found(error: Exception) -> None:
@@ -102,14 +116,31 @@ def register_error_logging_middleware(app: Flask) -> None:
 
         url = request.url if request else "未知URL"
         method = request.method if request else "未知方法"
-        log_warning("资源未找到", module="error_handler", exception=error, method=method, url=url, status_code=404)
-        return {"error": "资源未找到", "message": "请求的资源不存在", "status_code": 404}, 404
+        log_warning(
+            "资源未找到",
+            module="error_handler",
+            exception=error,
+            method=method,
+            url=url,
+            status_code=404,
+        )
+        return {
+            "error": "资源未找到",
+            "message": "请求的资源不存在",
+            "status_code": 404,
+        }, 404
 
     @app.errorhandler(500)
     def handle_internal_server_error(error: Exception) -> None:
         """处理500错误"""
-        log_error("服务器内部错误", module="error_handler", exception=error, status_code=500)
-        return {"error": "服务器内部错误", "message": "系统出现错误，请稍后重试", "status_code": 500}, 500
+        log_error(
+            "服务器内部错误", module="error_handler", exception=error, status_code=500
+        )
+        return {
+            "error": "服务器内部错误",
+            "message": "系统出现错误，请稍后重试",
+            "status_code": 500,
+        }, 500
 
     @app.errorhandler(Exception)
     def handle_unhandled_exception(error: Exception) -> None:
@@ -122,16 +153,27 @@ def register_error_logging_middleware(app: Flask) -> None:
             error_type=type(error).__name__,
             method=request.method if request else "unknown",
             path=request.path if request else "unknown",
-            user_id=current_user.id if current_user and hasattr(current_user, "id") else None,
+            user_id=(
+                current_user.id
+                if current_user and hasattr(current_user, "id")
+                else None
+            ),
             ip_address=request.remote_addr if request else None,
             user_agent=request.headers.get("User-Agent") if request else None,
         )
 
-        return {"error": "系统错误", "message": "系统出现错误，请稍后重试", "status_code": 500}, 500
+        return {
+            "error": "系统错误",
+            "message": "系统出现错误，请稍后重试",
+            "status_code": 500,
+        }, 500
 
 
 def log_database_operation_error(
-    operation: str, error: Exception, module: str | None = None, details: str | None = None
+    operation: str,
+    error: Exception,
+    module: str | None = None,
+    details: str | None = None,
 ) -> None:
     """记录数据库操作错误"""
     db_logger = get_db_logger()
@@ -142,14 +184,19 @@ def log_database_operation_error(
         exception=error,
         error_type=type(error).__name__,
         details=details,
-        user_id=current_user.id if current_user and hasattr(current_user, "id") else None,
+        user_id=(
+            current_user.id if current_user and hasattr(current_user, "id") else None
+        ),
         ip_address=request.remote_addr if request else None,
         user_agent=request.headers.get("User-Agent") if request else None,
     )
 
 
 def log_api_operation_error(
-    endpoint: str, error: Exception, module: str | None = None, details: str | None = None
+    endpoint: str,
+    error: Exception,
+    module: str | None = None,
+    details: str | None = None,
 ) -> None:
     """记录API操作错误"""
     api_logger = get_api_logger()
@@ -160,14 +207,19 @@ def log_api_operation_error(
         exception=error,
         error_type=type(error).__name__,
         details=details,
-        user_id=current_user.id if current_user and hasattr(current_user, "id") else None,
+        user_id=(
+            current_user.id if current_user and hasattr(current_user, "id") else None
+        ),
         ip_address=request.remote_addr if request else None,
         user_agent=request.headers.get("User-Agent") if request else None,
     )
 
 
 def log_sync_operation_error(
-    operation: str, error: Exception, module: str | None = None, details: str | None = None
+    operation: str,
+    error: Exception,
+    module: str | None = None,
+    details: str | None = None,
 ) -> None:
     """记录同步操作错误"""
     sync_logger = get_sync_logger()
@@ -178,7 +230,9 @@ def log_sync_operation_error(
         exception=error,
         error_type=type(error).__name__,
         details=details,
-        user_id=current_user.id if current_user and hasattr(current_user, "id") else None,
+        user_id=(
+            current_user.id if current_user and hasattr(current_user, "id") else None
+        ),
         ip_address=request.remote_addr if request else None,
         user_agent=request.headers.get("User-Agent") if request else None,
     )
@@ -206,7 +260,12 @@ def _find_related_sync_logs(start_time: datetime, end_time: datetime) -> list:
 
 
 def _merge_batch_sync_logs(
-    start_log: Log, sync_logs: list, end_time: datetime, duration: float, status_code: int, response: Response
+    start_log: Log,
+    sync_logs: list,
+    end_time: datetime,
+    duration: float,
+    status_code: int,
+    response: Response,
 ) -> None:
     """合并批量同步日志"""
     try:
@@ -232,9 +291,7 @@ def _merge_batch_sync_logs(
                 failed_count += 1
 
         # 构建合并后的消息
-        merged_message = (
-            f"批量同步所有账户: 成功 {success_count} 个实例，失败 {failed_count} 个实例，共同步 {total_accounts} 个账户"
-        )
+        merged_message = f"批量同步所有账户: 成功 {success_count} 个实例，失败 {failed_count} 个实例，共同步 {total_accounts} 个账户"
 
         # 构建详细信息
         details_parts = [
@@ -266,7 +323,13 @@ def _merge_batch_sync_logs(
         # 确定日志级别
         log_level = "warning" if status_code >= 400 or failed_count > 0 else "info"
         levels = [start_log.level, log_level.upper()]
-        level_priority = {"CRITICAL": 5, "ERROR": 4, "WARNING": 3, "INFO": 2, "DEBUG": 1}
+        level_priority = {
+            "CRITICAL": 5,
+            "ERROR": 4,
+            "WARNING": 3,
+            "INFO": 2,
+            "DEBUG": 1,
+        }
         max_level = max(levels, key=lambda x: level_priority.get(x, 0))
 
         # 确定日志来源
@@ -279,7 +342,11 @@ def _merge_batch_sync_logs(
             module="batch_sync_handler",
             message=merged_message,
             details=details,
-            user_id=current_user.id if current_user and hasattr(current_user, "id") else None,
+            user_id=(
+                current_user.id
+                if current_user and hasattr(current_user, "id")
+                else None
+            ),
             ip_address=request.remote_addr,
             user_agent=request.headers.get("User-Agent"),
             source=log_source,
@@ -298,15 +365,23 @@ def _merge_batch_sync_logs(
         return None
 
 
-def _handle_batch_sync_log_merge(request_id: str, status_code: int, response: Response) -> None:
+def _handle_batch_sync_log_merge(
+    request_id: str, status_code: int, response: Response
+) -> None:
     """处理批量同步日志合并"""
     try:
         if request_id == "unknown":
             return
 
         # 查找对应的开始日志
-        search_pattern = f"%请求开始: POST /account-sync/sync-all [request_id: {request_id}]%"
-        start_log = Log.query.filter(Log.message.like(search_pattern)).order_by(Log.created_at.desc()).first()
+        search_pattern = (
+            f"%请求开始: POST /account-sync/sync-all [request_id: {request_id}]%"
+        )
+        start_log = (
+            Log.query.filter(Log.message.like(search_pattern))
+            .order_by(Log.created_at.desc())
+            .first()
+        )
 
         if not start_log:
             return
@@ -321,7 +396,9 @@ def _handle_batch_sync_log_merge(request_id: str, status_code: int, response: Re
         sync_logs = _find_related_sync_logs(start_log.created_at, end_time)
 
         # 合并所有相关日志
-        merged_log = _merge_batch_sync_logs(start_log, sync_logs, end_time, duration, status_code, response)
+        merged_log = _merge_batch_sync_logs(
+            start_log, sync_logs, end_time, duration, status_code, response
+        )
 
         if merged_log:
             # 删除所有相关的原始日志

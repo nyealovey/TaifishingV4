@@ -10,7 +10,11 @@ from flask_login import login_required  # type: ignore
 from app.models.unified_log import LogLevel, UnifiedLog
 from app.utils.api_response import error_response, success_response
 from app.utils.decorators import view_required
-from app.utils.structlog_config import get_system_logger, is_debug_logging_enabled, set_debug_logging_enabled
+from app.utils.structlog_config import (
+    get_system_logger,
+    is_debug_logging_enabled,
+    set_debug_logging_enabled,
+)
 from app.utils.timezone import now, utc_to_china
 
 # 创建蓝图
@@ -64,7 +68,9 @@ def get_unified_logs() -> Response:
             query = query.filter(UnifiedLog.message.contains(q))
 
         # 分页查询
-        logs = query.order_by(UnifiedLog.timestamp.desc()).paginate(page=page, per_page=per_page, error_out=False)
+        logs = query.order_by(UnifiedLog.timestamp.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
 
         # 构建响应数据（转换为东八区时间显示）
         logs_data = []
@@ -76,13 +82,17 @@ def get_unified_logs() -> Response:
             logs_data.append(
                 {
                     "id": log.id,
-                    "timestamp": china_timestamp.isoformat() if china_timestamp else None,
+                    "timestamp": (
+                        china_timestamp.isoformat() if china_timestamp else None
+                    ),
                     "level": log.level.value,
                     "module": log.module,
                     "message": log.message,
                     "context": log.context,
                     "traceback": log.traceback,
-                    "created_at": china_created_at.isoformat() if china_created_at else None,
+                    "created_at": (
+                        china_created_at.isoformat() if china_created_at else None
+                    ),
                 }
             )
 
@@ -139,7 +149,8 @@ def get_unified_error_logs() -> Response:
         start_time = datetime.utcnow() - timedelta(hours=hours)
         error_logs = (
             UnifiedLog.query.filter(
-                UnifiedLog.level.in_([LogLevel.ERROR, LogLevel.CRITICAL]), UnifiedLog.timestamp >= start_time
+                UnifiedLog.level.in_([LogLevel.ERROR, LogLevel.CRITICAL]),
+                UnifiedLog.timestamp >= start_time,
             )
             .order_by(UnifiedLog.timestamp.desc())
             .limit(limit)
@@ -207,8 +218,16 @@ def get_unified_log_detail(log_id: int) -> Response:
             "context": log.context,
             "traceback": log.traceback,
             "created_at": china_created_at.isoformat() if china_created_at else None,
-            "formatted_timestamp": china_timestamp.strftime("%Y-%m-%d %H:%M:%S") if china_timestamp else None,
-            "formatted_created_at": china_created_at.strftime("%Y-%m-%d %H:%M:%S") if china_created_at else None,
+            "formatted_timestamp": (
+                china_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                if china_timestamp
+                else None
+            ),
+            "formatted_created_at": (
+                china_created_at.strftime("%Y-%m-%d %H:%M:%S")
+                if china_created_at
+                else None
+            ),
         }
 
         return success_response(log_detail)
@@ -261,29 +280,43 @@ def export_unified_logs() -> Response:
             writer = csv.writer(output)
 
             # 写入表头
-            writer.writerow(["时间", "级别", "模块", "消息", "上下文", "堆栈追踪", "创建时间"])
+            writer.writerow(
+                ["时间", "级别", "模块", "消息", "上下文", "堆栈追踪", "创建时间"]
+            )
 
             # 写入数据（转换为东八区时间显示）
             for log in logs:
                 # 转换为东八区时间
                 china_timestamp = utc_to_china(log.timestamp)
-                china_created_at = utc_to_china(log.created_at) if log.created_at else None
+                china_created_at = (
+                    utc_to_china(log.created_at) if log.created_at else None
+                )
 
                 writer.writerow(
                     [
-                        china_timestamp.strftime("%Y-%m-%d %H:%M:%S") if china_timestamp else "",
+                        (
+                            china_timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                            if china_timestamp
+                            else ""
+                        ),
                         log.level.value,
                         log.module,
                         log.message,
                         log.context,
                         log.traceback,
-                        china_created_at.strftime("%Y-%m-%d %H:%M:%S") if china_created_at else "",
+                        (
+                            china_created_at.strftime("%Y-%m-%d %H:%M:%S")
+                            if china_created_at
+                            else ""
+                        ),
                     ]
                 )
 
             response = make_response(output.getvalue())
             response.headers["Content-Type"] = "text/csv; charset=utf-8"
-            response.headers["Content-Disposition"] = "attachment; filename=unified_logs.csv"
+            response.headers["Content-Disposition"] = (
+                "attachment; filename=unified_logs.csv"
+            )
             return response
 
         if format_type == "json":
@@ -291,22 +324,36 @@ def export_unified_logs() -> Response:
             for log in logs:
                 # 转换为东八区时间
                 china_timestamp = utc_to_china(log.timestamp)
-                china_created_at = utc_to_china(log.created_at) if log.created_at else None
+                china_created_at = (
+                    utc_to_china(log.created_at) if log.created_at else None
+                )
 
                 logs_data.append(
                     {
                         "id": log.id,
-                        "timestamp": china_timestamp.isoformat() if china_timestamp else None,
+                        "timestamp": (
+                            china_timestamp.isoformat() if china_timestamp else None
+                        ),
                         "level": log.level.value,
                         "module": log.module,
                         "message": log.message,
                         "context": log.context,
                         "traceback": log.traceback,
-                        "created_at": china_created_at.isoformat() if china_created_at else None,
+                        "created_at": (
+                            china_created_at.isoformat() if china_created_at else None
+                        ),
                     }
                 )
 
-            return success_response({"data": {"logs": logs_data, "total": len(logs), "exported_at": now().isoformat()}})
+            return success_response(
+                {
+                    "data": {
+                        "logs": logs_data,
+                        "total": len(logs),
+                        "exported_at": now().isoformat(),
+                    }
+                }
+            )
         return error_response("Unsupported format", 400)
 
     except Exception as e:
@@ -323,7 +370,9 @@ def get_debug_status() -> Response:
     """获取DEBUG日志状态"""
     try:
         enabled = is_debug_logging_enabled()
-        return success_response({"enabled": enabled, "status": "启用" if enabled else "关闭"})
+        return success_response(
+            {"enabled": enabled, "status": "启用" if enabled else "关闭"}
+        )
     except Exception as e:
         from app.utils.structlog_config import get_system_logger
 

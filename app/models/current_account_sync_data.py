@@ -14,7 +14,9 @@ class CurrentAccountSyncData(BaseSyncData):
     __tablename__ = "current_account_sync_data"
 
     __table_args__ = (
-        db.UniqueConstraint("instance_id", "db_type", "username", name="uq_current_account_sync"),
+        db.UniqueConstraint(
+            "instance_id", "db_type", "username", name="uq_current_account_sync"
+        ),
         db.Index("idx_instance_dbtype", "instance_id", "db_type"),
         db.Index("idx_deleted", "is_deleted"),
         db.Index("idx_username", "username"),
@@ -49,7 +51,9 @@ class CurrentAccountSyncData(BaseSyncData):
 
     # 时间戳和状态字段
     last_sync_time = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-    last_change_type = db.Column(db.String(20), default="add")  # 'add', 'modify_privilege', 'modify_other', 'delete'
+    last_change_type = db.Column(
+        db.String(20), default="add"
+    )  # 'add', 'modify_privilege', 'modify_other', 'delete'
     last_change_time = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
     # 删除标记（不支持恢复）
@@ -83,11 +87,17 @@ class CurrentAccountSyncData(BaseSyncData):
                 "system_privileges": self.system_privileges,
                 "tablespace_privileges_oracle": self.tablespace_privileges_oracle,
                 "type_specific": self.type_specific,
-                "last_sync_time": self.last_sync_time.isoformat() if self.last_sync_time else None,
+                "last_sync_time": (
+                    self.last_sync_time.isoformat() if self.last_sync_time else None
+                ),
                 "last_change_type": self.last_change_type,
-                "last_change_time": self.last_change_time.isoformat() if self.last_change_time else None,
+                "last_change_time": (
+                    self.last_change_time.isoformat() if self.last_change_time else None
+                ),
                 "is_deleted": self.is_deleted,
-                "deleted_time": self.deleted_time.isoformat() if self.deleted_time else None,
+                "deleted_time": (
+                    self.deleted_time.isoformat() if self.deleted_time else None
+                ),
             }
         )
         return base_dict

@@ -18,7 +18,9 @@ class DatabaseTypeService:
     @staticmethod
     def get_all_types() -> list[DatabaseTypeConfig]:
         """获取所有数据库类型配置"""
-        return DatabaseTypeConfig.query.order_by(DatabaseTypeConfig.sort_order, DatabaseTypeConfig.name).all()
+        return DatabaseTypeConfig.query.order_by(
+            DatabaseTypeConfig.sort_order, DatabaseTypeConfig.name
+        ).all()
 
     @staticmethod
     def get_active_types() -> list[DatabaseTypeConfig]:
@@ -40,7 +42,13 @@ class DatabaseTypeService:
         """创建数据库类型配置"""
         try:
             # 验证必填字段
-            required_fields = ["name", "display_name", "driver", "default_port", "default_schema"]
+            required_fields = [
+                "name",
+                "display_name",
+                "driver",
+                "default_port",
+                "default_schema",
+            ]
             for field in required_fields:
                 if not data.get(field):
                     return {"success": False, "message": f"缺少必填字段: {field}"}
@@ -77,7 +85,11 @@ class DatabaseTypeService:
                 driver=config.driver,
             )
 
-            return {"success": True, "message": "数据库类型创建成功", "data": config.to_dict()}
+            return {
+                "success": True,
+                "message": "数据库类型创建成功",
+                "data": config.to_dict(),
+            }
 
         except IntegrityError as e:
             db.session.rollback()
@@ -98,7 +110,14 @@ class DatabaseTypeService:
 
             # 系统内置类型只能修改部分字段
             if config.is_system:
-                allowed_fields = ["display_name", "description", "icon", "color", "is_active", "sort_order"]
+                allowed_fields = [
+                    "display_name",
+                    "description",
+                    "icon",
+                    "color",
+                    "is_active",
+                    "sort_order",
+                ]
                 for key, value in data.items():
                     if key in allowed_fields:
                         setattr(config, key, value)
@@ -110,9 +129,19 @@ class DatabaseTypeService:
 
             db.session.commit()
 
-            log_info("更新数据库类型", module="database_type", type_id=type_id, type_name=config.name, changes=data)
+            log_info(
+                "更新数据库类型",
+                module="database_type",
+                type_id=type_id,
+                type_name=config.name,
+                changes=data,
+            )
 
-            return {"success": True, "message": "数据库类型更新成功", "data": config.to_dict()}
+            return {
+                "success": True,
+                "message": "数据库类型更新成功",
+                "data": config.to_dict(),
+            }
 
         except Exception as e:
             db.session.rollback()
@@ -136,12 +165,20 @@ class DatabaseTypeService:
 
             instance_count = Instance.query.filter_by(db_type=config.name).count()
             if instance_count > 0:
-                return {"success": False, "message": f"有 {instance_count} 个实例正在使用此数据库类型，无法删除"}
+                return {
+                    "success": False,
+                    "message": f"有 {instance_count} 个实例正在使用此数据库类型，无法删除",
+                }
 
             db.session.delete(config)
             db.session.commit()
 
-            log_info("删除数据库类型", module="database_type", type_id=type_id, type_name=config.name)
+            log_info(
+                "删除数据库类型",
+                module="database_type",
+                type_id=type_id,
+                type_name=config.name,
+            )
 
             return {"success": True, "message": "数据库类型删除成功"}
 
@@ -260,7 +297,11 @@ class DatabaseTypeService:
 
         try:
             db.session.commit()
-            api_logger.info("database_type_init", user_id=None, details={"count": len(default_types)})
+            api_logger.info(
+                "database_type_init",
+                user_id=None,
+                details={"count": len(default_types)},
+            )
         except Exception as e:
             db.session.rollback()
             log_error(f"初始化默认数据库类型失败: {e}")
@@ -270,6 +311,11 @@ class DatabaseTypeService:
         """获取用于表单的数据库类型列表"""
         types = DatabaseTypeService.get_active_types()
         return [
-            {"value": config.name, "text": config.display_name, "icon": config.icon, "color": config.color}
+            {
+                "value": config.name,
+                "text": config.display_name,
+                "icon": config.icon,
+                "color": config.color,
+            }
             for config in types
         ]

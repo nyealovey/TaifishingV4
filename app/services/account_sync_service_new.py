@@ -137,9 +137,28 @@ class AccountSyncService:
 
             # 创建同步报告记录（定时任务跳过单个实例记录，只创建聚合记录）
             if sync_type == "batch":
-                # 移除SyncData导入，使用新的同步会话模型
-                # 同步会话记录已通过sync_session_service管理，无需额外创建记录
-                pass
+                from app.models.sync_data import SyncData
+
+                sync_record = SyncData(
+                    sync_type="batch",  # 批量同步
+                    instance_id=instance.id,
+                    task_id=None,
+                    session_id=session_id,
+                    data={
+                        "db_type": instance.db_type,
+                        "instance_name": instance.name,
+                        "sync_type": sync_type,
+                    },
+                    status="success",
+                    message=f"成功同步 {synced_count} 个账户",
+                    synced_count=synced_count,
+                    added_count=added_count,
+                    removed_count=removed_count,
+                    modified_count=modified_count,
+                    records_count=synced_count,
+                )
+                db.session.add(sync_record)
+                db.session.commit()
 
             # 更新实例的最后连接时间
             instance.last_connected_at = now()
@@ -251,7 +270,3 @@ class AccountSyncService:
                 error=str(e),
             )
             return {}
-
-
-# 创建服务实例
-account_sync_service = AccountSyncService()

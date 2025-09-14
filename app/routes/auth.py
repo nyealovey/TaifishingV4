@@ -34,7 +34,11 @@ def login() -> "str | Response":
         password = data.get("password")
 
         if not username or not password:
-            auth_logger.warning("登录失败：用户名或密码为空", username=username, ip_address=request.remote_addr)
+            auth_logger.warning(
+                "登录失败：用户名或密码为空",
+                username=username,
+                ip_address=request.remote_addr,
+            )
             if request.is_json:
                 return jsonify({"error": "用户名和密码不能为空"}), 400
             flash("用户名和密码不能为空", "error")
@@ -78,15 +82,26 @@ def login() -> "str | Response":
                 # Web登录，重定向到首页
                 flash("登录成功！", "success")
                 next_page = request.args.get("next")
-                return redirect(next_page) if next_page else redirect(url_for("dashboard.index"))
+                return (
+                    redirect(next_page)
+                    if next_page
+                    else redirect(url_for("dashboard.index"))
+                )
             auth_logger.warning(
-                "登录失败：账户已被禁用", username=username, user_id=user.id, ip_address=request.remote_addr
+                "登录失败：账户已被禁用",
+                username=username,
+                user_id=user.id,
+                ip_address=request.remote_addr,
             )
             if request.is_json:
                 return jsonify({"error": "账户已被禁用"}), 403
             flash("账户已被禁用", "error")
         else:
-            auth_logger.warning("登录失败：用户名或密码错误", username=username, ip_address=request.remote_addr)
+            auth_logger.warning(
+                "登录失败：用户名或密码错误",
+                username=username,
+                ip_address=request.remote_addr,
+            )
             if request.is_json:
                 return jsonify({"error": "用户名或密码错误"}), 401
             flash("用户名或密码错误", "error")
@@ -135,8 +150,16 @@ def profile() -> "str | Response":
                 "email": current_user.email,
                 "role": current_user.role,
                 "is_active": current_user.is_active,
-                "created_at": (current_user.created_at.isoformat() if current_user.created_at else None),
-                "last_login": (current_user.last_login.isoformat() if current_user.last_login else None),
+                "created_at": (
+                    current_user.created_at.isoformat()
+                    if current_user.created_at
+                    else None
+                ),
+                "last_login": (
+                    current_user.last_login.isoformat()
+                    if current_user.last_login
+                    else None
+                ),
             }
         )
 
@@ -205,7 +228,9 @@ def refresh() -> "Response":
     """刷新JWT token"""
     current_user_id = get_jwt_identity()
     access_token = create_access_token(identity=current_user_id)
-    return jsonify({"access_token": access_token, "token_type": "Bearer", "expires_in": 3600})
+    return jsonify(
+        {"access_token": access_token, "token_type": "Bearer", "expires_in": 3600}
+    )
 
 
 @auth_bp.route("/api/me")

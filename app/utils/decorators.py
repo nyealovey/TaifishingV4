@@ -38,7 +38,16 @@ def admin_required(f):
                 failure_reason="not_authenticated",
             )
             if request.is_json:
-                return jsonify({"success": False, "message": "请先登录", "code": "UNAUTHORIZED"}), 401
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "message": "请先登录",
+                            "code": "UNAUTHORIZED",
+                        }
+                    ),
+                    401,
+                )
             from flask import flash, redirect, url_for
 
             flash("请先登录", "warning")
@@ -59,7 +68,16 @@ def admin_required(f):
                 failure_reason="insufficient_permissions",
             )
             if request.is_json:
-                return jsonify({"success": False, "message": "需要管理员权限", "code": "FORBIDDEN"}), 403
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "message": "需要管理员权限",
+                            "code": "FORBIDDEN",
+                        }
+                    ),
+                    403,
+                )
             from flask import flash, redirect, url_for
 
             flash("需要管理员权限", "error")
@@ -110,7 +128,16 @@ def scheduler_manage_required(f):
                 failure_reason="not_authenticated",
             )
             if request.is_json:
-                return jsonify({"success": False, "message": "请先登录", "code": "UNAUTHORIZED"}), 401
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "message": "请先登录",
+                            "code": "UNAUTHORIZED",
+                        }
+                    ),
+                    401,
+                )
             from flask import flash, redirect, url_for
 
             flash("请先登录", "warning")
@@ -132,7 +159,13 @@ def scheduler_manage_required(f):
             )
             if request.is_json:
                 return (
-                    jsonify({"success": False, "message": "需要管理员权限才能管理定时任务", "code": "FORBIDDEN"}),
+                    jsonify(
+                        {
+                            "success": False,
+                            "message": "需要管理员权限才能管理定时任务",
+                            "code": "FORBIDDEN",
+                        }
+                    ),
                     403,
                 )
             from flask import flash, redirect, url_for
@@ -185,7 +218,16 @@ def scheduler_view_required(f):
                 failure_reason="not_authenticated",
             )
             if request.is_json:
-                return jsonify({"success": False, "message": "请先登录", "code": "UNAUTHORIZED"}), 401
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "message": "请先登录",
+                            "code": "UNAUTHORIZED",
+                        }
+                    ),
+                    401,
+                )
             from flask import flash, redirect, url_for
 
             flash("请先登录", "warning")
@@ -235,7 +277,16 @@ def login_required(f):
                 failure_reason="not_authenticated",
             )
             if request.is_json:
-                return jsonify({"success": False, "message": "请先登录", "code": "UNAUTHORIZED"}), 401
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "message": "请先登录",
+                            "code": "UNAUTHORIZED",
+                        }
+                    ),
+                    401,
+                )
             from flask import flash, redirect, url_for
 
             flash("请先登录", "warning")
@@ -271,7 +322,12 @@ def login_required_json(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
-            return jsonify({"success": False, "message": "请先登录", "code": "UNAUTHORIZED"}), 401
+            return (
+                jsonify(
+                    {"success": False, "message": "请先登录", "code": "UNAUTHORIZED"}
+                ),
+                401,
+            )
 
         return f(*args, **kwargs)
 
@@ -316,14 +372,34 @@ def validate_json(required_fields=None):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if not request.is_json:
-                return jsonify({"success": False, "message": "请求必须是JSON格式", "code": "INVALID_CONTENT_TYPE"}), 400
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "message": "请求必须是JSON格式",
+                            "code": "INVALID_CONTENT_TYPE",
+                        }
+                    ),
+                    400,
+                )
 
             data = request.get_json()
             if not data:
-                return jsonify({"success": False, "message": "请求数据不能为空", "code": "EMPTY_DATA"}), 400
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "message": "请求数据不能为空",
+                            "code": "EMPTY_DATA",
+                        }
+                    ),
+                    400,
+                )
 
             if required_fields:
-                missing_fields = [field for field in required_fields if field not in data]
+                missing_fields = [
+                    field for field in required_fields if field not in data
+                ]
                 if missing_fields:
                     return (
                         jsonify(
@@ -372,7 +448,16 @@ def permission_required(permission):
                     failure_reason="not_authenticated",
                 )
                 if request.is_json:
-                    return jsonify({"success": False, "message": "请先登录", "code": "UNAUTHORIZED"}), 401
+                    return (
+                        jsonify(
+                            {
+                                "success": False,
+                                "message": "请先登录",
+                                "code": "UNAUTHORIZED",
+                            }
+                        ),
+                        401,
+                    )
                 from flask import flash, redirect, url_for
 
                 flash("请先登录", "warning")
@@ -394,7 +479,16 @@ def permission_required(permission):
                     failure_reason="insufficient_permissions",
                 )
                 if request.is_json:
-                    return jsonify({"success": False, "message": f"需要{permission}权限", "code": "FORBIDDEN"}), 403
+                    return (
+                        jsonify(
+                            {
+                                "success": False,
+                                "message": f"需要{permission}权限",
+                                "code": "FORBIDDEN",
+                            }
+                        ),
+                        403,
+                    )
                 from flask import flash, redirect, url_for
 
                 flash(f"需要{permission}权限", "error")
@@ -432,7 +526,10 @@ def has_permission(user, permission):
     # 权限级别定义
 
     # 角色权限映射
-    ROLE_PERMISSIONS = {"admin": ["view", "create", "update", "delete"], "user": ["view"]}  # 普通用户只能查看
+    ROLE_PERMISSIONS = {
+        "admin": ["view", "create", "update", "delete"],
+        "user": ["view"],
+    }  # 普通用户只能查看
 
     if not user or not user.is_authenticated:
         return False

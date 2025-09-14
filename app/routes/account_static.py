@@ -9,10 +9,14 @@ from datetime import timedelta
 from flask import Blueprint, jsonify, render_template, request
 from flask_login import login_required
 
-from app.models.account import Account
-from app.models.account_classification import AccountClassification, AccountClassificationAssignment
+from app.models.account_classification import (
+    AccountClassification,
+    AccountClassificationAssignment,
+)
+from app.models.current_account_sync_data import CurrentAccountSyncData
 from app.models.instance import Instance
-from app.models.sync_data import SyncData
+
+# 移除SyncData导入，使用新的同步会话模型
 from app.utils.timezone import now
 
 # 创建蓝图
@@ -26,8 +30,12 @@ def index() -> str:
     # 获取统计信息
     stats = get_account_statistics()
 
-    # 获取最近同步记录
-    recent_syncs = SyncData.query.order_by(SyncData.sync_time.desc()).limit(10).all()
+    # 获取最近同步记录 - 使用新的同步会话模型
+    from app.models.sync_session import SyncSession
+
+    recent_syncs = (
+        SyncSession.query.order_by(SyncSession.created_at.desc()).limit(10).all()
+    )
 
     # 获取实例列表
     instances = Instance.query.filter_by(is_active=True).all()
@@ -80,23 +88,37 @@ def get_account_statistics() -> dict:
     """获取账户统计信息"""
     try:
         # 基础统计
-        total_accounts = Account.query.count()
+        total_accounts = CurrentAccountSyncData.query.filter_by(
+            is_deleted=False
+        ).count()
 
         # 按数据库类型统计
         db_type_stats = {}
         for db_type in ["mysql", "postgresql", "oracle", "sqlserver"]:
-            total_count = Account.query.join(Instance).filter(Instance.db_type == db_type).count()
-            locked_count = Account.query.join(Instance).filter(Instance.db_type == db_type, Account.is_locked).count()
+            total_count = CurrentAccountSyncData.query.filter_by(
+                db_type=db_type, is_deleted=False
+            ).count()
+            locked_count = CurrentAccountSyncData.query.filter_by(
+                db_type=db_type, is_locked=True, is_deleted=False
+            ).count()
             active_count = total_count - locked_count
 
-            db_type_stats[db_type] = {"total": total_count, "active": active_count, "locked": locked_count}
+            db_type_stats[db_type] = {
+                "total": total_count,
+                "active": active_count,
+                "locked": locked_count,
+            }
 
         # 按实例统计
         instance_stats = []
         instances = Instance.query.filter_by(is_active=True).all()
         for instance in instances:
-            total_count = Account.query.filter_by(instance_id=instance.id).count()
-            locked_count = Account.query.filter_by(instance_id=instance.id, is_locked=True).count()
+            total_count = CurrentAccountSyncData.query.filter_by(
+                instance_id=instance.id, is_deleted=False
+            ).count()
+            locked_count = CurrentAccountSyncData.query.filter_by(
+                instance_id=instance.id, is_locked=True, is_deleted=False
+            ).count()
             active_count = total_count - locked_count
 
             instance_stats.append(
@@ -115,8 +137,12 @@ def get_account_statistics() -> dict:
         environment_stats = defaultdict(lambda: {"total": 0, "active": 0, "locked": 0})
         for instance in instances:
             env = instance.environment or "unknown"
-            total_count = Account.query.filter_by(instance_id=instance.id).count()
-            locked_count = Account.query.filter_by(instance_id=instance.id, is_locked=True).count()
+            total_count = CurrentAccountSyncData.query.filter_by(
+                instance_id=instance.id, is_deleted=False
+            ).count()
+            locked_count = CurrentAccountSyncData.query.filter_by(
+                instance_id=instance.id, is_locked=True, is_deleted=False
+            ).count()
             active_count = total_count - locked_count
 
             environment_stats[env]["total"] += total_count
@@ -137,9 +163,15 @@ def get_account_statistics() -> dict:
             }
 
         # 按状态统计
-        locked_accounts = Account.query.filter_by(is_locked=True).count()
-        superuser_accounts = Account.query.filter_by(is_superuser=True).count()
-        active_accounts = total_accounts - locked_accounts  # 活跃账户 = 总账户 - 锁定账户
+        locked_accounts = CurrentAccountSyncData.query.filter_by(
+            is_locked=True, is_deleted=False
+        ).count()
+        superuser_accounts = CurrentAccountSyncData.query.filter_by(
+            is_superuser=True, is_deleted=False
+        ).count()
+        active_accounts = (
+            total_accounts - locked_accounts
+        )  # 活跃账户 = 总账户 - 锁定账户
         database_instances = len(instances)  # 数据库实例数
 
         # 最近7天新增账户趋势
@@ -151,12 +183,22 @@ def get_account_statistics() -> dict:
             date = start_date + timedelta(days=i)
             next_date = date + timedelta(days=1)
 
-            count = Account.query.filter(Account.created_at >= date, Account.created_at < next_date).count()
+            count = CurrentAccountSyncData.query.filter(
+                CurrentAccountSyncData.created_at >= date,
+                CurrentAccountSyncData.created_at < next_date,
+                CurrentAccountSyncData.is_deleted == False,
+            ).count()
 
             trend_data.append({"date": date.strftime("%Y-%m-%d"), "count": count})
 
         # 最近账户活动 - 获取最近创建的10个账户
-        recent_accounts_query = Account.query.join(Instance).order_by(Account.created_at.desc()).limit(10).all()
+        recent_accounts_query = (
+            CurrentAccountSyncData.query.join(Instance)
+            .filter(CurrentAccountSyncData.is_deleted == False)
+            .order_by(CurrentAccountSyncData.created_at.desc())
+            .limit(10)
+            .all()
+        )
 
         # 转换为字典格式
         recent_accounts = []
@@ -165,38 +207,71 @@ def get_account_statistics() -> dict:
                 {
                     "id": account.id,
                     "username": account.username,
-                    "instance_name": account.instance.name if account.instance else "Unknown",
-                    "db_type": account.instance.db_type if account.instance else "Unknown",
+                    "instance_name": (
+                        account.instance.name if account.instance else "Unknown"
+                    ),
+                    "db_type": (
+                        account.instance.db_type if account.instance else "Unknown"
+                    ),
                     "is_locked": account.is_locked,
-                    "created_at": account.created_at.isoformat() if account.created_at else None,
-                    "last_login": account.last_login.isoformat() if account.last_login else None,
+                    "created_at": (
+                        account.created_at.isoformat() if account.created_at else None
+                    ),
+                    "last_login": (
+                        account.last_login.isoformat() if account.last_login else None
+                    ),
                 }
             )
 
-        # 按权限类型统计
+        # 按权限类型统计 - 使用新的优化同步模型
         permission_stats = defaultdict(int)
-        accounts_with_permissions = Account.query.filter(Account.permissions.isnot(None)).all()
 
-        for account in accounts_with_permissions:
-            if account.permissions:
+        # 从CurrentAccountSyncData获取权限统计
+        sync_data_with_permissions = CurrentAccountSyncData.query.filter(
+            CurrentAccountSyncData.sync_data.isnot(None)
+        ).all()
+
+        for sync_data in sync_data_with_permissions:
+            if sync_data.sync_data:
                 try:
                     import json
 
-                    permissions = json.loads(account.permissions)
+                    permissions = json.loads(sync_data.sync_data)
                     if isinstance(permissions, dict):
-                        # 统计各种权限类型
-                        if permissions.get("is_superuser"):
-                            permission_stats["superuser"] += 1
-                        if permissions.get("can_grant"):
-                            permission_stats["can_grant"] += 1
-                        if permissions.get("can_login"):
-                            permission_stats["can_login"] += 1
-                        if permissions.get("can_create_db"):
-                            permission_stats["can_create_db"] += 1
-                        if permissions.get("can_create_role"):
-                            permission_stats["can_create_role"] += 1
+                        # 根据数据库类型统计权限
+                        if sync_data.db_type == "mysql":
+                            if permissions.get("global_privileges"):
+                                permission_stats["global_privileges"] += 1
+                            if permissions.get("database_privileges"):
+                                permission_stats["database_privileges"] += 1
+                        elif sync_data.db_type == "postgresql":
+                            if permissions.get("role_attributes"):
+                                permission_stats["role_attributes"] += 1
+                            if permissions.get("database_privileges"):
+                                permission_stats["database_privileges"] += 1
+                        elif sync_data.db_type == "sqlserver":
+                            if permissions.get("server_roles"):
+                                permission_stats["server_roles"] += 1
+                            if permissions.get("database_roles"):
+                                permission_stats["database_roles"] += 1
+                        elif sync_data.db_type == "oracle":
+                            if permissions.get("roles"):
+                                permission_stats["roles"] += 1
+                            if permissions.get("system_privileges"):
+                                permission_stats["system_privileges"] += 1
                 except (json.JSONDecodeError, TypeError):
                     continue
+
+        # 统计CurrentAccountSyncData模型中的基础权限字段
+        superuser_count = CurrentAccountSyncData.query.filter_by(
+            is_superuser=True, is_deleted=False
+        ).count()
+        # can_grant字段在CurrentAccountSyncData中不存在，跳过
+
+        permission_stats["superuser"] = superuser_count
+        permission_stats["can_grant"] = (
+            0  # CurrentAccountSyncData模型中没有can_grant字段
+        )
 
         return {
             "total_accounts": total_accounts,
@@ -211,7 +286,7 @@ def get_account_statistics() -> dict:
             "trend_data": trend_data,
             "recent_accounts": recent_accounts,
             "permission_stats": dict(permission_stats),
-            "accounts_with_permissions": len(accounts_with_permissions),
+            "accounts_with_permissions": len(sync_data_with_permissions),
         }
 
     except Exception as e:

@@ -52,7 +52,11 @@ class MySQLConnection(DatabaseConnection):
             import pymysql
 
             # 获取连接信息
-            password = self.instance.credential.get_plain_password() if self.instance.credential else ""
+            password = (
+                self.instance.credential.get_plain_password()
+                if self.instance.credential
+                else ""
+            )
 
             self.connection = pymysql.connect(
                 host=self.instance.host,
@@ -60,7 +64,11 @@ class MySQLConnection(DatabaseConnection):
                 database=self.instance.database_name
                 or DatabaseTypeUtils.get_database_type_config("mysql").default_schema
                 or "",
-                user=self.instance.credential.username if self.instance.credential else "",
+                user=(
+                    self.instance.credential.username
+                    if self.instance.credential
+                    else ""
+                ),
                 password=password,
                 charset="utf8mb4",
                 autocommit=True,
@@ -74,7 +82,11 @@ class MySQLConnection(DatabaseConnection):
 
         except Exception as e:
             self.db_logger.error(
-                "MySQL连接失败", module="connection", instance_id=self.instance.id, db_type="MySQL", exception=e
+                "MySQL连接失败",
+                module="connection",
+                instance_id=self.instance.id,
+                db_type="MySQL",
+                exception=e,
             )
             return False
 
@@ -85,7 +97,11 @@ class MySQLConnection(DatabaseConnection):
                 self.connection.close()
             except Exception as e:
                 self.db_logger.error(
-                    "MySQL断开连接失败", module="connection", instance_id=self.instance.id, db_type="MySQL", exception=e
+                    "MySQL断开连接失败",
+                    module="connection",
+                    instance_id=self.instance.id,
+                    db_type="MySQL",
+                    exception=e,
                 )
             finally:
                 self.connection = None
@@ -140,15 +156,25 @@ class PostgreSQLConnection(DatabaseConnection):
             import psycopg
 
             # 获取连接信息
-            password = self.instance.credential.get_plain_password() if self.instance.credential else ""
+            password = (
+                self.instance.credential.get_plain_password()
+                if self.instance.credential
+                else ""
+            )
 
             self.connection = psycopg.connect(
                 host=self.instance.host,
                 port=self.instance.port,
                 dbname=self.instance.database_name
-                or DatabaseTypeUtils.get_database_type_config("postgresql").default_schema
+                or DatabaseTypeUtils.get_database_type_config(
+                    "postgresql"
+                ).default_schema
                 or "postgres",
-                user=self.instance.credential.username if self.instance.credential else "",
+                user=(
+                    self.instance.credential.username
+                    if self.instance.credential
+                    else ""
+                ),
                 password=password,
                 connect_timeout=30,
             )
@@ -232,9 +258,13 @@ class SQLServerConnection(DatabaseConnection):
     def connect(self) -> bool:
         """建立SQL Server连接 - 尝试多种驱动和版本兼容性"""
         # 获取连接信息
-        password = self.instance.credential.get_plain_password() if self.instance.credential else ""
+        password = (
+            self.instance.credential.get_plain_password()
+            if self.instance.credential
+            else ""
+        )
         username = self.instance.credential.username if self.instance.credential else ""
-        
+
         database_name = (
             self.instance.database_name
             or DatabaseTypeUtils.get_database_type_config("sqlserver").default_schema
@@ -271,11 +301,13 @@ class SQLServerConnection(DatabaseConnection):
         )
         return False
 
-    def _try_pyodbc_connection(self, username: str, password: str, database_name: str) -> bool:
+    def _try_pyodbc_connection(
+        self, username: str, password: str, database_name: str
+    ) -> bool:
         """尝试使用pyodbc连接 (推荐用于现代SQL Server版本)"""
         try:
             import pyodbc
-            
+
             # 构建连接字符串 - 支持多种版本
             connection_strings = [
                 # SQL Server 2012+ (推荐)
@@ -287,7 +319,7 @@ class SQLServerConnection(DatabaseConnection):
                 # 使用命名管道 (本地连接)
                 f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={self.instance.host};DATABASE={database_name};UID={username};PWD={password};Trusted_Connection=no;",
             ]
-            
+
             for conn_str in connection_strings:
                 try:
                     self.connection = pyodbc.connect(conn_str, timeout=30)
@@ -296,17 +328,19 @@ class SQLServerConnection(DatabaseConnection):
                     return True
                 except Exception:
                     continue
-                    
+
             return False
-            
+
         except ImportError:
             return False
 
-    def _try_pymssql_connection(self, username: str, password: str, database_name: str) -> bool:
+    def _try_pymssql_connection(
+        self, username: str, password: str, database_name: str
+    ) -> bool:
         """尝试使用pymssql连接 (适用于Linux/Unix环境)"""
         try:
             import pymssql
-            
+
             self.connection = pymssql.connect(
                 server=self.instance.host,
                 port=self.instance.port,
@@ -315,20 +349,22 @@ class SQLServerConnection(DatabaseConnection):
                 database=database_name,
                 timeout=30,
                 # 添加版本兼容性参数
-                tds_version='7.4',  # 支持SQL Server 2005+
+                tds_version="7.4",  # 支持SQL Server 2005+
             )
             self.is_connected = True
             self.driver_type = "pymssql"
             return True
-            
+
         except ImportError:
             return False
 
-    def _try_pyodbc_legacy_connection(self, username: str, password: str, database_name: str) -> bool:
+    def _try_pyodbc_legacy_connection(
+        self, username: str, password: str, database_name: str
+    ) -> bool:
         """尝试使用传统pyodbc连接 (兼容老版本)"""
         try:
             import pyodbc
-            
+
             # 传统连接字符串，兼容SQL Server 2005-2008
             legacy_conn_str = (
                 f"DRIVER={{SQL Server}};"
@@ -338,12 +374,12 @@ class SQLServerConnection(DatabaseConnection):
                 f"PWD={password};"
                 f"Connection Timeout=30;"
             )
-            
+
             self.connection = pyodbc.connect(legacy_conn_str)
             self.is_connected = True
             self.driver_type = "pyodbc_legacy"
             return True
-            
+
         except ImportError:
             return False
 
@@ -424,7 +460,11 @@ class OracleConnection(DatabaseConnection):
             import oracledb
 
             # 获取连接信息
-            password = self.instance.credential.get_plain_password() if self.instance.credential else ""
+            password = (
+                self.instance.credential.get_plain_password()
+                if self.instance.credential
+                else ""
+            )
 
             # 构建连接字符串
             database_name = (
@@ -446,11 +486,17 @@ class OracleConnection(DatabaseConnection):
                 # 初始化Thick模式（指定Oracle Instant Client路径）
                 import os
 
-                current_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                current_dir = os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                )
                 oracle_client_path = os.path.join(current_dir, "oracle_client", "lib")
                 oracledb.init_oracle_client(lib_dir=oracle_client_path)
                 self.connection = oracledb.connect(
-                    user=self.instance.credential.username if self.instance.credential else "",
+                    user=(
+                        self.instance.credential.username
+                        if self.instance.credential
+                        else ""
+                    ),
                     password=password,
                     dsn=dsn,
                 )
@@ -458,9 +504,15 @@ class OracleConnection(DatabaseConnection):
                 # 如果服务名格式失败，尝试SID格式
                 if not dsn.endswith(f":{database_name}") and "." not in database_name:
                     try:
-                        sid_dsn = f"{self.instance.host}:{self.instance.port}:{database_name}"
+                        sid_dsn = (
+                            f"{self.instance.host}:{self.instance.port}:{database_name}"
+                        )
                         self.connection = oracledb.connect(
-                            user=self.instance.credential.username if self.instance.credential else "",
+                            user=(
+                                self.instance.credential.username
+                                if self.instance.credential
+                                else ""
+                            ),
                             password=password,
                             dsn=sid_dsn,
                         )
@@ -475,7 +527,11 @@ class OracleConnection(DatabaseConnection):
 
         except Exception as e:
             self.db_logger.error(
-                "Oracle连接失败", module="connection", instance_id=self.instance.id, db_type="Oracle", exception=e
+                "Oracle连接失败",
+                module="connection",
+                instance_id=self.instance.id,
+                db_type="Oracle",
+                exception=e,
             )
             return False
 
@@ -561,7 +617,12 @@ class ConnectionFactory:
         db_type = instance.db_type.lower()
 
         if db_type not in ConnectionFactory.CONNECTION_CLASSES:
-            log_error("不支持的数据库类型", module="connection", instance_id=instance.id, db_type=db_type)
+            log_error(
+                "不支持的数据库类型",
+                module="connection",
+                instance_id=instance.id,
+                db_type=db_type,
+            )
             return None
 
         connection_class = ConnectionFactory.CONNECTION_CLASSES[db_type]
@@ -580,7 +641,10 @@ class ConnectionFactory:
         """
         connection = ConnectionFactory.create_connection(instance)
         if not connection:
-            return {"success": False, "error": f"不支持的数据库类型: {instance.db_type}"}
+            return {
+                "success": False,
+                "error": f"不支持的数据库类型: {instance.db_type}",
+            }
 
         return connection.test_connection()
 

@@ -25,8 +25,7 @@ class Account(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     last_login = db.Column(db.DateTime, nullable=True)
 
-    # 权限信息字段
-    permissions = db.Column(db.Text, nullable=True)  # JSON格式存储权限信息
+    # 权限信息字段 - 已迁移到CurrentAccountSyncData模型
     is_superuser = db.Column(db.Boolean, default=False)  # 是否为超级用户
     can_grant = db.Column(db.Boolean, default=False)  # 是否有授权权限
 
@@ -42,6 +41,9 @@ class Account(db.Model):
     # 分类相关字段
     last_classified_at = db.Column(db.DateTime, nullable=True)  # 最后分类时间
     last_classification_batch_id = db.Column(db.String(36), nullable=True)  # 最后分类批次ID
+
+    # 同步相关字段
+    last_sync_time = db.Column(db.DateTime, nullable=True)  # 最后同步时间
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -68,7 +70,7 @@ class Account(db.Model):
             "is_locked": self.is_locked,
             "is_active": self.is_active,
             "last_login": self.last_login.isoformat() if self.last_login else None,
-            "permissions": json.loads(self.permissions) if self.permissions else None,
+            # permissions字段已迁移到CurrentAccountSyncData模型
             "is_superuser": self.is_superuser,
             "can_grant": self.can_grant,
             "user_id": self.user_id,  # Oracle数据库中的用户ID
@@ -78,6 +80,7 @@ class Account(db.Model):
             "account_created_at": (
                 self.account_created_at.isoformat() if self.account_created_at else None
             ),  # 账户创建时间
+            "last_sync_time": (self.last_sync_time.isoformat() if self.last_sync_time else None),  # 最后同步时间
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "instance_name": self.instance.name if self.instance else None,

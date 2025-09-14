@@ -17,7 +17,10 @@ class ClassificationBatchService:
 
     @staticmethod
     def create_batch(
-        batch_type: str, created_by: int | None = None, total_rules: int = 0, active_rules: int = 0
+        batch_type: str,
+        created_by: int | None = None,
+        total_rules: int = 0,
+        active_rules: int = 0,
     ) -> str:
         """
         创建新的分类批次
@@ -60,12 +63,20 @@ class ClassificationBatchService:
 
         except Exception as e:
             db.session.rollback()
-            log_error("创建自动分类批次失败", module="classification_batch", batch_type=batch_type, error=str(e))
+            log_error(
+                "创建自动分类批次失败",
+                module="classification_batch",
+                batch_type=batch_type,
+                error=str(e),
+            )
             raise
 
     @staticmethod
     def update_batch_stats(
-        batch_id: str, total_accounts: int = 0, matched_accounts: int = 0, failed_accounts: int = 0
+        batch_id: str,
+        total_accounts: int = 0,
+        matched_accounts: int = 0,
+        failed_accounts: int = 0,
     ) -> bool:
         """
         更新批次统计信息
@@ -82,7 +93,9 @@ class ClassificationBatchService:
         try:
             batch = ClassificationBatch.query.filter_by(batch_id=batch_id).first()
             if not batch:
-                log_warning("批次不存在", module="classification_batch", batch_id=batch_id)
+                log_warning(
+                    "批次不存在", module="classification_batch", batch_id=batch_id
+                )
                 return False
 
             batch.total_accounts = total_accounts
@@ -104,7 +117,12 @@ class ClassificationBatchService:
 
         except Exception as e:
             db.session.rollback()
-            log_error("更新批次统计信息失败", module="classification_batch", batch_id=batch_id, error=str(e))
+            log_error(
+                "更新批次统计信息失败",
+                module="classification_batch",
+                batch_id=batch_id,
+                error=str(e),
+            )
             return False
 
     @staticmethod
@@ -129,7 +147,9 @@ class ClassificationBatchService:
         try:
             batch = ClassificationBatch.query.filter_by(batch_id=batch_id).first()
             if not batch:
-                log_warning("批次不存在", module="classification_batch", batch_id=batch_id)
+                log_warning(
+                    "批次不存在", module="classification_batch", batch_id=batch_id
+                )
                 return False
 
             batch.status = status
@@ -157,7 +177,12 @@ class ClassificationBatchService:
 
         except Exception as e:
             db.session.rollback()
-            log_error("完成批次失败", module="classification_batch", batch_id=batch_id, error=str(e))
+            log_error(
+                "完成批次失败",
+                module="classification_batch",
+                batch_id=batch_id,
+                error=str(e),
+            )
             return False
 
     @staticmethod
@@ -174,11 +199,21 @@ class ClassificationBatchService:
         try:
             return ClassificationBatch.query.filter_by(batch_id=batch_id).first()
         except Exception as e:
-            log_error("获取批次信息失败", module="classification_batch", batch_id=batch_id, error=str(e))
+            log_error(
+                "获取批次信息失败",
+                module="classification_batch",
+                batch_id=batch_id,
+                error=str(e),
+            )
             return None
 
     @staticmethod
-    def get_batches(batch_type: str | None = None, status: str | None = None, limit: int = 50, offset: int = 0) -> list:
+    def get_batches(
+        batch_type: str | None = None,
+        status: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list:
         """
         获取批次列表
 
@@ -200,11 +235,20 @@ class ClassificationBatchService:
             if status:
                 query = query.filter(ClassificationBatch.status == status)
 
-            return query.order_by(ClassificationBatch.started_at.desc()).offset(offset).limit(limit).all()
+            return (
+                query.order_by(ClassificationBatch.started_at.desc())
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
 
         except Exception as e:
             log_error(
-                "获取批次列表失败", module="classification_batch", batch_type=batch_type, status=status, error=str(e)
+                "获取批次列表失败",
+                module="classification_batch",
+                batch_type=batch_type,
+                status=status,
+                error=str(e),
             )
             return []
 
@@ -235,10 +279,19 @@ class ClassificationBatchService:
                 "failed_accounts": batch.failed_accounts,
                 "total_rules": batch.total_rules,
                 "active_rules": batch.active_rules,
-                "started_at": batch.started_at.isoformat() if batch.started_at else None,
-                "completed_at": batch.completed_at.isoformat() if batch.completed_at else None,
+                "started_at": (
+                    batch.started_at.isoformat() if batch.started_at else None
+                ),
+                "completed_at": (
+                    batch.completed_at.isoformat() if batch.completed_at else None
+                ),
             }
 
         except Exception as e:
-            log_error("获取批次统计信息失败", module="classification_batch", batch_id=batch_id, error=str(e))
+            log_error(
+                "获取批次统计信息失败",
+                module="classification_batch",
+                batch_id=batch_id,
+                error=str(e),
+            )
             return None

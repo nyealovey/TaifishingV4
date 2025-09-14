@@ -196,7 +196,12 @@ class DatabaseTypeUtils:
         """
         config = DatabaseTypeUtils.get_database_type_config(db_type)
         if not config:
-            return {"driver": "", "default_port": None, "default_schema": "", "connection_string_template": ""}
+            return {
+                "driver": "",
+                "default_port": None,
+                "default_schema": "",
+                "connection_string_template": "",
+            }
 
         # 根据数据库类型生成连接字符串模板
         connection_templates = {

@@ -37,7 +37,9 @@ def get_instance_accounts(instance_id: int) -> Response:
         if db_type:
             # 获取指定数据库类型的账户
             accounts = SyncDataManager.get_accounts_by_instance_and_db_type(
-                instance_id=instance_id, db_type=db_type, include_deleted=include_deleted
+                instance_id=instance_id,
+                db_type=db_type,
+                include_deleted=include_deleted,
             )
         else:
             # 获取所有数据库类型的账户
@@ -55,11 +57,21 @@ def get_instance_accounts(instance_id: int) -> Response:
             account_count=len(accounts_data),
         )
 
-        return jsonify({"success": True, "data": accounts_data, "count": len(accounts_data)})
+        return jsonify(
+            {"success": True, "data": accounts_data, "count": len(accounts_data)}
+        )
 
     except Exception as e:
-        log_error("获取实例账户列表失败", module="instance_accounts", instance_id=instance_id, error=str(e))
-        return jsonify({"success": False, "error": f"获取实例账户列表失败: {str(e)}"}), 500
+        log_error(
+            "获取实例账户列表失败",
+            module="instance_accounts",
+            instance_id=instance_id,
+            error=str(e),
+        )
+        return (
+            jsonify({"success": False, "error": f"获取实例账户列表失败: {str(e)}"}),
+            500,
+        )
 
 
 @instance_accounts_bp.route("/<int:instance_id>/accounts/<username>/permissions")
@@ -71,11 +83,18 @@ def get_account_permissions(instance_id: int, username: str) -> Response:
         db_type = request.args.get("db_type", "mysql")
 
         api_logger.info(
-            "获取账户权限详情", module="instance_accounts", instance_id=instance_id, username=username, db_type=db_type
+            "获取账户权限详情",
+            module="instance_accounts",
+            instance_id=instance_id,
+            username=username,
+            db_type=db_type,
         )
 
         account = SyncDataManager.get_account_latest(
-            db_type=db_type, instance_id=instance_id, username=username, include_deleted=True
+            db_type=db_type,
+            instance_id=instance_id,
+            username=username,
+            include_deleted=True,
         )
 
         if not account:
@@ -91,9 +110,19 @@ def get_account_permissions(instance_id: int, username: str) -> Response:
                 "db_type": account.db_type,
                 "is_superuser": account.is_superuser,
                 "is_deleted": account.is_deleted,
-                "deleted_time": account.deleted_time.isoformat() if account.deleted_time else None,
-                "last_sync_time": account.last_sync_time.isoformat() if account.last_sync_time else None,
-                "last_change_time": account.last_change_time.isoformat() if account.last_change_time else None,
+                "deleted_time": (
+                    account.deleted_time.isoformat() if account.deleted_time else None
+                ),
+                "last_sync_time": (
+                    account.last_sync_time.isoformat()
+                    if account.last_sync_time
+                    else None
+                ),
+                "last_change_time": (
+                    account.last_change_time.isoformat()
+                    if account.last_change_time
+                    else None
+                ),
                 "permissions": permissions_data,
             },
         }
@@ -110,9 +139,16 @@ def get_account_permissions(instance_id: int, username: str) -> Response:
 
     except Exception as e:
         log_error(
-            "获取账户权限详情失败", module="instance_accounts", instance_id=instance_id, username=username, error=str(e)
+            "获取账户权限详情失败",
+            module="instance_accounts",
+            instance_id=instance_id,
+            username=username,
+            error=str(e),
         )
-        return jsonify({"success": False, "error": f"获取账户权限详情失败: {str(e)}"}), 500
+        return (
+            jsonify({"success": False, "error": f"获取账户权限详情失败: {str(e)}"}),
+            500,
+        )
 
 
 @instance_accounts_bp.route("/<int:instance_id>/accounts/<username>/history")
@@ -124,7 +160,11 @@ def get_account_history(instance_id: int, username: str) -> Response:
         db_type = request.args.get("db_type", "mysql")
 
         api_logger.info(
-            "获取账户变更历史", module="instance_accounts", instance_id=instance_id, username=username, db_type=db_type
+            "获取账户变更历史",
+            module="instance_accounts",
+            instance_id=instance_id,
+            username=username,
+            db_type=db_type,
         )
 
         changes = SyncDataManager.get_account_changes(instance_id, db_type, username)
@@ -141,16 +181,27 @@ def get_account_history(instance_id: int, username: str) -> Response:
             change_count=len(changes_data),
         )
 
-        return jsonify({"success": True, "data": changes_data, "count": len(changes_data)})
+        return jsonify(
+            {"success": True, "data": changes_data, "count": len(changes_data)}
+        )
 
     except Exception as e:
         log_error(
-            "获取账户变更历史失败", module="instance_accounts", instance_id=instance_id, username=username, error=str(e)
+            "获取账户变更历史失败",
+            module="instance_accounts",
+            instance_id=instance_id,
+            username=username,
+            error=str(e),
         )
-        return jsonify({"success": False, "error": f"获取账户变更历史失败: {str(e)}"}), 500
+        return (
+            jsonify({"success": False, "error": f"获取账户变更历史失败: {str(e)}"}),
+            500,
+        )
 
 
-@instance_accounts_bp.route("/<int:instance_id>/accounts/<username>/delete", methods=["POST"])
+@instance_accounts_bp.route(
+    "/<int:instance_id>/accounts/<username>/delete", methods=["POST"]
+)
 @login_required
 @view_required
 def delete_account(instance_id: int, username: str) -> Response:
@@ -160,12 +211,19 @@ def delete_account(instance_id: int, username: str) -> Response:
         session_id = request.args.get("session_id")
 
         api_logger.info(
-            "标记账户为已删除", module="instance_accounts", instance_id=instance_id, username=username, db_type=db_type
+            "标记账户为已删除",
+            module="instance_accounts",
+            instance_id=instance_id,
+            username=username,
+            db_type=db_type,
         )
 
         # 检查账户是否存在
         account = SyncDataManager.get_account_latest(
-            db_type=db_type, instance_id=instance_id, username=username, include_deleted=True
+            db_type=db_type,
+            instance_id=instance_id,
+            username=username,
+            include_deleted=True,
         )
 
         if not account:
@@ -189,9 +247,16 @@ def delete_account(instance_id: int, username: str) -> Response:
 
     except Exception as e:
         log_error(
-            "标记账户为已删除失败", module="instance_accounts", instance_id=instance_id, username=username, error=str(e)
+            "标记账户为已删除失败",
+            module="instance_accounts",
+            instance_id=instance_id,
+            username=username,
+            error=str(e),
         )
-        return jsonify({"success": False, "error": f"标记账户为已删除失败: {str(e)}"}), 500
+        return (
+            jsonify({"success": False, "error": f"标记账户为已删除失败: {str(e)}"}),
+            500,
+        )
 
 
 @instance_accounts_bp.route("/<int:instance_id>/accounts/statistics")
@@ -200,7 +265,9 @@ def delete_account(instance_id: int, username: str) -> Response:
 def get_account_statistics(instance_id: int) -> Response:
     """获取实例账户统计信息"""
     try:
-        api_logger.info("获取实例账户统计信息", module="instance_accounts", instance_id=instance_id)
+        api_logger.info(
+            "获取实例账户统计信息", module="instance_accounts", instance_id=instance_id
+        )
 
         # 获取所有数据库类型的账户统计
         db_types = ["mysql", "postgresql", "sqlserver", "oracle"]
@@ -248,5 +315,13 @@ def get_account_statistics(instance_id: int) -> Response:
         return jsonify(response_data)
 
     except Exception as e:
-        log_error("获取实例账户统计信息失败", module="instance_accounts", instance_id=instance_id, error=str(e))
-        return jsonify({"success": False, "error": f"获取实例账户统计信息失败: {str(e)}"}), 500
+        log_error(
+            "获取实例账户统计信息失败",
+            module="instance_accounts",
+            instance_id=instance_id,
+            error=str(e),
+        )
+        return (
+            jsonify({"success": False, "error": f"获取实例账户统计信息失败: {str(e)}"}),
+            500,
+        )

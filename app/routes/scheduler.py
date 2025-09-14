@@ -54,9 +54,15 @@ def get_jobs() -> Response:
             job_info = {
                 "id": job.id,
                 "name": job.name,
-                "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None,
+                "next_run_time": (
+                    job.next_run_time.isoformat() if job.next_run_time else None
+                ),
                 "trigger": str(job.trigger),
-                "func": job.func.__name__ if hasattr(job.func, "__name__") else str(job.func),
+                "func": (
+                    job.func.__name__
+                    if hasattr(job.func, "__name__")
+                    else str(job.func)
+                ),
                 "args": job.args,
                 "kwargs": job.kwargs,
                 "misfire_grace_time": job.misfire_grace_time,
@@ -88,9 +94,13 @@ def get_job(job_id: str) -> Response:
         job_info = {
             "id": job.id,
             "name": job.name,
-            "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None,
+            "next_run_time": (
+                job.next_run_time.isoformat() if job.next_run_time else None
+            ),
             "trigger": str(job.trigger),
-            "func": job.func.__name__ if hasattr(job.func, "__name__") else str(job.func),
+            "func": (
+                job.func.__name__ if hasattr(job.func, "__name__") else str(job.func)
+            ),
             "args": job.args,
             "kwargs": job.kwargs,
             "misfire_grace_time": job.misfire_grace_time,
@@ -147,7 +157,13 @@ def create_job() -> Response:
 
         # 直接使用函数对象
         job = scheduler.add_job(
-            func=task_func, trigger=trigger, id=data["id"], name=data["name"], args=[], kwargs={}, replace_existing=True
+            func=task_func,
+            trigger=trigger,
+            id=data["id"],
+            name=data["name"],
+            args=[],
+            kwargs={},
+            replace_existing=True,
         )
 
         system_logger.info(f"任务创建成功: {job.id}")
@@ -447,7 +463,9 @@ def task_wrapper():
         return None
 
 
-def _build_trigger(data: dict[str, Any]) -> CronTrigger | IntervalTrigger | DateTrigger | None:
+def _build_trigger(
+    data: dict[str, Any],
+) -> CronTrigger | IntervalTrigger | DateTrigger | None:
     """构建触发器"""
     trigger_type = data.get("trigger_type")
 
