@@ -312,6 +312,7 @@ class AccountClassificationService:
         assigned_by: int = None,
         notes: str = None,
         batch_id: str = None,
+        skip_log: bool = False,
     ) -> dict[str, Any]:
         """为账户分配分类"""
         try:
@@ -358,13 +359,14 @@ class AccountClassificationService:
 
             db.session.commit()
 
-            log_info(
-                "分配账户分类",
-                module="account_classification",
-                account_id=account_id,
-                classification_id=classification_id,
-                assignment_type=assignment_type,
-            )
+            if not skip_log:
+                log_info(
+                    "分配账户分类",
+                    module="account_classification",
+                    account_id=account_id,
+                    classification_id=classification_id,
+                    assignment_type=assignment_type,
+                )
 
             return {
                 "success": True,
@@ -410,9 +412,6 @@ class AccountClassificationService:
 
             for account in accounts:
                 try:
-                    # 先清除该账户的所有现有分类
-                    self._clear_account_classifications(account.id)
-
                     # 根据账户的数据库类型获取对应的规则，按优先级排序
                     account_rules = [rule for rule in rules if rule.db_type == account.instance.db_type]
 
@@ -425,36 +424,69 @@ class AccountClassificationService:
                         reverse=True,
                     )
 
-                    # 应用规则进行自动分类
+                    # 获取当前账户的分类分配
+                    current_assignments = AccountClassificationAssignment.query.filter_by(
+                        account_id=account.id, is_active=True
+                    ).all()
+                    current_classification_ids = {assignment.classification_id for assignment in current_assignments}
+
+                    # 应用规则进行自动分类，收集新的分类
+                    new_classification_ids = set()
                     account_matched = False
                     for rule in account_rules:
                         if self._evaluate_rule(account, rule):
-                            # 分配分类
-                            result = self.classify_account(
-                                account.id,
-                                rule.classification_id,
-                                "auto",
-                                None,  # assigned_by
-                                None,  # notes
-                                batch_id,  # batch_id
-                            )
-                            if result["success"]:
-                                total_matches += 1
-                                if not account_matched:
-                                    classified_accounts += 1
-                                    account_matched = True
-                                log_info(
-                                    f"账户 {account.username} 按优先级 {rule.classification.priority if rule.classification else 0} 的规则 {rule.rule_name} 分类到 {rule.classification.name if rule.classification else '未知分类'}",
-                                    module="account_classification",
-                                    batch_id=batch_id,
-                                    account_id=account.id,
-                                    rule_id=rule.id,
-                                    classification_id=rule.classification_id,
-                                )
-                            # 移除break，允许匹配多个规则
+                            new_classification_ids.add(rule.classification_id)
+                            total_matches += 1
+                            if not account_matched:
+                                classified_accounts += 1
+                                account_matched = True
 
-                    # 如果没有规则匹配，账户保持未分类状态（已清除现有分类）
-                    # 不记录未匹配的账户日志
+                    # 比较当前分类和新分类，只在有变化时更新
+                    if current_classification_ids != new_classification_ids:
+                        # 清除当前所有分类
+                        for assignment in current_assignments:
+                            assignment.is_active = False
+                            assignment.updated_at = datetime.utcnow()
+
+                        # 添加新的分类
+                        for classification_id in new_classification_ids:
+                            assignment = AccountClassificationAssignment(
+                                account_id=account.id,
+                                classification_id=classification_id,
+                                assigned_by=None,  # 自动分类
+                                assignment_type="auto",
+                                notes=None,
+                                batch_id=batch_id,
+                            )
+                            db.session.add(assignment)
+
+                        # 记录分类变化日志
+                        if new_classification_ids:
+                            classification_names = []
+                            for cid in new_classification_ids:
+                                classification = AccountClassification.query.get(cid)
+                                if classification:
+                                    classification_names.append(classification.name)
+                            
+                            log_info(
+                                f"账户 {account.username} 分类已更新: {', '.join(classification_names)}",
+                                module="account_classification",
+                                batch_id=batch_id,
+                                account_id=account.id,
+                                old_classifications=list(current_classification_ids),
+                                new_classifications=list(new_classification_ids),
+                            )
+                        else:
+                            log_info(
+                                f"账户 {account.username} 已移除所有分类",
+                                module="account_classification",
+                                batch_id=batch_id,
+                                account_id=account.id,
+                                old_classifications=list(current_classification_ids),
+                            )
+                    else:
+                        # 分类没有变化，不记录日志
+                        pass
 
                 except Exception as e:
                     failed_count += 1
