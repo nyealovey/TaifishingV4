@@ -264,8 +264,9 @@
                                     <th>账户名</th>
                                     <th>实例</th>
                                     <th>数据库类型</th>
+                                    <th>分类</th>
                                     <th>匹配规则</th>
-                                    <th>规则描述</th>
+                                    <th>规则表达式</th>
                                     <th>匹配时间</th>
                                 </tr>
                             </thead>
@@ -587,11 +588,15 @@ function displayMatches(batchId, matches) {
                 <span class="badge bg-info">${match.instance_type}</span>
             </td>
             <td>
+                <strong>${match.classification_name}</strong>
+                <br><small class="text-muted">ID: ${match.classification_id}</small>
+            </td>
+            <td>
                 <strong>${match.rule_name}</strong>
                 <br><small class="text-muted">ID: ${match.rule_id}</small>
             </td>
             <td>
-                <small>${match.rule_description || '无描述'}</small>
+                <small class="text-muted" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block;" title="${match.rule_description || '无表达式'}">${match.rule_description || '无表达式'}</small>
             </td>
             <td>
                 ${match.matched_at ? new Date(match.matched_at).toLocaleString() : '-'}

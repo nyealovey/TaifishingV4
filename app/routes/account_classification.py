@@ -686,6 +686,7 @@ def api_get_batch_matches(batch_id: str) -> "Response":
         from app.models.account_classification_assignment import AccountClassificationAssignment
         from app.models.account import Account
         from app.models.instance import Instance
+        from app.models.account_classification import AccountClassification
         from app.models.classification_rule import ClassificationRule
         
         # 获取该批次的所有匹配记录
@@ -693,19 +694,22 @@ def api_get_batch_matches(batch_id: str) -> "Response":
             AccountClassificationAssignment,
             Account,
             Instance,
+            AccountClassification,
             ClassificationRule
         ).join(
             Account, AccountClassificationAssignment.account_id == Account.id
         ).join(
             Instance, Account.instance_id == Instance.id
         ).join(
-            ClassificationRule, AccountClassificationAssignment.rule_id == ClassificationRule.id
+            AccountClassification, AccountClassificationAssignment.classification_id == AccountClassification.id
+        ).join(
+            ClassificationRule, AccountClassification.id == ClassificationRule.classification_id
         ).filter(
             AccountClassificationAssignment.batch_id == batch_id
         ).all()
 
         matches = []
-        for assignment, account, instance, rule in assignments:
+        for assignment, account, instance, classification, rule in assignments:
             matches.append({
                 "assignment_id": assignment.id,
                 "account_id": account.id,
@@ -713,11 +717,13 @@ def api_get_batch_matches(batch_id: str) -> "Response":
                 "instance_id": instance.id,
                 "instance_name": instance.name,
                 "instance_type": instance.db_type,
+                "classification_id": classification.id,
+                "classification_name": classification.name,
                 "rule_id": rule.id,
-                "rule_name": rule.name,
-                "rule_description": rule.description,
+                "rule_name": rule.rule_name,
+                "rule_description": rule.rule_expression,
                 "matched_at": assignment.created_at.isoformat() if assignment.created_at else None,
-                "confidence": getattr(assignment, 'confidence', None)
+                "confidence": getattr(assignment, 'confidence_score', None)
             })
 
         return jsonify({"success": True, "matches": matches})
