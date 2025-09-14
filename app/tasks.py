@@ -113,16 +113,16 @@ def sync_accounts():
 
             # 创建同步会话
             session = sync_session_service.create_session(
-                sync_type='scheduled',
-                sync_category='account',
-                created_by=None  # 定时任务没有用户
+                sync_type="scheduled",
+                sync_category="account",
+                created_by=None,  # 定时任务没有用户
             )
 
             sync_logger.info(
                 "定时任务开始同步所有账户",
                 module="scheduler",
                 session_id=session.session_id,
-                total_instances=total_instances
+                total_instances=total_instances,
             )
 
             # 添加实例记录
@@ -157,7 +157,9 @@ def sync_accounts():
                     )
 
                     # 执行账户同步，使用task类型
-                    result = account_sync_service.sync_accounts(instance, sync_type="task", session_id=session.session_id)
+                    result = account_sync_service.sync_accounts(
+                        instance, sync_type="task", session_id=session.session_id
+                    )
 
                     if result.get("success"):
                         success_count += 1
@@ -174,7 +176,7 @@ def sync_accounts():
                             accounts_created=result.get("added_count", 0),
                             accounts_updated=result.get("modified_count", 0),
                             accounts_deleted=result.get("removed_count", 0),
-                            sync_details=result.get("details", {})
+                            sync_details=result.get("details", {}),
                         )
 
                         sync_logger.info(
@@ -197,12 +199,10 @@ def sync_accounts():
                     else:
                         failed_count += 1
                         error_msg = result.get("message", result.get("error", "未知错误"))
-                        
+
                         # 标记实例同步失败
                         sync_session_service.fail_instance_sync(
-                            record.id,
-                            error_message=error_msg,
-                            sync_details=result.get("details", {})
+                            record.id, error_message=error_msg, sync_details=result.get("details", {})
                         )
 
                         sync_logger.warning(
@@ -225,13 +225,11 @@ def sync_accounts():
 
                 except Exception as e:
                     failed_count += 1
-                    
+
                     # 标记实例同步失败
                     if record:
                         sync_session_service.fail_instance_sync(
-                            record.id,
-                            error_message=str(e),
-                            sync_details={"exception": str(e)}
+                            record.id, error_message=str(e), sync_details={"exception": str(e)}
                         )
 
                     sync_logger.error(
@@ -240,7 +238,7 @@ def sync_accounts():
                         session_id=session.session_id,
                         instance_name=instance.name,
                         instance_id=instance.id,
-                        exception=e,
+                        exception=str(e),
                     )
 
                     results.append(

@@ -436,17 +436,20 @@ def log_info(message: str, module: str = "app", **kwargs):
     logger.info(message, module=module, **kwargs)
 
 
-def log_warning(message: str, module: str = "app", **kwargs):
+def log_warning(message: str, module: str = "app", exception: Exception | None = None, **kwargs):
     """记录警告日志"""
     logger = get_logger("app")
-    logger.warning(message, module=module, **kwargs)
+    if exception:
+        logger.warning(message, module=module, exception=str(exception), **kwargs)
+    else:
+        logger.warning(message, module=module, **kwargs)
 
 
 def log_error(message: str, module: str = "app", exception: Exception | None = None, **kwargs):
     """记录错误日志"""
     logger = get_logger("app")
     if exception:
-        logger.error(message, module=module, exception=exception, **kwargs)
+        logger.error(message, module=module, exception=str(exception), **kwargs)
     else:
         logger.error(message, module=module, **kwargs)
 
@@ -455,7 +458,7 @@ def log_critical(message: str, module: str = "app", exception: Exception | None 
     """记录严重错误日志"""
     logger = get_logger("app")
     if exception:
-        logger.critical(message, module=module, exception=exception, **kwargs)
+        logger.critical(message, module=module, exception=str(exception), **kwargs)
     else:
         logger.critical(message, module=module, **kwargs)
 

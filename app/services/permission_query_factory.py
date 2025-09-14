@@ -74,7 +74,7 @@ class MySQLPermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return {"success": False, "error": str(e)}
         finally:
@@ -88,20 +88,32 @@ class MySQLPermissionQuery(PermissionQuery):
             if not connection or not connection.connect():
                 return []
 
-            # 查询全局权限
-            query = """
-                SELECT
-                    PRIVILEGE_TYPE as privilege,
-                    IS_GRANTABLE = 'YES' as grantable
-                FROM information_schema.USER_PRIVILEGES
-                WHERE GRANTEE = %s
-                ORDER BY PRIVILEGE_TYPE
-            """
-
             # 处理host字段为空的情况
             host = account.host if account.host and account.host.strip() else ""
-            grantee = f"'{account.username}'@'{host}'"
-            results = connection.execute_query(query, (grantee,))
+            if host:
+                # 查询全局权限
+                query = """
+                    SELECT
+                        PRIVILEGE_TYPE as privilege,
+                        IS_GRANTABLE = 'YES' as grantable
+                    FROM information_schema.USER_PRIVILEGES
+                    WHERE GRANTEE = %s
+                    ORDER BY PRIVILEGE_TYPE
+                """
+                grantee = f"'{account.username}'@'{host}'"
+                results = connection.execute_query(query, (grantee,))
+            else:
+                # 如果host为空，查询所有匹配的用户名
+                query = """
+                    SELECT
+                        PRIVILEGE_TYPE as privilege,
+                        IS_GRANTABLE = 'YES' as grantable
+                    FROM information_schema.USER_PRIVILEGES
+                    WHERE GRANTEE LIKE %s
+                    ORDER BY PRIVILEGE_TYPE
+                """
+                grantee_pattern = f"'%{account.username}%'"
+                results = connection.execute_query(query, (grantee_pattern,))
 
             return [{"privilege": row[0], "granted": True, "grantable": row[1]} for row in results]
         except Exception as e:
@@ -110,7 +122,7 @@ class MySQLPermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return []
         finally:
@@ -124,21 +136,34 @@ class MySQLPermissionQuery(PermissionQuery):
             if not connection or not connection.connect():
                 return []
 
-            # 查询数据库权限
-            query = """
-                SELECT
-                    TABLE_SCHEMA as database_name,
-                    GROUP_CONCAT(PRIVILEGE_TYPE) as privileges
-                FROM information_schema.SCHEMA_PRIVILEGES
-                WHERE GRANTEE = %s
-                GROUP BY TABLE_SCHEMA
-                ORDER BY TABLE_SCHEMA
-            """
-
             # 处理host字段为空的情况
             host = account.host if account.host and account.host.strip() else ""
-            grantee = f"'{account.username}'@'{host}'"
-            results = connection.execute_query(query, (grantee,))
+            if host:
+                # 查询数据库权限
+                query = """
+                    SELECT
+                        TABLE_SCHEMA as database_name,
+                        GROUP_CONCAT(PRIVILEGE_TYPE) as privileges
+                    FROM information_schema.SCHEMA_PRIVILEGES
+                    WHERE GRANTEE = %s
+                    GROUP BY TABLE_SCHEMA
+                    ORDER BY TABLE_SCHEMA
+                """
+                grantee = f"'{account.username}'@'{host}'"
+                results = connection.execute_query(query, (grantee,))
+            else:
+                # 如果host为空，查询所有匹配的用户名
+                query = """
+                    SELECT
+                        TABLE_SCHEMA as database_name,
+                        GROUP_CONCAT(PRIVILEGE_TYPE) as privileges
+                    FROM information_schema.SCHEMA_PRIVILEGES
+                    WHERE GRANTEE LIKE %s
+                    GROUP BY TABLE_SCHEMA
+                    ORDER BY TABLE_SCHEMA
+                """
+                grantee_pattern = f"'%{account.username}%'"
+                results = connection.execute_query(query, (grantee_pattern,))
 
             return [{"database": row[0], "privileges": row[1].split(",") if row[1] else []} for row in results]
         except Exception as e:
@@ -147,7 +172,7 @@ class MySQLPermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return []
         finally:
@@ -184,7 +209,7 @@ class MySQLPermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return []
         finally:
@@ -231,7 +256,7 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return {"success": False, "error": str(e)}
         finally:
@@ -298,7 +323,7 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return []
         finally:
@@ -344,7 +369,7 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return []
         finally:
@@ -399,7 +424,7 @@ class PostgreSQLPermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return []
         finally:
@@ -473,7 +498,7 @@ class SQLServerPermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return {"success": False, "error": str(e)}
         finally:
@@ -510,7 +535,7 @@ class SQLServerPermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return []
         finally:
@@ -568,7 +593,7 @@ class SQLServerPermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return []
         finally:
@@ -617,7 +642,7 @@ class SQLServerPermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return []
         finally:
@@ -678,7 +703,7 @@ class OraclePermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return {"success": False, "error": str(e)}
         finally:
@@ -737,7 +762,7 @@ class OraclePermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return []
         finally:
@@ -790,7 +815,7 @@ class OraclePermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return []
         finally:
@@ -849,7 +874,7 @@ class OraclePermissionQuery(PermissionQuery):
                 module="permission",
                 instance_id=self.instance.id,
                 account_id=account.id,
-                exception=e,
+                exception=str(e),
             )
             return []
         finally:

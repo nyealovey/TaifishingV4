@@ -150,20 +150,20 @@ CREATE INDEX idx_sync_data_sync_category ON sync_data(sync_category);
 ### 1. 检查约束
 ```sql
 -- 同步会话表
-ALTER TABLE sync_sessions ADD CONSTRAINT chk_sync_sessions_status 
+ALTER TABLE sync_sessions ADD CONSTRAINT chk_sync_sessions_status
 CHECK (status IN ('running', 'completed', 'failed', 'cancelled'));
 
-ALTER TABLE sync_sessions ADD CONSTRAINT chk_sync_sessions_sync_type 
+ALTER TABLE sync_sessions ADD CONSTRAINT chk_sync_sessions_sync_type
 CHECK (sync_type IN ('scheduled', 'manual_batch'));
 
-ALTER TABLE sync_sessions ADD CONSTRAINT chk_sync_sessions_sync_category 
+ALTER TABLE sync_sessions ADD CONSTRAINT chk_sync_sessions_sync_category
 CHECK (sync_category IN ('account', 'capacity', 'config', 'other'));
 
 -- 同步实例记录表
-ALTER TABLE sync_instance_records ADD CONSTRAINT chk_sync_instance_records_status 
+ALTER TABLE sync_instance_records ADD CONSTRAINT chk_sync_instance_records_status
 CHECK (status IN ('pending', 'running', 'completed', 'failed'));
 
-ALTER TABLE sync_instance_records ADD CONSTRAINT chk_sync_instance_records_sync_category 
+ALTER TABLE sync_instance_records ADD CONSTRAINT chk_sync_instance_records_sync_category
 CHECK (sync_category IN ('account', 'capacity', 'config', 'other'));
 ```
 
@@ -193,28 +193,28 @@ instances (1) ←→ (N) sync_instance_records
 ### 1. 常用查询模式
 ```sql
 -- 获取会话及其所有实例记录
-SELECT s.*, r.* 
+SELECT s.*, r.*
 FROM sync_sessions s
 LEFT JOIN sync_instance_records r ON s.session_id = r.session_id
 WHERE s.session_id = ?;
 
 -- 获取最近的会话列表
-SELECT * FROM sync_sessions 
-ORDER BY created_at DESC 
+SELECT * FROM sync_sessions
+ORDER BY created_at DESC
 LIMIT ?;
 
 -- 获取特定类型的会话
-SELECT * FROM sync_sessions 
+SELECT * FROM sync_sessions
 WHERE sync_type = ? AND sync_category = ?
 ORDER BY created_at DESC;
 
 -- 获取会话统计信息
-SELECT 
+SELECT
     sync_type,
     sync_category,
     status,
     COUNT(*) as count
-FROM sync_sessions 
+FROM sync_sessions
 GROUP BY sync_type, sync_category, status;
 ```
 
@@ -248,8 +248,8 @@ GROUP BY sync_type, sync_category, status;
 ### 1. 定期清理
 ```sql
 -- 清理30天前的已完成会话
-DELETE FROM sync_sessions 
-WHERE status IN ('completed', 'failed', 'cancelled') 
+DELETE FROM sync_sessions
+WHERE status IN ('completed', 'failed', 'cancelled')
 AND completed_at < DATE('now', '-30 days');
 
 -- 清理相关的实例记录（级联删除）

@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title id="page-title">{% block title %}泰摸鱼吧 - 数据同步管理平台{% endblock %}</title>
-    
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
+
     <style>
         :root {
             --primary-color: #667eea;
@@ -20,13 +20,13 @@
             --warning-color: #ffc107;
             --info-color: #17a2b8;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             min-height: 100vh;
         }
-        
+
         .navbar {
             background: rgba(255, 255, 255, 0.95) !important;
             backdrop-filter: blur(10px);
@@ -38,12 +38,12 @@
             z-index: 1030;
             width: 100%;
         }
-        
+
         .navbar-brand {
             font-weight: 700;
             color: var(--primary-color) !important;
         }
-        
+
         /* 2级菜单样式 */
         .navbar .dropdown-menu {
             border: none;
@@ -56,7 +56,7 @@
             position: absolute;
             z-index: 1050;
         }
-        
+
         .navbar .dropdown-item {
             padding: 10px 20px;
             border-radius: 6px;
@@ -64,54 +64,54 @@
             transition: all 0.3s ease;
             color: #333;
         }
-        
+
         .navbar .dropdown-item:hover {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
             transform: translateX(5px);
         }
-        
+
         .navbar .dropdown-item i {
             width: 20px;
             text-align: center;
         }
-        
+
         .navbar .dropdown-toggle::after {
             margin-left: 8px;
             transition: transform 0.3s ease;
         }
-        
+
         .navbar .dropdown-toggle[aria-expanded="true"]::after {
             transform: rotate(180deg);
         }
-        
+
         /* 导航栏居中样式 */
         .navbar-collapse {
             flex-grow: 0;
         }
-        
+
         .navbar-nav {
             align-items: center;
         }
-        
+
         /* 响应式调整 */
         @media (max-width: 991.98px) {
             .navbar-collapse {
                 flex-grow: 1;
             }
-            
+
             .navbar-nav.ms-auto {
                 margin-left: 0 !important;
                 margin-top: 1rem;
             }
         }
-        
+
         .main-content {
             min-height: calc(100vh - 76px);
             padding: 2rem 0;
             margin-top: 76px;
         }
-        
+
         .card {
             border: none;
             border-radius: 15px;
@@ -119,7 +119,7 @@
             backdrop-filter: blur(10px);
             background: rgba(255, 255, 255, 0.95);
         }
-        
+
         .btn-primary {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             border: none;
@@ -128,29 +128,29 @@
             font-weight: 600;
             transition: all 0.3s ease;
         }
-        
+
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
-        
+
         .form-control {
             border-radius: 10px;
             border: 2px solid #e9ecef;
             padding: 0.75rem 1rem;
             transition: all 0.3s ease;
         }
-        
+
         .form-control:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
         }
-        
+
         .alert {
             border-radius: 10px;
             border: none;
         }
-        
+
         .footer {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
@@ -160,7 +160,7 @@
             margin-top: auto;
         }
     </style>
-    
+
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -170,11 +170,11 @@
             <a class="navbar-brand" href="{{ url_for('main.index') }}">
                 <i class="fas fa-fish me-2"></i><span id="app-name">泰摸鱼吧</span>
             </a>
-            
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
+
             <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
                 <ul class="navbar-nav">
                     {% if current_user.is_authenticated %}
@@ -236,7 +236,7 @@
                     {% endif %}
                     {% endif %}
                 </ul>
-                
+
                 <ul class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
                     <li class="nav-item dropdown">
@@ -267,7 +267,7 @@
             </div>
         </div>
     </nav>
-    
+
     <!-- 主要内容 -->
     <div class="main-content">
         <div class="container">
@@ -283,33 +283,37 @@
                     {% endfor %}
                 {% endif %}
             {% endwith %}
-            
+
             <!-- 页面内容 -->
             {% block content %}{% endblock %}
         </div>
     </div>
-    
+
     <!-- 页脚 -->
     <footer class="footer">
         <div class="container">
             <p class="mb-0">
-                &copy; 2025 <span id="footer-app-name">泰摸鱼吧</span> - 数据同步管理平台 | 
-                <a href="{{ url_for('auth.login') }}" class="text-white text-decoration-none">登录</a> | 
+                &copy; 2025 <span id="footer-app-name">泰摸鱼吧</span> - 数据同步管理平台 |
+                <a href="{{ url_for('auth.login') }}" class="text-white text-decoration-none">登录</a> |
             </p>
         </div>
     </footer>
-    
+
     <!-- jQuery -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-    
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- 通用工具组件 -->
+    <script src="{{ url_for('static', filename='js/common/console-utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/common/alert-utils.js') }}"></script>
     
     <!-- 权限查看组件 -->
     <script src="{{ url_for('static', filename='js/common/permission-viewer.js') }}"></script>
     <script src="{{ url_for('static', filename='js/common/permission-modal.js') }}"></script>
     <script src="{{ url_for('static', filename='js/components/permission-button.js') }}"></script>
-    
+
     <!-- 动态加载应用信息 -->
     <script>
         // 加载应用信息
@@ -317,22 +321,22 @@
             try {
                 const response = await fetch('/admin/app-info');
                 const data = await response.json();
-                
+
                 if (data.success && data.data) {
                     const appName = data.data.app_name;
-                    
+
                     // 更新左上角logo中的应用名称
                     const appNameElement = document.getElementById('app-name');
                     if (appNameElement) {
                         appNameElement.textContent = appName;
                     }
-                    
+
                     // 更新底部版权信息中的应用名称
                     const footerAppNameElement = document.getElementById('footer-app-name');
                     if (footerAppNameElement) {
                         footerAppNameElement.textContent = appName;
                     }
-                    
+
                     // 更新页面标题中的应用名称
                     const pageTitleElement = document.getElementById('page-title');
                     if (pageTitleElement) {
@@ -343,13 +347,13 @@
                 console.error('加载应用信息失败:', error);
             }
         }
-        
+
         // 页面加载完成后获取应用信息
         document.addEventListener('DOMContentLoaded', function() {
             loadAppInfo();
         });
     </script>
-    
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

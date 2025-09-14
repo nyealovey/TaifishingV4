@@ -196,7 +196,7 @@ let currentFilters = {};
 document.addEventListener('DOMContentLoaded', function() {
     loadStatistics();
     loadSessions();
-    
+
     // 设置自动刷新
     setInterval(function() {
         loadSessions();
@@ -233,7 +233,7 @@ function loadSessions() {
     if (currentFilters.sync_type) params.append('sync_type', currentFilters.sync_type);
     if (currentFilters.sync_category) params.append('sync_category', currentFilters.sync_category);
     if (currentFilters.status) params.append('status', currentFilters.status);
-    
+
     fetch(`/sync_sessions/api/sessions?${params.toString()}`)
         .then(response => response.json())
         .then(data => {
@@ -255,19 +255,19 @@ function loadSessions() {
 // 渲染会话列表
 function renderSessions(sessions) {
     const container = document.getElementById('sessions-container');
-    
+
     if (sessions.length === 0) {
         container.innerHTML = '<div class="text-center py-4 text-muted">暂无同步会话</div>';
         return;
     }
-    
+
     const html = sessions.map(session => {
         const statusClass = getStatusClass(session.status);
         const statusText = getStatusText(session.status);
         const progress = session.progress_percentage || 0;
         const startedAt = new Date(session.started_at).toLocaleString();
         const completedAt = session.completed_at ? new Date(session.completed_at).toLocaleString() : '-';
-        
+
         return `
             <div class="card session-card ${statusClass} mb-3">
                 <div class="card-body">
@@ -306,7 +306,7 @@ function renderSessions(sessions) {
             </div>
         `;
     }).join('');
-    
+
     container.innerHTML = html;
 }
 
@@ -331,13 +331,13 @@ function viewSessionDetail(sessionId) {
 function showSessionDetail(session) {
     const content = document.getElementById('session-detail-content');
     const records = session.instance_records || [];
-    
+
     const recordsHtml = records.map(record => {
         const statusClass = getStatusClass(record.status);
         const statusText = getStatusText(record.status);
-        const duration = record.started_at && record.completed_at ? 
+        const duration = record.started_at && record.completed_at ?
             Math.round((new Date(record.completed_at) - new Date(record.started_at)) / 1000) + '秒' : '-';
-        
+
         return `
             <div class="card mb-2">
                 <div class="card-body">
@@ -351,9 +351,9 @@ function showSessionDetail(session) {
                         </div>
                         <div class="col-md-3">
                             <small class="text-muted">
-                                同步: ${record.accounts_synced} | 
-                                新增: ${record.accounts_created} | 
-                                更新: ${record.accounts_updated} | 
+                                同步: ${record.accounts_synced} |
+                                新增: ${record.accounts_created} |
+                                更新: ${record.accounts_updated} |
                                 删除: ${record.accounts_deleted}
                             </small>
                         </div>
@@ -368,7 +368,7 @@ function showSessionDetail(session) {
             </div>
         `;
     }).join('');
-    
+
     content.innerHTML = `
         <div class="row mb-3">
             <div class="col-md-6">
@@ -411,7 +411,7 @@ function showSessionDetail(session) {
             ${recordsHtml || '<div class="text-muted">暂无实例记录</div>'}
         </div>
     `;
-    
+
     const modal = new bootstrap.Modal(document.getElementById('sessionDetailModal'));
     modal.show();
 }

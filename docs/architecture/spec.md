@@ -119,7 +119,7 @@ erDiagram
         datetime created_at "创建时间"
         datetime updated_at "更新时间"
     }
-    
+
     Instance }o--|| DatabaseTypeConfig : uses
     Task }o--|| DatabaseTypeConfig : targets
 ```
@@ -135,7 +135,7 @@ graph TB
         C --> E[实例管理界面]
         C --> F[任务管理界面]
     end
-    
+
     subgraph "应用层"
         D --> G[Flask应用]
         E --> G
@@ -147,14 +147,14 @@ graph TB
         J --> L[连接工厂]
         J --> M[权限查询工厂]
     end
-    
+
     subgraph "数据层"
         J --> N[SQLAlchemy ORM]
         N --> O[SQLite/PostgreSQL]
         J --> P[Redis缓存]
         J --> Q[文件存储]
     end
-    
+
     subgraph "数据库类型管理"
         K --> R[DatabaseTypeConfig]
         R --> S[系统内置类型]
@@ -164,7 +164,7 @@ graph TB
         L --> W[SQL Server连接工厂]
         L --> X[Oracle连接工厂]
     end
-    
+
     subgraph "外部数据库"
         Y[PostgreSQL实例]
         Z[MySQL实例]
@@ -172,7 +172,7 @@ graph TB
         BB[Oracle实例]
         CC[其他数据库实例]
     end
-    
+
     U --> Z
     V --> Y
     W --> AA
@@ -212,7 +212,7 @@ graph TB
         C --> E[批量操作界面]
         C --> F[快速创建界面]
     end
-    
+
     subgraph "应用层"
         D --> G[Flask应用]
         E --> G
@@ -222,14 +222,14 @@ graph TB
         I --> J[服务层]
         J --> K[任务调度服务]
     end
-    
+
     subgraph "数据层"
         J --> L[SQLAlchemy ORM]
         L --> M[SQLite/PostgreSQL]
         J --> N[Redis缓存]
         J --> O[文件存储]
     end
-    
+
     subgraph "任务执行层"
         K --> P[任务执行器]
         P --> Q[批量任务处理器]
@@ -237,27 +237,27 @@ graph TB
         P --> S[数据库连接池]
         S --> T[外部数据库]
     end
-    
+
     subgraph "外部系统"
         U[PostgreSQL实例]
         V[MySQL实例]
         W[SQL Server实例]
         X[Oracle实例]
     end
-    
+
     G --> K
     T --> U
     T --> V
     T --> W
     T --> X
-    
+
     subgraph "任务类型"
         Y[账户同步任务]
         Z[版本同步任务]
         AA[大小同步任务]
         BB[自定义任务]
     end
-    
+
     P --> Y
     P --> Z
     P --> AA
@@ -274,18 +274,18 @@ erDiagram
     User ||--o{ Instance : manages
     User ||--o{ Credential : manages
     User ||--o{ Task : creates
-    
+
     Instance ||--o{ Account : contains
     Instance ||--o{ SyncData : generates
     Instance }o--|| Credential : uses
-    
+
     Credential ||--o{ Instance : authenticates
-    
+
     Task ||--o{ SyncData : executes
     Task }o--|| Instance : targets
-    
+
     Account }o--|| Instance : belongs_to
-    
+
     User {
         int id PK
         string username UK
@@ -297,7 +297,7 @@ erDiagram
         datetime updated_at
         datetime last_login
     }
-    
+
     Instance {
         int id PK
         string name UK
@@ -315,7 +315,7 @@ erDiagram
         datetime updated_at
         datetime deleted_at
     }
-    
+
     Credential {
         int id PK
         string name UK
@@ -328,7 +328,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     Account {
         int id PK
         int instance_id FK
@@ -348,7 +348,7 @@ erDiagram
         boolean is_superuser
         boolean can_grant
     }
-    
+
     Task {
         int id PK
         string name UK
@@ -368,7 +368,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     Log {
         int id PK
         int user_id FK
@@ -380,7 +380,7 @@ erDiagram
         string user_agent
         datetime created_at
     }
-    
+
     SyncData {
         int id PK
         int instance_id FK
@@ -391,7 +391,7 @@ erDiagram
         int synced_count
         datetime created_at
     }
-    
+
     GlobalParam {
         int id PK
         string key UK
@@ -402,7 +402,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     AccountClassification {
         int id PK
         string name UK
@@ -415,7 +415,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     ClassificationRule {
         int id PK
         int classification_id FK
@@ -426,7 +426,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     AccountClassificationAssignment {
         int id PK
         int account_id FK
@@ -439,7 +439,7 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    
+
     PermissionConfig {
         int id PK
         string db_type
@@ -638,10 +638,10 @@ sequenceDiagram
     participant E as 任务执行器
     participant D as 数据库
     participant I as 外部实例
-    
+
     U->>W: 访问任务管理页面
     W->>U: 显示快速创建选项
-    
+
     alt 快速创建任务
         U->>W: 点击快速创建按钮
         W->>T: 调用快速创建API
@@ -649,7 +649,7 @@ sequenceDiagram
         T-->>W: 返回创建结果
         W-->>U: 显示创建成功
     end
-    
+
     alt 批量操作
         U->>W: 选择多个任务
         U->>W: 点击批量操作按钮
@@ -658,21 +658,21 @@ sequenceDiagram
         T-->>W: 返回操作结果
         W-->>U: 显示操作成功
     end
-    
+
     alt 任务执行
         U->>W: 触发任务执行
         W->>T: 调用任务执行API
         T->>E: 执行任务
         E->>D: 查询匹配实例
         D-->>E: 返回实例列表
-        
+
         loop 遍历每个实例
             E->>I: 连接数据库
             E->>E: 执行Python代码
             E->>D: 保存同步数据
             E->>D: 更新任务统计
         end
-        
+
         E-->>T: 返回执行结果
         T-->>W: 更新任务状态
         W-->>U: 显示执行状态
@@ -887,7 +887,7 @@ services:
       - DATABASE_URL=sqlite:///instance.db
     volumes:
       - ./userdata:/app/userdata
-  
+
   redis:
     image: redis:7.2.5
     ports:
@@ -911,7 +911,7 @@ services:
     depends_on:
       - postgres
       - redis
-  
+
   postgres:
     image: postgres:16.3
     environment:
@@ -920,12 +920,12 @@ services:
       - POSTGRES_PASSWORD=pass
     volumes:
       - postgres_data:/var/lib/postgresql/data
-  
+
   redis:
     image: redis:7.2.5
     volumes:
       - redis_data:/data
-  
+
   nginx:
     image: nginx:alpine
     ports:
@@ -1049,6 +1049,6 @@ app/
 
 ---
 
-**文档版本**: v1.0.0  
-**最后更新**: 2025-09-08  
+**文档版本**: v1.0.0
+**最后更新**: 2025-09-08
 **维护者**: 泰摸鱼吧开发团队

@@ -638,7 +638,7 @@ function testConnection() {
 }
 
 function syncAccounts() {
-    const syncBtn = event.target;
+    const syncBtn = event ? event.target : document.querySelector('button[onclick="syncAccounts()"]');
     const originalText = syncBtn.innerHTML;
 
     // 记录操作开始日志

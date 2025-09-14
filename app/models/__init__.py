@@ -11,6 +11,7 @@ from .account_classification import (
     AccountClassificationAssignment,
     ClassificationRule,
 )
+from .classification_batch import ClassificationBatch
 from .credential import Credential
 from .instance import Instance
 from .log import Log
@@ -38,5 +39,6 @@ __all__ = [
     "AccountClassification",
     "ClassificationRule",
     "AccountClassificationAssignment",
+    "ClassificationBatch",
     "PermissionConfig",
 ]

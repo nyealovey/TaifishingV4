@@ -13,7 +13,9 @@ from app.models.account_classification import (
     AccountClassificationAssignment,
     ClassificationRule,
 )
+from app.models.classification_batch import ClassificationBatch
 from app.services.account_classification_service import AccountClassificationService
+from app.services.classification_batch_service import ClassificationBatchService
 from app.utils.decorators import create_required, delete_required, update_required, view_required
 from app.utils.structlog_config import log_error, log_info
 
@@ -396,7 +398,11 @@ def get_matched_accounts(rule_id: int) -> "Response":
 
         all_accounts = (
             Account.query.join(Instance, Account.instance_id == Instance.id)
-            .filter(Instance.db_type == rule.db_type)
+            .filter(
+                Instance.db_type == rule.db_type,
+                Instance.is_active == True,
+                Instance.deleted_at.is_(None)  # 排除已删除的实例
+            )
             .all()
         )
 
@@ -494,24 +500,32 @@ def auto_classify() -> "Response":
     try:
         data = request.get_json()
         instance_id = data.get("instance_id")
+        batch_type = data.get("batch_type", "manual")  # 默认为手动操作
 
-        log_info("开始自动分类账户", module="account_classification", instance_id=instance_id)
+        log_info("开始自动分类账户", module="account_classification", instance_id=instance_id, batch_type=batch_type)
 
         service = AccountClassificationService()
-        result = service.auto_classify_accounts(instance_id)
+        result = service.auto_classify_accounts(
+            instance_id=instance_id,
+            batch_type=batch_type,
+            created_by=current_user.id if current_user.is_authenticated else None
+        )
 
         if result.get("success"):
             log_info(
                 f"自动分类完成: {result.get('message', '分类成功')}",
                 module="account_classification",
                 instance_id=instance_id,
+                batch_id=result.get("batch_id"),
                 classified_count=result.get("classified_count", 0),
+                failed_count=result.get("failed_count", 0),
             )
         else:
             log_error(
                 "自动分类失败",
                 module="account_classification",
                 instance_id=instance_id,
+                batch_id=result.get("batch_id"),
                 error=result.get("error", "未知错误"),
             )
 
@@ -520,7 +534,6 @@ def auto_classify() -> "Response":
 
     except Exception as e:
         log_error("自动分类异常", module="account_classification", instance_id=instance_id, exception=e)
-        log_error("自动分类失败", module="account_classification", instance_id=instance_id, exception=e)
         return jsonify({"success": False, "error": str(e)})
 
 
@@ -588,6 +601,67 @@ def get_permissions(db_type: str) -> "Response":
         return jsonify({"success": True, "permissions": permissions})
 
     except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
+@account_classification_bp.route("/batches")
+@login_required
+@view_required
+def get_batches() -> "Response":
+    """获取自动分类批次列表"""
+    try:
+        batch_type = request.args.get("batch_type")
+        status = request.args.get("status")
+        limit = int(request.args.get("limit", 50))
+        offset = int(request.args.get("offset", 0))
+
+        batches = ClassificationBatchService.get_batches(
+            batch_type=batch_type,
+            status=status,
+            limit=limit,
+            offset=offset
+        )
+
+        result = [batch.to_dict() for batch in batches]
+
+        return jsonify({"success": True, "batches": result})
+
+    except Exception as e:
+        log_error("获取批次列表失败", module="account_classification", error=str(e))
+        return jsonify({"success": False, "error": str(e)})
+
+
+@account_classification_bp.route("/batches/<batch_id>")
+@login_required
+@view_required
+def get_batch(batch_id: str) -> "Response":
+    """获取批次详情"""
+    try:
+        batch = ClassificationBatchService.get_batch(batch_id)
+        if not batch:
+            return jsonify({"success": False, "error": "批次不存在"})
+
+        return jsonify({"success": True, "batch": batch.to_dict()})
+
+    except Exception as e:
+        log_error("获取批次详情失败", module="account_classification", batch_id=batch_id, error=str(e))
+        return jsonify({"success": False, "error": str(e)})
+
+
+@account_classification_bp.route("/batches/<batch_id>/stats")
+@login_required
+@view_required
+def get_batch_stats(batch_id: str) -> "Response":
+    """获取批次统计信息"""
+    try:
+        stats = ClassificationBatchService.get_batch_stats(batch_id)
+        if not stats:
+            return jsonify({"success": False, "error": "批次不存在"})
+
+        return jsonify({"success": True, "stats": stats})
+
+    except Exception as e:
+        log_error("获取批次统计失败", module="account_classification", batch_id=batch_id, error=str(e))
         return jsonify({"success": False, "error": str(e)})
 
 

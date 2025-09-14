@@ -53,4 +53,3 @@ CREATE INDEX IF NOT EXISTS idx_sync_instance_records_instance_id ON sync_instanc
 CREATE INDEX IF NOT EXISTS idx_sync_instance_records_sync_category ON sync_instance_records(sync_category);
 CREATE INDEX IF NOT EXISTS idx_sync_instance_records_status ON sync_instance_records(status);
 CREATE INDEX IF NOT EXISTS idx_sync_instance_records_created_at ON sync_instance_records(created_at);
-

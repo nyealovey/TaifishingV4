@@ -4,13 +4,13 @@
 """
 
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import Any
 
 from app import db
-from app.models.sync_session import SyncSession
-from app.models.sync_instance_record import SyncInstanceRecord
 from app.models.instance import Instance
-from app.utils.structlog_config import get_system_logger, get_sync_logger
+from app.models.sync_instance_record import SyncInstanceRecord
+from app.models.sync_session import SyncSession
+from app.utils.structlog_config import get_sync_logger, get_system_logger
 
 
 class SyncSessionService:
@@ -20,8 +20,7 @@ class SyncSessionService:
         self.system_logger = get_system_logger()
         self.sync_logger = get_sync_logger()
 
-    def create_session(self, sync_type: str, sync_category: str = 'account', 
-                      created_by: int = None) -> SyncSession:
+    def create_session(self, sync_type: str, sync_category: str = "account", created_by: int = None) -> SyncSession:
         """
         创建同步会话
 
@@ -34,11 +33,7 @@ class SyncSessionService:
             SyncSession: 创建的同步会话
         """
         try:
-            session = SyncSession(
-                sync_type=sync_type,
-                sync_category=sync_category,
-                created_by=created_by
-            )
+            session = SyncSession(sync_type=sync_type, sync_category=sync_category, created_by=created_by)
             db.session.add(session)
             db.session.commit()
 
@@ -48,7 +43,7 @@ class SyncSessionService:
                 session_id=session.session_id,
                 sync_type=sync_type,
                 sync_category=sync_category,
-                created_by=created_by
+                created_by=created_by,
             )
 
             return session
@@ -59,11 +54,11 @@ class SyncSessionService:
                 module="sync_session",
                 sync_type=sync_type,
                 sync_category=sync_category,
-                error=str(e)
+                error=str(e),
             )
             raise
 
-    def add_instance_records(self, session_id: str, instance_ids: List[int]) -> List[SyncInstanceRecord]:
+    def add_instance_records(self, session_id: str, instance_ids: list[int]) -> list[SyncInstanceRecord]:
         """
         为会话添加实例记录
 
@@ -86,7 +81,7 @@ class SyncSessionService:
                         session_id=session_id,
                         instance_id=instance_id,
                         instance_name=instance.name,
-                        sync_category='account'  # 默认账户同步
+                        sync_category="account",  # 默认账户同步
                     )
                     db.session.add(record)
                     records.append(record)
@@ -94,21 +89,13 @@ class SyncSessionService:
             db.session.commit()
 
             self.sync_logger.info(
-                "添加实例记录",
-                module="sync_session",
-                session_id=session_id,
-                instance_count=len(records)
+                "添加实例记录", module="sync_session", session_id=session_id, instance_count=len(records)
             )
 
             return records
         except Exception as e:
             db.session.rollback()
-            self.sync_logger.error(
-                "添加实例记录失败",
-                module="sync_session",
-                session_id=session_id,
-                error=str(e)
-            )
+            self.sync_logger.error("添加实例记录失败", module="sync_session", session_id=session_id, error=str(e))
             raise
 
     def start_instance_sync(self, record_id: int) -> bool:
@@ -134,23 +121,24 @@ class SyncSessionService:
                 module="sync_session",
                 session_id=record.session_id,
                 instance_id=record.instance_id,
-                instance_name=record.instance_name
+                instance_name=record.instance_name,
             )
 
             return True
         except Exception as e:
             db.session.rollback()
-            self.sync_logger.error(
-                "开始实例同步失败",
-                module="sync_session",
-                record_id=record_id,
-                error=str(e)
-            )
+            self.sync_logger.error("开始实例同步失败", module="sync_session", record_id=record_id, error=str(e))
             return False
 
-    def complete_instance_sync(self, record_id: int, accounts_synced: int = 0,
-                              accounts_created: int = 0, accounts_updated: int = 0,
-                              accounts_deleted: int = 0, sync_details: Dict[str, Any] = None) -> bool:
+    def complete_instance_sync(
+        self,
+        record_id: int,
+        accounts_synced: int = 0,
+        accounts_created: int = 0,
+        accounts_updated: int = 0,
+        accounts_deleted: int = 0,
+        sync_details: dict[str, Any] = None,
+    ) -> bool:
         """
         完成实例同步
 
@@ -175,7 +163,7 @@ class SyncSessionService:
                 accounts_created=accounts_created,
                 accounts_updated=accounts_updated,
                 accounts_deleted=accounts_deleted,
-                sync_details=sync_details
+                sync_details=sync_details,
             )
             db.session.commit()
 
@@ -191,22 +179,16 @@ class SyncSessionService:
                 accounts_synced=accounts_synced,
                 accounts_created=accounts_created,
                 accounts_updated=accounts_updated,
-                accounts_deleted=accounts_deleted
+                accounts_deleted=accounts_deleted,
             )
 
             return True
         except Exception as e:
             db.session.rollback()
-            self.sync_logger.error(
-                "完成实例同步失败",
-                module="sync_session",
-                record_id=record_id,
-                error=str(e)
-            )
+            self.sync_logger.error("完成实例同步失败", module="sync_session", record_id=record_id, error=str(e))
             return False
 
-    def fail_instance_sync(self, record_id: int, error_message: str,
-                          sync_details: Dict[str, Any] = None) -> bool:
+    def fail_instance_sync(self, record_id: int, error_message: str, sync_details: dict[str, Any] = None) -> bool:
         """
         标记实例同步失败
 
@@ -235,18 +217,13 @@ class SyncSessionService:
                 session_id=record.session_id,
                 instance_id=record.instance_id,
                 instance_name=record.instance_name,
-                error_message=error_message
+                error_message=error_message,
             )
 
             return True
         except Exception as e:
             db.session.rollback()
-            self.sync_logger.error(
-                "标记实例同步失败时出错",
-                module="sync_session",
-                record_id=record_id,
-                error=str(e)
-            )
+            self.sync_logger.error("标记实例同步失败时出错", module="sync_session", record_id=record_id, error=str(e))
             return False
 
     def _update_session_statistics(self, session_id: str):
@@ -257,14 +234,9 @@ class SyncSessionService:
                 session.update_statistics()
                 db.session.commit()
         except Exception as e:
-            self.sync_logger.error(
-                "更新会话统计失败",
-                module="sync_session",
-                session_id=session_id,
-                error=str(e)
-            )
+            self.sync_logger.error("更新会话统计失败", module="sync_session", session_id=session_id, error=str(e))
 
-    def get_session_records(self, session_id: str) -> List[SyncInstanceRecord]:
+    def get_session_records(self, session_id: str) -> list[SyncInstanceRecord]:
         """
         获取会话的所有实例记录
 
@@ -276,7 +248,7 @@ class SyncSessionService:
         """
         return SyncInstanceRecord.get_records_by_session(session_id)
 
-    def get_session_by_id(self, session_id: str) -> Optional[SyncSession]:
+    def get_session_by_id(self, session_id: str) -> SyncSession | None:
         """
         根据ID获取会话
 
@@ -288,7 +260,7 @@ class SyncSessionService:
         """
         return SyncSession.query.filter_by(session_id=session_id).first()
 
-    def get_sessions_by_type(self, sync_type: str, limit: int = 50) -> List[SyncSession]:
+    def get_sessions_by_type(self, sync_type: str, limit: int = 50) -> list[SyncSession]:
         """
         根据类型获取会话列表
 
@@ -301,7 +273,7 @@ class SyncSessionService:
         """
         return SyncSession.get_sessions_by_type(sync_type, limit)
 
-    def get_sessions_by_category(self, sync_category: str, limit: int = 50) -> List[SyncSession]:
+    def get_sessions_by_category(self, sync_category: str, limit: int = 50) -> list[SyncSession]:
         """
         根据分类获取会话列表
 
@@ -314,7 +286,7 @@ class SyncSessionService:
         """
         return SyncSession.get_sessions_by_category(sync_category, limit)
 
-    def get_recent_sessions(self, limit: int = 20) -> List[SyncSession]:
+    def get_recent_sessions(self, limit: int = 20) -> list[SyncSession]:
         """
         获取最近的会话列表
 
@@ -341,27 +313,18 @@ class SyncSessionService:
             if not session:
                 return False
 
-            if session.status == 'running':
-                session.status = 'cancelled'
+            if session.status == "running":
+                session.status = "cancelled"
                 session.completed_at = datetime.utcnow()
                 session.updated_at = datetime.utcnow()
                 db.session.commit()
 
-                self.sync_logger.info(
-                    "取消同步会话",
-                    module="sync_session",
-                    session_id=session_id
-                )
+                self.sync_logger.info("取消同步会话", module="sync_session", session_id=session_id)
 
             return True
         except Exception as e:
             db.session.rollback()
-            self.sync_logger.error(
-                "取消同步会话失败",
-                module="sync_session",
-                session_id=session_id,
-                error=str(e)
-            )
+            self.sync_logger.error("取消同步会话失败", module="sync_session", session_id=session_id, error=str(e))
             return False
 
 

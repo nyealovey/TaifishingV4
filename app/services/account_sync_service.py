@@ -48,23 +48,24 @@ class AccountSyncService:
         """
         try:
             self.sync_logger.info(
-                "开始账户同步", 
-                instance_name=instance.name, 
-                db_type=instance.db_type, 
+                "开始账户同步",
+                module="account_sync",
+                instance_name=instance.name,
+                db_type=instance.db_type,
                 sync_type=sync_type,
-                session_id=session_id
+                session_id=session_id,
             )
 
             # 获取数据库连接
             conn = self._get_connection(instance)
             if not conn:
                 error_msg = "无法获取数据库连接"
-                self.sync_logger.error("无法获取数据库连接", instance_name=instance.name, db_type=instance.db_type)
+                self.sync_logger.error("无法获取数据库连接", module="account_sync", instance_name=instance.name, db_type=instance.db_type)
                 return {"success": False, "error": error_msg}
 
             # 记录同步前的账户数量
             before_count = Account.query.filter_by(instance_id=instance.id).count()
-            self.sync_logger.info("同步前账户统计", instance_name=instance.name, before_count=before_count)
+            self.sync_logger.info("同步前账户统计", module="account_sync", instance_name=instance.name, before_count=before_count)
 
             # 获取同步前的账户快照
             self._get_account_snapshot(instance)
@@ -75,15 +76,15 @@ class AccountSyncService:
             modified_count = 0
 
             # 根据数据库类型执行同步
-            self.sync_logger.info("开始数据库账户同步", instance_name=instance.name, db_type=instance.db_type)
+            self.sync_logger.info("开始数据库账户同步", module="account_sync", instance_name=instance.name, db_type=instance.db_type)
 
             if instance.db_type == "mysql":
                 result = self._sync_mysql_accounts(instance, conn)
             elif instance.db_type == "postgresql":
-                self.sync_logger.info("调用PostgreSQL账户同步函数", instance_name=instance.name)
+                self.sync_logger.info("调用PostgreSQL账户同步函数", module="account_sync", instance_name=instance.name)
                 result = self._sync_postgresql_accounts(instance, conn)
                 self.sync_logger.info(
-                    "PostgreSQL同步完成", instance_name=instance.name, synced_count=result.get("synced_count", 0)
+                    "PostgreSQL同步完成", module="account_sync", instance_name=instance.name, synced_count=result.get("synced_count", 0)
                 )
             elif instance.db_type == "sqlserver":
                 result = self._sync_sqlserver_accounts(instance, conn)
@@ -91,7 +92,7 @@ class AccountSyncService:
                 result = self._sync_oracle_accounts(instance, conn)
             else:
                 error_msg = f"不支持的数据库类型: {instance.db_type}"
-                self.sync_logger.warning("不支持的数据库类型", instance_name=instance.name, db_type=instance.db_type)
+                self.sync_logger.warning("不支持的数据库类型", module="account_sync", instance_name=instance.name, db_type=instance.db_type)
                 return {
                     "success": False,
                     "error": error_msg,
@@ -149,13 +150,13 @@ class AccountSyncService:
                     "sync_type": sync_type,
                     "before_count": before_count,
                     "after_count": after_count,
-                }
+                },
             }
 
         except Exception as e:
             # 记录详细的错误日志
             self.sync_logger.error(
-                "账户同步失败", exception=e, instance_name=instance.name, db_type=instance.db_type, sync_type=sync_type
+                "账户同步失败", module="account_sync", exception=str(e), instance_name=instance.name, db_type=instance.db_type, sync_type=sync_type
             )
 
             # 创建失败的同步报告记录（定时任务跳过单个实例记录，只创建聚合记录）
@@ -195,7 +196,7 @@ class AccountSyncService:
                     "db_type": instance.db_type,
                     "sync_type": sync_type,
                     "exception": str(e),
-                }
+                },
             }
 
     def _get_connection(self, instance: Instance) -> "Any | None":
@@ -207,17 +208,17 @@ class AccountSyncService:
             connection_obj = ConnectionFactory.create_connection(instance)
 
             if not connection_obj:
-                self.sync_logger.error(f"不支持的数据库类型: {instance.db_type}")
+                self.sync_logger.error(f"不支持的数据库类型: {instance.db_type}", module="account_sync")
                 return None
 
             # 建立连接
             if connection_obj.connect():
                 return connection_obj.connection
-            self.sync_logger.error(f"无法建立{instance.db_type}连接")
+            self.sync_logger.error(f"无法建立{instance.db_type}连接", module="account_sync")
             return None
 
         except Exception as e:
-            self.sync_logger.error(f"数据库连接失败: {str(e)}")
+            self.sync_logger.error(f"数据库连接失败: {str(e)}", module="account_sync")
             return None
 
     def _get_sqlserver_pyodbc_connection(self, instance: Instance) -> "str | None":
@@ -627,9 +628,9 @@ class AccountSyncService:
                     account.can_grant = permissions.get("can_grant", False)
                     # 标记有权限更新
                     changes = True
-                    self.sync_logger.info(f"PostgreSQL账户 {username} 权限已更新: {permissions}")
+                    self.sync_logger.info(f"PostgreSQL账户 {username} 权限已更新: {permissions}", module="account_sync")
             except Exception as e:
-                self.sync_logger.warning(f"获取PostgreSQL账户 {username} 权限失败: {e}")
+                self.sync_logger.warning(f"获取PostgreSQL账户 {username} 权限失败: {e}", module="account_sync")
 
         # 删除服务器端不存在的账户
         local_accounts = Account.query.filter_by(instance_id=instance.id).all()
@@ -660,15 +661,15 @@ class AccountSyncService:
         }
 
         try:
-            self.sync_logger.info(f"开始获取PostgreSQL用户 {username} 的权限信息")
+            self.sync_logger.info(f"开始获取PostgreSQL用户 {username} 的权限信息", module="account_sync")
 
             # 首先检查用户是否存在
             cursor.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (username,))
             if not cursor.fetchone():
-                self.sync_logger.warning(f"PostgreSQL用户 {username} 不存在")
+                self.sync_logger.warning(f"PostgreSQL用户 {username} 不存在", module="account_sync")
                 return permissions
 
-            self.sync_logger.info(f"PostgreSQL用户 {username} 存在，继续获取权限")
+            self.sync_logger.info(f"PostgreSQL用户 {username} 存在，继续获取权限", module="account_sync")
 
             # 获取预定义角色成员身份
             try:
@@ -691,7 +692,7 @@ class AccountSyncService:
                         if role and len(role) > 0:
                             permissions["predefined_roles"].append(role[0])
             except Exception as e:
-                self.sync_logger.warning(f"获取PostgreSQL用户 {username} 预定义角色失败: {e}")
+                self.sync_logger.warning(f"获取PostgreSQL用户 {username} 预定义角色失败: {e}", module="account_sync")
 
             # 获取角色属性
             try:
@@ -772,7 +773,7 @@ class AccountSyncService:
                                     {"database": db_name, "privileges": db_privileges}
                                 )
                     except Exception as db_error:
-                        self.sync_logger.debug(f"查询数据库 {db_name} 的权限失败: {db_error}")
+                        self.sync_logger.debug(f"查询数据库 {db_name} 的权限失败: {db_error}", module="account_sync")
                         continue
 
             except Exception as e:
@@ -803,10 +804,10 @@ class AccountSyncService:
             permissions["is_superuser"] = is_superuser
             permissions["can_grant"] = can_grant
 
-            self.sync_logger.info(f"PostgreSQL用户 {username} 权限获取成功: {permissions}")
+            self.sync_logger.info(f"PostgreSQL用户 {username} 权限获取成功: {permissions}", module="account_sync")
 
         except Exception as e:
-            self.sync_logger.error(f"获取PostgreSQL账户 {username} 权限失败: {e}")
+            self.sync_logger.error(f"获取PostgreSQL账户 {username} 权限失败: {e}", module="account_sync")
             # 返回基本权限结构而不是空字典
             permissions["is_superuser"] = False
             permissions["can_grant"] = False
@@ -1116,6 +1117,20 @@ class AccountSyncService:
         cursor = conn.cursor()
 
         try:
+            self.sync_logger.info(f"开始获取MySQL用户 {username}@{host} 的权限信息", module="account_sync")
+            
+            # 首先检查用户是否存在
+            cursor.execute("SELECT 1 FROM mysql.user WHERE User = %s AND Host = %s", (username, host))
+            if not cursor.fetchone():
+                self.sync_logger.warning(f"MySQL用户 {username}@{host} 不存在", module="account_sync")
+                return {
+                    "permissions_json": json.dumps({"global_privileges": [], "database_privileges": []}),
+                    "is_superuser": False,
+                    "can_grant": False,
+                }
+
+            self.sync_logger.info(f"MySQL用户 {username}@{host} 存在，继续获取权限", module="account_sync")
+
             # 获取全局权限 - 使用mysql.user表获取更完整的权限信息
             cursor.execute(
                 """
@@ -1139,6 +1154,8 @@ class AccountSyncService:
 
             user_row = cursor.fetchone()
             if user_row:
+                self.sync_logger.info(f"MySQL用户 {username}@{host} 权限数据获取成功，开始解析权限", module="account_sync")
+                
                 # 定义权限映射
                 privilege_map = {
                     "Select_priv": "SELECT",
@@ -1181,8 +1198,13 @@ class AccountSyncService:
                             is_superuser = True
                         if privilege_name == "GRANT OPTION":
                             can_grant = True
+                
+                self.sync_logger.info(f"MySQL用户 {username}@{host} 全局权限解析完成，共 {len(global_permissions)} 个权限", module="account_sync")
+            else:
+                self.sync_logger.warning(f"MySQL用户 {username}@{host} 权限数据为空", module="account_sync")
 
             # 获取数据库权限
+            self.sync_logger.info(f"开始获取MySQL用户 {username}@{host} 的数据库权限", module="account_sync")
             cursor.execute(
                 """
                 SELECT TABLE_SCHEMA, PRIVILEGE_TYPE
@@ -1194,21 +1216,33 @@ class AccountSyncService:
             )
 
             db_permissions = {}
+            db_permission_count = 0
             for row in cursor.fetchall():
                 schema, privilege = row
                 if schema not in db_permissions:
                     db_permissions[schema] = []
                 db_permissions[schema].append(privilege)
+                db_permission_count += 1
+
+            self.sync_logger.info(f"MySQL用户 {username}@{host} 数据库权限查询完成，共 {db_permission_count} 个权限", module="account_sync")
 
             # 转换为前端需要的格式
             database_permissions = []
             for schema, privileges in db_permissions.items():
                 database_permissions.append({"database": schema, "privileges": privileges})
+            
+            self.sync_logger.info(f"MySQL用户 {username}@{host} 数据库权限格式化完成，涉及 {len(database_permissions)} 个数据库", module="account_sync")
 
             permissions_data = {
                 "global_privileges": global_permissions,
                 "database_privileges": database_permissions,
             }
+
+            # 记录权限获取成功
+            self.sync_logger.info(f"MySQL用户 {username}@{host} 权限获取成功: {permissions_data}", module="account_sync")
+            
+            # 记录权限更新
+            self.sync_logger.info(f"MySQL账户 {username}@{host} 权限已更新: {permissions_data}", module="account_sync")
 
             return {
                 "permissions_json": json.dumps(permissions_data),
@@ -1217,7 +1251,7 @@ class AccountSyncService:
             }
 
         except Exception as e:
-            self.sync_logger.error(f"获取MySQL权限失败: {e}")
+            self.sync_logger.error(f"获取MySQL账户 {username}@{host} 权限失败: {e}", module="account_sync")
             return {
                 "permissions_json": json.dumps({"global_privileges": [], "database_privileges": []}),
                 "is_superuser": False,
@@ -1347,7 +1381,7 @@ class AccountSyncService:
 
                     except Exception as db_error:
                         # 如果某个数据库查询失败，记录日志但继续处理其他数据库
-                        self.sync_logger.debug(f"查询数据库 {db_name} 的权限失败: {db_error}")
+                        self.sync_logger.debug(f"查询数据库 {db_name} 的权限失败: {db_error}", module="account_sync")
                         continue
 
                 # 转换格式
@@ -1389,7 +1423,7 @@ class AccountSyncService:
             }
 
         except Exception as e:
-            self.sync_logger.error(f"获取SQL Server权限失败: {e}")
+            self.sync_logger.error(f"获取SQL Server权限失败: {e}", module="account_sync")
             return {
                 "permissions_json": json.dumps(
                     {
@@ -1498,7 +1532,7 @@ class AccountSyncService:
                 cursor.close()
 
         except Exception as e:
-            self.sync_logger.error(f"获取Oracle权限失败: {e}")
+            self.sync_logger.error(f"获取Oracle权限失败: {e}", module="account_sync")
             return {
                 "permissions_json": json.dumps(
                     {

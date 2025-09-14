@@ -1151,6 +1151,10 @@ def sync_accounts(instance_id: int) -> str | Response | tuple[Response, int]:
 
         flash("账户同步失败，请重试", "error")
 
+    # 如果是AJAX请求，返回JSON响应
+    if request.is_json:
+        return jsonify({"error": "同步失败，请重试"}), 500
+    
     return redirect(url_for("instances.detail", instance_id=instance_id))
 
 

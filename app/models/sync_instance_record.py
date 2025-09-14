@@ -16,26 +16,23 @@ class SyncInstanceRecord(db.Model):
     session_id = db.Column(db.String(36), db.ForeignKey("sync_sessions.session_id"), nullable=False, index=True)
     instance_id = db.Column(db.Integer, db.ForeignKey("instances.id"), nullable=False, index=True)
     instance_name = db.Column(db.String(255))
-    sync_category = db.Column(db.Enum('account', 'capacity', 'config', 'other'), 
-                             nullable=False, default='account')
-    status = db.Column(db.Enum('pending', 'running', 'completed', 'failed'), 
-                      nullable=False, default='pending')
+    sync_category = db.Column(db.Enum("account", "capacity", "config", "other"), nullable=False, default="account")
+    status = db.Column(db.Enum("pending", "running", "completed", "failed"), nullable=False, default="pending")
     started_at = db.Column(db.DateTime)
     completed_at = db.Column(db.DateTime)
-    
+
     # 账户同步统计字段
     accounts_synced = db.Column(db.Integer, default=0)
     accounts_created = db.Column(db.Integer, default=0)
     accounts_updated = db.Column(db.Integer, default=0)
     accounts_deleted = db.Column(db.Integer, default=0)
-    
+
     # 通用字段
     error_message = db.Column(db.Text)
     sync_details = db.Column(db.JSON)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def __init__(self, session_id: str, instance_id: int, instance_name: str = None, 
-                 sync_category: str = 'account'):
+    def __init__(self, session_id: str, instance_id: int, instance_name: str = None, sync_category: str = "account"):
         """
         初始化同步实例记录
 
@@ -49,7 +46,7 @@ class SyncInstanceRecord(db.Model):
         self.instance_id = instance_id
         self.instance_name = instance_name
         self.sync_category = sync_category
-        self.status = 'pending'
+        self.status = "pending"
 
     def to_dict(self):
         """转换为字典"""
@@ -68,19 +65,24 @@ class SyncInstanceRecord(db.Model):
             "accounts_deleted": self.accounts_deleted,
             "error_message": self.error_message,
             "sync_details": self.sync_details,
-            "created_at": self.created_at.isoformat() if self.created_at else None
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
     def start_sync(self):
         """开始同步"""
-        self.status = 'running'
+        self.status = "running"
         self.started_at = datetime.utcnow()
 
-    def complete_sync(self, accounts_synced: int = 0, accounts_created: int = 0,
-                     accounts_updated: int = 0, accounts_deleted: int = 0,
-                     sync_details: dict = None):
+    def complete_sync(
+        self,
+        accounts_synced: int = 0,
+        accounts_created: int = 0,
+        accounts_updated: int = 0,
+        accounts_deleted: int = 0,
+        sync_details: dict = None,
+    ):
         """完成同步"""
-        self.status = 'completed'
+        self.status = "completed"
         self.completed_at = datetime.utcnow()
         self.accounts_synced = accounts_synced
         self.accounts_created = accounts_created
@@ -90,7 +92,7 @@ class SyncInstanceRecord(db.Model):
 
     def fail_sync(self, error_message: str, sync_details: dict = None):
         """同步失败"""
-        self.status = 'failed'
+        self.status = "failed"
         self.completed_at = datetime.utcnow()
         self.error_message = error_message
         self.sync_details = sync_details
@@ -104,15 +106,21 @@ class SyncInstanceRecord(db.Model):
     @staticmethod
     def get_records_by_session(session_id: str):
         """根据会话ID获取所有实例记录"""
-        return SyncInstanceRecord.query.filter_by(session_id=session_id)\
-                                      .order_by(SyncInstanceRecord.created_at.asc()).all()
+        return (
+            SyncInstanceRecord.query.filter_by(session_id=session_id)
+            .order_by(SyncInstanceRecord.created_at.asc())
+            .all()
+        )
 
     @staticmethod
     def get_records_by_instance(instance_id: int, limit: int = 50):
         """根据实例ID获取同步记录"""
-        return SyncInstanceRecord.query.filter_by(instance_id=instance_id)\
-                                      .order_by(SyncInstanceRecord.created_at.desc())\
-                                      .limit(limit).all()
+        return (
+            SyncInstanceRecord.query.filter_by(instance_id=instance_id)
+            .order_by(SyncInstanceRecord.created_at.desc())
+            .limit(limit)
+            .all()
+        )
 
     def __repr__(self):
         return f"<SyncInstanceRecord {self.instance_name} ({self.status})>"

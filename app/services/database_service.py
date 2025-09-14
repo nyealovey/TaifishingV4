@@ -52,7 +52,7 @@ class DatabaseService:
         except Exception as e:
             error_msg = f"连接测试失败: {str(e)}"
             self.db_logger.error(
-                "数据库连接测试异常", exception=e, instance_name=instance.name, db_type=instance.db_type
+                "数据库连接测试异常", exception=str(e), instance_name=instance.name, db_type=instance.db_type
             )
             return {"success": False, "error": error_msg}
 
@@ -205,7 +205,7 @@ class DatabaseService:
                 },
             }
         except Exception as e:
-            self.db_logger.error("账户同步失败", exception=e, instance_name=instance.name, db_type=instance.db_type)
+            self.db_logger.error("账户同步失败", exception=str(e), instance_name=instance.name, db_type=instance.db_type)
 
             # 创建失败的同步报告记录
             from app.models.sync_data import SyncData

@@ -161,7 +161,7 @@ class PostgreSQLConnection(DatabaseConnection):
                 module="connection",
                 instance_id=self.instance.id,
                 db_type="PostgreSQL",
-                exception=e,
+                exception=str(e),
             )
             return False
 
@@ -176,7 +176,7 @@ class PostgreSQLConnection(DatabaseConnection):
                     module="connection",
                     instance_id=self.instance.id,
                     db_type="PostgreSQL",
-                    exception=e,
+                    exception=str(e),
                 )
             finally:
                 self.connection = None
@@ -256,7 +256,7 @@ class SQLServerConnection(DatabaseConnection):
                 module="connection",
                 instance_id=self.instance.id,
                 db_type="SQL Server",
-                exception=e,
+                exception=str(e),
             )
             return False
 
@@ -271,7 +271,7 @@ class SQLServerConnection(DatabaseConnection):
                     module="connection",
                     instance_id=self.instance.id,
                     db_type="SQL Server",
-                    exception=e,
+                    exception=str(e),
                 )
             finally:
                 self.connection = None
@@ -392,7 +392,7 @@ class OracleConnection(DatabaseConnection):
                     module="connection",
                     instance_id=self.instance.id,
                     db_type="Oracle",
-                    exception=e,
+                    exception=str(e),
                 )
             finally:
                 self.connection = None

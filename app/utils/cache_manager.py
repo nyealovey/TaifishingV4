@@ -37,7 +37,7 @@ class CacheManager:
         try:
             return self.cache.get(key)
         except Exception as e:
-            self.self.system_logger.warning("获取缓存失败", module="cache", key=key, exception=e)
+            self.system_logger.warning("获取缓存失败", module="cache", key=key, exception=str(e))
             return None
 
     def set(self, key: str, value: Any, timeout: int | None = None) -> bool:
@@ -47,7 +47,7 @@ class CacheManager:
             self.cache.set(key, value, timeout=timeout)
             return True
         except Exception as e:
-            self.self.system_logger.warning("设置缓存失败", module="cache", key=key, exception=e)
+            self.system_logger.warning("设置缓存失败", module="cache", key=key, exception=str(e))
             return False
 
     def delete(self, key: str) -> bool:
@@ -300,5 +300,5 @@ def warm_up_cache() -> "bool | None":
         return True
     except Exception as e:
         system_logger = get_system_logger()
-        system_logger.error("缓存预热失败", module="cache", exception=e)
+        system_logger.error("缓存预热失败", module="cache", exception=str(e))
         return False

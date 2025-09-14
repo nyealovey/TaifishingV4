@@ -15,11 +15,9 @@ class SyncSession(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     session_id = db.Column(db.String(36), unique=True, nullable=False, index=True)
-    sync_type = db.Column(db.Enum('scheduled', 'manual_batch'), nullable=False)
-    sync_category = db.Column(db.Enum('account', 'capacity', 'config', 'other'), 
-                             nullable=False, default='account')
-    status = db.Column(db.Enum('running', 'completed', 'failed', 'cancelled'), 
-                      nullable=False, default='running')
+    sync_type = db.Column(db.Enum("scheduled", "manual_batch"), nullable=False)
+    sync_category = db.Column(db.Enum("account", "capacity", "config", "other"), nullable=False, default="account")
+    status = db.Column(db.Enum("running", "completed", "failed", "cancelled"), nullable=False, default="running")
     started_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
     total_instances = db.Column(db.Integer, default=0)
@@ -30,9 +28,11 @@ class SyncSession(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # 关系
-    instance_records = db.relationship("SyncInstanceRecord", backref="session", lazy="dynamic", cascade="all, delete-orphan")
+    instance_records = db.relationship(
+        "SyncInstanceRecord", backref="session", lazy="dynamic", cascade="all, delete-orphan"
+    )
 
-    def __init__(self, sync_type: str, sync_category: str = 'account', created_by: int = None):
+    def __init__(self, sync_type: str, sync_category: str = "account", created_by: int = None):
         """
         初始化同步会话
 
@@ -44,7 +44,7 @@ class SyncSession(db.Model):
         self.session_id = str(uuid.uuid4())
         self.sync_type = sync_type
         self.sync_category = sync_category
-        self.status = 'running'
+        self.status = "running"
         self.started_at = datetime.utcnow()
         self.created_by = created_by
 
@@ -63,24 +63,24 @@ class SyncSession(db.Model):
             "failed_instances": self.failed_instances,
             "created_by": self.created_by,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
     def update_statistics(self):
         """更新统计信息"""
         records = self.instance_records.all()
         self.total_instances = len(records)
-        self.successful_instances = len([r for r in records if r.status == 'completed'])
-        self.failed_instances = len([r for r in records if r.status == 'failed'])
-        
+        self.successful_instances = len([r for r in records if r.status == "completed"])
+        self.failed_instances = len([r for r in records if r.status == "failed"])
+
         # 更新状态
         if self.failed_instances == 0:
-            self.status = 'completed'
+            self.status = "completed"
         elif self.successful_instances == 0:
-            self.status = 'failed'
+            self.status = "failed"
         else:
-            self.status = 'failed'  # 部分失败也算失败
-        
+            self.status = "failed"  # 部分失败也算失败
+
         self.completed_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
 
@@ -94,16 +94,19 @@ class SyncSession(db.Model):
     @staticmethod
     def get_sessions_by_type(sync_type: str, limit: int = 50):
         """根据类型获取会话列表"""
-        return SyncSession.query.filter_by(sync_type=sync_type)\
-                               .order_by(SyncSession.created_at.desc())\
-                               .limit(limit).all()
+        return (
+            SyncSession.query.filter_by(sync_type=sync_type).order_by(SyncSession.created_at.desc()).limit(limit).all()
+        )
 
     @staticmethod
     def get_sessions_by_category(sync_category: str, limit: int = 50):
         """根据分类获取会话列表"""
-        return SyncSession.query.filter_by(sync_category=sync_category)\
-                               .order_by(SyncSession.created_at.desc())\
-                               .limit(limit).all()
+        return (
+            SyncSession.query.filter_by(sync_category=sync_category)
+            .order_by(SyncSession.created_at.desc())
+            .limit(limit)
+            .all()
+        )
 
     def __repr__(self):
         return f"<SyncSession {self.session_id} ({self.sync_type}-{self.sync_category})>"

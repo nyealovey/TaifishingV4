@@ -250,7 +250,7 @@ def sync_records() -> str | Response:
 def sync_all_accounts() -> str | Response | tuple[Response, int]:
     """同步所有实例的账户（使用新的会话管理架构）"""
     from app.services.sync_session_service import sync_session_service
-    
+
     try:
         log_info("开始同步所有账户", module="account_sync", user_id=current_user.id)
 
@@ -263,9 +263,7 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
 
         # 创建同步会话
         session = sync_session_service.create_session(
-            sync_type='manual_batch',
-            sync_category='account',
-            created_by=current_user.id
+            sync_type="manual_batch", sync_category="account", created_by=current_user.id
         )
 
         log_info(
@@ -273,7 +271,7 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
             module="account_sync",
             session_id=session.session_id,
             user_id=current_user.id,
-            instance_count=len(instances)
+            instance_count=len(instances),
         )
 
         # 添加实例记录
@@ -294,15 +292,19 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
                 # 开始实例同步
                 sync_session_service.start_instance_sync(record.id)
 
-                log_info(f"开始同步实例: {instance.name}", module="account_sync", 
-                        session_id=session.session_id, instance_id=instance.id)
+                log_info(
+                    f"开始同步实例: {instance.name}",
+                    module="account_sync",
+                    session_id=session.session_id,
+                    instance_id=instance.id,
+                )
 
                 # 使用统一的账户同步服务
                 result = account_sync_service.sync_accounts(instance, sync_type="batch", session_id=session.session_id)
 
                 if result["success"]:
                     success_count += 1
-                    
+
                     # 完成实例同步
                     sync_session_service.complete_instance_sync(
                         record.id,
@@ -310,7 +312,7 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
                         accounts_created=result.get("added_count", 0),
                         accounts_updated=result.get("modified_count", 0),
                         accounts_deleted=result.get("removed_count", 0),
-                        sync_details=result.get("details", {})
+                        sync_details=result.get("details", {}),
                     )
 
                     log_info(
@@ -320,7 +322,7 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
                         instance_id=instance.id,
                         synced_count=result.get("synced_count", 0),
                     )
-                    
+
                     # 记录同步成功（保持向后兼容）
                     sync_record = SyncData(  # type: ignore
                         instance_id=instance.id,
@@ -331,17 +333,15 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
                         added_count=result.get("added_count", 0),
                         removed_count=result.get("removed_count", 0),
                         modified_count=result.get("modified_count", 0),
-                        data={"session_id": session.session_id}
+                        data={"session_id": session.session_id},
                     )
                     db.session.add(sync_record)
                 else:
                     failed_count += 1
-                    
+
                     # 标记实例同步失败
                     sync_session_service.fail_instance_sync(
-                        record.id,
-                        error_message=result.get("error", "同步失败"),
-                        sync_details=result.get("details", {})
+                        record.id, error_message=result.get("error", "同步失败"), sync_details=result.get("details", {})
                     )
 
                     log_error(
@@ -351,7 +351,7 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
                         instance_id=instance.id,
                         error=result.get("error", "同步失败"),
                     )
-                    
+
                     # 记录同步失败（保持向后兼容）
                     sync_record = SyncData(  # type: ignore
                         instance_id=instance.id,
@@ -359,7 +359,7 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
                         status="failed",
                         message=result.get("error", "同步失败"),
                         synced_count=0,
-                        data={"session_id": session.session_id}
+                        data={"session_id": session.session_id},
                     )
                     db.session.add(sync_record)
 
@@ -374,23 +374,21 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
 
             except Exception as e:
                 failed_count += 1
-                
+
                 # 标记实例同步失败
                 if record:
                     sync_session_service.fail_instance_sync(
-                        record.id,
-                        error_message=str(e),
-                        sync_details={"exception": str(e)}
+                        record.id, error_message=str(e), sync_details={"exception": str(e)}
                     )
 
                 log_error(
-                    f"实例同步异常: {instance.name}", 
-                    module="account_sync", 
+                    f"实例同步异常: {instance.name}",
+                    module="account_sync",
                     session_id=session.session_id,
-                    instance_id=instance.id, 
-                    error=str(e)
+                    instance_id=instance.id,
+                    error=str(e),
                 )
-                
+
                 # 记录同步失败（保持向后兼容）
                 sync_record = SyncData(  # type: ignore
                     instance_id=instance.id,
@@ -398,7 +396,7 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
                     status="failed",
                     message=f"同步失败: {str(e)}",
                     synced_count=0,
-                    data={"session_id": session.session_id}
+                    data={"session_id": session.session_id},
                 )
                 db.session.add(sync_record)
 
@@ -458,7 +456,7 @@ def sync_all_accounts() -> str | Response | tuple[Response, int]:
             module="account_sync",
             operation="sync_all_accounts",
             user_id=current_user.id if current_user else None,
-            exception=e,
+            exception=str(e),
         )
 
         return (
