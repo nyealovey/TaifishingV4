@@ -162,7 +162,6 @@
                                     <th>分类</th>
                                     <th>匹配规则</th>
                                     <th>命中权限</th>
-                                    <th>账户权限</th>
                                     <th>匹配时间</th>
                                 </tr>
                             </thead>
@@ -472,20 +471,6 @@ function displayMatches(batchId, matches) {
                         ? match.matched_permissions.map(perm => `
                             <div class="mb-1">
                                 <span class="badge bg-success">${perm.name}</span>
-                                ${perm.category ? `<br><small class="text-muted">${perm.category}</small>` : ''}
-                                ${perm.description ? `<br><small class="text-muted">${perm.description}</small>` : ''}
-                            </div>
-                        `).join('')
-                        : '<small class="text-muted">无权限信息</small>'
-                    }
-                </div>
-            </td>
-            <td>
-                <div style="max-height: 150px; overflow-y: auto;">
-                    ${match.account_permissions && match.account_permissions.length > 0 
-                        ? match.account_permissions.map(perm => `
-                            <div class="mb-1">
-                                <span class="badge ${perm.granted ? 'bg-primary' : 'bg-secondary'}">${perm.name}</span>
                                 ${perm.category ? `<br><small class="text-muted">${perm.category}</small>` : ''}
                                 ${perm.description ? `<br><small class="text-muted">${perm.description}</small>` : ''}
                             </div>

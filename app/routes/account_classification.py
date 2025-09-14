@@ -695,6 +695,12 @@ def api_get_batch_matches(batch_id: str) -> "Response":
         from app.models.instance import Instance
         import json
         
+        # 获取批次信息
+        from app.models.classification_batch import ClassificationBatch
+        batch = ClassificationBatch.query.filter_by(batch_id=batch_id).first()
+        if not batch:
+            return jsonify({"success": False, "message": "批次不存在"})
+        
         # 获取该批次的所有匹配记录
         assignments = db.session.query(
             AccountClassificationAssignment,
@@ -782,7 +788,7 @@ def api_get_batch_matches(batch_id: str) -> "Response":
                 "rule_id": rule.id if rule else None,
                 "rule_name": rule.rule_name if rule else "无规则",
                 "rule_description": rule.rule_expression if rule else "无规则表达式",
-                "matched_at": assignment.created_at.isoformat() if assignment.created_at else None,
+                "matched_at": batch.started_at.isoformat() if batch.started_at else None,
                 "confidence": getattr(assignment, 'confidence_score', None),
                 "account_permissions": account_permissions,
                 "matched_permissions": matched_permissions,
