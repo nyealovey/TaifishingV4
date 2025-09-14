@@ -924,14 +924,8 @@ class DatabaseService:
 
             # 建立连接
             if connection_obj.connect():
-                conn = connection_obj.connection
-            else:
-                log_error(f"无法建立{instance.db_type}连接", module="database")
-                return None
-
-            if conn:
-                # 存储连接
-                self.connections[instance.id] = conn
+                # 存储增强连接对象而不是原始连接
+                self.connections[instance.id] = connection_obj
                 self.db_logger.info(
                     "数据库连接成功",
                     module="database",
@@ -940,8 +934,10 @@ class DatabaseService:
                     db_type=instance.db_type,
                     host=instance.host,
                 )
-
-            return conn
+                return connection_obj
+            else:
+                log_error(f"无法建立{instance.db_type}连接", module="database")
+                return None
 
         except Exception as e:
             log_error(e, module="database", context={"instance_id": instance.id, "instance_name": instance.name})
@@ -996,11 +992,12 @@ class DatabaseService:
             if instance.id in self.connections:
                 conn = self.connections[instance.id]
                 if conn:
-                    # 确保连接被正确关闭
-                    if hasattr(conn, "close"):
-                        conn.close()
-                    elif hasattr(conn, "disconnect"):
+                    # 如果是增强连接对象，调用disconnect方法
+                    if hasattr(conn, "disconnect"):
                         conn.disconnect()
+                    # 如果是原始连接对象，调用close方法
+                    elif hasattr(conn, "close"):
+                        conn.close()
                 del self.connections[instance.id]
                 self.db_logger.info(
                     "数据库连接关闭",
