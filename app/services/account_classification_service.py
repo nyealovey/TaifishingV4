@@ -403,7 +403,8 @@ class AccountClassificationService:
                 batch_type=batch_type, created_by=created_by, total_rules=len(rules), active_rules=len(rules)
             )
 
-            classified_count = 0
+            classified_accounts = 0  # 实际匹配的账户数（去重）
+            total_matches = 0  # 总匹配次数
             failed_count = 0
             errors = []
 
@@ -425,7 +426,7 @@ class AccountClassificationService:
                     )
 
                     # 应用规则进行自动分类
-                    classified = False
+                    account_matched = False
                     for rule in account_rules:
                         if self._evaluate_rule(account, rule):
                             # 分配分类
@@ -438,8 +439,10 @@ class AccountClassificationService:
                                 batch_id,  # batch_id
                             )
                             if result["success"]:
-                                classified_count += 1
-                                classified = True
+                                total_matches += 1
+                                if not account_matched:
+                                    classified_accounts += 1
+                                    account_matched = True
                                 log_info(
                                     f"账户 {account.username} 按优先级 {rule.classification.priority if rule.classification else 0} 的规则 {rule.rule_name} 分类到 {rule.classification.name if rule.classification else '未知分类'}",
                                     module="account_classification",
@@ -469,7 +472,7 @@ class AccountClassificationService:
             ClassificationBatchService.update_batch_stats(
                 batch_id=batch_id,
                 total_accounts=len(accounts),
-                matched_accounts=classified_count,
+                matched_accounts=classified_accounts,  # 使用实际匹配的账户数
                 failed_accounts=failed_count,
             )
 
@@ -491,16 +494,18 @@ class AccountClassificationService:
                 module="account_classification",
                 batch_id=batch_id,
                 instance_id=instance_id,
-                classified_count=classified_count,
+                classified_accounts=classified_accounts,
+                total_matches=total_matches,
                 failed_count=failed_count,
                 total_accounts=len(accounts),
             )
 
             return {
                 "success": True,
-                "message": f"自动分类完成，成功分类 {classified_count} 个账户",
+                "message": f"自动分类完成，成功分类 {classified_accounts} 个账户，共 {total_matches} 次匹配",
                 "batch_id": batch_id,
-                "classified_count": classified_count,
+                "classified_accounts": classified_accounts,
+                "total_matches": total_matches,
                 "failed_count": failed_count,
                 "total_accounts": len(accounts),
                 "errors": errors,
