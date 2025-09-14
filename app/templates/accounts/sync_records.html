@@ -561,7 +561,7 @@ function showFailedDetailsModal(details) {
                                                 <small class="text-danger">${result.message || '未知错误'}</small>
                                             </td>
                                             <td>
-                                                <small class="text-muted">${result.sync_time ? new Date(result.sync_time).toLocaleString() : '-'}</small>
+                                                <small class="text-muted">${result.sync_time ? formatChinaTime(result.sync_time) : '-'}</small>
                                             </td>
                                         </tr>
                                     `).join('')}
@@ -589,6 +589,33 @@ function showFailedDetailsModal(details) {
     // 显示模态框
     const modal = new bootstrap.Modal(document.getElementById('failedDetailsModal'));
     modal.show();
+}
+
+// 格式化中国时区时间
+function formatChinaTime(dt) {
+    if (!dt) return '-';
+    
+    try {
+        // 如果是ISO格式字符串，解析为Date对象
+        const date = new Date(dt);
+        if (isNaN(date.getTime())) return '-';
+        
+        // 转换为中国时区（UTC+8）
+        const chinaTime = new Date(date.getTime() + (8 * 60 * 60 * 1000));
+        
+        // 格式化为 YYYY-MM-DD HH:mm:ss
+        const year = chinaTime.getUTCFullYear();
+        const month = String(chinaTime.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(chinaTime.getUTCDate()).padStart(2, '0');
+        const hours = String(chinaTime.getUTCHours()).padStart(2, '0');
+        const minutes = String(chinaTime.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(chinaTime.getUTCSeconds()).padStart(2, '0');
+        
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    } catch (e) {
+        console.error('时间格式化错误:', e);
+        return '-';
+    }
 }
 
 </script>
