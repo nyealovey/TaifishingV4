@@ -1,0 +1,272 @@
+/* 泰摸鱼吧 - 实例详情页面样式 */
+
+/* 时间线样式 */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -35px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.timeline-marker.success {
+    background: var(--success-color);
+}
+
+.timeline-marker.error {
+    background: var(--danger-color);
+}
+
+.timeline-marker.warning {
+    background: var(--warning-color);
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid var(--primary-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.timeline-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.timeline-content.success {
+    border-left-color: var(--success-color);
+    background: rgba(40, 167, 69, 0.05);
+}
+
+.timeline-content.error {
+    border-left-color: var(--danger-color);
+    background: rgba(220, 53, 69, 0.05);
+}
+
+.timeline-content.warning {
+    border-left-color: var(--warning-color);
+    background: rgba(255, 193, 7, 0.05);
+}
+
+/* 连接状态指示器 */
+.connection-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.connection-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.connection-status-dot.success {
+    background: var(--success-color);
+}
+
+.connection-status-dot.error {
+    background: var(--danger-color);
+}
+
+.connection-status-dot.warning {
+    background: var(--warning-color);
+}
+
+.connection-status-dot.testing {
+    background: var(--info-color);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* 实例详情卡片 */
+.instance-detail-card {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.instance-detail-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 20px;
+}
+
+.instance-detail-body {
+    padding: 25px;
+}
+
+/* 测试结果样式 */
+.test-result-container {
+    margin-top: 20px;
+}
+
+.test-result-success {
+    border-left: 4px solid var(--success-color);
+    background: rgba(40, 167, 69, 0.1);
+    padding: 15px;
+    border-radius: 0 8px 8px 0;
+}
+
+.test-result-error {
+    border-left: 4px solid var(--danger-color);
+    background: rgba(220, 53, 69, 0.1);
+    padding: 15px;
+    border-radius: 0 8px 8px 0;
+}
+
+/* 操作按钮组 */
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.action-buttons .btn {
+    flex: 1;
+    min-width: 120px;
+}
+
+@media (max-width: 768px) {
+    .action-buttons .btn {
+        flex: 1 1 100%;
+    }
+}
+
+/* 统计信息卡片 */
+.stats-info-card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.stats-info-card h5 {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 15px;
+}
+
+.stats-info-card .stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stats-info-card .stat-item:last-child {
+    border-bottom: none;
+}
+
+.stats-info-card .stat-label {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.stats-info-card .stat-value {
+    color: white;
+    font-weight: 600;
+}
+
+/* 数据库信息展示 */
+.db-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.db-info-item {
+    background: rgba(0,0,0,0.05);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid var(--primary-color);
+}
+
+.db-info-label {
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    text-transform: uppercase;
+}
+
+.db-info-value {
+    font-size: 1.1em;
+    color: #333;
+    word-break: break-all;
+}
+
+/* 同步历史表格 */
+.sync-history-table {
+    margin-top: 20px;
+}
+
+.sync-history-table .table {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.sync-history-table .table th {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border: none;
+    font-weight: 600;
+    text-align: center;
+}
+
+.sync-history-table .table td {
+    vertical-align: middle;
+    text-align: center;
+    border-color: rgba(0,0,0,0.05);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .timeline {
+        padding-left: 20px;
+    }
+    
+    .timeline-marker {
+        left: -25px;
+    }
+    
+    .instance-detail-header {
+        padding: 15px;
+    }
+    
+    .instance-detail-body {
+        padding: 20px;
+    }
+    
+    .db-info-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}

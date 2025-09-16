@@ -1,0 +1,361 @@
+/* 泰摸鱼吧 - 实例统计页面样式 */
+
+/* 统计卡片样式 */
+.statistics-card {
+    border-radius: 12px;
+    border: none;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.statistics-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.statistics-card.bg-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+}
+
+.statistics-card.bg-success {
+    background: linear-gradient(135deg, var(--success-color), #20c997) !important;
+}
+
+.statistics-card.bg-warning {
+    background: linear-gradient(135deg, var(--warning-color), #fd7e14) !important;
+}
+
+.statistics-card.bg-info {
+    background: linear-gradient(135deg, var(--info-color), #6f42c1) !important;
+}
+
+.statistics-card .card-body {
+    padding: 25px 20px;
+    text-align: center;
+}
+
+.statistics-card .card-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.statistics-card .card-text {
+    font-size: 1rem;
+    font-weight: 500;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.statistics-card .card-icon {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 2rem;
+    opacity: 0.3;
+}
+
+/* 图表容器样式 */
+.chart-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow: hidden;
+    border: none;
+}
+
+.chart-container .card-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border: none;
+    padding: 20px;
+    font-weight: 600;
+}
+
+.chart-container .card-body {
+    padding: 30px 20px;
+    position: relative;
+}
+
+.chart-canvas {
+    width: 100% !important;
+    height: 300px !important;
+}
+
+/* 空图表状态 */
+.chart-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: #6c757d;
+}
+
+.chart-empty i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: #dee2e6;
+}
+
+.chart-empty h5 {
+    margin-bottom: 10px;
+    color: #6c757d;
+}
+
+.chart-empty p {
+    color: #adb5bd;
+    text-align: center;
+}
+
+/* 刷新按钮样式 */
+.refresh-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+}
+
+.refresh-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.refresh-button:active {
+    transform: translateY(0);
+}
+
+/* 图表图例优化 */
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(0,0,0,0.02);
+    border-radius: 8px;
+}
+
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.chart-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* 统计概览区域 */
+.statistics-overview {
+    margin-bottom: 30px;
+}
+
+.statistics-overview .row {
+    margin: -10px;
+}
+
+.statistics-overview .col-md-3 {
+    padding: 10px;
+}
+
+/* 版本分布区域 */
+.version-distribution {
+    margin-top: 30px;
+}
+
+/* 加载动画 */
+.statistics-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+}
+
+.statistics-loading .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    color: var(--primary-color);
+}
+
+.statistics-loading-text {
+    margin-top: 15px;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* 数据更新指示器 */
+.data-updated-indicator {
+    position: fixed;
+    top: 90px;
+    right: 20px;
+    background: var(--success-color);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 500;
+    z-index: 1000;
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* 导出按钮样式 */
+.export-button {
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.export-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 工具提示优化 */
+.statistics-tooltip {
+    background: rgba(0, 0, 0, 0.9) !important;
+    border: none !important;
+    border-radius: 6px !important;
+    color: white !important;
+    font-size: 0.8rem !important;
+    padding: 8px 12px !important;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .statistics-card .card-title {
+        font-size: 2rem;
+    }
+    
+    .statistics-card .card-body {
+        padding: 20px 15px;
+    }
+    
+    .chart-container .card-body {
+        padding: 20px 15px;
+    }
+    
+    .chart-canvas {
+        height: 250px !important;
+    }
+    
+    .refresh-button {
+        position: static;
+        width: 100%;
+        margin-top: 15px;
+    }
+    
+    .chart-legend {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .statistics-card .card-title {
+        font-size: 1.8rem;
+    }
+    
+    .statistics-card .card-text {
+        font-size: 0.9rem;
+    }
+    
+    .chart-empty {
+        height: 200px;
+    }
+    
+    .chart-empty i {
+        font-size: 2rem;
+    }
+    
+    .chart-canvas {
+        height: 200px !important;
+    }
+    
+    .statistics-overview .col-md-3 {
+        margin-bottom: 15px;
+    }
+}
+
+/* 深色主题支持 */
+@media (prefers-color-scheme: dark) {
+    .chart-container {
+        background: rgba(33, 37, 41, 0.95);
+        color: #f8f9fa;
+    }
+    
+    .chart-legend {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .chart-empty {
+        color: #adb5bd;
+    }
+    
+    .chart-empty i {
+        color: #495057;
+    }
+}
+
+/* 动画效果 */
+.statistics-card {
+    animation: fadeInUp 0.6s ease;
+}
+
+.statistics-card:nth-child(1) { animation-delay: 0.1s; }
+.statistics-card:nth-child(2) { animation-delay: 0.2s; }
+.statistics-card:nth-child(3) { animation-delay: 0.3s; }
+.statistics-card:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
