@@ -1,0 +1,401 @@
+/* 泰摸鱼吧 - 账户列表页面样式 */
+
+/* 数据库类型筛选按钮样式优化 */
+.btn-group .btn-outline-primary {
+    color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    font-weight: 600 !important;
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-group .btn-outline-primary:hover {
+    color: white !important;
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
+}
+
+.btn-group .btn-primary {
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
+    border-radius: 8px;
+}
+
+.btn-group .btn {
+    transition: all 0.2s ease-in-out;
+    min-width: 100px;
+    font-weight: 500;
+    border-radius: 8px !important;
+}
+
+/* 权限按钮样式优化 */
+.btn-outline-primary.btn-sm {
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    background-color: transparent;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 3px rgba(102, 126, 234, 0.1);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-primary.btn-sm:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.2);
+}
+
+.btn-outline-primary.btn-sm:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-outline-primary.btn-sm i {
+    font-size: 0.7rem;
+    margin-right: 3px;
+}
+
+/* 账户表格样式优化 */
+.accounts-table {
+    font-size: 0.9rem;
+}
+
+.accounts-table th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #333;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border: none;
+    padding: 12px 8px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.accounts-table td {
+    font-size: 0.85rem;
+    padding: 10px 8px;
+    vertical-align: middle;
+    border-color: rgba(0,0,0,0.05);
+}
+
+.accounts-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.accounts-table tbody tr:hover {
+    background: rgba(102, 126, 234, 0.05);
+    transform: scale(1.005);
+}
+
+/* 账户名称样式 */
+.account-name {
+    display: flex;
+    align-items: center;
+}
+
+.account-name i {
+    font-size: 0.8rem;
+    margin-right: 5px;
+    color: var(--primary-color);
+}
+
+.account-name strong {
+    font-size: 0.85rem;
+    color: #333;
+    font-weight: 600;
+}
+
+/* 实例信息样式 */
+.instance-info {
+    display: flex;
+    align-items: center;
+}
+
+.instance-info i {
+    font-size: 0.8rem;
+    margin-right: 5px;
+    color: var(--info-color);
+}
+
+.instance-info span {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+/* 主机地址标签 */
+.host-badge {
+    font-size: 0.7rem !important;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    font-weight: 500;
+}
+
+/* 状态徽章样式 */
+.status-badge {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.status-badge.bg-success {
+    background: linear-gradient(135deg, var(--success-color), #20c997) !important;
+}
+
+.status-badge.bg-danger {
+    background: linear-gradient(135deg, var(--danger-color), #e83e8c) !important;
+}
+
+.status-badge.bg-warning {
+    background: linear-gradient(135deg, var(--warning-color), #fd7e14) !important;
+}
+
+/* 分类徽章样式 */
+.classification-badge {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+    background: rgba(102, 126, 234, 0.1);
+    color: var(--primary-color);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+/* 操作按钮容器 */
+.action-buttons {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.action-buttons .btn {
+    margin: 1px;
+    min-width: auto;
+}
+
+/* 筛选器样式 */
+.filter-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.filter-section .card-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-weight: 600;
+}
+
+.filter-section .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.filter-section .form-control,
+.filter-section .form-select {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.filter-section .form-control:focus,
+.filter-section .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* 搜索按钮样式 */
+.search-buttons .btn {
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.search-buttons .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* 分页样式 */
+.pagination {
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.pagination .page-link {
+    border-radius: 8px;
+    margin: 0 2px;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.pagination .page-link:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-color: var(--primary-color);
+    color: white;
+}
+
+/* 空状态样式 */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    color: #dee2e6;
+}
+
+.empty-state h5 {
+    color: #6c757d;
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    color: #adb5bd;
+    margin-bottom: 20px;
+}
+
+.empty-state .btn {
+    border-radius: 10px;
+    padding: 10px 25px;
+    font-weight: 600;
+}
+
+/* 加载状态 */
+.loading-accounts {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.loading-accounts .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    color: var(--primary-color);
+}
+
+/* 统计信息卡片 */
+.stats-summary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.stats-summary .stat-item {
+    text-align: center;
+    padding: 10px;
+}
+
+.stats-summary .stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 5px;
+}
+
+.stats-summary .stat-label {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .accounts-table th,
+    .accounts-table td {
+        font-size: 0.75rem;
+        padding: 8px 4px;
+    }
+    
+    .account-name strong {
+        font-size: 0.8rem;
+    }
+    
+    .instance-info span {
+        font-size: 0.75rem;
+    }
+    
+    .host-badge {
+        font-size: 0.65rem !important;
+        padding: 2px 6px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+        font-size: 0.7rem;
+        padding: 3px 6px;
+    }
+    
+    .filter-section {
+        padding: 15px;
+    }
+    
+    .btn-group .btn {
+        min-width: 80px;
+        font-size: 0.8rem;
+        padding: 6px 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .accounts-table {
+        font-size: 0.8rem;
+    }
+    
+    .accounts-table th,
+    .accounts-table td {
+        font-size: 0.7rem;
+        padding: 6px 3px;
+    }
+    
+    .action-buttons .btn {
+        font-size: 0.65rem;
+        padding: 2px 4px;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+    }
+    
+    .empty-state {
+        padding: 30px 15px;
+    }
+}

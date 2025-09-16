@@ -190,7 +190,7 @@ class DatabaseService:
 
     def sync_accounts(self, instance: Instance, sync_type: str = "manual_single") -> dict[str, Any]:
         """
-        同步账户信息 - 使用优化同步模型
+        同步账户信息 - 委托给统一同步服务
 
         Args:
             instance: 数据库实例
@@ -199,82 +199,10 @@ class DatabaseService:
         Returns:
             Dict: 同步结果
         """
-        try:
-            import uuid
-
-            from app.services.sync_data_manager import SyncDataManager
-            from app.utils.timezone import now
-
-            self.db_logger.info("开始同步账户", instance_name=instance.name, db_type=instance.db_type)
-
-            # 获取数据库连接
-            conn = self.get_connection(instance)
-            if not conn:
-                self.db_logger.error("无法获取数据库连接", instance_name=instance.name)
-                return {"success": False, "error": "无法获取数据库连接"}
-
-            # 获取数据库版本信息
-            version_info = self.get_database_version(instance, conn)
-            if version_info and version_info != instance.database_version:
-                from app import db
-                from app.utils.version_parser import DatabaseVersionParser
-
-                # 解析版本信息
-                parsed = DatabaseVersionParser.parse_version(instance.db_type.lower(), version_info)
-                
-                # 更新实例的版本信息
-                instance.database_version = parsed['original']
-                instance.main_version = parsed['main_version']
-                instance.detailed_version = parsed['detailed_version']
-                
-                db.session.commit()
-
-            # 使用SyncDataManager进行同步
-            session_id = str(uuid.uuid4())
-            sync_manager = SyncDataManager()
-
-            # 根据数据库类型执行同步
-            if instance.db_type == "mysql":
-                result = sync_manager.sync_mysql_accounts(instance, conn, session_id)
-            elif instance.db_type == "postgresql":
-                result = sync_manager.sync_postgresql_accounts(instance, conn, session_id)
-            elif instance.db_type == "sqlserver":
-                result = sync_manager.sync_sqlserver_accounts(instance, conn, session_id)
-            elif instance.db_type == "oracle":
-                result = sync_manager.sync_oracle_accounts(instance, conn, session_id)
-            else:
-                return {
-                    "success": False,
-                    "error": f"不支持的数据库类型: {instance.db_type}",
-                }
-
-            # 更新实例的最后连接时间
-            from app import db
-
-            instance.last_connected_at = now()
-            db.session.commit()
-
-            # 关闭连接
-            self.close_connection(instance)
-
-            self.db_logger.info(
-                "账户同步完成",
-                instance_name=instance.name,
-                synced_count=result.get("synced_count", 0),
-                added_count=result.get("added_count", 0),
-                removed_count=result.get("removed_count", 0),
-                modified_count=result.get("modified_count", 0),
-            )
-
-            return {
-                "success": True,
-                "message": f"成功同步 {result.get('synced_count', 0)} 个账户",
-                "synced_count": result.get("synced_count", 0),
-                "added_count": result.get("added_count", 0),
-                "removed_count": result.get("removed_count", 0),
-                "modified_count": result.get("modified_count", 0),
-            }
-
-        except Exception as e:
-            self.db_logger.error("账户同步失败", instance_name=instance.name, error=str(e))
-            return {"success": False, "error": f"账户同步失败: {str(e)}"}
+        from app.services.unified_sync_service import unified_sync_service
+        
+        return unified_sync_service.sync_accounts(
+            instance=instance,
+            sync_type=sync_type,
+            create_sync_report=False  # 单一实例同步不创建报告
+        )
